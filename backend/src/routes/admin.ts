@@ -70,7 +70,13 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/suppliers", { preHandler: [requireAdmin] }, async () => {
-    const suppliers = await prisma.supplier.findMany({ orderBy: { createdAt: "desc" } });
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("DB timeout in /admin/suppliers")), 2000)
+    );
+    const suppliers = await Promise.race([
+      prisma.supplier.findMany({ orderBy: { createdAt: "desc" } }),
+      timeout,
+    ]);
     return suppliers;
   });
 
