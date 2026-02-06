@@ -33,6 +33,15 @@ function requireAdmin(request: any, reply: any) {
   return user;
 }
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+}
+
 export async function adminRoutes(app: FastifyInstance) {
   app.get("/ping", async (request, reply) => {
     const user = requireAdmin(request, reply);
@@ -58,7 +67,7 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!user) return;
     return prisma.product.findMany({
       orderBy: { createdAt: "desc" },
-      include: { sourceSupplier: true },
+      include: { sourceSupplier: true, categoryRef: true },
     });
   });
 
@@ -72,15 +81,23 @@ export async function adminRoutes(app: FastifyInstance) {
         description: z.string().optional(),
         brand: z.string().optional(),
         category: z.string().optional(),
+        categoryId: z.string().optional(),
         price: z.number().positive(),
         stockQty: z.number().int().nonnegative().default(0),
         imageUrl: z.string().url().optional(),
       })
       .parse(request.body);
 
+    let categoryName = body.category;
+    if (body.categoryId) {
+      const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
+      if (!category) return reply.badRequest("Category not found");
+      categoryName = category.name;
+    }
     return prisma.product.create({
       data: {
         ...body,
+        category: categoryName,
         source: "MANUAL",
       },
     });
@@ -96,6 +113,7 @@ export async function adminRoutes(app: FastifyInstance) {
         description: z.string().optional(),
         brand: z.string().optional(),
         category: z.string().optional(),
+        categoryId: z.string().nullable().optional(),
         price: z.number().positive().optional(),
         stockQty: z.number().int().nonnegative().optional(),
         imageUrl: z.string().url().optional(),
@@ -105,7 +123,16 @@ export async function adminRoutes(app: FastifyInstance) {
     const existing = await prisma.product.findUnique({ where: { id } });
     if (!existing) throw app.httpErrors.notFound("Product not found");
 
-    const data = { ...body };
+    const data: any = { ...body };
+    if (body.categoryId !== undefined) {
+      if (body.categoryId) {
+        const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
+        if (!category) return reply.badRequest("Category not found");
+        data.category = category.name;
+      } else {
+        data.category = null;
+      }
+    }
     if (existing.source === "SUPPLIER") {
       delete (data as any).stockQty;
     }
@@ -132,6 +159,136 @@ export async function adminRoutes(app: FastifyInstance) {
       timeout,
     ]);
     return suppliers;
+  });
+
+  app.get("/metrics", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const days = 14;
+    const startRange = new Date(startOfToday);
+    startRange.setDate(startRange.getDate() - (days - 1));
+
+    const [
+      totalProducts,
+      totalSuppliers,
+      totalOrders,
+      pendingUsers,
+      pendingCompanies,
+      totalRevenueAgg,
+      recentOrders,
+      ordersLastDays,
+    ] = await Promise.all([
+      prisma.product.count(),
+      prisma.supplier.count(),
+      prisma.order.count(),
+      prisma.user.count({ where: { approved: false } }),
+      prisma.company.count({ where: { status: "PENDING" } }),
+      prisma.order.aggregate({ _sum: { total: true } }),
+      prisma.order.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: { company: true },
+      }),
+      prisma.order.findMany({
+        where: { createdAt: { gte: startRange } },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
+
+    const ordersToday = await prisma.order.count({ where: { createdAt: { gte: startOfToday } } });
+
+    const daily = Array.from({ length: days }).map((_, i) => {
+      const d = new Date(startRange);
+      d.setDate(startRange.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      return { date: key, count: 0, total: 0 };
+    });
+    const index = new Map(daily.map((d, i) => [d.date, i]));
+    for (const order of ordersLastDays) {
+      const key = order.createdAt.toISOString().slice(0, 10);
+      const idx = index.get(key);
+      if (idx == null) continue;
+      daily[idx].count += 1;
+      daily[idx].total += Number(order.total);
+    }
+
+    return {
+      totals: {
+        products: totalProducts,
+        suppliers: totalSuppliers,
+        orders: totalOrders,
+        ordersToday,
+        pendingUsers,
+        pendingCompanies,
+        revenue: Number(totalRevenueAgg._sum.total || 0),
+      },
+      daily,
+      recentOrders: recentOrders.map((o) => ({
+        id: o.id,
+        status: o.status,
+        total: Number(o.total),
+        createdAt: o.createdAt,
+        company: o.company?.name || "-",
+      })),
+    };
+  });
+
+  app.get("/categories", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.category.findMany({ orderBy: { name: "asc" } });
+  });
+
+  app.post("/categories", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        name: z.string().min(2),
+        parentId: z.string().optional(),
+      })
+      .parse(request.body);
+    const slug = slugify(body.name);
+    const existing = await prisma.category.findUnique({ where: { slug } });
+    if (existing) return reply.conflict("Category already exists");
+    return prisma.category.create({
+      data: {
+        name: body.name,
+        slug,
+        parentId: body.parentId || null,
+      },
+    });
+  });
+
+  app.patch("/categories/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        parentId: z.string().nullable().optional(),
+      })
+      .parse(request.body);
+    const data: any = {};
+    if (body.name) {
+      data.name = body.name;
+      data.slug = slugify(body.name);
+    }
+    if (body.parentId !== undefined) data.parentId = body.parentId;
+    return prisma.category.update({ where: { id }, data });
+  });
+
+  app.delete("/categories/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const children = await prisma.category.count({ where: { parentId: id } });
+    if (children > 0) return reply.conflict("Remove children first");
+    await prisma.category.delete({ where: { id } });
+    return reply.code(204).send();
   });
 
   app.get("/suppliers/:id/products", async (request, reply) => {
@@ -233,6 +390,7 @@ export async function adminRoutes(app: FastifyInstance) {
         supplierSku: z.string().min(1).optional(),
         supplierSkus: z.array(z.string().min(1)).optional(),
         price: z.number().positive().optional(),
+        categoryId: z.string().min(1),
       })
       .parse(request.body);
 
@@ -259,6 +417,9 @@ export async function adminRoutes(app: FastifyInstance) {
     let already = 0;
     let missing = 0;
 
+    const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
+    if (!category) return reply.badRequest("Category not found");
+
     for (const sp of supplierProducts) {
       const existing = await prisma.product.findUnique({ where: { sku: sp.supplierSku } });
       const price = body.price ?? sp.price ?? undefined;
@@ -271,7 +432,8 @@ export async function adminRoutes(app: FastifyInstance) {
             name: sp.name || sp.supplierSku,
             description: sp.description,
             brand: sp.brand,
-            category: sp.category,
+            category: category.name,
+            categoryId: category.id,
             price: price ?? 0,
             stockQty,
             imageUrl: sp.imageUrl,

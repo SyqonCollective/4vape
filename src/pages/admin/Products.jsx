@@ -8,12 +8,32 @@ export default function AdminProducts() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [edit, setEdit] = useState({ name: "", description: "", price: "", stockQty: "", imageUrl: "" });
+  const [edit, setEdit] = useState({ name: "", description: "", price: "", stockQty: "", imageUrl: "", categoryId: "" });
+  const [categories, setCategories] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const token = getToken();
+  const categoryOptions = (() => {
+    const byParent = new Map();
+    for (const c of categories) {
+      const key = c.parentId || "root";
+      const list = byParent.get(key) || [];
+      list.push(c);
+      byParent.set(key, list);
+    }
+    const result = [];
+    const walk = (parentId, prefix = "") => {
+      const list = (byParent.get(parentId) || []).sort((a, b) => a.name.localeCompare(b.name));
+      for (const c of list) {
+        result.push({ ...c, label: `${prefix}${c.name}` });
+        walk(c.id, `${prefix}— `);
+      }
+    };
+    walk("root");
+    return result;
+  })();
   const withToken = (url) => {
     if (!url) return url;
     let fixed = url;
@@ -50,6 +70,23 @@ export default function AdminProducts() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    async function loadCategories() {
+      try {
+        const res = await api("/admin/categories");
+        if (!active) return;
+        setCategories(res);
+      } catch {
+        // ignore
+      }
+    }
+    loadCategories();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function openEdit(p) {
     setSelectedProduct(p);
     setEdit({
@@ -58,6 +95,7 @@ export default function AdminProducts() {
       price: p.price ? Number(p.price).toFixed(2) : "",
       stockQty: p.stockQty ?? "",
       imageUrl: p.imageUrl || "",
+      categoryId: p.categoryId || "",
     });
   }
 
@@ -72,6 +110,7 @@ export default function AdminProducts() {
           price: edit.price ? Number(edit.price) : undefined,
           stockQty: edit.stockQty !== "" ? Number(edit.stockQty) : undefined,
           imageUrl: edit.imageUrl || undefined,
+          categoryId: edit.categoryId || undefined,
         }),
       });
       setSelectedProduct(null);
@@ -254,6 +293,21 @@ export default function AdminProducts() {
                   <label>
                     Prezzo
                     <input type="number" step="0.01" value={edit.price} onChange={(e) => setEdit({ ...edit, price: e.target.value })} />
+                  </label>
+                  <label>
+                    Categoria
+                    <select
+                      className="select"
+                      value={edit.categoryId || ""}
+                      onChange={(e) => setEdit({ ...edit, categoryId: e.target.value })}
+                    >
+                      <option value="">Seleziona categoria</option>
+                      {categoryOptions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label>
                     Giacenza

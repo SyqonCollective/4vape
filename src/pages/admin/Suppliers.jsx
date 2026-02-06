@@ -28,6 +28,11 @@ export default function AdminSuppliers() {
   const [priceOverride, setPriceOverride] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedSkus, setSelectedSkus] = useState(new Set());
+  const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState("");
+  const [bulkCategoryId, setBulkCategoryId] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryParent, setNewCategoryParent] = useState("");
   const token = getToken();
   const withToken = (url) => {
     if (!url) return url;
@@ -77,6 +82,23 @@ export default function AdminSuppliers() {
     load();
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    async function loadCategories() {
+      try {
+        const res = await api("/admin/categories");
+        if (!active) return;
+        setCategories(res);
+      } catch {
+        // ignore
+      }
+    }
+    loadCategories();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function createSupplier(e) {
     e.preventDefault();
     setError("");
@@ -108,10 +130,15 @@ export default function AdminSuppliers() {
 
   async function promoteToStore(product) {
     if (!selected) return;
+    if (!categoryId) {
+      setError("Seleziona una categoria");
+      return;
+    }
     setActionMsg("");
     try {
       const payload = {
         supplierSku: product.supplierSku,
+        categoryId,
       };
       if (priceOverride) payload.price = Number(priceOverride);
       const res = await api(`/admin/suppliers/${selected.id}/promote`, {
@@ -132,11 +159,15 @@ export default function AdminSuppliers() {
 
   async function promoteSelected() {
     if (!selected || selectedSkus.size === 0) return;
+    if (!bulkCategoryId) {
+      setError("Seleziona una categoria per l'import multiplo");
+      return;
+    }
     setActionMsg("");
     try {
       const res = await api(`/admin/suppliers/${selected.id}/promote`, {
         method: "POST",
-        body: JSON.stringify({ supplierSkus: Array.from(selectedSkus) }),
+        body: JSON.stringify({ supplierSkus: Array.from(selectedSkus), categoryId: bulkCategoryId }),
       });
       setActionMsg(`${res.created} prodotti importati con successo`);
       setSuccessTitle("Importazione completata");
@@ -152,6 +183,8 @@ export default function AdminSuppliers() {
 
   async function viewProducts(supplier, nextPage = page) {
     setSelected(supplier);
+    setCategoryId("");
+    setPriceOverride("");
     try {
       const res = await api(
         `/admin/suppliers/${supplier.id}/products?page=${nextPage}&perPage=${perPage}&q=${encodeURIComponent(search)}`
@@ -162,6 +195,45 @@ export default function AdminSuppliers() {
       setSelectedSkus(new Set());
     } catch (err) {
       setError("Errore caricamento prodotti fornitore");
+    }
+  }
+
+  const categoryOptions = (() => {
+    const byParent = new Map();
+    for (const c of categories) {
+      const list = byParent.get(c.parentId || "root") || [];
+      list.push(c);
+      byParent.set(c.parentId || "root", list);
+    }
+    const result = [];
+    const walk = (parentId, prefix = "") => {
+      const list = (byParent.get(parentId) || []).sort((a, b) => a.name.localeCompare(b.name));
+      for (const c of list) {
+        result.push({ ...c, label: `${prefix}${c.name}` });
+        walk(c.id, `${prefix}— `);
+      }
+    };
+    walk("root");
+    return result;
+  })();
+
+  async function createCategoryInline() {
+    if (!newCategoryName.trim()) return;
+    try {
+      const res = await api("/admin/categories", {
+        method: "POST",
+        body: JSON.stringify({
+          name: newCategoryName.trim(),
+          parentId: newCategoryParent || undefined,
+        }),
+      });
+      setCategories((prev) => [...prev, res]);
+      setNewCategoryName("");
+      setNewCategoryParent("");
+      setCategoryId(res.id);
+      if (bulkMode) setBulkCategoryId(res.id);
+    } catch {
+      setError("Errore creazione categoria");
     }
   }
 
@@ -238,6 +310,20 @@ export default function AdminSuppliers() {
               <button className="btn primary" onClick={promoteSelected} disabled={!bulkMode || selectedSkus.size === 0}>
                 Importa selezionati
               </button>
+              {bulkMode ? (
+                <select
+                  value={bulkCategoryId}
+                  onChange={(e) => setBulkCategoryId(e.target.value)}
+                  className="select"
+                >
+                  <option value="">Categoria per import multiplo</option>
+                  {categoryOptions.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
             </div>
           </div>
           <div className="table wide-6">
@@ -382,6 +468,39 @@ export default function AdminSuppliers() {
                   <div className="muted">-</div>
                 )}
                 <div className="form-grid">
+                  <label>
+                    Categoria (obbligatoria)
+                    <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="select">
+                      <option value="">Seleziona categoria</option>
+                      {categoryOptions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="inline-create">
+                    <input
+                      placeholder="Nuova categoria"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                    />
+                    <select
+                      value={newCategoryParent}
+                      onChange={(e) => setNewCategoryParent(e.target.value)}
+                      className="select"
+                    >
+                      <option value="">Sottocategoria di…</option>
+                      {categoryOptions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button className="btn ghost" onClick={createCategoryInline}>
+                      Crea
+                    </button>
+                  </div>
                   <label>
                     Prezzo vendita (€)
                     <input

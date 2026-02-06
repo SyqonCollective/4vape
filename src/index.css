@@ -332,6 +332,24 @@ button {
   font-weight: 700;
   margin-top: 0.5rem;
 }
+.card-sub {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.sparkline {
+  width: 100%;
+  height: 80px;
+  color: #0f172a;
+  margin: 0.6rem 0;
+}
+.panel.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.table.compact .row {
+  grid-template-columns: 2fr 1fr 1fr;
+}
 
 .panel {
   background: #fff;
@@ -349,6 +367,7 @@ button {
 .table {
   display: grid;
   gap: 0.7rem;
+  overflow-x: auto;
 }
 
 .table.wide-6 .row {
@@ -806,6 +825,22 @@ button {
 .auth-card input::placeholder {
   color: rgba(226, 232, 240, 0.6);
 }
+.select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: #fff;
+  color: var(--text);
+}
+.inline-create {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.inline-create input {
+  width: 100%;
+}
 .pagination {
   display: flex;
   gap: 8px;
@@ -1063,6 +1098,10 @@ button {
   }
 
   .modal-body {
+    grid-template-columns: 1fr;
+  }
+
+  .panel.grid-2 {
     grid-template-columns: 1fr;
   }
 }

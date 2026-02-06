@@ -4,6 +4,7 @@ import AdminLogin from "./pages/admin/Login.jsx";
 import AdminDashboard from "./pages/admin/Dashboard.jsx";
 import AdminProducts from "./pages/admin/Products.jsx";
 import AdminSuppliers from "./pages/admin/Suppliers.jsx";
+import AdminCategories from "./pages/admin/Categories.jsx";
 import AdminOrders from "./pages/admin/Orders.jsx";
 import AdminUsers from "./pages/admin/Users.jsx";
 import { getToken } from "./lib/api.js";
@@ -29,6 +30,7 @@ export default function App() {
       >
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="products" element={<AdminProducts />} />
+        <Route path="categories" element={<AdminCategories />} />
         <Route path="suppliers" element={<AdminSuppliers />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="users" element={<AdminUsers />} />

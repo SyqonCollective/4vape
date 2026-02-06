@@ -1,9 +1,12 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { clearToken } from "../lib/api.js";
+import Portal from "./Portal.jsx";
 
 const links = [
   { to: "/admin/dashboard", label: "Dashboard" },
   { to: "/admin/products", label: "Prodotti" },
+  { to: "/admin/categories", label: "Categorie" },
   { to: "/admin/suppliers", label: "Fornitori" },
   { to: "/admin/orders", label: "Ordini" },
   { to: "/admin/users", label: "Utenti" },
@@ -11,10 +14,10 @@ const links = [
 
 export default function AdminLayout() {
   const navigate = useNavigate();
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   function onLogout() {
-    clearToken();
-    navigate("/admin/login");
+    setConfirmLogout(true);
   }
 
   return (
@@ -49,6 +52,35 @@ export default function AdminLayout() {
           <Outlet />
         </div>
       </main>
+      {confirmLogout ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setConfirmLogout(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div className="modal-title">
+                  <h3>Confermi logout?</h3>
+                </div>
+                <button className="btn ghost" onClick={() => setConfirmLogout(false)}>Annulla</button>
+              </div>
+              <div className="modal-body">
+                <p>Sei sicuro di voler uscire dall'area admin?</p>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setConfirmLogout(false)}>Resta</button>
+                  <button
+                    className="btn primary"
+                    onClick={() => {
+                      clearToken();
+                      navigate("/admin/login");
+                    }}
+                  >
+                    Esci
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
     </div>
   );
 }
