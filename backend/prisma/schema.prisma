@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  BUYER
+}
+
+enum OrderStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  FULFILLED
+  CANCELLED
+}
+
+enum ProductSource {
+  MANUAL
+  SUPPLIER
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  vatNumber String?  @unique
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+
+  users  User[]
+  orders Order[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(BUYER)
+  approved     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  isPrimary   Boolean  @default(false)
+  csvFullUrl  String?
+  csvStockUrl String?
+  fieldMap    Json?
+  createdAt   DateTime @default(now())
+
+  supplierProducts SupplierProduct[]
+  products         Product[]
+}
+
+model SupplierProduct {
+  id           String   @id @default(cuid())
+  supplierId   String
+  supplierSku  String
+  name         String?
+  description  String?
+  brand        String?
+  category     String?
+  price        Decimal? @db.Numeric(12, 2)
+  stockQty     Int?
+  imageUrl     String?
+  raw          Json?
+  lastSeenAt   DateTime @default(now())
+
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@unique([supplierId, supplierSku])
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  sku         String        @unique
+  name        String
+  description String?
+  brand       String?
+  category    String?
+  price       Decimal       @db.Numeric(12, 2)
+  stockQty    Int           @default(0)
+  imageUrl    String?
+  source      ProductSource @default(MANUAL)
+  createdAt   DateTime      @default(now())
+
+  sourceSupplierId String?
+  sourceSupplier   Supplier? @relation(fields: [sourceSupplierId], references: [id])
+
+  orderItems OrderItem[]
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  status     OrderStatus @default(DRAFT)
+  total      Decimal     @db.Numeric(12, 2)
+  createdAt  DateTime    @default(now())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  productId  String
+  sku        String
+  name       String
+  qty        Int
+  unitPrice  Decimal @db.Numeric(12, 2)
+  lineTotal  Decimal @db.Numeric(12, 2)
+
+  supplierId String?
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model ProductPrice {
+  id        String  @id @default(cuid())
+  companyId String
+  productId String
+  price     Decimal @db.Numeric(12, 2)
+
+  @@unique([companyId, productId])
+}
