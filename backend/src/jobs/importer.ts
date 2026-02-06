@@ -120,14 +120,27 @@ async function prestashopGet(supplier: Supplier, path: string, params: Record<st
   return res.json();
 }
 
-async function prestashopListAll(supplier: Supplier, path: string, pageSize = 100) {
+async function prestashopListAll(
+  supplier: Supplier,
+  path: string,
+  pageSize = 100,
+  opts?: { allowNotFound?: boolean }
+) {
   let offset = 0;
   const all: any[] = [];
   while (true) {
-    const data = await prestashopGet(supplier, path, {
-      display: "full",
-      limit: `${offset},${pageSize}`,
-    });
+    let data: any;
+    try {
+      data = await prestashopGet(supplier, path, {
+        display: "full",
+        limit: `${offset},${pageSize}`,
+      });
+    } catch (err: any) {
+      if (opts?.allowNotFound && String(err?.message || "").includes("404")) {
+        return all;
+      }
+      throw err;
+    }
     const key = path.replace(/\//g, "");
     const items =
       data?.[key] ||
@@ -167,8 +180,8 @@ export async function importFullFromSupplier(supplier: Supplier) {
   if (supplier.apiType === "PRESTASHOP") {
     const [products, combinations, categories] = await Promise.all([
       prestashopListAll(supplier, "/products"),
-      prestashopListAll(supplier, "/combinations"),
-      prestashopListAll(supplier, "/categories"),
+      prestashopListAll(supplier, "/combinations", 100, { allowNotFound: true }),
+      prestashopListAll(supplier, "/categories", 100, { allowNotFound: true }),
     ]);
     if (products.length === 0) return { created, skipped, updated };
 
