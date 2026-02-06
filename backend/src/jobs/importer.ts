@@ -58,11 +58,11 @@ function buildFieldMap(headers: string[], supplierMap?: any): FieldMap {
     sku: ["sku", "codice", "codice_sku", "codice_prodotto", "codiceart", "articolo"],
     name: ["nome", "name", "descrizione_breve", "titolo", "prodotto"],
     description: ["descrizione", "descrizione_lunga", "description"],
-    price: ["prezzo", "price", "prezzo_listino", "prezzo_netto"],
-    stockQty: ["giacenza", "stock", "qty", "quantita", "quantità"],
+    price: ["prezzo", "price", "prezzo_listino", "prezzo_netto", "prezzo_wls"],
+    stockQty: ["giacenza", "stock", "qty", "quantita", "quantità", "qta"],
     imageUrl: ["immagine", "image", "image_url", "img"],
     brand: ["brand", "marca", "produttore"],
-    category: ["categoria", "category", "famiglia"],
+    category: ["categoria", "category", "famiglia", "albero_categorie"],
   };
 
   for (const key of FIELD_KEYS) {
