@@ -128,7 +128,7 @@ async function prestashopListAll(supplier: Supplier, path: string, pageSize = 10
       display: "full",
       limit: `${offset},${pageSize}`,
     });
-    const key = path.replace(/\\//g, "");
+    const key = path.replace(/\//g, "");
     const items =
       data?.[key] ||
       data?.products ||
