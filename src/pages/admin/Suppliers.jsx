@@ -102,7 +102,7 @@ export default function AdminSuppliers() {
         method: "POST",
         body: JSON.stringify({ supplierSkus: Array.from(selectedSkus) }),
       });
-      setActionMsg(`Prodotti importati con successo: created ${res.created}, già presenti ${res.already}`);
+      setActionMsg(`${res.created} prodotti importati con successo`);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
       setSelectedSkus(new Set());
@@ -297,7 +297,12 @@ export default function AdminSuppliers() {
                     <div className="actions">
                       <button
                         className="btn ghost"
-                        onClick={() => setSelectedProduct(null)}
+                        onClick={() => {
+                          const next = new Set(selectedSkus);
+                          next.delete(selectedProduct.supplierSku);
+                          setSelectedSkus(next);
+                          setSelectedProduct(null);
+                        }}
                       >
                         Annulla
                       </button>

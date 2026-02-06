@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap");
 
 :root {
   color-scheme: light;
@@ -21,7 +21,7 @@
 
 body {
   margin: 0;
-  font-family: "Sora", system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   color: var(--ink);
   background:
     radial-gradient(circle at 18% 10%, #ffffff 0, transparent 45%),
@@ -76,7 +76,7 @@ a {
 }
 
 h1, h2, h3 {
-  font-family: "Playfair Display", serif;
+  font-family: "Fraunces", serif;
   margin: 0 0 0.4rem;
   letter-spacing: 0.01em;
 }
@@ -481,6 +481,26 @@ button {
   font-size: 0.8rem;
 }
 
+.flag.hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(225, 74, 43, 0.12), rgba(242, 179, 91, 0.25));
+  border: 1px solid rgba(225, 74, 43, 0.4);
+  color: #5a1a10;
+  font-weight: 600;
+}
+
+.flag-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e14a2b, #f2b35b);
+  box-shadow: 0 0 0 3px rgba(225, 74, 43, 0.15);
+}
+
 .modal-body {
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -527,6 +547,10 @@ button {
 }
 
 .confirm-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: #fff;
   border-radius: 20px;
   padding: 1.2rem 1.4rem;
@@ -534,6 +558,7 @@ button {
   max-width: 420px;
   width: 90vw;
   border: 1px solid var(--stroke);
+  z-index: 1002;
 }
 
 .check {

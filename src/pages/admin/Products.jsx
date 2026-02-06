@@ -202,6 +202,12 @@ export default function AdminProducts() {
                 </button>
               </div>
               <div className="modal-info">
+                {bulkMode ? (
+                  <div className="flag hero">
+                    <span className="flag-dot" />
+                    Imposta i dettagli
+                  </div>
+                ) : null}
                 <div><strong>SKU:</strong> {selectedProduct.sku}</div>
                 <div><strong>Fornitore:</strong> {selectedProduct.sourceSupplier?.name || (selectedProduct.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
                 <div className="form-grid">
