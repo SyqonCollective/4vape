@@ -134,11 +134,34 @@ export default function AdminProducts() {
             className="row clickable"
             key={p.id}
             onClick={() => {
-              if (!bulkMode) openEdit(p);
+              if (bulkMode) {
+                const next = new Set(selectedIds);
+                if (next.has(p.id)) next.delete(p.id);
+                else next.add(p.id);
+                setSelectedIds(next);
+                return;
+              }
+              openEdit(p);
             }}
           >
             <div>
-              {p.imageUrl ? <img className="thumb" src={p.imageUrl} alt={p.name} /> : <div className="thumb placeholder" />}
+              {p.imageUrl ? (
+                <img
+                  className="thumb"
+                  src={p.imageUrl}
+                  alt={p.name}
+                  onClick={(e) => {
+                    if (!bulkMode) return;
+                    e.stopPropagation();
+                    const next = new Set(selectedIds);
+                    if (next.has(p.id)) next.delete(p.id);
+                    else next.add(p.id);
+                    setSelectedIds(next);
+                  }}
+                />
+              ) : (
+                <div className="thumb placeholder" />
+              )}
             </div>
             <div className="mono">
               {bulkMode ? (
