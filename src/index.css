@@ -575,6 +575,20 @@ button {
 .muted {
   color: var(--muted);
 }
+.rich-text {
+  color: var(--muted);
+  line-height: 1.55;
+}
+.rich-text p {
+  margin: 0 0 8px;
+}
+.rich-text strong {
+  color: var(--text);
+}
+.rich-text ul,
+.rich-text ol {
+  margin: 0 0 8px 18px;
+}
 
 .mono {
   font-family: "SF Mono", ui-monospace, monospace;

@@ -247,10 +247,11 @@ export async function importFullFromSupplier(supplier: Supplier) {
       const name = getLocalized(p.name) || `Product ${p.id}`;
       const description = getLocalized(p.description_short || p.description);
       const price = p.price ? Number(p.price) : undefined;
+      const stockQty = p.quantity != null ? Math.trunc(Number(p.quantity)) : undefined;
       const brand = p.manufacturer_name || undefined;
       const category = p.id_category_default ? categoryMap.get(String(p.id_category_default)) : undefined;
       const images = p.associations?.images || [];
-      const imageId = images[0]?.id;
+      const imageId = images[0]?.id || p.id_default_image || p.id_default_image?.id;
       const imageUrl = imageId
         ? `/api/suppliers/${supplier.id}/image?productId=${p.id}&imageId=${imageId}`
         : undefined;
@@ -268,6 +269,7 @@ export async function importFullFromSupplier(supplier: Supplier) {
           brand,
           category,
           price: price != null ? new Prisma.Decimal(price) : undefined,
+          stockQty,
           imageUrl,
           raw: p,
           lastSeenAt: new Date(),
@@ -280,6 +282,7 @@ export async function importFullFromSupplier(supplier: Supplier) {
           brand,
           category,
           price: price != null ? new Prisma.Decimal(price) : undefined,
+          stockQty,
           imageUrl,
           raw: p,
         },
@@ -295,12 +298,13 @@ export async function importFullFromSupplier(supplier: Supplier) {
       const name = parent ? `${getLocalized(parent.name) || "Product"} - Variant` : `Variant ${c.id}`;
       const description = getLocalized(c.description_short || c.description);
       const price = c.price ? Number(c.price) : undefined;
+      const stockQty = c.quantity != null ? Math.trunc(Number(c.quantity)) : undefined;
       const brand = parent?.manufacturer_name || undefined;
       const category = parent?.id_category_default
         ? categoryMap.get(String(parent.id_category_default))
         : undefined;
       const images = parent?.associations?.images || [];
-      const imageId = images[0]?.id;
+      const imageId = images[0]?.id || parent?.id_default_image || parent?.id_default_image?.id;
       const imageUrl = imageId
         ? `/api/suppliers/${supplier.id}/image?productId=${parent.id}&imageId=${imageId}`
         : undefined;
@@ -318,6 +322,7 @@ export async function importFullFromSupplier(supplier: Supplier) {
           brand,
           category,
           price: price != null ? new Prisma.Decimal(price) : undefined,
+          stockQty,
           imageUrl,
           raw: c,
           lastSeenAt: new Date(),
@@ -330,6 +335,7 @@ export async function importFullFromSupplier(supplier: Supplier) {
           brand,
           category,
           price: price != null ? new Prisma.Decimal(price) : undefined,
+          stockQty,
           imageUrl,
           raw: c,
         },

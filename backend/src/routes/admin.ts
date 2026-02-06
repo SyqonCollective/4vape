@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "../lib/db.js";
 import { importFullFromSupplier, importStockFromSupplier } from "../jobs/importer.js";
 import jwt from "jsonwebtoken";
+import http from "node:http";
+import https from "node:https";
 
 function getUser(request: any, reply: any) {
   const auth = request.headers?.authorization || "";
@@ -287,16 +289,35 @@ export async function adminRoutes(app: FastifyInstance) {
     const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
     if (!supplier?.apiBaseUrl || !supplier?.apiKey) return reply.notFound("Supplier not configured");
 
-    const url = new URL(`/images/products/${productId}/${imageId}`, supplier.apiBaseUrl);
+    const base = supplier.apiBaseUrl.replace(/\/$/, "");
+    const url = new URL(`/images/products/${productId}/${imageId}`, base);
     url.searchParams.set("ws_key", supplier.apiKey);
-    const res = await fetch(url.toString(), {
-      headers: supplier.apiHost ? { Host: supplier.apiHost } : {},
-    });
-    if (!res.ok) return reply.code(res.status).send("Image fetch failed");
 
-    const buf = Buffer.from(await res.arrayBuffer());
-    const contentType = res.headers.get("content-type") || "image/jpeg";
-    reply.type(contentType);
+    const buf = await new Promise<Buffer>((resolve, reject) => {
+      const client = url.protocol === "https:" ? https : http;
+      const req = client.request(
+        url,
+        {
+          method: "GET",
+          headers: {
+            ...(supplier.apiHost ? { Host: supplier.apiHost } : {}),
+            "User-Agent": "4vape-image-proxy",
+          },
+        },
+        (res) => {
+          if (!res.statusCode || res.statusCode >= 400) {
+            return reject(new Error(`Image fetch failed: ${res.statusCode}`));
+          }
+          const chunks: Buffer[] = [];
+          res.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+          res.on("end", () => resolve(Buffer.concat(chunks)));
+        }
+      );
+      req.on("error", reject);
+      req.end();
+    });
+
+    reply.type("image/jpeg");
     return reply.send(buf);
   });
 }

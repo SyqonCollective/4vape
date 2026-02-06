@@ -293,7 +293,14 @@ export default function AdminSuppliers() {
                 <div><strong>Brand:</strong> {selectedProduct.brand || "-"}</div>
                 <div><strong>Categoria:</strong> {selectedProduct.category || "-"}</div>
                 <div><strong>Descrizione:</strong></div>
-                <div className="muted">{selectedProduct.description || "-"}</div>
+                {selectedProduct.description ? (
+                  <div
+                    className="rich-text muted"
+                    dangerouslySetInnerHTML={{ __html: selectedProduct.description }}
+                  />
+                ) : (
+                  <div className="muted">-</div>
+                )}
                 <div className="form-grid">
                   <label>
                     Prezzo vendita (€)
