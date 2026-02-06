@@ -30,6 +30,9 @@ export default function AdminProducts() {
   const [showCreateParent, setShowCreateParent] = useState(false);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
   const [parentChildren, setParentChildren] = useState(new Set());
+  const [childSearch, setChildSearch] = useState("");
+  const [childCategory, setChildCategory] = useState("");
+  const [childOnlyFree, setChildOnlyFree] = useState(true);
   const token = getToken();
   const fileInputRef = useRef(null);
   const categoryOptions = (() => {
@@ -275,6 +278,21 @@ export default function AdminProducts() {
       setError("Errore creazione prodotto genitore");
     }
   }
+
+  const filteredChildren = items.filter((p) => {
+    if (p.isParent) return false;
+    if (childOnlyFree && p.parentId) return false;
+    if (childCategory && p.categoryId !== childCategory) return false;
+    if (childSearch.trim()) {
+      const q = childSearch.trim().toLowerCase();
+      return (
+        p.name?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q) ||
+        p.brand?.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
 
   return (
     <section>
@@ -617,11 +635,38 @@ export default function AdminProducts() {
                       </select>
                     </label>
                   </div>
+                  <div className="child-toolbar">
+                    <div className="child-search">
+                      <input
+                        placeholder="Cerca per nome, SKU o brand..."
+                        value={childSearch}
+                        onChange={(e) => setChildSearch(e.target.value)}
+                      />
+                    </div>
+                    <select
+                      className="select"
+                      value={childCategory || ""}
+                      onChange={(e) => setChildCategory(e.target.value)}
+                    >
+                      <option value="">Tutte le categorie</option>
+                      {categoryOptions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <label className="check">
+                      <input
+                        type="checkbox"
+                        checked={childOnlyFree}
+                        onChange={(e) => setChildOnlyFree(e.target.checked)}
+                      />
+                      <span>Solo non assegnati</span>
+                    </label>
+                  </div>
                   <div className="muted">Seleziona i prodotti figli da associare:</div>
                   <div className="child-list">
-                    {items
-                      .filter((p) => !p.isParent)
-                      .map((p) => (
+                    {filteredChildren.map((p) => (
                         <button
                           type="button"
                           key={p.id}
@@ -635,7 +680,7 @@ export default function AdminProducts() {
                         >
                           <span className="mono">{p.sku}</span>
                           <span>{p.name}</span>
-                          {p.parent ? <span className="tag">Già figlio</span> : null}
+                          {p.parentId ? <span className="tag">Già figlio</span> : null}
                         </button>
                       ))}
                   </div>

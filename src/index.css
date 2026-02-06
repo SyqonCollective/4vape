@@ -598,6 +598,18 @@ button {
   padding-right: 0.4rem;
 }
 
+.child-toolbar {
+  margin-top: 0.4rem;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.child-search input {
+  width: 100%;
+}
+
 .child-row {
   display: grid;
   grid-template-columns: 110px 1fr auto;
