@@ -474,7 +474,7 @@ export default function AdminProducts() {
               <button className="btn ghost" onClick={() => setSelectedProduct(null)}>Chiudi</button>
             </div>
             <div className="modal-body">
-              <div className="modal-media">
+              <div className="modal-media" onClick={(e) => e.stopPropagation()}>
                 {edit.imageUrl ? (
                   <img src={withToken(edit.imageUrl)} alt={edit.name} />
                 ) : (
@@ -502,35 +502,46 @@ export default function AdminProducts() {
                   />
                 </div>
                 {images.length > 0 ? (
-                  <div className="image-grid">
+                  <div className="image-grid" onClick={(e) => e.stopPropagation()}>
                     {images.map((img) => (
-                      <div className="image-item" key={img.id}>
+                      <div className="image-item" key={img.id} onClick={(e) => e.stopPropagation()}>
                         <img src={withToken(img.url)} alt="" />
                         <div className="image-actions" onClick={(e) => e.stopPropagation()}>
                           <button
+                            type="button"
                             className="btn ghost"
                             onClick={(e) => {
                               e.stopPropagation();
+                              e.preventDefault();
                               setAsMain(img.url);
                             }}
                           >
                             Copertina
                           </button>
                           <button
+                            type="button"
                             className="btn danger"
                             onClick={(e) => {
                               e.stopPropagation();
+                              e.preventDefault();
                               deleteImage(img.id);
                             }}
                           >
-                            Elimina
+                            Elimina immagine
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : null}
-                <button className="delete-chip" onClick={() => setConfirmDelete(true)}>
+                <button
+                  type="button"
+                  className="delete-chip"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete(true);
+                  }}
+                >
                   Elimina
                 </button>
               </div>
