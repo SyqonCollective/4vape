@@ -280,8 +280,21 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/suppliers/:id/image", async (request, reply) => {
-    const user = requireAdmin(request, reply);
-    if (!user) return;
+    const auth = request.headers?.authorization || "";
+    const token =
+      auth.startsWith("Bearer ")
+        ? auth.slice(7).trim()
+        : (request.query as any)?.token;
+    if (!token) return reply.code(401).send({ error: "Unauthorized", message: "Missing token" });
+    let user: any;
+    try {
+      user = jwt.verify(token, process.env.JWT_SECRET || "dev_secret") as any;
+    } catch (err: any) {
+      return reply.code(401).send({ error: "Unauthorized", message: err?.message || "Invalid token" });
+    }
+    if (user.role !== "ADMIN" && user.role !== "MANAGER") {
+      return reply.code(403).send({ error: "Forbidden", message: "Admin only" });
+    }
     const supplierId = (request.params as any).id as string;
     const { productId, imageId } = request.query as any;
     if (!productId || !imageId) return reply.badRequest("Missing productId/imageId");

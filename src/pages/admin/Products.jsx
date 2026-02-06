@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
 import trashAnim from "../../assets/Trash clean.json";
-import { api } from "../../lib/api.js";
+import { api, getToken } from "../../lib/api.js";
 import Portal from "../../components/Portal.jsx";
 
 export default function AdminProducts() {
@@ -13,6 +13,15 @@ export default function AdminProducts() {
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const token = getToken();
+  const withToken = (url) => {
+    if (!url) return url;
+    if (url.startsWith("/api/") && token) {
+      const joiner = url.includes("?") ? "&" : "?";
+      return `${url}${joiner}token=${token}`;
+    }
+    return url;
+  };
 
   useEffect(() => {
     const open = Boolean(selectedProduct || confirmDelete || showDeleteSuccess);
@@ -148,7 +157,7 @@ export default function AdminProducts() {
               {p.imageUrl ? (
                 <img
                   className="thumb"
-                  src={p.imageUrl}
+                  src={withToken(p.imageUrl)}
                   alt={p.name}
                   onClick={(e) => {
                     if (!bulkMode) return;
@@ -216,7 +225,7 @@ export default function AdminProducts() {
             <div className="modal-body">
               <div className="modal-media">
                 {edit.imageUrl ? (
-                  <img src={edit.imageUrl} alt={edit.name} />
+                  <img src={withToken(edit.imageUrl)} alt={edit.name} />
                 ) : (
                   <div className="thumb placeholder large" />
                 )}

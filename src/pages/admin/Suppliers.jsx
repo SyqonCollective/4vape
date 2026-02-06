@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
 import successAnim from "../../assets/Success.json";
 import pulseAnim from "../../assets/Green Pulse Dot.json";
-import { api } from "../../lib/api.js";
+import { api, getToken } from "../../lib/api.js";
 import Portal from "../../components/Portal.jsx";
 
 export default function AdminSuppliers() {
@@ -25,6 +25,15 @@ export default function AdminSuppliers() {
   const [priceOverride, setPriceOverride] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedSkus, setSelectedSkus] = useState(new Set());
+  const token = getToken();
+  const withToken = (url) => {
+    if (!url) return url;
+    if (url.startsWith("/api/") && token) {
+      const joiner = url.includes("?") ? "&" : "?";
+      return `${url}${joiner}token=${token}`;
+    }
+    return url;
+  };
 
   useEffect(() => {
     const open = Boolean(selectedProduct || showSuccess);
@@ -212,7 +221,7 @@ export default function AdminSuppliers() {
                     {p.imageUrl ? (
                       <img
                         className="thumb"
-                        src={p.imageUrl}
+                        src={withToken(p.imageUrl)}
                         alt={p.name || p.supplierSku}
                         onClick={(e) => {
                           if (!bulkMode) return;
@@ -274,7 +283,10 @@ export default function AdminSuppliers() {
               <div className="modal-body">
                 <div className="modal-media">
                 {selectedProduct.imageUrl ? (
-                  <img src={selectedProduct.imageUrl} alt={selectedProduct.name || selectedProduct.supplierSku} />
+                  <img
+                    src={withToken(selectedProduct.imageUrl)}
+                    alt={selectedProduct.name || selectedProduct.supplierSku}
+                  />
                 ) : (
                   <div className="thumb placeholder large" />
                 )}
