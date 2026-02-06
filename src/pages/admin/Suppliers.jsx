@@ -264,7 +264,10 @@ export default function AdminSuppliers() {
               </div>
               <div className="modal-info">
                 {bulkMode ? (
-                  <div className="tag success">Imposta i dettagli</div>
+                  <div className="flag hero">
+                    <span className="flag-dot" />
+                    Imposta i dettagli
+                  </div>
                 ) : null}
                 <div><strong>SKU:</strong> {selectedProduct.supplierSku}</div>
                 <div><strong>Prezzo:</strong> {selectedProduct.price ? `€ ${Number(selectedProduct.price).toFixed(2)}` : "-"}</div>
@@ -291,22 +294,26 @@ export default function AdminSuppliers() {
                 </div>
                 <div>
                   {bulkMode ? (
-                    <button
-                      className="btn primary"
-                      onClick={() => {
-                        const next = new Set(selectedSkus);
-                        if (next.has(selectedProduct.supplierSku)) next.delete(selectedProduct.supplierSku);
-                        else next.add(selectedProduct.supplierSku);
-                        setSelectedSkus(next);
-                      }}
-                      disabled={selectedProduct.isImported}
-                    >
-                      {selectedProduct.isImported
-                        ? "Già importato"
-                        : selectedSkus.has(selectedProduct.supplierSku)
-                        ? "Selezionato"
-                        : "Seleziona"}
-                    </button>
+                    <div className="actions">
+                      <button
+                        className="btn ghost"
+                        onClick={() => setSelectedProduct(null)}
+                      >
+                        Annulla
+                      </button>
+                      <button
+                        className="btn primary"
+                        onClick={() => {
+                          const next = new Set(selectedSkus);
+                          next.add(selectedProduct.supplierSku);
+                          setSelectedSkus(next);
+                          setSelectedProduct(null);
+                        }}
+                        disabled={selectedProduct.isImported}
+                      >
+                        {selectedProduct.isImported ? "Già importato" : "Seleziona"}
+                      </button>
+                    </div>
                   ) : (
                     <button
                       className="btn primary"
