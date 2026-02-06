@@ -104,14 +104,17 @@ function getLocalized(value: any) {
 }
 
 async function prestashopGet(supplier: Supplier, path: string, params: Record<string, string>) {
-  if (!supplier.apiBaseUrl || !supplier.apiKey) {
+  const apiBaseUrl = supplier.apiBaseUrl?.trim();
+  const apiKey = supplier.apiKey?.trim();
+  const apiHost = supplier.apiHost?.trim();
+  if (!apiBaseUrl || !apiKey) {
     throw new Error("Missing PrestaShop apiBaseUrl/apiKey");
   }
-  const base = supplier.apiBaseUrl.replace(/\/$/, "");
+  const base = apiBaseUrl.replace(/\/$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const url = new URL(`${base}${normalizedPath}`);
   const search = new URLSearchParams(params);
-  search.set("ws_key", supplier.apiKey);
+  search.set("ws_key", apiKey);
   search.set("output_format", "JSON");
   url.search = search.toString();
 
@@ -122,7 +125,7 @@ async function prestashopGet(supplier: Supplier, path: string, params: Record<st
       {
         method: "GET",
         headers: {
-          ...(supplier.apiHost ? { Host: supplier.apiHost } : {}),
+          ...(apiHost ? { Host: apiHost } : {}),
           "User-Agent": "4vape-importer",
         },
       },
@@ -132,7 +135,11 @@ async function prestashopGet(supplier: Supplier, path: string, params: Record<st
         res.on("data", (chunk) => (data += chunk));
         res.on("end", () => {
           if (!res.statusCode || res.statusCode >= 400) {
-            return reject(new Error(`PrestaShop fetch failed: ${res.statusCode}`));
+            return reject(
+              new Error(
+                `PrestaShop fetch failed: ${res.statusCode} (url=${url.toString()} host=${apiHost || ""})`
+              )
+            );
           }
           resolve(data);
         });
