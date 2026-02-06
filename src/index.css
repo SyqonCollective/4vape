@@ -923,6 +923,33 @@ button {
   animation: modal-pop 0.35s ease both;
 }
 
+.login-success {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 10, 16, 0.55);
+  backdrop-filter: blur(8px);
+}
+.login-success-card {
+  width: min(340px, 80vw);
+  background: rgba(8, 12, 18, 0.9);
+  border: 1px solid rgba(120, 170, 255, 0.3);
+  border-radius: 20px;
+  padding: 22px 18px;
+  display: grid;
+  gap: 12px;
+  align-items: center;
+  justify-items: center;
+  box-shadow: 0 30px 60px rgba(8, 10, 16, 0.5);
+}
+.login-success-card .login-success-text {
+  color: #e2e8f0;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 .success-card > div:first-child {
   width: 80px;
   height: 80px;

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Lottie from "lottie-react";
+import correctAnim from "../../assets/Correct.json";
 import { api, setToken } from "../../lib/api.js";
 
 export default function AdminLogin() {
@@ -10,6 +12,7 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -22,7 +25,8 @@ export default function AdminLogin() {
         body: JSON.stringify({ email, password }),
       });
       setToken(res.token);
-      navigate("/admin/dashboard");
+      setShowSuccess(true);
+      setTimeout(() => navigate("/admin/dashboard"), 1400);
     } catch (err) {
       setError("Credenziali non valide o utente non approvato");
     } finally {
@@ -124,6 +128,14 @@ export default function AdminLogin() {
         <div className="auth-vignette" />
         <div className="auth-front-fog" />
       </div>
+      {showSuccess ? (
+        <div className="login-success">
+          <div className="login-success-card">
+            <Lottie animationData={correctAnim} loop={false} />
+            <div className="login-success-text">Accesso confermato</div>
+          </div>
+        </div>
+      ) : null}
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-badge">Admin</div>
