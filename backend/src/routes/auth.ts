@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/db.js";
 import { hashPassword, verifyPassword } from "../lib/auth.js";
+import jwt from "jsonwebtoken";
 
 export async function authRoutes(app: FastifyInstance) {
   app.post("/register", async (request, reply) => {
@@ -50,11 +51,14 @@ export async function authRoutes(app: FastifyInstance) {
     if (!ok) return reply.unauthorized("Invalid credentials");
     if (!user.approved) return reply.forbidden("User not approved");
 
-    const token = app.jwt.sign({
-      id: user.id,
-      role: user.role,
-      companyId: user.companyId,
-    });
+    const token = jwt.sign(
+      {
+        id: user.id,
+        role: user.role,
+        companyId: user.companyId,
+      },
+      process.env.JWT_SECRET || "dev_secret"
+    );
 
     return { token };
   });

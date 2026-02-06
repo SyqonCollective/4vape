@@ -1,10 +1,10 @@
 import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import jwt from "@fastify/jwt";
 import sensible from "@fastify/sensible";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import jwt from "jsonwebtoken";
 import { authRoutes } from "./routes/auth.js";
 import { adminRoutes } from "./routes/admin.js";
 import { catalogRoutes } from "./routes/catalog.js";
@@ -15,8 +15,6 @@ const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
 await app.register(sensible);
-await app.register(jwt, { secret: process.env.JWT_SECRET || "dev_secret" });
-
 await prisma.$connect();
 
 if (process.env.ENABLE_SWAGGER === "true") {
@@ -39,7 +37,7 @@ app.decorate("authenticate", async (request: any, reply: any) => {
 
   const token = authHeader.slice(7).trim();
   try {
-    const payload = app.jwt.verify(token);
+    const payload = jwt.verify(token, process.env.JWT_SECRET || "dev_secret");
     request.user = payload;
   } catch (err: any) {
     return reply.code(401).send({
