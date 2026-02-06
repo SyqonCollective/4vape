@@ -412,6 +412,7 @@ button {
   padding: 8px;
   display: grid;
   gap: 6px;
+  position: relative;
 }
 .image-item img {
   width: 100%;
@@ -422,6 +423,23 @@ button {
 .image-actions {
   display: grid;
   gap: 6px;
+}
+
+.image-x {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
 }
 
 .row {

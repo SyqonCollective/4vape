@@ -520,6 +520,16 @@ export default function AdminProducts() {
                     {images.map((img) => (
                       <div className="image-item" key={img.id} onClick={(e) => e.stopPropagation()}>
                         <img src={withToken(img.url)} alt="" />
+                        <button
+                          type="button"
+                          className="image-x"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteImage(img.id);
+                          }}
+                        >
+                          ×
+                        </button>
                         <div className="image-actions" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
@@ -532,32 +542,11 @@ export default function AdminProducts() {
                           >
                             Copertina
                           </button>
-                          <button
-                            type="button"
-                            className="btn danger"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              deleteImage(img.id);
-                            }}
-                          >
-                            Elimina immagine
-                          </button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : null}
-                <button
-                  type="button"
-                  className="delete-chip"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmDelete(true);
-                  }}
-                >
-                  Elimina
-                </button>
               </div>
               <div className="modal-info">
                 {bulkMode ? (
