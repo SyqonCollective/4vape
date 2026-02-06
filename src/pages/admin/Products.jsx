@@ -27,6 +27,9 @@ export default function AdminProducts() {
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [showCreateParent, setShowCreateParent] = useState(false);
+  const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
+  const [parentChildren, setParentChildren] = useState(new Set());
   const token = getToken();
   const fileInputRef = useRef(null);
   const categoryOptions = (() => {
@@ -66,10 +69,10 @@ export default function AdminProducts() {
   };
 
   useEffect(() => {
-    const open = Boolean(selectedProduct || confirmDelete || showDeleteSuccess);
+    const open = Boolean(selectedProduct || confirmDelete || showDeleteSuccess || showCreateParent);
     document.body.classList.toggle("modal-open", open);
     return () => document.body.classList.remove("modal-open");
-  }, [selectedProduct, confirmDelete, showDeleteSuccess]);
+  }, [selectedProduct, confirmDelete, showDeleteSuccess, showCreateParent]);
 
   useEffect(() => {
     let active = true;
@@ -234,6 +237,45 @@ export default function AdminProducts() {
     }
   }
 
+  async function createParentProduct() {
+    if (!parentDraft.name.trim() || !parentDraft.sku.trim()) {
+      setError("Nome e SKU sono obbligatori");
+      return;
+    }
+    try {
+      const parent = await api("/admin/products", {
+        method: "POST",
+        body: JSON.stringify({
+          name: parentDraft.name.trim(),
+          sku: parentDraft.sku.trim(),
+          categoryId: parentDraft.categoryId || undefined,
+          isParent: true,
+          price: 0,
+          stockQty: 0,
+        }),
+      });
+      if (parentChildren.size > 0) {
+        await Promise.all(
+          Array.from(parentChildren).map((id) =>
+            api(`/admin/products/${id}`, {
+              method: "PATCH",
+              body: JSON.stringify({ parentId: parent.id }),
+            })
+          )
+        );
+      }
+      setShowCreateParent(false);
+      setParentDraft({ name: "", sku: "", categoryId: "" });
+      setParentChildren(new Set());
+      const res = await api("/admin/products");
+      setItems(res);
+      const p = await api("/admin/products?parents=true");
+      setParents(p);
+    } catch (err) {
+      setError("Errore creazione prodotto genitore");
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -242,6 +284,9 @@ export default function AdminProducts() {
           <p>Catalogo principale con giacenze</p>
         </div>
         <div className="actions">
+          <button className="btn primary" onClick={() => setShowCreateParent(true)}>
+            Crea prodotto genitore
+          </button>
           <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
             {bulkMode ? "Selezione attiva" : "Multi selection"}
           </button>
@@ -458,6 +503,7 @@ export default function AdminProducts() {
                       />
                       <span>Non vendibile</span>
                     </div>
+                    <div className="muted">Per creare un nuovo genitore usa “Crea prodotto genitore”.</div>
                   </label>
                   <label>
                     Assegna a padre
@@ -523,6 +569,86 @@ export default function AdminProducts() {
               <button className="btn ghost" onClick={() => setConfirmDelete(false)}>Annulla</button>
               <button className="btn danger" onClick={bulkMode ? deleteSelected : deleteProduct}>Conferma</button>
             </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+
+      {showCreateParent ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowCreateParent(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Crea prodotto genitore</h3>
+                <button className="btn ghost" onClick={() => setShowCreateParent(false)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="modal-info">
+                  <div className="form-grid">
+                    <label>
+                      Nome
+                      <input
+                        value={parentDraft.name}
+                        onChange={(e) => setParentDraft({ ...parentDraft, name: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      SKU
+                      <input
+                        value={parentDraft.sku}
+                        onChange={(e) => setParentDraft({ ...parentDraft, sku: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Categoria
+                      <select
+                        className="select"
+                        value={parentDraft.categoryId || ""}
+                        onChange={(e) => setParentDraft({ ...parentDraft, categoryId: e.target.value })}
+                      >
+                        <option value="">Seleziona categoria</option>
+                        {categoryOptions.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <div className="muted">Seleziona i prodotti figli da associare:</div>
+                  <div className="child-list">
+                    {items
+                      .filter((p) => !p.isParent)
+                      .map((p) => (
+                        <button
+                          type="button"
+                          key={p.id}
+                          className={`child-row ${parentChildren.has(p.id) ? "active" : ""}`}
+                          onClick={() => {
+                            const next = new Set(parentChildren);
+                            if (next.has(p.id)) next.delete(p.id);
+                            else next.add(p.id);
+                            setParentChildren(next);
+                          }}
+                        >
+                          <span className="mono">{p.sku}</span>
+                          <span>{p.name}</span>
+                          {p.parent ? <span className="tag">Già figlio</span> : null}
+                        </button>
+                      ))}
+                  </div>
+                  <div className="actions">
+                    <button className="btn ghost" onClick={() => setShowCreateParent(false)}>
+                      Annulla
+                    </button>
+                    <button className="btn primary" onClick={createParentProduct}>
+                      Crea e associa {parentChildren.size} prodotti
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </Portal>

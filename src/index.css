@@ -589,6 +589,39 @@ button {
   font-size: 0.95rem;
 }
 
+.child-list {
+  margin-top: 0.4rem;
+  display: grid;
+  gap: 0.4rem;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 0.4rem;
+}
+
+.child-row {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.child-row:hover {
+  transform: translateY(-1px);
+  border-color: rgba(14, 165, 233, 0.35);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+}
+
+.child-row.active {
+  border-color: rgba(14, 165, 233, 0.6);
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(59, 130, 246, 0.12));
+}
+
 .delete-chip {
   position: absolute;
   top: 10px;
