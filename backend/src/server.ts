@@ -26,24 +26,28 @@ if (process.env.ENABLE_SWAGGER === "true") {
   await app.register(swaggerUi, { routePrefix: "/docs" });
 }
 
-app.decorate("authenticate", async (request: any, reply: any) => {
+app.decorate("authenticate", (request: any, reply: any, done?: any) => {
   const authHeader = request.headers?.authorization || "";
   if (!authHeader.startsWith("Bearer ")) {
-    return reply.code(401).send({
+    reply.code(401).send({
       error: "Unauthorized",
       message: "Missing Bearer token",
     });
+    return;
   }
 
   const token = authHeader.slice(7).trim();
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET || "dev_secret");
     request.user = payload;
+    if (done) return done();
+    return;
   } catch (err: any) {
-    return reply.code(401).send({
+    reply.code(401).send({
       error: "Unauthorized",
       message: err?.message || "Invalid token",
     });
+    return;
   }
 });
 

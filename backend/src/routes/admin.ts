@@ -6,7 +6,7 @@ import { importFullFromSupplier, importStockFromSupplier } from "../jobs/importe
 function requireAdmin(request: any, reply: any) {
   const role = request.user?.role;
   if (role !== "ADMIN" && role !== "MANAGER") {
-    reply.forbidden("Admin only");
+    return reply.forbidden("Admin only");
   }
 }
 
