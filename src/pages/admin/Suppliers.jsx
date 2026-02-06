@@ -41,6 +41,22 @@ export default function AdminSuppliers() {
     }
     return fixed;
   };
+  const totalPages = Math.max(1, Math.ceil(totalProducts / perPage));
+  const pageItems = (() => {
+    const items = [];
+    const push = (value) => items.push(value);
+    const addEllipsis = () => {
+      if (items[items.length - 1] !== "…") push("…");
+    };
+    push(1);
+    const windowStart = Math.max(2, page - 1);
+    const windowEnd = Math.min(totalPages - 1, page + 1);
+    if (windowStart > 2) addEllipsis();
+    for (let i = windowStart; i <= windowEnd; i += 1) push(i);
+    if (windowEnd < totalPages - 1) addEllipsis();
+    if (totalPages > 1) push(totalPages);
+    return items;
+  })();
 
   useEffect(() => {
     const open = Boolean(selectedProduct || showSuccess);
@@ -286,18 +302,33 @@ export default function AdminSuppliers() {
             ))}
           </div>
           <div className="pagination">
-            {Array.from({ length: Math.max(1, Math.ceil(totalProducts / perPage)) }).map((_, i) => {
-              const num = i + 1;
-              return (
+            <button
+              className="page-btn ghost"
+              disabled={page <= 1}
+              onClick={() => viewProducts(selected, page - 1)}
+            >
+              Prev
+            </button>
+            {pageItems.map((item, i) =>
+              item === "…" ? (
+                <span key={`dots-${i}`} className="page-dots">…</span>
+              ) : (
                 <button
-                  key={num}
-                  className={`page-btn ${num === page ? "active" : ""}`}
-                  onClick={() => viewProducts(selected, num)}
+                  key={item}
+                  className={`page-btn ${item === page ? "active" : ""}`}
+                  onClick={() => viewProducts(selected, item)}
                 >
-                  {num}
+                  {item}
                 </button>
-              );
-            })}
+              )
+            )}
+            <button
+              className="page-btn ghost"
+              disabled={page >= totalPages}
+              onClick={() => viewProducts(selected, page + 1)}
+            >
+              Next
+            </button>
           </div>
         </div>
       ) : null}

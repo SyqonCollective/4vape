@@ -811,6 +811,7 @@ button {
   gap: 8px;
   margin-top: 14px;
   flex-wrap: wrap;
+  align-items: center;
 }
 .page-btn {
   border: 1px solid var(--stroke);
@@ -825,6 +826,18 @@ button {
   background: #111827;
   color: #fff;
   border-color: #111827;
+}
+.page-btn.ghost {
+  background: transparent;
+}
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.page-dots {
+  color: var(--muted);
+  font-weight: 700;
+  padding: 0 4px;
 }
 .password-field {
   position: relative;
