@@ -128,14 +128,6 @@ export default function AdminSuppliers() {
           </div>
         </div>
       ) : null}
-      {showImportedMsg ? (
-        <div className="toast info">
-          <div>
-            <strong>Già importato</strong>
-            <div className="muted">Questo prodotto è già nello store</div>
-          </div>
-        </div>
-      ) : null}
 
       <div className="panel">
         <h2>Nuovo fornitore</h2>
@@ -208,14 +200,7 @@ export default function AdminSuppliers() {
               <div
                 className="row clickable"
                 key={p.id}
-                onClick={() => {
-                  if (p.isImported) {
-                    setShowImportedMsg(true);
-                    setTimeout(() => setShowImportedMsg(false), 1500);
-                    return;
-                  }
-                  setSelectedProduct(p);
-                }}
+                onClick={() => setSelectedProduct(p)}
               >
                 <div>
                   <div className="thumb-wrap">
@@ -244,7 +229,12 @@ export default function AdminSuppliers() {
         <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{selectedProduct.name || "Dettaglio prodotto"}</h3>
+              <div className="modal-title">
+                <h3>{selectedProduct.name || "Dettaglio prodotto"}</h3>
+                {selectedProduct.isImported ? (
+                  <span className="tag success">Già importato</span>
+                ) : null}
+              </div>
               <button className="btn ghost" onClick={() => setSelectedProduct(null)}>Chiudi</button>
             </div>
             <div className="modal-body">

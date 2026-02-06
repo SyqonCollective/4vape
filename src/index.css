@@ -307,6 +307,21 @@ button {
   gap: 1rem;
 }
 
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.tag.success {
+  background: #e7f8e9;
+  color: #1e6b33;
+  border: 1px solid #b9e4c2;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
 .modal-body {
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -403,17 +418,6 @@ button {
   height: 80px;
 }
 
-.toast.info {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  background: #fff;
-  border: 1px solid var(--stroke);
-  border-radius: 16px;
-  padding: 0.8rem 1rem;
-  box-shadow: var(--shadow);
-  z-index: 30;
-}
 
 @media (max-width: 900px) {
   .admin-shell {
