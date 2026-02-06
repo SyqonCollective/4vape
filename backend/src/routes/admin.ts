@@ -177,4 +177,84 @@ export async function adminRoutes(app: FastifyInstance) {
     const result = await importStockFromSupplier(supplier);
     return result;
   });
+
+  app.post("/suppliers/:id/promote", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const supplierId = (request.params as any).id as string;
+    const body = z
+      .object({
+        supplierSku: z.string().min(1).optional(),
+        supplierSkus: z.array(z.string().min(1)).optional(),
+      })
+      .parse(request.body);
+
+    const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
+    if (!supplier) throw app.httpErrors.notFound("Supplier not found");
+
+    const skus =
+      body.supplierSkus && body.supplierSkus.length > 0
+        ? body.supplierSkus
+        : body.supplierSku
+        ? [body.supplierSku]
+        : [];
+
+    if (skus.length === 0) {
+      return reply.badRequest("Missing supplierSku");
+    }
+
+    const supplierProducts = await prisma.supplierProduct.findMany({
+      where: { supplierId, supplierSku: { in: skus } },
+    });
+
+    let created = 0;
+    let updated = 0;
+    let missing = 0;
+
+    for (const sp of supplierProducts) {
+      const existing = await prisma.product.findUnique({ where: { sku: sp.supplierSku } });
+      const price = sp.price ?? undefined;
+      const stockQty = sp.stockQty ?? 0;
+
+      if (!existing) {
+        await prisma.product.create({
+          data: {
+            sku: sp.supplierSku,
+            name: sp.name || sp.supplierSku,
+            description: sp.description,
+            brand: sp.brand,
+            category: sp.category,
+            price: price ?? 0,
+            stockQty,
+            imageUrl: sp.imageUrl,
+            source: "SUPPLIER",
+            sourceSupplierId: supplierId,
+          },
+        });
+        created += 1;
+      } else {
+        await prisma.product.update({
+          where: { id: existing.id },
+          data: {
+            name: sp.name || existing.name,
+            description: sp.description ?? existing.description,
+            brand: sp.brand ?? existing.brand,
+            category: sp.category ?? existing.category,
+            price: price ?? existing.price,
+            stockQty,
+            imageUrl: sp.imageUrl ?? existing.imageUrl,
+            source: "SUPPLIER",
+            sourceSupplierId: supplierId,
+          },
+        });
+        updated += 1;
+      }
+    }
+
+    if (supplierProducts.length < skus.length) {
+      missing = skus.length - supplierProducts.length;
+    }
+
+    return { created, updated, missing };
+  });
 }

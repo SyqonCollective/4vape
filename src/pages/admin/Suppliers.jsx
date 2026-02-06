@@ -14,6 +14,7 @@ export default function AdminSuppliers() {
   const [supplierProducts, setSupplierProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [search, setSearch] = useState("");
+  const [actionMsg, setActionMsg] = useState("");
 
   async function load() {
     try {
@@ -66,6 +67,20 @@ export default function AdminSuppliers() {
     }
   }
 
+  async function promoteToStore(product) {
+    if (!selected) return;
+    setActionMsg("");
+    try {
+      const res = await api(`/admin/suppliers/${selected.id}/promote`, {
+        method: "POST",
+        body: JSON.stringify({ supplierSku: product.supplierSku }),
+      });
+      setActionMsg(`Importato in store: created ${res.created}, updated ${res.updated}`);
+    } catch (err) {
+      setError("Errore import in store");
+    }
+  }
+
   async function viewProducts(supplier) {
     setSelected(supplier);
     try {
@@ -86,6 +101,7 @@ export default function AdminSuppliers() {
       </div>
 
       {error ? <div className="error">{error}</div> : null}
+      {actionMsg ? <div className="panel">{actionMsg}</div> : null}
 
       <div className="panel">
         <h2>Nuovo fornitore</h2>
@@ -193,10 +209,16 @@ export default function AdminSuppliers() {
                 <div><strong>SKU:</strong> {selectedProduct.supplierSku}</div>
                 <div><strong>Prezzo:</strong> {selectedProduct.price ? `€ ${Number(selectedProduct.price).toFixed(2)}` : "-"}</div>
                 <div><strong>Giacenza:</strong> {selectedProduct.stockQty ?? "-"}</div>
+                <div><strong>Disponibilità:</strong> {selectedProduct.stockQty && selectedProduct.stockQty > 0 ? "Disponibile" : "Out of stock"}</div>
                 <div><strong>Brand:</strong> {selectedProduct.brand || "-"}</div>
                 <div><strong>Categoria:</strong> {selectedProduct.category || "-"}</div>
                 <div><strong>Descrizione:</strong></div>
                 <div className="muted">{selectedProduct.description || "-"}</div>
+                <div>
+                  <button className="btn primary" onClick={() => promoteToStore(selectedProduct)}>
+                    Importa in store
+                  </button>
+                </div>
               </div>
             </div>
           </div>
