@@ -90,6 +90,58 @@ async function fetchCsv(url: string) {
   return records as ParsedRow[];
 }
 
+function getLocalized(value: any) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    const first = value[0];
+    if (typeof first === "string") return first;
+    if (first && typeof first.value === "string") return first.value;
+  }
+  if (value && typeof value.value === "string") return value.value;
+  return undefined;
+}
+
+async function prestashopGet(supplier: Supplier, path: string, params: Record<string, string>) {
+  if (!supplier.apiBaseUrl || !supplier.apiKey) {
+    throw new Error("Missing PrestaShop apiBaseUrl/apiKey");
+  }
+  const url = new URL(path, supplier.apiBaseUrl);
+  const search = new URLSearchParams(params);
+  search.set("ws_key", supplier.apiKey);
+  search.set("output_format", "JSON");
+  url.search = search.toString();
+
+  const res = await fetch(url.toString(), {
+    headers: supplier.apiHost ? { Host: supplier.apiHost } : {},
+  });
+  if (!res.ok) throw new Error(`PrestaShop fetch failed: ${res.status}`);
+  return res.json();
+}
+
+async function prestashopListAll(supplier: Supplier, path: string, pageSize = 100) {
+  let offset = 0;
+  const all: any[] = [];
+  while (true) {
+    const data = await prestashopGet(supplier, path, {
+      display: "full",
+      limit: `${offset},${pageSize}`,
+    });
+    const key = path.replace(/\\//g, "");
+    const items =
+      data?.[key] ||
+      data?.products ||
+      data?.stock_availables ||
+      data?.combinations ||
+      data?.categories ||
+      [];
+    if (!Array.isArray(items) || items.length === 0) break;
+    all.push(...items);
+    if (items.length < pageSize) break;
+    offset += pageSize;
+  }
+  return all;
+}
+
 function mapRow(row: ParsedRow, fieldMap: FieldMap) {
   const get = (key: FieldKey) => (fieldMap[key] ? row[fieldMap[key] as string] : undefined);
 
@@ -106,17 +158,133 @@ function mapRow(row: ParsedRow, fieldMap: FieldMap) {
 }
 
 export async function importFullFromSupplier(supplier: Supplier) {
+  let created = 0;
+  let skipped = 0;
+  let updated = 0;
+
+  if (supplier.apiType === "PRESTASHOP") {
+    const [products, combinations, categories] = await Promise.all([
+      prestashopListAll(supplier, "/products"),
+      prestashopListAll(supplier, "/combinations"),
+      prestashopListAll(supplier, "/categories"),
+    ]);
+    if (products.length === 0) return { created, skipped, updated };
+
+    const categoryMap = new Map<string, string>();
+    for (const c of categories) {
+      const name = getLocalized(c.name) || String(c.id);
+      categoryMap.set(String(c.id), name);
+    }
+
+    const productMap = new Map<string, any>();
+    for (const p of products) {
+      productMap.set(String(p.id), p);
+    }
+
+    for (const p of products) {
+      const sku = p.reference || String(p.id);
+      const name = getLocalized(p.name) || `Product ${p.id}`;
+      const description = getLocalized(p.description_short || p.description);
+      const price = p.price ? Number(p.price) : undefined;
+      const brand = p.manufacturer_name || undefined;
+      const category = p.id_category_default ? categoryMap.get(String(p.id_category_default)) : undefined;
+      const images = p.associations?.images || [];
+      const imageId = images[0]?.id;
+      const imageUrl = imageId
+        ? `/api/suppliers/${supplier.id}/image?productId=${p.id}&imageId=${imageId}`
+        : undefined;
+
+      await prisma.supplierProduct.upsert({
+        where: {
+          supplierId_supplierSku: {
+            supplierId: supplier.id,
+            supplierSku: sku,
+          },
+        },
+        update: {
+          name,
+          description,
+          brand,
+          category,
+          price: price != null ? new Prisma.Decimal(price) : undefined,
+          imageUrl,
+          raw: p,
+          lastSeenAt: new Date(),
+        },
+        create: {
+          supplierId: supplier.id,
+          supplierSku: sku,
+          name,
+          description,
+          brand,
+          category,
+          price: price != null ? new Prisma.Decimal(price) : undefined,
+          imageUrl,
+          raw: p,
+        },
+      });
+
+      updated += 1;
+    }
+
+    // Import combinations as separate supplier products (variants)
+    for (const c of combinations) {
+      const parent = productMap.get(String(c.id_product));
+      const sku = c.reference || `${c.id_product}-${c.id}`;
+      const name = parent ? `${getLocalized(parent.name) || "Product"} - Variant` : `Variant ${c.id}`;
+      const description = getLocalized(c.description_short || c.description);
+      const price = c.price ? Number(c.price) : undefined;
+      const brand = parent?.manufacturer_name || undefined;
+      const category = parent?.id_category_default
+        ? categoryMap.get(String(parent.id_category_default))
+        : undefined;
+      const images = parent?.associations?.images || [];
+      const imageId = images[0]?.id;
+      const imageUrl = imageId
+        ? `/api/suppliers/${supplier.id}/image?productId=${parent.id}&imageId=${imageId}`
+        : undefined;
+
+      await prisma.supplierProduct.upsert({
+        where: {
+          supplierId_supplierSku: {
+            supplierId: supplier.id,
+            supplierSku: sku,
+          },
+        },
+        update: {
+          name,
+          description,
+          brand,
+          category,
+          price: price != null ? new Prisma.Decimal(price) : undefined,
+          imageUrl,
+          raw: c,
+          lastSeenAt: new Date(),
+        },
+        create: {
+          supplierId: supplier.id,
+          supplierSku: sku,
+          name,
+          description,
+          brand,
+          category,
+          price: price != null ? new Prisma.Decimal(price) : undefined,
+          imageUrl,
+          raw: c,
+        },
+      });
+      updated += 1;
+    }
+    return { created, skipped, updated };
+  }
+
   if (!supplier.csvFullUrl) throw new Error("Missing csvFullUrl");
   const rows = await fetchCsv(supplier.csvFullUrl);
-  if (rows.length === 0) return { created: 0, skipped: 0, updated: 0 };
+  if (rows.length === 0) return { created, skipped, updated };
 
   const headers = Object.keys(rows[0]);
   const fieldMap = buildFieldMap(headers, supplier.fieldMap);
   if (!fieldMap.sku) throw new Error("SKU column not found. Configure supplier.fieldMap.");
-
-  let created = 0;
-  let skipped = 0;
-  let updated = 0;
 
   for (const row of rows) {
     const data = mapRow(row, fieldMap);
@@ -153,9 +321,6 @@ export async function importFullFromSupplier(supplier: Supplier) {
         raw: row,
       },
     });
-
-    // Nota: import completo aggiorna solo SupplierProduct.
-    // I prodotti "attivi" si creano solo tramite "Importa in store".
     updated += 1;
   }
 
@@ -163,6 +328,51 @@ export async function importFullFromSupplier(supplier: Supplier) {
 }
 
 export async function importStockFromSupplier(supplier: Supplier) {
+  let updated = 0;
+  let missing = 0;
+
+  if (supplier.apiType === "PRESTASHOP") {
+    const products = await prestashopListAll(supplier, "/products");
+    const combinations = await prestashopListAll(supplier, "/combinations");
+    const idToSku = new Map<string, string>();
+    const combinationToSku = new Map<string, string>();
+    for (const p of products) {
+      const sku = p.reference || String(p.id);
+      idToSku.set(String(p.id), sku);
+    }
+    for (const c of combinations) {
+      const sku = c.reference || `${c.id_product}-${c.id}`;
+      combinationToSku.set(String(c.id), sku);
+    }
+
+    const stocks = await prestashopListAll(supplier, "/stock_availables");
+    if (stocks.length === 0) return { updated: 0, missing: 0 };
+
+    for (const s of stocks) {
+      const sku = s.id_product_attribute && String(s.id_product_attribute) !== "0"
+        ? combinationToSku.get(String(s.id_product_attribute))
+        : s.id_product
+        ? idToSku.get(String(s.id_product))
+        : undefined;
+      const qty = s.quantity != null ? Math.trunc(Number(s.quantity)) : undefined;
+      if (!sku || qty == null) continue;
+
+      const res = await prisma.product.updateMany({
+        where: { sku },
+        data: { stockQty: qty },
+      });
+
+      await prisma.supplierProduct.updateMany({
+        where: { supplierId: supplier.id, supplierSku: sku },
+        data: { stockQty: qty, lastSeenAt: new Date() },
+      });
+
+      if (res.count === 0) missing += 1;
+      else updated += res.count;
+    }
+    return { updated, missing };
+  }
+
   if (!supplier.csvStockUrl) throw new Error("Missing csvStockUrl");
   const rows = await fetchCsv(supplier.csvStockUrl);
   if (rows.length === 0) return { updated: 0, missing: 0 };
@@ -170,9 +380,6 @@ export async function importStockFromSupplier(supplier: Supplier) {
   const headers = Object.keys(rows[0]);
   const fieldMap = buildFieldMap(headers, supplier.fieldMap);
   if (!fieldMap.sku) throw new Error("SKU column not found. Configure supplier.fieldMap.");
-
-  let updated = 0;
-  let missing = 0;
 
   for (const row of rows) {
     const data = mapRow(row, fieldMap);

@@ -9,6 +9,9 @@ const urls = {
   liquidsStock: process.env.VAPEITALIA_STOCK_LIQUIDS_URL,
   hardwareFull: process.env.VAPEITALIA_FULL_HARDWARE_URL,
   hardwareStock: process.env.VAPEITALIA_STOCK_HARDWARE_URL,
+  kingBase: process.env.KING_API_BASE_URL,
+  kingHost: process.env.KING_API_HOST,
+  kingKey: process.env.KING_API_KEY,
 };
 
 if (!email || !password) {
@@ -48,6 +51,7 @@ const suppliers = [
     csvFullUrl: urls.liquidsFull,
     csvStockUrl: urls.liquidsStock,
     isPrimary: true,
+    apiType: "CSV",
   },
   {
     name: "VapeItalia Hardware",
@@ -55,6 +59,16 @@ const suppliers = [
     csvFullUrl: urls.hardwareFull,
     csvStockUrl: urls.hardwareStock,
     isPrimary: false,
+    apiType: "CSV",
+  },
+  {
+    name: "King",
+    code: "KING",
+    isPrimary: false,
+    apiType: "PRESTASHOP",
+    apiBaseUrl: urls.kingBase,
+    apiHost: urls.kingHost,
+    apiKey: urls.kingKey,
   },
 ];
 

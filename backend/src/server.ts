@@ -63,7 +63,12 @@ if (syncEnabled && Number.isFinite(syncIntervalSec) && syncIntervalSec > 0) {
     syncRunning = true;
     try {
       const suppliers = await prisma.supplier.findMany({
-        where: { csvStockUrl: { not: null } },
+        where: {
+          OR: [
+            { csvStockUrl: { not: null } },
+            { apiType: "PRESTASHOP" },
+          ],
+        },
       });
       for (const s of suppliers) {
         if (s.csvStockUrl) {

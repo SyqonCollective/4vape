@@ -276,4 +276,27 @@ export async function adminRoutes(app: FastifyInstance) {
 
     return { created, updated, missing, already };
   });
+
+  app.get("/suppliers/:id/image", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const supplierId = (request.params as any).id as string;
+    const { productId, imageId } = request.query as any;
+    if (!productId || !imageId) return reply.badRequest("Missing productId/imageId");
+
+    const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
+    if (!supplier?.apiBaseUrl || !supplier?.apiKey) return reply.notFound("Supplier not configured");
+
+    const url = new URL(`/images/products/${productId}/${imageId}`, supplier.apiBaseUrl);
+    url.searchParams.set("ws_key", supplier.apiKey);
+    const res = await fetch(url.toString(), {
+      headers: supplier.apiHost ? { Host: supplier.apiHost } : {},
+    });
+    if (!res.ok) return reply.code(res.status).send("Image fetch failed");
+
+    const buf = Buffer.from(await res.arrayBuffer());
+    const contentType = res.headers.get("content-type") || "image/jpeg";
+    reply.type(contentType);
+    return reply.send(buf);
+  });
 }
