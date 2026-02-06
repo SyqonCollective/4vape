@@ -10,6 +10,8 @@ export default function AdminProducts() {
   const [edit, setEdit] = useState({ name: "", description: "", price: "", stockQty: "", imageUrl: "" });
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   useEffect(() => {
     let active = true;
@@ -75,12 +77,35 @@ export default function AdminProducts() {
     }
   }
 
+  async function deleteSelected() {
+    if (selectedIds.size === 0) return;
+    try {
+      await Promise.all(Array.from(selectedIds).map((id) => api(`/admin/products/${id}`, { method: "DELETE" })));
+      setSelectedIds(new Set());
+      setConfirmDelete(false);
+      setShowDeleteSuccess(true);
+      setTimeout(() => setShowDeleteSuccess(false), 2000);
+      const res = await api("/admin/products");
+      setItems(res);
+    } catch (err) {
+      setError("Errore eliminazione prodotti");
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
         <div>
           <h1>Prodotti</h1>
           <p>Catalogo principale con giacenze</p>
+        </div>
+        <div className="actions">
+          <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
+            {bulkMode ? "Selezione attiva" : "Multi selection"}
+          </button>
+          <button className="btn danger" onClick={() => setConfirmDelete(true)} disabled={!bulkMode || selectedIds.size === 0}>
+            Elimina selezionati
+          </button>
         </div>
       </div>
 
@@ -100,7 +125,25 @@ export default function AdminProducts() {
             <div>
               {p.imageUrl ? <img className="thumb" src={p.imageUrl} alt={p.name} /> : <div className="thumb placeholder" />}
             </div>
-            <div className="mono">{p.sku}</div>
+            <div className="mono">
+              {bulkMode ? (
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(p.id)}
+                    onChange={(e) => {
+                      const next = new Set(selectedIds);
+                      if (e.target.checked) next.add(p.id);
+                      else next.delete(p.id);
+                      setSelectedIds(next);
+                    }}
+                  />
+                  <span>{p.sku}</span>
+                </label>
+              ) : (
+                p.sku
+              )}
+            </div>
             <div>{p.name}</div>
             <div>€ {Number(p.price).toFixed(2)}</div>
             <div>{p.stockQty}</div>
@@ -181,16 +224,20 @@ export default function AdminProducts() {
                   <button className="btn primary" onClick={saveEdit}>Salva</button>
                   <button className="btn danger" onClick={() => setConfirmDelete(true)}>Elimina</button>
                 </div>
-                {confirmDelete ? (
-                  <div className="confirm">
-                    <div>Sei sicuro di voler eliminare?</div>
-                    <div className="actions">
-                      <button className="btn ghost" onClick={() => setConfirmDelete(false)}>Annulla</button>
-                      <button className="btn danger" onClick={deleteProduct}>Conferma</button>
-                    </div>
-                  </div>
-                ) : null}
               </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {confirmDelete ? (
+        <div className="modal-backdrop" onClick={() => setConfirmDelete(false)}>
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Sei sicuro di voler eliminare {bulkMode ? selectedIds.size : 1} prodotti?</h3>
+            <p className="muted">L’azione è irreversibile.</p>
+            <div className="actions">
+              <button className="btn ghost" onClick={() => setConfirmDelete(false)}>Annulla</button>
+              <button className="btn danger" onClick={bulkMode ? deleteSelected : deleteProduct}>Conferma</button>
             </div>
           </div>
         </div>
