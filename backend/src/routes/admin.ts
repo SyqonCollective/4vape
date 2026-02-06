@@ -139,25 +139,36 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!user) return;
     const supplierId = (request.params as any).id as string;
     const limitParam = (request.query as any)?.limit as string | undefined;
+    const pageParam = (request.query as any)?.page as string | undefined;
+    const perPageParam = (request.query as any)?.perPage as string | undefined;
     const q = ((request.query as any)?.q as string | undefined)?.trim();
     const limit = Math.min(Number(limitParam || 200), 500);
+    const perPage = Math.min(Number(perPageParam || 20), 200);
+    const page = Math.max(Number(pageParam || 1), 1);
+    const skip = (page - 1) * perPage;
 
-    const supplierProducts = await prisma.supplierProduct.findMany({
-      where: {
-        supplierId,
-        ...(q
-          ? {
-              OR: [
-                { supplierSku: { contains: q, mode: "insensitive" } },
-                { name: { contains: q, mode: "insensitive" } },
-                { brand: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: { lastSeenAt: "desc" },
-      take: limit,
-    });
+    const where = {
+      supplierId,
+      ...(q
+        ? {
+            OR: [
+              { supplierSku: { contains: q, mode: "insensitive" } },
+              { name: { contains: q, mode: "insensitive" } },
+              { brand: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    } as any;
+
+    const [supplierProducts, total] = await Promise.all([
+      prisma.supplierProduct.findMany({
+        where,
+        orderBy: { lastSeenAt: "desc" },
+        take: Math.min(limit, perPage),
+        skip,
+      }),
+      prisma.supplierProduct.count({ where }),
+    ]);
 
     const skus = supplierProducts.map((p) => p.supplierSku);
     const products = await prisma.product.findMany({
@@ -166,10 +177,11 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     const imported = new Set(products.map((p) => p.sku));
 
-    return supplierProducts.map((p) => ({
+    const items = supplierProducts.map((p) => ({
       ...p,
       isImported: imported.has(p.supplierSku),
     }));
+    return { items, total, page, perPage };
   });
 
   app.post("/suppliers", async (request, reply) => {

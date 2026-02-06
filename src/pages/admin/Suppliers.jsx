@@ -16,6 +16,9 @@ export default function AdminSuppliers() {
   });
   const [selected, setSelected] = useState(null);
   const [supplierProducts, setSupplierProducts] = useState([]);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [page, setPage] = useState(1);
+  const perPage = 20;
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [search, setSearch] = useState("");
   const [actionMsg, setActionMsg] = useState("");
@@ -105,7 +108,7 @@ export default function AdminSuppliers() {
       setSelectedProduct(null);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
-      viewProducts(selected);
+      viewProducts(selected, page);
     } catch (err) {
       setError("Errore import in store");
     }
@@ -125,17 +128,21 @@ export default function AdminSuppliers() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
       setSelectedSkus(new Set());
-      viewProducts(selected);
+      viewProducts(selected, page);
     } catch (err) {
       setError("Errore import multiplo");
     }
   }
 
-  async function viewProducts(supplier) {
+  async function viewProducts(supplier, nextPage = page) {
     setSelected(supplier);
     try {
-      const res = await api(`/admin/suppliers/${supplier.id}/products?limit=200&q=${encodeURIComponent(search)}`);
-      setSupplierProducts(res);
+      const res = await api(
+        `/admin/suppliers/${supplier.id}/products?page=${nextPage}&perPage=${perPage}&q=${encodeURIComponent(search)}`
+      );
+      setSupplierProducts(res.items || []);
+      setTotalProducts(res.total || 0);
+      setPage(res.page || nextPage);
       setSelectedSkus(new Set());
     } catch (err) {
       setError("Errore caricamento prodotti fornitore");
@@ -189,7 +196,9 @@ export default function AdminSuppliers() {
           <div className="page-header">
             <div>
               <h2>Prodotti fornitore</h2>
-              <p>{selected.name} — ultimi {supplierProducts.length} risultati</p>
+              <p>
+                {selected.name} — {totalProducts} risultati
+              </p>
             </div>
             <div className="actions">
               <input
@@ -197,7 +206,15 @@ export default function AdminSuppliers() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <button className="btn" onClick={() => viewProducts(selected)}>Cerca</button>
+              <button
+                className="btn"
+                onClick={() => {
+                  setPage(1);
+                  viewProducts(selected, 1);
+                }}
+              >
+                Cerca
+              </button>
               <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
                 {bulkMode ? "Selezione attiva" : "Import multiplo"}
               </button>
@@ -267,6 +284,20 @@ export default function AdminSuppliers() {
                 <div>{p.brand || "-"}</div>
               </div>
             ))}
+          </div>
+          <div className="pagination">
+            {Array.from({ length: Math.max(1, Math.ceil(totalProducts / perPage)) }).map((_, i) => {
+              const num = i + 1;
+              return (
+                <button
+                  key={num}
+                  className={`page-btn ${num === page ? "active" : ""}`}
+                  onClick={() => viewProducts(selected, num)}
+                >
+                  {num}
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}
