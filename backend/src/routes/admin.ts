@@ -13,6 +13,10 @@ function requireAdmin(request: any, reply: any) {
 export async function adminRoutes(app: FastifyInstance) {
   app.addHook("preHandler", app.authenticate);
 
+  app.get("/ping", { preHandler: [requireAdmin] }, async () => {
+    return { ok: true };
+  });
+
   app.get("/users/pending", { preHandler: [requireAdmin] }, async () => {
     return prisma.user.findMany({ where: { approved: false } });
   });
@@ -66,7 +70,8 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/suppliers", { preHandler: [requireAdmin] }, async () => {
-    return prisma.supplier.findMany({ orderBy: { createdAt: "desc" } });
+    const suppliers = await prisma.supplier.findMany({ orderBy: { createdAt: "desc" } });
+    return suppliers;
   });
 
   app.get("/suppliers/:id/products", { preHandler: [requireAdmin] }, async (request) => {
