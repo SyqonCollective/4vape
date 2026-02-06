@@ -103,9 +103,11 @@ export default function AdminProducts() {
           <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
             {bulkMode ? "Selezione attiva" : "Multi selection"}
           </button>
-          <button className="btn danger" onClick={() => setConfirmDelete(true)} disabled={!bulkMode || selectedIds.size === 0}>
-            Elimina selezionati
-          </button>
+          {bulkMode ? (
+            <button className="btn danger" onClick={() => setConfirmDelete(true)} disabled={selectedIds.size === 0}>
+              Elimina selezionati
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -121,7 +123,13 @@ export default function AdminProducts() {
           <div>Fornitore</div>
         </div>
         {items.map((p) => (
-          <div className="row clickable" key={p.id} onClick={() => openEdit(p)}>
+          <div
+            className="row clickable"
+            key={p.id}
+            onClick={() => {
+              if (!bulkMode) openEdit(p);
+            }}
+          >
             <div>
               {p.imageUrl ? <img className="thumb" src={p.imageUrl} alt={p.name} /> : <div className="thumb placeholder" />}
             </div>
@@ -137,6 +145,7 @@ export default function AdminProducts() {
                       else next.delete(p.id);
                       setSelectedIds(next);
                     }}
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <span>{p.sku}</span>
                 </label>

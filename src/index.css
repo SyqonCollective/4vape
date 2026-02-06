@@ -2,15 +2,16 @@
 
 :root {
   color-scheme: light;
-  --bg: #f5f1ea;
-  --bg-2: #e9e2d8;
-  --ink: #1c1a18;
-  --muted: #5b554d;
-  --brand: #c03b2b;
-  --brand-2: #f2b65d;
-  --panel: #ffffff;
-  --stroke: #d7cfc3;
-  --shadow: 0 12px 30px rgba(28, 26, 24, 0.12);
+  --bg: #0c0f14;
+  --bg-2: #141924;
+  --ink: #eef2f7;
+  --muted: #9aa6b2;
+  --brand: #ff6a3d;
+  --brand-2: #fbbf24;
+  --panel: #121826;
+  --panel-2: #0f1522;
+  --stroke: #273246;
+  --shadow: 0 18px 40px rgba(5, 10, 20, 0.45);
 }
 
 * {
@@ -20,9 +21,10 @@
 body {
   margin: 0;
   font-family: "Space Grotesk", system-ui, sans-serif;
-  background: radial-gradient(circle at 10% 10%, #fff8ef 0, transparent 45%),
-    radial-gradient(circle at 90% 20%, #f7e0b2 0, transparent 40%),
-    linear-gradient(130deg, var(--bg) 0%, var(--bg-2) 100%);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255, 106, 61, 0.2), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(251, 191, 36, 0.25), transparent 40%),
+    linear-gradient(140deg, var(--bg) 0%, var(--bg-2) 100%);
   color: var(--ink);
 }
 
@@ -46,7 +48,8 @@ input {
   padding: 0.8rem 0.9rem;
   border-radius: 12px;
   border: 1px solid var(--stroke);
-  background: #fff;
+  background: var(--panel-2);
+  color: var(--ink);
   font-size: 0.95rem;
   outline: none;
 }
@@ -61,7 +64,8 @@ textarea {
   padding: 0.8rem 0.9rem;
   border-radius: 12px;
   border: 1px solid var(--stroke);
-  background: #fff;
+  background: var(--panel-2);
+  color: var(--ink);
   font-size: 0.95rem;
   outline: none;
   resize: vertical;
@@ -74,26 +78,29 @@ button {
 .btn {
   padding: 0.7rem 1rem;
   border-radius: 999px;
-  border: 1px solid var(--ink);
+  border: 1px solid transparent;
   background: var(--ink);
-  color: #fff;
+  color: #0c0f14;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn.primary {
-  background: var(--brand);
-  border-color: var(--brand);
+  background: linear-gradient(135deg, var(--brand), #ff915f);
+  border-color: transparent;
+  color: #140d0b;
 }
 
 .btn.ghost {
   background: transparent;
   color: var(--ink);
+  border-color: var(--stroke);
 }
 
 .btn.danger {
-  background: #b3261e;
-  border-color: #b3261e;
+  background: linear-gradient(135deg, #ff3b30, #b3261e);
+  border-color: transparent;
+  color: #fff;
 }
 
 .btn:hover {
@@ -104,14 +111,14 @@ button {
 .admin-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 280px 1fr;
 }
 
 .admin-sidebar {
   padding: 2rem 1.5rem;
-  background: rgba(255, 255, 255, 0.82);
+  background: linear-gradient(180deg, rgba(18, 24, 38, 0.92), rgba(12, 16, 26, 0.94));
   border-right: 1px solid var(--stroke);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -131,10 +138,10 @@ button {
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: linear-gradient(150deg, var(--brand), #8e1f14);
+  background: linear-gradient(150deg, var(--brand), #7a2b14);
   display: grid;
   place-items: center;
-  color: #fff;
+  color: #0c0f14;
   font-weight: 700;
   font-size: 1.1rem;
 }
@@ -155,15 +162,16 @@ button {
 }
 
 .nav-item {
-  padding: 0.65rem 0.9rem;
-  border-radius: 12px;
+  padding: 0.75rem 0.95rem;
+  border-radius: 14px;
   color: var(--muted);
   transition: all 0.2s ease;
 }
 
 .nav-item.active {
-  background: var(--ink);
+  background: linear-gradient(140deg, rgba(255, 106, 61, 0.2), rgba(251, 191, 36, 0.12));
   color: #fff;
+  border: 1px solid rgba(255, 106, 61, 0.45);
 }
 
 .page-header {
@@ -181,10 +189,11 @@ button {
 }
 
 .card {
-  background: var(--panel);
+  background: linear-gradient(160deg, rgba(18, 24, 38, 0.9), rgba(15, 21, 34, 0.95));
   border-radius: 18px;
   padding: 1.4rem;
   box-shadow: var(--shadow);
+  border: 1px solid var(--stroke);
 }
 
 .card-label {
@@ -199,10 +208,11 @@ button {
 }
 
 .panel {
-  background: var(--panel);
+  background: linear-gradient(160deg, rgba(18, 24, 38, 0.92), rgba(15, 20, 33, 0.96));
   border-radius: 18px;
   padding: 1.6rem;
   box-shadow: var(--shadow);
+  border: 1px solid var(--stroke);
 }
 
 .list {
@@ -227,23 +237,29 @@ button {
   grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
   align-items: center;
-  padding: 0.8rem 1rem;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.86);
+  padding: 0.9rem 1.1rem;
+  border-radius: 16px;
+  background: rgba(18, 24, 38, 0.9);
   border: 1px solid var(--stroke);
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .row.clickable {
   cursor: pointer;
 }
 
+.row.clickable:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 106, 61, 0.6);
+}
+
 .row.header {
   background: transparent;
   border: none;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
 }
 
 .row .actions {
@@ -373,12 +389,13 @@ button {
 }
 
 .confirm-dialog {
-  background: #fff;
+  background: linear-gradient(160deg, rgba(18, 24, 38, 0.98), rgba(12, 16, 26, 0.98));
   border-radius: 18px;
   padding: 1.2rem 1.4rem;
   box-shadow: var(--shadow);
   max-width: 420px;
   width: 90vw;
+  border: 1px solid var(--stroke);
 }
 
 .check {
@@ -402,10 +419,10 @@ button {
 .error {
   margin: 1rem 0;
   padding: 0.8rem 1rem;
-  background: #ffe3e0;
-  border: 1px solid #f0a9a1;
+  background: rgba(255, 87, 87, 0.12);
+  border: 1px solid rgba(255, 87, 87, 0.4);
   border-radius: 12px;
-  color: #7b1b10;
+  color: #ffb3ad;
 }
 
 .auth-wrap {
@@ -417,10 +434,11 @@ button {
 
 .auth-card {
   width: min(460px, 92vw);
-  background: var(--panel);
+  background: linear-gradient(160deg, rgba(18, 24, 38, 0.98), rgba(12, 16, 26, 0.98));
   padding: 2.5rem;
   border-radius: 24px;
   box-shadow: var(--shadow);
+  border: 1px solid var(--stroke);
 }
 
 .auth-header {
@@ -453,7 +471,7 @@ button {
 }
 
 .success-card {
-  background: #fff;
+  background: linear-gradient(160deg, rgba(18, 24, 38, 0.98), rgba(12, 16, 26, 0.98));
   border: 1px solid var(--stroke);
   border-radius: 18px;
   display: flex;
