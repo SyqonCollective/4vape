@@ -168,7 +168,11 @@ async function prestashopListAll(
         limit: `${offset},${pageSize}`,
       });
     } catch (err: any) {
-      if (opts?.allowNotFound && String(err?.message || "").includes("404")) {
+      const msg = String(err?.message || "");
+      if (opts?.allowNotFound && msg.includes("404")) {
+        return all;
+      }
+      if (opts?.allowForbidden && (msg.includes("401") || msg.includes("403"))) {
         return all;
       }
       throw err;
