@@ -31,6 +31,15 @@ body {
   position: relative;
 }
 
+html, body {
+  height: 100%;
+}
+
+.admin-shell,
+.admin-main {
+  transform: none !important;
+}
+
 body.modal-open {
   overflow: hidden;
 }
@@ -425,11 +434,15 @@ button {
 }
 
 .modal-backdrop {
-  position: fixed;
-  inset: 0;
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(15, 23, 42, 0.32);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 2rem;
   z-index: 1000;
   backdrop-filter: blur(6px);
