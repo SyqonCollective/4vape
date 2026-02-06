@@ -186,6 +186,8 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         supplierSku: z.string().min(1).optional(),
         supplierSkus: z.array(z.string().min(1)).optional(),
+        price: z.number().positive().optional(),
+        stockQty: z.number().int().nonnegative().optional(),
       })
       .parse(request.body);
 
@@ -213,8 +215,8 @@ export async function adminRoutes(app: FastifyInstance) {
 
     for (const sp of supplierProducts) {
       const existing = await prisma.product.findUnique({ where: { sku: sp.supplierSku } });
-      const price = sp.price ?? undefined;
-      const stockQty = sp.stockQty ?? 0;
+      const price = body.price ?? sp.price ?? undefined;
+      const stockQty = body.stockQty ?? sp.stockQty ?? 0;
 
       if (!existing) {
         await prisma.product.create({

@@ -15,6 +15,8 @@ export default function AdminSuppliers() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [search, setSearch] = useState("");
   const [actionMsg, setActionMsg] = useState("");
+  const [priceOverride, setPriceOverride] = useState("");
+  const [stockOverride, setStockOverride] = useState("");
 
   async function load() {
     try {
@@ -71,9 +73,14 @@ export default function AdminSuppliers() {
     if (!selected) return;
     setActionMsg("");
     try {
+      const payload = {
+        supplierSku: product.supplierSku,
+      };
+      if (priceOverride) payload.price = Number(priceOverride);
+      if (stockOverride !== "") payload.stockQty = Number(stockOverride);
       const res = await api(`/admin/suppliers/${selected.id}/promote`, {
         method: "POST",
-        body: JSON.stringify({ supplierSku: product.supplierSku }),
+        body: JSON.stringify(payload),
       });
       setActionMsg(`Importato in store: created ${res.created}, updated ${res.updated}`);
     } catch (err) {
@@ -214,6 +221,28 @@ export default function AdminSuppliers() {
                 <div><strong>Categoria:</strong> {selectedProduct.category || "-"}</div>
                 <div><strong>Descrizione:</strong></div>
                 <div className="muted">{selectedProduct.description || "-"}</div>
+                <div className="form-grid">
+                  <label>
+                    Prezzo vendita (€)
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder={selectedProduct.price ? Number(selectedProduct.price).toFixed(2) : "0.00"}
+                      value={priceOverride}
+                      onChange={(e) => setPriceOverride(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Giacenza
+                    <input
+                      type="number"
+                      step="1"
+                      placeholder={String(selectedProduct.stockQty ?? 0)}
+                      value={stockOverride}
+                      onChange={(e) => setStockOverride(e.target.value)}
+                    />
+                  </label>
+                </div>
                 <div>
                   <button className="btn primary" onClick={() => promoteToStore(selectedProduct)}>
                     Importa in store

@@ -154,33 +154,9 @@ export async function importFullFromSupplier(supplier: Supplier) {
       },
     });
 
-    const existing = await prisma.product.findUnique({ where: { sku: data.sku } });
-    if (existing) {
-      skipped += 1;
-      continue;
-    }
-
-    if (!data.name || data.price == null) {
-      skipped += 1;
-      continue;
-    }
-
-    await prisma.product.create({
-      data: {
-        sku: data.sku,
-        name: data.name,
-        description: data.description,
-        brand: data.brand,
-        category: data.category,
-        price: new Prisma.Decimal(data.price),
-        stockQty: data.stockQty ? Math.trunc(data.stockQty) : 0,
-        imageUrl: data.imageUrl,
-        source: "SUPPLIER",
-        sourceSupplierId: supplier.id,
-      },
-    });
-
-    created += 1;
+    // Nota: import completo aggiorna solo SupplierProduct.
+    // I prodotti "attivi" si creano solo tramite "Importa in store".
+    updated += 1;
   }
 
   return { created, skipped, updated };
