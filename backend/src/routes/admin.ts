@@ -303,34 +303,38 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!supplier?.apiBaseUrl || !supplier?.apiKey) return reply.notFound("Supplier not configured");
 
     const base = supplier.apiBaseUrl.replace(/\/$/, "");
-    const url = new URL(`/images/products/${productId}/${imageId}`, base);
+    const url = new URL(`${base}/images/products/${productId}/${imageId}`);
     url.searchParams.set("ws_key", supplier.apiKey);
 
-    const buf = await new Promise<Buffer>((resolve, reject) => {
-      const client = url.protocol === "https:" ? https : http;
-      const req = client.request(
-        url,
-        {
-          method: "GET",
-          headers: {
-            ...(supplier.apiHost ? { Host: supplier.apiHost } : {}),
-            "User-Agent": "4vape-image-proxy",
+    try {
+      const buf = await new Promise<Buffer>((resolve, reject) => {
+        const client = url.protocol === "https:" ? https : http;
+        const req = client.request(
+          url,
+          {
+            method: "GET",
+            headers: {
+              ...(supplier.apiHost ? { Host: supplier.apiHost } : {}),
+              "User-Agent": "4vape-image-proxy",
+            },
           },
-        },
-        (res) => {
-          if (!res.statusCode || res.statusCode >= 400) {
-            return reject(new Error(`Image fetch failed: ${res.statusCode}`));
+          (res) => {
+            if (!res.statusCode || res.statusCode >= 400) {
+              return reject(new Error(`Image fetch failed: ${res.statusCode}`));
+            }
+            const chunks: Buffer[] = [];
+            res.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+            res.on("end", () => resolve(Buffer.concat(chunks)));
           }
-          const chunks: Buffer[] = [];
-          res.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
-          res.on("end", () => resolve(Buffer.concat(chunks)));
-        }
-      );
-      req.on("error", reject);
-      req.end();
-    });
+        );
+        req.on("error", reject);
+        req.end();
+      });
 
-    reply.type("image/jpeg");
-    return reply.send(buf);
+      reply.type("image/jpeg");
+      return reply.send(buf);
+    } catch (err: any) {
+      return reply.code(404).send({ error: "Image fetch failed", message: err?.message || "Not found" });
+    }
   });
 }
