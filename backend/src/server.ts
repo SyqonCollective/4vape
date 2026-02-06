@@ -30,9 +30,20 @@ if (process.env.ENABLE_SWAGGER === "true") {
 
 app.decorate("authenticate", async (request: any, reply: any) => {
   try {
-    await request.jwtVerify();
+    const authHeader = request.headers?.authorization || "";
+    await Promise.race([
+      request.jwtVerify(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Auth timeout")), 2000)
+      ),
+    ]);
   } catch (err) {
-    reply.send(err);
+    return reply.code(401).send({
+      error: "Unauthorized",
+      message: err?.message || "Auth failed",
+      hasAuthHeader: Boolean(request.headers?.authorization),
+      authHeaderPrefix: authHeader.slice(0, 12),
+    });
   }
 });
 
@@ -42,4 +53,5 @@ await app.register(catalogRoutes, { prefix: "/catalog" });
 await app.register(orderRoutes, { prefix: "/orders" });
 
 const port = Number(process.env.PORT || 4000);
+app.get("/health", async () => ({ ok: true }));
 await app.listen({ port, host: "0.0.0.0" });
