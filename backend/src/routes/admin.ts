@@ -54,7 +54,10 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/products", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
-    return prisma.product.findMany({ orderBy: { createdAt: "desc" } });
+    return prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { sourceSupplier: true },
+    });
   });
 
   app.post("/products", async (request, reply) => {
@@ -207,7 +210,6 @@ export async function adminRoutes(app: FastifyInstance) {
         supplierSku: z.string().min(1).optional(),
         supplierSkus: z.array(z.string().min(1)).optional(),
         price: z.number().positive().optional(),
-        stockQty: z.number().int().nonnegative().optional(),
       })
       .parse(request.body);
 
@@ -237,7 +239,7 @@ export async function adminRoutes(app: FastifyInstance) {
     for (const sp of supplierProducts) {
       const existing = await prisma.product.findUnique({ where: { sku: sp.supplierSku } });
       const price = body.price ?? sp.price ?? undefined;
-      const stockQty = body.stockQty ?? sp.stockQty ?? 0;
+      const stockQty = sp.stockQty ?? 0;
 
       if (!existing) {
         await prisma.product.create({

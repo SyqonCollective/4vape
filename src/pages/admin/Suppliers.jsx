@@ -21,7 +21,6 @@ export default function AdminSuppliers() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showImportedMsg, setShowImportedMsg] = useState(false);
   const [priceOverride, setPriceOverride] = useState("");
-  const [stockOverride, setStockOverride] = useState("");
 
   async function load() {
     try {
@@ -82,7 +81,6 @@ export default function AdminSuppliers() {
         supplierSku: product.supplierSku,
       };
       if (priceOverride) payload.price = Number(priceOverride);
-      if (stockOverride !== "") payload.stockQty = Number(stockOverride);
       const res = await api(`/admin/suppliers/${selected.id}/promote`, {
         method: "POST",
         body: JSON.stringify(payload),
@@ -265,16 +263,9 @@ export default function AdminSuppliers() {
                       onChange={(e) => setPriceOverride(e.target.value)}
                     />
                   </label>
-                  <label>
-                    Giacenza
-                    <input
-                      type="number"
-                      step="1"
-                      placeholder={String(selectedProduct.stockQty ?? 0)}
-                      value={stockOverride}
-                      onChange={(e) => setStockOverride(e.target.value)}
-                    />
-                  </label>
+                  <div className="muted">
+                    Giacenza sincronizzata dal fornitore
+                  </div>
                 </div>
                 <div>
                   <button

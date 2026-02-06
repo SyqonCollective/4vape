@@ -74,7 +74,7 @@ export default function AdminProducts() {
           <div>Nome</div>
           <div>Prezzo</div>
           <div>Giacenza</div>
-          <div>Fonte</div>
+          <div>Fornitore</div>
         </div>
         {items.map((p) => (
           <div className="row clickable" key={p.id} onClick={() => openEdit(p)}>
@@ -85,7 +85,7 @@ export default function AdminProducts() {
             <div>{p.name}</div>
             <div>€ {Number(p.price).toFixed(2)}</div>
             <div>{p.stockQty}</div>
-            <div>{p.source}</div>
+            <div>{p.sourceSupplier?.name || (p.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
           </div>
         ))}
       </div>
@@ -107,6 +107,7 @@ export default function AdminProducts() {
               </div>
               <div className="modal-info">
                 <div><strong>SKU:</strong> {selectedProduct.sku}</div>
+                <div><strong>Fornitore:</strong> {selectedProduct.sourceSupplier?.name || (selectedProduct.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
                 <div className="form-grid">
                   <label>
                     Nome
