@@ -37,6 +37,11 @@ await app.register(fastifyStatic, {
   prefix: "/uploads/",
   decorateReply: false,
 });
+await app.register(fastifyStatic, {
+  root: uploadsDir,
+  prefix: "/api/uploads/",
+  decorateReply: false,
+});
 
 if (process.env.ENABLE_SWAGGER === "true") {
   await app.register(swagger, {
