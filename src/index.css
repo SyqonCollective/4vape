@@ -605,14 +605,19 @@ button {
 .success-center {
   position: fixed;
   inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(15, 23, 42, 0.28);
-  z-index: 40;
-  backdrop-filter: blur(6px);
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  background: rgba(15, 23, 42, 0.2);
+  z-index: 1001;
+  backdrop-filter: blur(4px);
 }
 
 .success-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: #fff;
   border: 1px solid var(--stroke);
   border-radius: 20px;
@@ -621,6 +626,7 @@ button {
   gap: 1rem;
   padding: 1rem 1.3rem;
   box-shadow: var(--shadow-strong);
+  animation: modal-pop 0.35s ease both;
 }
 
 .success-card > div:first-child {
