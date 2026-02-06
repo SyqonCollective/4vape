@@ -1,6 +1,8 @@
 import { parse } from "csv-parse/sync";
 import { Prisma, Supplier } from "@prisma/client";
 import { prisma } from "../lib/db.js";
+import http from "node:http";
+import https from "node:https";
 
 const FIELD_KEYS = [
   "sku",
@@ -113,11 +115,34 @@ async function prestashopGet(supplier: Supplier, path: string, params: Record<st
   search.set("output_format", "JSON");
   url.search = search.toString();
 
-  const res = await fetch(url.toString(), {
-    headers: supplier.apiHost ? { Host: supplier.apiHost } : {},
+  const body = await new Promise<string>((resolve, reject) => {
+    const client = url.protocol === "https:" ? https : http;
+    const req = client.request(
+      url,
+      {
+        method: "GET",
+        headers: {
+          ...(supplier.apiHost ? { Host: supplier.apiHost } : {}),
+          "User-Agent": "4vape-importer",
+        },
+      },
+      (res) => {
+        let data = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => {
+          if (!res.statusCode || res.statusCode >= 400) {
+            return reject(new Error(`PrestaShop fetch failed: ${res.statusCode}`));
+          }
+          resolve(data);
+        });
+      }
+    );
+    req.on("error", reject);
+    req.end();
   });
-  if (!res.ok) throw new Error(`PrestaShop fetch failed: ${res.status}`);
-  return res.json();
+
+  return JSON.parse(body);
 }
 
 async function prestashopListAll(
