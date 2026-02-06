@@ -12,6 +12,7 @@ export default function AdminSuppliers() {
   });
   const [selected, setSelected] = useState(null);
   const [supplierProducts, setSupplierProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [search, setSearch] = useState("");
 
   async function load() {
@@ -146,6 +147,7 @@ export default function AdminSuppliers() {
           </div>
           <div className="table">
             <div className="row header">
+              <div>Immagine</div>
               <div>SKU</div>
               <div>Nome</div>
               <div>Prezzo</div>
@@ -153,7 +155,14 @@ export default function AdminSuppliers() {
               <div>Brand</div>
             </div>
             {supplierProducts.map((p) => (
-              <div className="row" key={p.id}>
+              <div className="row clickable" key={p.id} onClick={() => setSelectedProduct(p)}>
+                <div>
+                  {p.imageUrl ? (
+                    <img className="thumb" src={p.imageUrl} alt={p.name || p.supplierSku} />
+                  ) : (
+                    <div className="thumb placeholder" />
+                  )}
+                </div>
                 <div className="mono">{p.supplierSku}</div>
                 <div>{p.name || "-"}</div>
                 <div>{p.price ? `€ ${Number(p.price).toFixed(2)}` : "-"}</div>
@@ -161,6 +170,35 @@ export default function AdminSuppliers() {
                 <div>{p.brand || "-"}</div>
               </div>
             ))}
+          </div>
+        </div>
+      ) : null}
+
+      {selectedProduct ? (
+        <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{selectedProduct.name || "Dettaglio prodotto"}</h3>
+              <button className="btn ghost" onClick={() => setSelectedProduct(null)}>Chiudi</button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-media">
+                {selectedProduct.imageUrl ? (
+                  <img src={selectedProduct.imageUrl} alt={selectedProduct.name || selectedProduct.supplierSku} />
+                ) : (
+                  <div className="thumb placeholder large" />
+                )}
+              </div>
+              <div className="modal-info">
+                <div><strong>SKU:</strong> {selectedProduct.supplierSku}</div>
+                <div><strong>Prezzo:</strong> {selectedProduct.price ? `€ ${Number(selectedProduct.price).toFixed(2)}` : "-"}</div>
+                <div><strong>Giacenza:</strong> {selectedProduct.stockQty ?? "-"}</div>
+                <div><strong>Brand:</strong> {selectedProduct.brand || "-"}</div>
+                <div><strong>Categoria:</strong> {selectedProduct.category || "-"}</div>
+                <div><strong>Descrizione:</strong></div>
+                <div className="muted">{selectedProduct.description || "-"}</div>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
