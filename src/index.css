@@ -389,7 +389,7 @@ button {
 }
 
 .confirm-dialog {
-  background: linear-gradient(160deg, rgba(18, 24, 38, 0.98), rgba(12, 16, 26, 0.98));
+  background: linear-gradient(160deg, #ffffff, #fbf6ee);
   border-radius: 18px;
   padding: 1.2rem 1.4rem;
   box-shadow: var(--shadow);
