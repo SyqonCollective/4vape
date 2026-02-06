@@ -696,3 +696,12 @@ button {
     grid-template-columns: 1fr;
   }
 }
+.modal-backdrop {
+  z-index: 1000;
+}
+.success-center {
+  z-index: 1001;
+}
+.modal {
+  display: block;
+}
