@@ -47,6 +47,8 @@ model User {
 
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
+
+  ordersCreated Order[] @relation("OrderCreatedBy")
 }
 
 model Supplier {
@@ -71,7 +73,7 @@ model SupplierProduct {
   description  String?
   brand        String?
   category     String?
-  price        Decimal? @db.Numeric(12, 2)
+  price        Decimal? @db.Decimal(12, 2)
   stockQty     Int?
   imageUrl     String?
   raw          Json?
@@ -89,7 +91,7 @@ model Product {
   description String?
   brand       String?
   category    String?
-  price       Decimal       @db.Numeric(12, 2)
+  price       Decimal       @db.Decimal(12, 2)
   stockQty    Int           @default(0)
   imageUrl    String?
   source      ProductSource @default(MANUAL)
@@ -104,14 +106,14 @@ model Product {
 model Order {
   id         String      @id @default(cuid())
   status     OrderStatus @default(DRAFT)
-  total      Decimal     @db.Numeric(12, 2)
+  total      Decimal     @db.Decimal(12, 2)
   createdAt  DateTime    @default(now())
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
 
   createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdBy   User   @relation("OrderCreatedBy", fields: [createdById], references: [id])
 
   items OrderItem[]
 }
@@ -123,8 +125,8 @@ model OrderItem {
   sku        String
   name       String
   qty        Int
-  unitPrice  Decimal @db.Numeric(12, 2)
-  lineTotal  Decimal @db.Numeric(12, 2)
+  unitPrice  Decimal @db.Decimal(12, 2)
+  lineTotal  Decimal @db.Decimal(12, 2)
 
   supplierId String?
 
@@ -136,7 +138,7 @@ model ProductPrice {
   id        String  @id @default(cuid())
   companyId String
   productId String
-  price     Decimal @db.Numeric(12, 2)
+  price     Decimal @db.Decimal(12, 2)
 
   @@unique([companyId, productId])
 }
