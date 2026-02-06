@@ -10,6 +10,9 @@ export default function AdminSuppliers() {
     csvFullUrl: "",
     csvStockUrl: "",
   });
+  const [selected, setSelected] = useState(null);
+  const [supplierProducts, setSupplierProducts] = useState([]);
+  const [search, setSearch] = useState("");
 
   async function load() {
     try {
@@ -62,6 +65,16 @@ export default function AdminSuppliers() {
     }
   }
 
+  async function viewProducts(supplier) {
+    setSelected(supplier);
+    try {
+      const res = await api(`/admin/suppliers/${supplier.id}/products?limit=200&q=${encodeURIComponent(search)}`);
+      setSupplierProducts(res);
+    } catch (err) {
+      setError("Errore caricamento prodotti fornitore");
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -109,10 +122,48 @@ export default function AdminSuppliers() {
             <div className="actions">
               <button className="btn" onClick={() => importFull(s.id)}>Import completo</button>
               <button className="btn ghost" onClick={() => updateStock(s.id)}>Aggiorna giacenze</button>
+              <button className="btn ghost" onClick={() => viewProducts(s)}>Vedi prodotti</button>
             </div>
           </div>
         ))}
       </div>
+
+      {selected ? (
+        <div className="panel" style={{ marginTop: "1.5rem" }}>
+          <div className="page-header">
+            <div>
+              <h2>Prodotti fornitore</h2>
+              <p>{selected.name} — ultimi {supplierProducts.length} risultati</p>
+            </div>
+            <div className="actions">
+              <input
+                placeholder="Cerca SKU o nome"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <button className="btn" onClick={() => viewProducts(selected)}>Cerca</button>
+            </div>
+          </div>
+          <div className="table">
+            <div className="row header">
+              <div>SKU</div>
+              <div>Nome</div>
+              <div>Prezzo</div>
+              <div>Giacenza</div>
+              <div>Brand</div>
+            </div>
+            {supplierProducts.map((p) => (
+              <div className="row" key={p.id}>
+                <div className="mono">{p.supplierSku}</div>
+                <div>{p.name || "-"}</div>
+                <div>{p.price ? `€ ${Number(p.price).toFixed(2)}` : "-"}</div>
+                <div>{p.stockQty ?? "-"}</div>
+                <div>{p.brand || "-"}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -69,6 +69,30 @@ export async function adminRoutes(app: FastifyInstance) {
     return prisma.supplier.findMany({ orderBy: { createdAt: "desc" } });
   });
 
+  app.get("/suppliers/:id/products", { preHandler: [requireAdmin] }, async (request) => {
+    const supplierId = (request.params as any).id as string;
+    const limitParam = (request.query as any)?.limit as string | undefined;
+    const q = ((request.query as any)?.q as string | undefined)?.trim();
+    const limit = Math.min(Number(limitParam || 200), 500);
+
+    return prisma.supplierProduct.findMany({
+      where: {
+        supplierId,
+        ...(q
+          ? {
+              OR: [
+                { supplierSku: { contains: q, mode: "insensitive" } },
+                { name: { contains: q, mode: "insensitive" } },
+                { brand: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: { lastSeenAt: "desc" },
+      take: limit,
+    });
+  });
+
   app.post("/suppliers", { preHandler: [requireAdmin] }, async (request) => {
     const body = z
       .object({
