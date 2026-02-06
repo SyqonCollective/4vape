@@ -27,6 +27,7 @@ export default function AdminProducts() {
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [productFilter, setProductFilter] = useState("all");
   const [showCreateParent, setShowCreateParent] = useState(false);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
   const [parentChildren, setParentChildren] = useState(new Set());
@@ -243,6 +244,11 @@ export default function AdminProducts() {
     }
   }
 
+  function generateSku() {
+    const sku = String(Math.floor(100000 + Math.random() * 900000));
+    setParentDraft((prev) => ({ ...prev, sku }));
+  }
+
   async function createParentProduct() {
     if (!parentDraft.name.trim() || !parentDraft.sku.trim()) {
       setError("Nome e SKU sono obbligatori");
@@ -318,6 +324,13 @@ export default function AdminProducts() {
     return true;
   });
 
+  const filteredItems = items.filter((p) => {
+    if (productFilter === "parents") return Boolean(p.isParent);
+    if (productFilter === "children") return Boolean(p.parentId);
+    if (productFilter === "single") return !p.isParent && !p.parentId;
+    return true;
+  });
+
   return (
     <section>
       <div className="page-header">
@@ -329,6 +342,16 @@ export default function AdminProducts() {
           <button className="btn primary" onClick={() => setShowCreateParent(true)}>
             Crea prodotto genitore
           </button>
+          <select
+            className="select"
+            value={productFilter}
+            onChange={(e) => setProductFilter(e.target.value)}
+          >
+            <option value="all">Tutti i prodotti</option>
+            <option value="parents">Solo genitori</option>
+            <option value="children">Solo figli</option>
+            <option value="single">Solo singoli</option>
+          </select>
           <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
             {bulkMode ? "Selezione attiva" : "Multi selection"}
           </button>
@@ -351,7 +374,7 @@ export default function AdminProducts() {
           <div>Giacenza</div>
           <div>Fornitore</div>
         </div>
-        {items.map((p) => (
+        {filteredItems.map((p) => (
           <div
             className="row clickable"
             key={p.id}
@@ -670,10 +693,15 @@ export default function AdminProducts() {
                     </label>
                     <label>
                       SKU
-                      <input
-                        value={parentDraft.sku}
-                        onChange={(e) => setParentDraft({ ...parentDraft, sku: e.target.value })}
-                      />
+                      <div className="input-row">
+                        <input
+                          value={parentDraft.sku}
+                          onChange={(e) => setParentDraft({ ...parentDraft, sku: e.target.value })}
+                        />
+                        <button type="button" className="btn ghost" onClick={generateSku}>
+                          Genera SKU
+                        </button>
+                      </div>
                     </label>
                     <label>
                       Categoria

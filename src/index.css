@@ -648,6 +648,16 @@ button {
   text-align: left;
 }
 
+.input-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.input-row input {
+  flex: 1;
+}
+
 @media (max-width: 860px) {
   .child-toolbar {
     grid-template-columns: 1fr;
