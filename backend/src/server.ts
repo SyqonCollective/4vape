@@ -25,7 +25,8 @@ await prisma.$connect();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, "..", "uploads");
+const uploadsDir =
+  process.env.UPLOADS_DIR || path.resolve(process.cwd(), "..", "uploads");
 await fs.mkdir(uploadsDir, { recursive: true });
 
 await app.register(multipart, {
