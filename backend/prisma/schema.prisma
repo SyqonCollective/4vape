@@ -82,6 +82,7 @@ model SupplierProduct {
   description  String?
   brand        String?
   category     String?
+  categoryId   String?
   price        Decimal? @db.Decimal(12, 2)
   stockQty     Int?
   imageUrl     String?
@@ -89,6 +90,7 @@ model SupplierProduct {
   lastSeenAt   DateTime @default(now())
 
   supplier Supplier @relation(fields: [supplierId], references: [id])
+  categoryRef Category? @relation(fields: [categoryId], references: [id])
 
   @@unique([supplierId, supplierSku])
 }
@@ -100,6 +102,7 @@ model Product {
   description String?
   brand       String?
   category    String?
+  categoryId  String?
   price       Decimal       @db.Decimal(12, 2)
   stockQty    Int           @default(0)
   imageUrl    String?
@@ -108,8 +111,24 @@ model Product {
 
   sourceSupplierId String?
   sourceSupplier   Supplier? @relation(fields: [sourceSupplierId], references: [id])
+  categoryRef      Category? @relation(fields: [categoryId], references: [id])
 
   orderItems OrderItem[]
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  parentId  String?
+  createdAt DateTime  @default(now())
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  products Product[]
+  supplierProducts SupplierProduct[]
+
+  @@index([parentId])
 }
 
 model Order {
