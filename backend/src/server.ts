@@ -9,12 +9,15 @@ import { authRoutes } from "./routes/auth.js";
 import { adminRoutes } from "./routes/admin.js";
 import { catalogRoutes } from "./routes/catalog.js";
 import { orderRoutes } from "./routes/orders.js";
+import { prisma } from "./lib/db.js";
 
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
 await app.register(sensible);
 await app.register(jwt, { secret: process.env.JWT_SECRET || "dev_secret" });
+
+await prisma.$connect();
 
 if (process.env.ENABLE_SWAGGER === "true") {
   await app.register(swagger, {
