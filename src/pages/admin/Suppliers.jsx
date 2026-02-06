@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Lottie from "lottie-react";
+import successAnim from "../../assets/Success.json";
 import { api } from "../../lib/api.js";
 
 export default function AdminSuppliers() {
@@ -15,6 +17,7 @@ export default function AdminSuppliers() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [search, setSearch] = useState("");
   const [actionMsg, setActionMsg] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
   const [priceOverride, setPriceOverride] = useState("");
   const [stockOverride, setStockOverride] = useState("");
 
@@ -83,6 +86,8 @@ export default function AdminSuppliers() {
         body: JSON.stringify(payload),
       });
       setActionMsg(`Importato in store: created ${res.created}, updated ${res.updated}`);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
     } catch (err) {
       setError("Errore import in store");
     }
@@ -109,6 +114,15 @@ export default function AdminSuppliers() {
 
       {error ? <div className="error">{error}</div> : null}
       {actionMsg ? <div className="panel">{actionMsg}</div> : null}
+      {showSuccess ? (
+        <div className="toast success">
+          <Lottie animationData={successAnim} loop={false} />
+          <div>
+            <strong>Importazione completata</strong>
+            <div className="muted">Prodotto inserito nello store</div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="panel">
         <h2>Nuovo fornitore</h2>
@@ -168,7 +182,7 @@ export default function AdminSuppliers() {
               <button className="btn" onClick={() => viewProducts(selected)}>Cerca</button>
             </div>
           </div>
-          <div className="table">
+          <div className="table wide-6">
             <div className="row header">
               <div>Immagine</div>
               <div>SKU</div>
