@@ -29,13 +29,22 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-smoke">
-        <span className="smoke s1" />
-        <span className="smoke s2" />
-        <span className="smoke s3" />
-        <span className="smoke s4" />
-        <span className="smoke s5" />
+    <div className="auth-wrap auth-epic">
+      <div className="auth-scene">
+        <div className="auth-sky" />
+        <div className="auth-aurora" />
+        <div className="auth-fog">
+          <span className="fog f1" />
+          <span className="fog f2" />
+          <span className="fog f3" />
+        </div>
+        <div className="auth-noise" />
+        <div className="auth-sparks">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <span key={i} className={`spark s${i + 1}`} />
+          ))}
+        </div>
+        <div className="auth-vignette" />
       </div>
       <div className="auth-card">
         <div className="auth-header">

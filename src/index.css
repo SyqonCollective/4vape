@@ -610,48 +610,131 @@ button {
   padding: 2rem;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(circle at top, #f7f3ea, #efe6d7);
 }
 
-.auth-smoke {
+.auth-wrap.auth-epic {
+  background: radial-gradient(circle at 20% 10%, #1c2029, #0b0f14 50%, #06080b 100%);
+}
+.auth-scene {
   position: absolute;
-  inset: -20vh -10vw;
-  pointer-events: none;
+  inset: 0;
   z-index: 0;
-  filter: blur(4px);
-  opacity: 0.9;
+  pointer-events: none;
 }
-.auth-smoke .smoke {
+.auth-sky {
   position: absolute;
-  width: 60vmax;
-  height: 60vmax;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 60%),
-    radial-gradient(circle at 70% 60%, rgba(210, 220, 230, 0.45), rgba(255, 255, 255, 0) 65%),
-    radial-gradient(circle at 40% 80%, rgba(180, 190, 210, 0.35), rgba(255, 255, 255, 0) 60%);
-  mix-blend-mode: screen;
-  animation: smokeFloat 24s ease-in-out infinite;
+  inset: -10%;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(88, 130, 255, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 30%, rgba(71, 220, 255, 0.22), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(255, 120, 190, 0.08), transparent 50%);
+  filter: blur(10px);
+  animation: skyShift 18s ease-in-out infinite;
 }
-.auth-smoke .s1 { top: -10vmax; left: -15vmax; animation-duration: 30s; }
-.auth-smoke .s2 { top: 10vmax; right: -10vmax; animation-duration: 26s; animation-delay: -8s; }
-.auth-smoke .s3 { bottom: -15vmax; left: 10vmax; animation-duration: 28s; animation-delay: -12s; }
-.auth-smoke .s4 { bottom: -8vmax; right: 5vmax; animation-duration: 22s; animation-delay: -6s; }
-.auth-smoke .s5 { top: 30vmax; left: 20vmax; animation-duration: 34s; animation-delay: -16s; }
+.auth-aurora {
+  position: absolute;
+  inset: -20%;
+  background:
+    conic-gradient(from 180deg at 50% 50%, rgba(0, 255, 220, 0.08), rgba(120, 90, 255, 0.12), rgba(255, 120, 200, 0.06), rgba(0, 255, 220, 0.08));
+  filter: blur(40px);
+  opacity: 0.6;
+  mix-blend-mode: screen;
+  animation: auroraFlow 22s linear infinite;
+}
+.auth-fog {
+  position: absolute;
+  inset: -30%;
+  filter: blur(30px);
+  opacity: 0.85;
+}
+.auth-fog .fog {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.25), transparent 60%),
+    radial-gradient(circle at 70% 70%, rgba(160, 190, 255, 0.12), transparent 65%);
+  animation: fogDrift 26s ease-in-out infinite;
+}
+.auth-fog .f1 { top: -20vmax; left: -10vmax; animation-duration: 30s; }
+.auth-fog .f2 { bottom: -25vmax; right: -15vmax; animation-duration: 24s; animation-delay: -8s; }
+.auth-fog .f3 { top: 10vmax; right: 20vmax; animation-duration: 28s; animation-delay: -14s; }
+.auth-noise {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-radial-gradient(circle at 30% 20%, rgba(255,255,255,0.03) 0 2px, transparent 2px 4px),
+    repeating-radial-gradient(circle at 70% 60%, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px);
+  mix-blend-mode: soft-light;
+  opacity: 0.35;
+  animation: noiseMove 8s steps(2) infinite;
+}
+.auth-sparks {
+  position: absolute;
+  inset: 0;
+}
+.auth-sparks .spark {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(200, 230, 255, 0.9);
+  box-shadow: 0 0 12px rgba(120, 190, 255, 0.9);
+  opacity: 0.7;
+  animation: sparkFloat 10s ease-in-out infinite;
+}
+.auth-sparks .s1 { top: 20%; left: 15%; animation-delay: -1s; }
+.auth-sparks .s2 { top: 30%; left: 70%; animation-delay: -3s; }
+.auth-sparks .s3 { top: 60%; left: 40%; animation-delay: -5s; }
+.auth-sparks .s4 { top: 75%; left: 80%; animation-delay: -7s; }
+.auth-sparks .s5 { top: 15%; left: 55%; animation-delay: -9s; }
+.auth-sparks .s6 { top: 45%; left: 25%; animation-delay: -2s; }
+.auth-sparks .s7 { top: 85%; left: 20%; animation-delay: -4s; }
+.auth-sparks .s8 { top: 65%; left: 60%; animation-delay: -6s; }
+.auth-sparks .s9 { top: 35%; left: 85%; animation-delay: -8s; }
+.auth-sparks .s10 { top: 55%; left: 10%; animation-delay: -10s; }
+.auth-sparks .s11 { top: 10%; left: 40%; animation-delay: -12s; }
+.auth-sparks .s12 { top: 80%; left: 50%; animation-delay: -14s; }
+.auth-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 35%, rgba(5, 6, 10, 0.9) 80%);
+}
 
-@keyframes smokeFloat {
+@keyframes skyShift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-2vmax, 1vmax, 0) scale(1.02); }
+  100% { transform: translate3d(2vmax, -1vmax, 0) scale(1); }
+}
+@keyframes auroraFlow {
+  0% { transform: rotate(0deg) scale(1); }
+  100% { transform: rotate(360deg) scale(1.04); }
+}
+@keyframes fogDrift {
   0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
-  50% { transform: translate3d(3vmax, -2vmax, 0) scale(1.08); opacity: 0.85; }
-  100% { transform: translate3d(-2vmax, 2vmax, 0) scale(1); opacity: 0.6; }
+  50% { transform: translate3d(4vmax, -2vmax, 0) scale(1.08); opacity: 0.9; }
+  100% { transform: translate3d(-3vmax, 3vmax, 0) scale(1); opacity: 0.6; }
+}
+@keyframes noiseMove {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-1%, 1%, 0); }
+  100% { transform: translate3d(1%, -1%, 0); }
+}
+@keyframes sparkFloat {
+  0% { transform: translate3d(0, 0, 0); opacity: 0.4; }
+  50% { transform: translate3d(0, -8px, 0); opacity: 0.9; }
+  100% { transform: translate3d(0, 0, 0); opacity: 0.4; }
 }
 
 .auth-card {
   width: min(460px, 92vw);
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(10, 14, 20, 0.78);
   padding: 2.6rem;
   border-radius: 26px;
   box-shadow: var(--shadow-strong);
-  border: 1px solid var(--stroke);
-  backdrop-filter: blur(12px);
+  border: 1px solid rgba(110, 140, 190, 0.25);
+  backdrop-filter: blur(18px);
   animation: float-in 0.6s ease;
   position: relative;
   z-index: 1;
@@ -666,16 +749,30 @@ button {
   display: inline-block;
   padding: 0.3rem 0.9rem;
   border-radius: 999px;
-  background: rgba(14, 165, 233, 0.12);
-  color: #0e7490;
+  background: rgba(74, 222, 128, 0.12);
+  color: #a7f3d0;
   font-size: 0.8rem;
   margin-bottom: 0.6rem;
-  border: 1px solid rgba(14, 165, 233, 0.2);
+  border: 1px solid rgba(74, 222, 128, 0.25);
 }
 
 .auth-form {
   display: grid;
   gap: 1rem;
+}
+
+.auth-card h1,
+.auth-card p,
+.auth-card label {
+  color: #e2e8f0;
+}
+.auth-card input {
+  background: rgba(8, 12, 18, 0.8);
+  border-color: rgba(120, 150, 190, 0.3);
+  color: #e2e8f0;
+}
+.auth-card input::placeholder {
+  color: rgba(226, 232, 240, 0.6);
 }
 
 .success-center {
