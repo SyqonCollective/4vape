@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
 import successAnim from "../../assets/Success.json";
+import pulseAnim from "../../assets/Green Pulse Dot.json";
 import { api } from "../../lib/api.js";
 
 export default function AdminSuppliers() {
@@ -18,6 +19,7 @@ export default function AdminSuppliers() {
   const [search, setSearch] = useState("");
   const [actionMsg, setActionMsg] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showImportedMsg, setShowImportedMsg] = useState(false);
   const [priceOverride, setPriceOverride] = useState("");
   const [stockOverride, setStockOverride] = useState("");
 
@@ -86,6 +88,7 @@ export default function AdminSuppliers() {
         body: JSON.stringify(payload),
       });
       setActionMsg(`Importato in store: created ${res.created}, updated ${res.updated}`);
+      setSelectedProduct(null);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
     } catch (err) {
@@ -115,11 +118,21 @@ export default function AdminSuppliers() {
       {error ? <div className="error">{error}</div> : null}
       {actionMsg ? <div className="panel">{actionMsg}</div> : null}
       {showSuccess ? (
-        <div className="toast success">
-          <Lottie animationData={successAnim} loop={false} />
+        <div className="success-center">
+          <div className="success-card">
+            <Lottie animationData={successAnim} loop={false} />
+            <div>
+              <strong>Importazione completata</strong>
+              <div className="muted">Prodotto inserito nello store</div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {showImportedMsg ? (
+        <div className="toast info">
           <div>
-            <strong>Importazione completata</strong>
-            <div className="muted">Prodotto inserito nello store</div>
+            <strong>Già importato</strong>
+            <div className="muted">Questo prodotto è già nello store</div>
           </div>
         </div>
       ) : null}
@@ -192,13 +205,29 @@ export default function AdminSuppliers() {
               <div>Brand</div>
             </div>
             {supplierProducts.map((p) => (
-              <div className="row clickable" key={p.id} onClick={() => setSelectedProduct(p)}>
+              <div
+                className="row clickable"
+                key={p.id}
+                onClick={() => {
+                  if (p.isImported) {
+                    setShowImportedMsg(true);
+                    setTimeout(() => setShowImportedMsg(false), 1500);
+                    return;
+                  }
+                  setSelectedProduct(p);
+                }}
+              >
                 <div>
-                  {p.imageUrl ? (
-                    <img className="thumb" src={p.imageUrl} alt={p.name || p.supplierSku} />
-                  ) : (
-                    <div className="thumb placeholder" />
-                  )}
+                  <div className="thumb-wrap">
+                    {p.isImported ? (
+                      <Lottie className="pulse-dot" animationData={pulseAnim} loop />
+                    ) : null}
+                    {p.imageUrl ? (
+                      <img className="thumb" src={p.imageUrl} alt={p.name || p.supplierSku} />
+                    ) : (
+                      <div className="thumb placeholder" />
+                    )}
+                  </div>
                 </div>
                 <div className="mono">{p.supplierSku}</div>
                 <div>{p.name || "-"}</div>

@@ -129,7 +129,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const q = ((request.query as any)?.q as string | undefined)?.trim();
     const limit = Math.min(Number(limitParam || 200), 500);
 
-    return prisma.supplierProduct.findMany({
+    const supplierProducts = await prisma.supplierProduct.findMany({
       where: {
         supplierId,
         ...(q
@@ -145,6 +145,18 @@ export async function adminRoutes(app: FastifyInstance) {
       orderBy: { lastSeenAt: "desc" },
       take: limit,
     });
+
+    const skus = supplierProducts.map((p) => p.supplierSku);
+    const products = await prisma.product.findMany({
+      where: { sku: { in: skus } },
+      select: { sku: true },
+    });
+    const imported = new Set(products.map((p) => p.sku));
+
+    return supplierProducts.map((p) => ({
+      ...p,
+      isImported: imported.has(p.supplierSku),
+    }));
   });
 
   app.post("/suppliers", async (request, reply) => {

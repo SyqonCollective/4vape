@@ -262,6 +262,17 @@ button {
   background: #fff;
 }
 
+.thumb-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pulse-dot {
+  width: 22px;
+  height: 22px;
+}
+
 .thumb.placeholder {
   background: linear-gradient(135deg, #f1ece5, #e1d7c8);
 }
@@ -367,24 +378,41 @@ button {
   gap: 1rem;
 }
 
-.toast.success {
+.success-center {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(26, 22, 18, 0.35);
+  z-index: 40;
+}
+
+.success-card {
+  background: #fff;
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+.success-card > div:first-child {
+  width: 80px;
+  height: 80px;
+}
+
+.toast.info {
   position: fixed;
   right: 24px;
   bottom: 24px;
   background: #fff;
   border: 1px solid var(--stroke);
   border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
   padding: 0.8rem 1rem;
   box-shadow: var(--shadow);
   z-index: 30;
-}
-
-.toast.success > div:first-child {
-  width: 64px;
-  height: 64px;
 }
 
 @media (max-width: 900px) {
