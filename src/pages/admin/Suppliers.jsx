@@ -20,6 +20,8 @@ export default function AdminSuppliers() {
   const [search, setSearch] = useState("");
   const [actionMsg, setActionMsg] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successTitle, setSuccessTitle] = useState("");
+  const [successBody, setSuccessBody] = useState("");
   const [priceOverride, setPriceOverride] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedSkus, setSelectedSkus] = useState(new Set());
@@ -85,6 +87,8 @@ export default function AdminSuppliers() {
         body: JSON.stringify(payload),
       });
       setActionMsg(`Importato in store: created ${res.created}, già presenti ${res.already}`);
+      setSuccessTitle("Importazione completata");
+      setSuccessBody("Prodotto inserito nello store");
       setSelectedProduct(null);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
@@ -103,6 +107,8 @@ export default function AdminSuppliers() {
         body: JSON.stringify({ supplierSkus: Array.from(selectedSkus) }),
       });
       setActionMsg(`${res.created} prodotti importati con successo`);
+      setSuccessTitle("Importazione completata");
+      setSuccessBody(`${res.created} prodotti importati con successo`);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
       setSelectedSkus(new Set());
@@ -140,8 +146,8 @@ export default function AdminSuppliers() {
             <div className="success-card">
               <Lottie animationData={successAnim} loop={false} />
               <div>
-                <strong>Importazione completata</strong>
-                <div className="muted">Prodotto inserito nello store</div>
+                <strong>{successTitle || "Operazione completata"}</strong>
+                <div className="muted">{successBody || "Operazione eseguita"}</div>
               </div>
             </div>
           </div>
@@ -205,7 +211,19 @@ export default function AdminSuppliers() {
                       <Lottie className="pulse-dot" animationData={pulseAnim} loop />
                     ) : null}
                     {p.imageUrl ? (
-                      <img className="thumb" src={p.imageUrl} alt={p.name || p.supplierSku} />
+                      <img
+                        className="thumb"
+                        src={p.imageUrl}
+                        alt={p.name || p.supplierSku}
+                        onClick={(e) => {
+                          if (!bulkMode) return;
+                          e.stopPropagation();
+                          const next = new Set(selectedSkus);
+                          if (next.has(p.supplierSku)) next.delete(p.supplierSku);
+                          else next.add(p.supplierSku);
+                          setSelectedSkus(next);
+                        }}
+                      />
                     ) : (
                       <div className="thumb placeholder" />
                     )}
