@@ -124,7 +124,7 @@ async function prestashopListAll(
   supplier: Supplier,
   path: string,
   pageSize = 100,
-  opts?: { allowNotFound?: boolean }
+  opts?: { allowNotFound?: boolean; allowForbidden?: boolean }
 ) {
   let offset = 0;
   const all: any[] = [];
@@ -140,6 +140,13 @@ async function prestashopListAll(
         return all;
       }
       throw err;
+    }
+    if (
+      opts?.allowForbidden &&
+      Array.isArray(data?.errors) &&
+      data.errors.some((e: any) => String(e?.code) === "26")
+    ) {
+      return all;
     }
     const key = path.replace(/\//g, "");
     const items =
@@ -180,7 +187,10 @@ export async function importFullFromSupplier(supplier: Supplier) {
   if (supplier.apiType === "PRESTASHOP") {
     const [products, combinations, categories] = await Promise.all([
       prestashopListAll(supplier, "/products"),
-      prestashopListAll(supplier, "/combinations", 100, { allowNotFound: true }),
+      prestashopListAll(supplier, "/combinations", 100, {
+        allowNotFound: true,
+        allowForbidden: true,
+      }),
       prestashopListAll(supplier, "/categories", 100, { allowNotFound: true }),
     ]);
     if (products.length === 0) return { created, skipped, updated };
