@@ -506,11 +506,23 @@ export default function AdminProducts() {
                     {images.map((img) => (
                       <div className="image-item" key={img.id}>
                         <img src={withToken(img.url)} alt="" />
-                        <div className="image-actions">
-                          <button className="btn ghost" onClick={() => setAsMain(img.url)}>
+                        <div className="image-actions" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="btn ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAsMain(img.url);
+                            }}
+                          >
                             Copertina
                           </button>
-                          <button className="btn danger" onClick={() => deleteImage(img.id)}>
+                          <button
+                            className="btn danger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteImage(img.id);
+                            }}
+                          >
                             Elimina
                           </button>
                         </div>
