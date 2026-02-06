@@ -137,7 +137,7 @@ export default function AdminLogin() {
           </label>
           <label>
             Password
-            <div className="password-field">
+            <div className={`password-field ${showPassword ? "" : "smoke-on"}`}>
               <input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

@@ -814,6 +814,24 @@ button {
 .password-field input {
   padding-right: 42px;
 }
+.password-field.smoke-on::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 44px;
+  top: 6px;
+  bottom: 6px;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 20% 40%, rgba(220, 235, 255, 0.55), transparent 60%),
+    radial-gradient(circle at 60% 60%, rgba(140, 170, 220, 0.45), transparent 65%),
+    radial-gradient(circle at 80% 35%, rgba(255, 255, 255, 0.25), transparent 55%);
+  filter: blur(10px);
+  opacity: 0.9;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: smokeMask 5s ease-in-out infinite;
+}
 .password-field .eye-btn {
   position: absolute;
   right: 10px;
@@ -868,11 +886,13 @@ button {
 .smoke-pass {
   color: transparent;
   caret-color: transparent;
-  text-shadow:
-    0 0 8px rgba(180, 210, 255, 0.7),
-    0 0 16px rgba(130, 160, 220, 0.6),
-    0 0 28px rgba(90, 120, 190, 0.5);
-  filter: blur(1.2px);
+  text-shadow: none;
+  filter: blur(2px);
+}
+@keyframes smokeMask {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.85; }
+  50% { transform: translate3d(6px, -2px, 0) scale(1.04); opacity: 1; }
+  100% { transform: translate3d(-4px, 3px, 0) scale(1); opacity: 0.85; }
 }
 
 .success-center {
