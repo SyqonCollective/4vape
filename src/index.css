@@ -832,6 +832,18 @@ button {
   pointer-events: none;
   animation: smokeMask 5s ease-in-out infinite;
 }
+.password-field.smoke-on::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 44px;
+  top: 6px;
+  bottom: 6px;
+  border-radius: 10px;
+  background: rgba(6, 8, 12, 0.82);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
 .password-field .eye-btn {
   position: absolute;
   right: 10px;
@@ -887,7 +899,7 @@ button {
   color: transparent;
   caret-color: transparent;
   text-shadow: none;
-  filter: blur(2px);
+  filter: blur(6px);
 }
 @keyframes smokeMask {
   0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.85; }
