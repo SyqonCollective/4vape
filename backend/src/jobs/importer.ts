@@ -79,7 +79,14 @@ async function fetchCsv(url: string) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
   const text = await res.text();
-  const records = parse(text, { columns: true, skip_empty_lines: true });
+  const records = parse(text, {
+    columns: true,
+    skip_empty_lines: true,
+    delimiter: ";",
+    relax_column_count: true,
+    relax_quotes: true,
+    trim: true,
+  });
   return records as ParsedRow[];
 }
 
