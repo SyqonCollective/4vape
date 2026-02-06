@@ -23,6 +23,12 @@ export default function AdminSuppliers() {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedSkus, setSelectedSkus] = useState(new Set());
 
+  useEffect(() => {
+    const open = Boolean(selectedProduct || showSuccess);
+    document.body.classList.toggle("modal-open", open);
+    return () => document.body.classList.remove("modal-open");
+  }, [selectedProduct, showSuccess]);
+
   async function load() {
     try {
       const res = await api("/admin/suppliers");
@@ -138,29 +144,6 @@ export default function AdminSuppliers() {
           </div>
         </div>
       ) : null}
-
-      <div className="panel">
-        <h2>Nuovo fornitore</h2>
-        <form className="form-grid" onSubmit={createSupplier}>
-          <label>
-            Nome
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          </label>
-          <label>
-            Codice
-            <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
-          </label>
-          <label>
-            CSV Completo URL
-            <input value={form.csvFullUrl} onChange={(e) => setForm({ ...form, csvFullUrl: e.target.value })} />
-          </label>
-          <label>
-            CSV Giacenze URL
-            <input value={form.csvStockUrl} onChange={(e) => setForm({ ...form, csvStockUrl: e.target.value })} />
-          </label>
-          <button className="btn primary">Crea</button>
-        </form>
-      </div>
 
       <div className="table">
         <div className="row header">

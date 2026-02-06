@@ -14,6 +14,12 @@ export default function AdminProducts() {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   useEffect(() => {
+    const open = Boolean(selectedProduct || confirmDelete || showDeleteSuccess);
+    document.body.classList.toggle("modal-open", open);
+    return () => document.body.classList.remove("modal-open");
+  }, [selectedProduct, confirmDelete, showDeleteSuccess]);
+
+  useEffect(() => {
     let active = true;
     async function load() {
       try {

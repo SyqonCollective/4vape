@@ -31,6 +31,10 @@ body {
   position: relative;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 body::before,
 body::after {
   content: "";
@@ -427,7 +431,7 @@ button {
   display: grid;
   place-items: center;
   padding: 2rem;
-  z-index: 20;
+  z-index: 1000;
   backdrop-filter: blur(6px);
 }
 
