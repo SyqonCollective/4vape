@@ -105,7 +105,9 @@ async function prestashopGet(supplier: Supplier, path: string, params: Record<st
   if (!supplier.apiBaseUrl || !supplier.apiKey) {
     throw new Error("Missing PrestaShop apiBaseUrl/apiKey");
   }
-  const url = new URL(path, supplier.apiBaseUrl);
+  const base = supplier.apiBaseUrl.replace(/\/$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const url = new URL(`${base}${normalizedPath}`);
   const search = new URLSearchParams(params);
   search.set("ws_key", supplier.apiKey);
   search.set("output_format", "JSON");
