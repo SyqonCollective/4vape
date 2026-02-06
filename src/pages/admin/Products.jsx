@@ -475,11 +475,25 @@ export default function AdminProducts() {
             </div>
             <div className="modal-body">
               <div className="modal-media" onClick={(e) => e.stopPropagation()}>
-                {edit.imageUrl ? (
-                  <img src={withToken(edit.imageUrl)} alt={edit.name} />
-                ) : (
-                  <div className="thumb placeholder large" />
-                )}
+                <div className="cover-wrap">
+                  {edit.imageUrl ? (
+                    <>
+                      <img src={withToken(edit.imageUrl)} alt={edit.name} />
+                      <button
+                        type="button"
+                        className="cover-clear"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEdit((prev) => ({ ...prev, imageUrl: "" }));
+                        }}
+                      >
+                        ×
+                      </button>
+                    </>
+                  ) : (
+                    <div className="thumb placeholder large" />
+                  )}
+                </div>
                 <div
                   className={`upload-drop ${uploading ? "loading" : ""}`}
                   onDragOver={(e) => e.preventDefault()}

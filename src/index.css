@@ -600,6 +600,27 @@ button {
   border: 1px solid var(--stroke);
 }
 
+.cover-wrap {
+  position: relative;
+}
+
+.cover-clear {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
 .modal-info {
   display: grid;
   gap: 0.6rem;
