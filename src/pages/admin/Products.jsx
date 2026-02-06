@@ -62,6 +62,14 @@ export default function AdminProducts() {
   const withToken = (url) => {
     if (!url) return url;
     let fixed = url;
+    if (fixed.includes("/uploads/") && !fixed.startsWith("/api/") && !fixed.startsWith("/uploads/")) {
+      try {
+        const parsed = new URL(fixed);
+        fixed = parsed.pathname;
+      } catch {
+        // ignore
+      }
+    }
     if (fixed.startsWith("/uploads/")) {
       fixed = `/api${fixed}`;
     }
@@ -267,22 +275,26 @@ export default function AdminProducts() {
         }),
       });
       if (parentImageFile) {
-        const form = new FormData();
-        form.append("files", parentImageFile);
-        const res = await fetch(`/api/admin/products/${parent.id}/images`, {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: form,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const uploaded = data?.items?.[0];
-          if (uploaded?.url) {
-            await api(`/admin/products/${parent.id}`, {
-              method: "PATCH",
-              body: JSON.stringify({ imageUrl: uploaded.url }),
-            });
+        try {
+          const form = new FormData();
+          form.append("files", parentImageFile);
+          const res = await fetch(`/api/admin/products/${parent.id}/images`, {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: form,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const uploaded = data?.items?.[0];
+            if (uploaded?.url) {
+              await api(`/admin/products/${parent.id}`, {
+                method: "PATCH",
+                body: JSON.stringify({ imageUrl: uploaded.url }),
+              });
+            }
           }
+        } catch {
+          // ignore image failure, still create parent and children
         }
       }
       if (parentChildren.size > 0) {
@@ -326,8 +338,8 @@ export default function AdminProducts() {
 
   const filteredItems = items.filter((p) => {
     if (productFilter === "parents") return Boolean(p.isParent);
-    if (productFilter === "children") return Boolean(p.parentId);
-    if (productFilter === "single") return !p.isParent && !p.parentId;
+    if (productFilter === "children") return Boolean(p.parentId || p.parent?.id);
+    if (productFilter === "single") return !p.isParent && !(p.parentId || p.parent?.id);
     return true;
   });
 

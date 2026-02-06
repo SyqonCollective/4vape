@@ -97,7 +97,7 @@ export async function adminRoutes(app: FastifyInstance) {
         isParent: z.boolean().optional(),
         price: z.number().nonnegative().optional(),
         stockQty: z.number().int().nonnegative().default(0),
-        imageUrl: z.string().url().optional(),
+        imageUrl: z.string().optional(),
       })
       .parse(request.body);
 
@@ -145,7 +145,7 @@ export async function adminRoutes(app: FastifyInstance) {
         isParent: z.boolean().optional(),
         price: z.number().nonnegative().optional(),
         stockQty: z.number().int().nonnegative().optional(),
-        imageUrl: z.string().url().optional(),
+        imageUrl: z.string().optional(),
       })
       .parse(request.body);
 
