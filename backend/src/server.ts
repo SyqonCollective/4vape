@@ -30,19 +30,21 @@ if (process.env.ENABLE_SWAGGER === "true") {
 
 app.decorate("authenticate", async (request: any, reply: any) => {
   const authHeader = request.headers?.authorization || "";
+  if (!authHeader.startsWith("Bearer ")) {
+    return reply.code(401).send({
+      error: "Unauthorized",
+      message: "Missing Bearer token",
+    });
+  }
+
+  const token = authHeader.slice(7).trim();
   try {
-    await Promise.race([
-      request.jwtVerify(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Auth timeout")), 2000)
-      ),
-    ]);
+    const payload = app.jwt.verify(token);
+    request.user = payload;
   } catch (err: any) {
     return reply.code(401).send({
       error: "Unauthorized",
-      message: err?.message || "Auth failed",
-      hasAuthHeader: Boolean(request.headers?.authorization),
-      authHeaderPrefix: authHeader.slice(0, 12),
+      message: err?.message || "Invalid token",
     });
   }
 });
