@@ -29,15 +29,15 @@ if (process.env.ENABLE_SWAGGER === "true") {
 }
 
 app.decorate("authenticate", async (request: any, reply: any) => {
+  const authHeader = request.headers?.authorization || "";
   try {
-    const authHeader = request.headers?.authorization || "";
     await Promise.race([
       request.jwtVerify(),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Auth timeout")), 2000)
       ),
     ]);
-  } catch (err) {
+  } catch (err: any) {
     return reply.code(401).send({
       error: "Unauthorized",
       message: err?.message || "Auth failed",
