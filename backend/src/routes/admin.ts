@@ -231,6 +231,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
     let created = 0;
     let updated = 0;
+    let already = 0;
     let missing = 0;
 
     for (const sp of supplierProducts) {
@@ -255,21 +256,7 @@ export async function adminRoutes(app: FastifyInstance) {
         });
         created += 1;
       } else {
-        await prisma.product.update({
-          where: { id: existing.id },
-          data: {
-            name: sp.name || existing.name,
-            description: sp.description ?? existing.description,
-            brand: sp.brand ?? existing.brand,
-            category: sp.category ?? existing.category,
-            price: price ?? existing.price,
-            stockQty,
-            imageUrl: sp.imageUrl ?? existing.imageUrl,
-            source: "SUPPLIER",
-            sourceSupplierId: supplierId,
-          },
-        });
-        updated += 1;
+        already += 1;
       }
     }
 
@@ -277,6 +264,6 @@ export async function adminRoutes(app: FastifyInstance) {
       missing = skus.length - supplierProducts.length;
     }
 
-    return { created, updated, missing };
+    return { created, updated, missing, already };
   });
 }

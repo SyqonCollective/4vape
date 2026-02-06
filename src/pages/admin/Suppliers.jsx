@@ -87,7 +87,7 @@ export default function AdminSuppliers() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      setActionMsg(`Importato in store: created ${res.created}, updated ${res.updated}`);
+      setActionMsg(`Importato in store: created ${res.created}, già presenti ${res.already}`);
       setSelectedProduct(null);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
@@ -277,8 +277,12 @@ export default function AdminSuppliers() {
                   </label>
                 </div>
                 <div>
-                  <button className="btn primary" onClick={() => promoteToStore(selectedProduct)}>
-                    Importa in store
+                  <button
+                    className="btn primary"
+                    onClick={() => promoteToStore(selectedProduct)}
+                    disabled={selectedProduct.isImported}
+                  >
+                    {selectedProduct.isImported ? "Già importato" : "Importa in store"}
                   </button>
                 </div>
               </div>
