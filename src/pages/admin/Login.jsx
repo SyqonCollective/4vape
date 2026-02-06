@@ -147,11 +147,11 @@ export default function AdminLogin() {
               />
               <button
                 type="button"
-                className="eye-btn"
+                className={`eye-btn ${showPassword ? "on" : ""}`}
                 aria-label={showPassword ? "Nascondi password" : "Mostra password"}
                 onClick={() => setShowPassword((v) => !v)}
               >
-                {showPassword ? "🙈" : "👁"}
+                <span className="eye-icon" aria-hidden="true" />
               </button>
             </div>
           </label>
