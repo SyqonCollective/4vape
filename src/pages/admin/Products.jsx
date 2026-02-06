@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
 import trashAnim from "../../assets/Trash clean.json";
 import { api } from "../../lib/api.js";
+import Portal from "../../components/Portal.jsx";
 
 export default function AdminProducts() {
   const [items, setItems] = useState([]);
@@ -168,20 +169,23 @@ export default function AdminProducts() {
       </div>
 
       {showDeleteSuccess ? (
-        <div className="success-center">
-          <div className="success-card">
-            <Lottie animationData={trashAnim} loop={false} />
-            <div>
-              <strong>Eliminazione completata</strong>
-              <div className="muted">Prodotto rimosso dallo store</div>
+        <Portal>
+          <div className="success-center">
+            <div className="success-card">
+              <Lottie animationData={trashAnim} loop={false} />
+              <div>
+                <strong>Eliminazione completata</strong>
+                <div className="muted">Prodotto rimosso dallo store</div>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       ) : null}
 
       {selectedProduct ? (
-        <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Modifica prodotto</h3>
               <button className="btn ghost" onClick={() => setSelectedProduct(null)}>Chiudi</button>
@@ -241,21 +245,24 @@ export default function AdminProducts() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
-        </div>
+        </Portal>
       ) : null}
 
       {confirmDelete ? (
-        <div className="modal-backdrop" onClick={() => setConfirmDelete(false)}>
-          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setConfirmDelete(false)}>
+            <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
             <h3>Sei sicuro di voler eliminare {bulkMode ? selectedIds.size : 1} prodotti?</h3>
             <p className="muted">L’azione è irreversibile.</p>
             <div className="actions">
               <button className="btn ghost" onClick={() => setConfirmDelete(false)}>Annulla</button>
               <button className="btn danger" onClick={bulkMode ? deleteSelected : deleteProduct}>Conferma</button>
             </div>
+            </div>
           </div>
-        </div>
+        </Portal>
       ) : null}
     </section>
   );

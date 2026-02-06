@@ -3,6 +3,7 @@ import Lottie from "lottie-react";
 import successAnim from "../../assets/Success.json";
 import pulseAnim from "../../assets/Green Pulse Dot.json";
 import { api } from "../../lib/api.js";
+import Portal from "../../components/Portal.jsx";
 
 export default function AdminSuppliers() {
   const [items, setItems] = useState([]);
@@ -134,15 +135,17 @@ export default function AdminSuppliers() {
       {error ? <div className="error">{error}</div> : null}
       {actionMsg ? <div className="panel">{actionMsg}</div> : null}
       {showSuccess ? (
-        <div className="success-center">
-          <div className="success-card">
-            <Lottie animationData={successAnim} loop={false} />
-            <div>
-              <strong>Importazione completata</strong>
-              <div className="muted">Prodotto inserito nello store</div>
+        <Portal>
+          <div className="success-center">
+            <div className="success-card">
+              <Lottie animationData={successAnim} loop={false} />
+              <div>
+                <strong>Importazione completata</strong>
+                <div className="muted">Prodotto inserito nello store</div>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       ) : null}
 
       <div className="table">
@@ -239,8 +242,9 @@ export default function AdminSuppliers() {
       ) : null}
 
       {selectedProduct ? (
-        <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title">
                 <h3>{selectedProduct.name || "Dettaglio prodotto"}</h3>
@@ -291,10 +295,11 @@ export default function AdminSuppliers() {
                     {selectedProduct.isImported ? "Già importato" : "Importa in store"}
                   </button>
                 </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </Portal>
       ) : null}
     </section>
   );

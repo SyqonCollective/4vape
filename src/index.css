@@ -456,7 +456,7 @@ button {
   box-shadow: var(--shadow-strong);
   padding: 1.6rem 2rem;
   border: 1px solid var(--stroke);
-  animation: rise 0.4s ease;
+  animation: modal-pop 0.35s ease both;
 }
 
 .modal-header {
@@ -647,6 +647,17 @@ button {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
