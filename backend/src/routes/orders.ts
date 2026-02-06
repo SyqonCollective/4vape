@@ -47,6 +47,7 @@ export async function orderRoutes(app: FastifyInstance) {
     const items = body.items.map((item) => {
       const product = products.find((p) => p.id === item.productId);
       if (!product) throw app.httpErrors.notFound("Product not found");
+      if ((product as any).isParent) throw app.httpErrors.badRequest("Parent product not orderable");
       const unitPrice = overrideMap.get(product.id) ?? product.price;
       const lineTotal = unitPrice.mul(item.qty);
 

@@ -377,6 +377,52 @@ button {
 .table.wide-6 .row.header {
   grid-template-columns: 0.7fr 1.2fr 2fr 1fr 1fr 1fr;
 }
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toggle input {
+  width: 18px;
+  height: 18px;
+}
+.upload-drop {
+  margin-top: 12px;
+  border: 1px dashed rgba(120, 150, 190, 0.4);
+  border-radius: 14px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+}
+.upload-drop.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.image-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+.image-item {
+  background: #fff;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+.image-item img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.image-actions {
+  display: grid;
+  gap: 6px;
+}
 
 .row {
   display: grid;
@@ -620,6 +666,17 @@ button {
   border: 1px solid #fecdd3;
   border-radius: 12px;
   color: #9f1239;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.error-close {
+  background: transparent;
+  border: none;
+  color: #9f1239;
+  font-size: 18px;
+  cursor: pointer;
 }
 
 .auth-wrap {
@@ -1122,6 +1179,10 @@ button {
 
   .cards {
     grid-template-columns: 1fr;
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 .modal-backdrop {

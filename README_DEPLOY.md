@@ -1,6 +1,6 @@
 # Deploy rapido 4Vape (Locale + VPS)
 
-## Locale (Mac) — build + push
+## Locale (Mac) — commit + push
 ```bash
 cd "/Users/michaelruggeri/Desktop/Code/4vape buono"
 git add .
@@ -9,17 +9,15 @@ git push origin main
 git push production main
 ```
 
-## VPS (Ubuntu) — update backend manuale (se serve)
+## VPS (Ubuntu) — update backend
 ```bash
-# entra in VPS prima
 ssh root@82.165.175.171
 
-# aggiorna il checkout dal bare repo
 GIT_DIR=/var/repo/4vape.git GIT_WORK_TREE=/var/www/4vape git checkout -f
-
-# rebuild backend
 cd /var/www/4vape/backend
 npm install
+npx prisma migrate deploy
+npx prisma generate
 npm run build
 systemctl restart 4vape-api
 ```

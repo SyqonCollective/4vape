@@ -3,6 +3,7 @@ import Lottie from "lottie-react";
 import successAnim from "../../assets/Success.json";
 import pulseAnim from "../../assets/Green Pulse Dot.json";
 import { api, getToken } from "../../lib/api.js";
+import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
 export default function AdminSuppliers() {
@@ -247,7 +248,7 @@ export default function AdminSuppliers() {
         </div>
       </div>
 
-      {error ? <div className="error">{error}</div> : null}
+      <InlineError message={error} onClose={() => setError("")} />
       {actionMsg ? <div className="panel">{actionMsg}</div> : null}
       {showSuccess ? (
         <Portal>

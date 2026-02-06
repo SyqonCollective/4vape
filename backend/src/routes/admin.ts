@@ -5,6 +5,9 @@ import { importFullFromSupplier, importStockFromSupplier } from "../jobs/importe
 import jwt from "jsonwebtoken";
 import http from "node:http";
 import https from "node:https";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
 
 function getUser(request: any, reply: any) {
   const auth = request.headers?.authorization || "";
@@ -65,9 +68,17 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/products", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
+    const parentOnly = (request.query as any)?.parents === "true";
     return prisma.product.findMany({
+      where: parentOnly ? { isParent: true } : undefined,
       orderBy: { createdAt: "desc" },
-      include: { sourceSupplier: true, categoryRef: true },
+      include: {
+        sourceSupplier: true,
+        categoryRef: true,
+        parent: true,
+        images: true,
+        children: { select: { id: true, name: true, sku: true } },
+      },
     });
   });
 
@@ -82,6 +93,8 @@ export async function adminRoutes(app: FastifyInstance) {
         brand: z.string().optional(),
         category: z.string().optional(),
         categoryId: z.string().optional(),
+        parentId: z.string().optional(),
+        isParent: z.boolean().optional(),
         price: z.number().positive(),
         stockQty: z.number().int().nonnegative().default(0),
         imageUrl: z.string().url().optional(),
@@ -98,6 +111,8 @@ export async function adminRoutes(app: FastifyInstance) {
       data: {
         ...body,
         category: categoryName,
+        parentId: body.parentId || null,
+        isParent: body.isParent ?? false,
         source: "MANUAL",
       },
     });
@@ -114,6 +129,8 @@ export async function adminRoutes(app: FastifyInstance) {
         brand: z.string().optional(),
         category: z.string().optional(),
         categoryId: z.string().nullable().optional(),
+        parentId: z.string().nullable().optional(),
+        isParent: z.boolean().optional(),
         price: z.number().positive().optional(),
         stockQty: z.number().int().nonnegative().optional(),
         imageUrl: z.string().url().optional(),
@@ -133,11 +150,58 @@ export async function adminRoutes(app: FastifyInstance) {
         data.category = null;
       }
     }
+    if (body.parentId !== undefined) data.parentId = body.parentId;
+    if (body.isParent !== undefined) data.isParent = body.isParent;
     if (existing.source === "SUPPLIER") {
       delete (data as any).stockQty;
     }
 
     return prisma.product.update({ where: { id }, data });
+  });
+
+  app.get("/products/:id/images", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    return prisma.productImage.findMany({ where: { productId: id }, orderBy: { sortOrder: "asc" } });
+  });
+
+  app.post("/products/:id/images", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (!product) return reply.notFound("Product not found");
+
+    const uploadsDir = process.env.UPLOADS_DIR || path.resolve(process.cwd(), "..", "uploads");
+    const productDir = path.join(uploadsDir, "products", id);
+    await fs.mkdir(productDir, { recursive: true });
+
+    const parts = (request as any).parts();
+    const created: any[] = [];
+    for await (const part of parts) {
+      if (part.type !== "file") continue;
+      const ext = path.extname(part.filename || "").slice(0, 10) || ".jpg";
+      const filename = `${randomUUID()}${ext}`;
+      const filePath = path.join(productDir, filename);
+      await fs.writeFile(filePath, await part.toBuffer());
+      const url = `/api/uploads/products/${id}/${filename}`;
+      const image = await prisma.productImage.create({
+        data: { productId: id, url },
+      });
+      created.push(image);
+    }
+    return { items: created };
+  });
+
+  app.delete("/products/:id/images/:imageId", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const { id, imageId } = request.params as any;
+    const image = await prisma.productImage.findUnique({ where: { id: imageId } });
+    if (!image || image.productId !== id) return reply.notFound("Image not found");
+    await prisma.productImage.delete({ where: { id: imageId } });
+    return reply.code(204).send();
   });
 
   app.delete("/products/:id", async (request, reply) => {
@@ -391,6 +455,7 @@ export async function adminRoutes(app: FastifyInstance) {
         supplierSkus: z.array(z.string().min(1)).optional(),
         price: z.number().positive().optional(),
         categoryId: z.string().min(1),
+        parentId: z.string().optional(),
       })
       .parse(request.body);
 
@@ -434,6 +499,7 @@ export async function adminRoutes(app: FastifyInstance) {
             brand: sp.brand,
             category: category.name,
             categoryId: category.id,
+            parentId: body.parentId || null,
             price: price ?? 0,
             stockQty,
             imageUrl: sp.imageUrl,

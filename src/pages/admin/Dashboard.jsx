@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api.js";
+import InlineError from "../../components/InlineError.jsx";
 
 function Sparkline({ points = [] }) {
   if (!points.length) return null;
@@ -60,7 +61,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {error ? <div className="error">{error}</div> : null}
+      <InlineError message={error} onClose={() => setError("")} />
 
       <div className="cards">
         <div className="card">

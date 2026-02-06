@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api.js";
+import InlineError from "../../components/InlineError.jsx";
 
 export default function AdminOrders() {
   const [items, setItems] = useState([]);
@@ -31,7 +32,7 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {error ? <div className="error">{error}</div> : null}
+      <InlineError message={error} onClose={() => setError("")} />
 
       <div className="table">
         <div className="row header">

@@ -4,6 +4,8 @@ import cors from "@fastify/cors";
 import sensible from "@fastify/sensible";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import multipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
 import jwt from "jsonwebtoken";
 import { importStockFromSupplier } from "./jobs/importer.js";
 import { authRoutes } from "./routes/auth.js";
@@ -11,12 +13,30 @@ import { adminRoutes } from "./routes/admin.js";
 import { catalogRoutes } from "./routes/catalog.js";
 import { orderRoutes } from "./routes/orders.js";
 import { prisma } from "./lib/db.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import fs from "node:fs/promises";
 
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
 await app.register(sensible);
 await prisma.$connect();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, "..", "uploads");
+await fs.mkdir(uploadsDir, { recursive: true });
+
+await app.register(multipart, {
+  limits: { fileSize: 15 * 1024 * 1024, files: 10 },
+});
+
+await app.register(fastifyStatic, {
+  root: uploadsDir,
+  prefix: "/uploads/",
+  decorateReply: false,
+});
 
 if (process.env.ENABLE_SWAGGER === "true") {
   await app.register(swagger, {

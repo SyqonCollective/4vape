@@ -1,20 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Lottie from "lottie-react";
 import trashAnim from "../../assets/Trash clean.json";
 import { api, getToken } from "../../lib/api.js";
+import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
 export default function AdminProducts() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [edit, setEdit] = useState({ name: "", description: "", price: "", stockQty: "", imageUrl: "", categoryId: "" });
+  const [edit, setEdit] = useState({
+    name: "",
+    description: "",
+    price: "",
+    stockQty: "",
+    imageUrl: "",
+    categoryId: "",
+    parentId: "",
+    isParent: false,
+  });
   const [categories, setCategories] = useState([]);
+  const [parents, setParents] = useState([]);
+  const [images, setImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const token = getToken();
+  const fileInputRef = useRef(null);
   const categoryOptions = (() => {
     const byParent = new Map();
     for (const c of categories) {
@@ -34,9 +48,13 @@ export default function AdminProducts() {
     walk("root");
     return result;
   })();
+  const parentOptions = parents.map((p) => ({ id: p.id, name: p.name, sku: p.sku }));
   const withToken = (url) => {
     if (!url) return url;
     let fixed = url;
+    if (fixed.startsWith("/uploads/")) {
+      fixed = `/api${fixed}`;
+    }
     if (fixed.startsWith("/api/suppliers/")) {
       fixed = fixed.replace("/api/suppliers/", "/api/admin/suppliers/");
     }
@@ -87,6 +105,23 @@ export default function AdminProducts() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    async function loadParents() {
+      try {
+        const res = await api("/admin/products?parents=true");
+        if (!active) return;
+        setParents(res);
+      } catch {
+        // ignore
+      }
+    }
+    loadParents();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function openEdit(p) {
     setSelectedProduct(p);
     setEdit({
@@ -96,7 +131,10 @@ export default function AdminProducts() {
       stockQty: p.stockQty ?? "",
       imageUrl: p.imageUrl || "",
       categoryId: p.categoryId || "",
+      parentId: p.parentId || "",
+      isParent: Boolean(p.isParent),
     });
+    setImages(p.images || []);
   }
 
   async function saveEdit() {
@@ -111,6 +149,8 @@ export default function AdminProducts() {
           stockQty: edit.stockQty !== "" ? Number(edit.stockQty) : undefined,
           imageUrl: edit.imageUrl || undefined,
           categoryId: edit.categoryId || undefined,
+          parentId: edit.parentId || undefined,
+          isParent: edit.isParent,
         }),
       });
       setSelectedProduct(null);
@@ -119,6 +159,49 @@ export default function AdminProducts() {
     } catch (err) {
       setError("Errore salvataggio prodotto");
     }
+  }
+
+  async function refreshImages(id) {
+    try {
+      const res = await api(`/admin/products/${id}/images`);
+      setImages(res);
+    } catch {
+      // ignore
+    }
+  }
+
+  async function uploadFiles(files) {
+    if (!selectedProduct || !files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      Array.from(files).forEach((f) => form.append("files", f));
+      const res = await fetch(`/api/admin/products/${selectedProduct.id}/images`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      await refreshImages(selectedProduct.id);
+    } catch (err) {
+      setError("Errore upload immagini");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function deleteImage(imageId) {
+    if (!selectedProduct) return;
+    try {
+      await api(`/admin/products/${selectedProduct.id}/images/${imageId}`, { method: "DELETE" });
+      await refreshImages(selectedProduct.id);
+    } catch {
+      setError("Errore eliminazione immagine");
+    }
+  }
+
+  function setAsMain(imageUrl) {
+    setEdit((prev) => ({ ...prev, imageUrl }));
   }
 
   async function deleteProduct() {
@@ -170,7 +253,7 @@ export default function AdminProducts() {
         </div>
       </div>
 
-      {error ? <div className="error">{error}</div> : null}
+      <InlineError message={error} onClose={() => setError("")} />
 
       <div className="table wide-6">
         <div className="row header">
@@ -235,7 +318,10 @@ export default function AdminProducts() {
                 p.sku
               )}
             </div>
-            <div>{p.name}</div>
+            <div>
+              {p.name}
+              {p.isParent ? <span className="tag">Padre</span> : null}
+            </div>
             <div>€ {Number(p.price).toFixed(2)}</div>
             <div>{p.stockQty}</div>
             <div>{p.sourceSupplier?.name || (p.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
@@ -272,6 +358,44 @@ export default function AdminProducts() {
                 ) : (
                   <div className="thumb placeholder large" />
                 )}
+                <div
+                  className={`upload-drop ${uploading ? "loading" : ""}`}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    uploadFiles(e.dataTransfer.files);
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="muted">
+                    Trascina immagini qui o clicca per caricare
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => uploadFiles(e.target.files)}
+                    style={{ display: "none" }}
+                  />
+                </div>
+                {images.length > 0 ? (
+                  <div className="image-grid">
+                    {images.map((img) => (
+                      <div className="image-item" key={img.id}>
+                        <img src={withToken(img.url)} alt="" />
+                        <div className="image-actions">
+                          <button className="btn ghost" onClick={() => setAsMain(img.url)}>
+                            Copertina
+                          </button>
+                          <button className="btn danger" onClick={() => deleteImage(img.id)}>
+                            Elimina
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 <button className="delete-chip" onClick={() => setConfirmDelete(true)}>
                   Elimina
                 </button>
@@ -285,6 +409,9 @@ export default function AdminProducts() {
                 ) : null}
                 <div><strong>SKU:</strong> {selectedProduct.sku}</div>
                 <div><strong>Fornitore:</strong> {selectedProduct.sourceSupplier?.name || (selectedProduct.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
+                {selectedProduct.isParent ? (
+                  <div><strong>Figli:</strong> {selectedProduct.children?.length || 0}</div>
+                ) : null}
                 <div className="form-grid">
                   <label>
                     Nome
@@ -292,7 +419,13 @@ export default function AdminProducts() {
                   </label>
                   <label>
                     Prezzo
-                    <input type="number" step="0.01" value={edit.price} onChange={(e) => setEdit({ ...edit, price: e.target.value })} />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={edit.price}
+                      onChange={(e) => setEdit({ ...edit, price: e.target.value })}
+                      disabled={edit.isParent}
+                    />
                   </label>
                   <label>
                     Categoria
@@ -310,17 +443,51 @@ export default function AdminProducts() {
                     </select>
                   </label>
                   <label>
+                    Prodotto padre
+                    <div className="toggle">
+                      <input
+                        type="checkbox"
+                        checked={edit.isParent}
+                        onChange={(e) =>
+                          setEdit({
+                            ...edit,
+                            isParent: e.target.checked,
+                            parentId: e.target.checked ? "" : edit.parentId,
+                          })
+                        }
+                      />
+                      <span>Non vendibile</span>
+                    </div>
+                  </label>
+                  <label>
+                    Assegna a padre
+                    <select
+                      className="select"
+                      value={edit.parentId || ""}
+                      onChange={(e) => setEdit({ ...edit, parentId: e.target.value })}
+                      disabled={edit.isParent}
+                    >
+                      <option value="">Nessuno</option>
+                      {parentOptions.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.sku})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
                     Giacenza
                     <input
                       type="number"
                       step="1"
                       value={edit.stockQty}
                       onChange={(e) => setEdit({ ...edit, stockQty: e.target.value })}
-                      disabled={selectedProduct.source === "SUPPLIER"}
+                      disabled={selectedProduct.source === "SUPPLIER" || edit.isParent}
                     />
                     {selectedProduct.source === "SUPPLIER" ? (
                       <div className="muted">La giacenza è sincronizzata dal fornitore</div>
                     ) : null}
+                    {edit.isParent ? <div className="muted">Prodotto padre non vendibile</div> : null}
                   </label>
                   <label>
                     Immagine URL
