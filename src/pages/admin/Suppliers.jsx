@@ -19,8 +19,9 @@ export default function AdminSuppliers() {
   const [search, setSearch] = useState("");
   const [actionMsg, setActionMsg] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showImportedMsg, setShowImportedMsg] = useState(false);
   const [priceOverride, setPriceOverride] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedSkus, setSelectedSkus] = useState(new Set());
 
   async function load() {
     try {
@@ -55,15 +56,6 @@ export default function AdminSuppliers() {
     }
   }
 
-  async function importFull(id) {
-    try {
-      await api(`/admin/suppliers/${id}/import-full`, { method: "POST" });
-      load();
-    } catch (err) {
-      setError("Errore import completo");
-    }
-  }
-
   async function updateStock(id) {
     try {
       await api(`/admin/suppliers/${id}/update-stock`, { method: "POST" });
@@ -89,8 +81,27 @@ export default function AdminSuppliers() {
       setSelectedProduct(null);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
+      viewProducts(selected);
     } catch (err) {
       setError("Errore import in store");
+    }
+  }
+
+  async function promoteSelected() {
+    if (!selected || selectedSkus.size === 0) return;
+    setActionMsg("");
+    try {
+      const res = await api(`/admin/suppliers/${selected.id}/promote`, {
+        method: "POST",
+        body: JSON.stringify({ supplierSkus: Array.from(selectedSkus) }),
+      });
+      setActionMsg(`Prodotti importati con successo: created ${res.created}, già presenti ${res.already}`);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+      setSelectedSkus(new Set());
+      viewProducts(selected);
+    } catch (err) {
+      setError("Errore import multiplo");
     }
   }
 
@@ -99,6 +110,7 @@ export default function AdminSuppliers() {
     try {
       const res = await api(`/admin/suppliers/${supplier.id}/products?limit=200&q=${encodeURIComponent(search)}`);
       setSupplierProducts(res);
+      setSelectedSkus(new Set());
     } catch (err) {
       setError("Errore caricamento prodotti fornitore");
     }
@@ -161,7 +173,6 @@ export default function AdminSuppliers() {
             <div>{s.name}</div>
             <div className="mono">{s.code}</div>
             <div className="actions">
-              <button className="btn" onClick={() => importFull(s.id)}>Import completo</button>
               <button className="btn ghost" onClick={() => updateStock(s.id)}>Aggiorna giacenze</button>
               <button className="btn ghost" onClick={() => viewProducts(s)}>Vedi prodotti</button>
             </div>
@@ -183,6 +194,12 @@ export default function AdminSuppliers() {
                 onChange={(e) => setSearch(e.target.value)}
               />
               <button className="btn" onClick={() => viewProducts(selected)}>Cerca</button>
+              <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
+                {bulkMode ? "Selezione attiva" : "Import multiplo"}
+              </button>
+              <button className="btn primary" onClick={promoteSelected} disabled={!bulkMode || selectedSkus.size === 0}>
+                Importa selezionati
+              </button>
             </div>
           </div>
           <div className="table wide-6">
@@ -195,11 +212,7 @@ export default function AdminSuppliers() {
               <div>Brand</div>
             </div>
             {supplierProducts.map((p) => (
-              <div
-                className="row clickable"
-                key={p.id}
-                onClick={() => setSelectedProduct(p)}
-              >
+              <div className="row clickable" key={p.id} onClick={() => setSelectedProduct(p)}>
                 <div>
                   <div className="thumb-wrap">
                     {p.isImported ? (
@@ -212,7 +225,26 @@ export default function AdminSuppliers() {
                     )}
                   </div>
                 </div>
-                <div className="mono">{p.supplierSku}</div>
+                <div className="mono">
+                  {bulkMode ? (
+                    <label className={`check ${p.isImported ? "disabled" : ""}`}>
+                      <input
+                        type="checkbox"
+                        disabled={p.isImported}
+                        checked={selectedSkus.has(p.supplierSku)}
+                        onChange={(e) => {
+                          const next = new Set(selectedSkus);
+                          if (e.target.checked) next.add(p.supplierSku);
+                          else next.delete(p.supplierSku);
+                          setSelectedSkus(next);
+                        }}
+                      />
+                      <span>{p.supplierSku}</span>
+                    </label>
+                  ) : (
+                    p.supplierSku
+                  )}
+                </div>
                 <div>{p.name || "-"}</div>
                 <div>{p.price ? `€ ${Number(p.price).toFixed(2)}` : "-"}</div>
                 <div>{p.stockQty ?? "-"}</div>

@@ -111,6 +111,14 @@ export async function adminRoutes(app: FastifyInstance) {
     return prisma.product.update({ where: { id }, data });
   });
 
+  app.delete("/products/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.product.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
   app.get("/suppliers", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Lottie from "lottie-react";
+import trashAnim from "../../assets/Trash clean.json";
 import { api } from "../../lib/api.js";
 
 export default function AdminProducts() {
@@ -6,6 +8,8 @@ export default function AdminProducts() {
   const [error, setError] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [edit, setEdit] = useState({ name: "", description: "", price: "", stockQty: "", imageUrl: "" });
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -56,6 +60,21 @@ export default function AdminProducts() {
     }
   }
 
+  async function deleteProduct() {
+    if (!selectedProduct) return;
+    try {
+      await api(`/admin/products/${selectedProduct.id}`, { method: "DELETE" });
+      setSelectedProduct(null);
+      setConfirmDelete(false);
+      setShowDeleteSuccess(true);
+      setTimeout(() => setShowDeleteSuccess(false), 2000);
+      const res = await api("/admin/products");
+      setItems(res);
+    } catch (err) {
+      setError("Errore eliminazione prodotto");
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -90,6 +109,18 @@ export default function AdminProducts() {
         ))}
       </div>
 
+      {showDeleteSuccess ? (
+        <div className="success-center">
+          <div className="success-card">
+            <Lottie animationData={trashAnim} loop={false} />
+            <div>
+              <strong>Eliminazione completata</strong>
+              <div className="muted">Prodotto rimosso dallo store</div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {selectedProduct ? (
         <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -104,6 +135,9 @@ export default function AdminProducts() {
                 ) : (
                   <div className="thumb placeholder large" />
                 )}
+                <button className="delete-chip" onClick={() => setConfirmDelete(true)}>
+                  Elimina
+                </button>
               </div>
               <div className="modal-info">
                 <div><strong>SKU:</strong> {selectedProduct.sku}</div>
@@ -143,9 +177,19 @@ export default function AdminProducts() {
                     rows={5}
                   />
                 </label>
-                <div>
+                <div className="actions">
                   <button className="btn primary" onClick={saveEdit}>Salva</button>
+                  <button className="btn danger" onClick={() => setConfirmDelete(true)}>Elimina</button>
                 </div>
+                {confirmDelete ? (
+                  <div className="confirm">
+                    <div>Sei sicuro di voler eliminare?</div>
+                    <div className="actions">
+                      <button className="btn ghost" onClick={() => setConfirmDelete(false)}>Annulla</button>
+                      <button className="btn danger" onClick={deleteProduct}>Conferma</button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
