@@ -118,7 +118,16 @@ export default function AdminProducts() {
                   </label>
                   <label>
                     Giacenza
-                    <input type="number" step="1" value={edit.stockQty} onChange={(e) => setEdit({ ...edit, stockQty: e.target.value })} />
+                    <input
+                      type="number"
+                      step="1"
+                      value={edit.stockQty}
+                      onChange={(e) => setEdit({ ...edit, stockQty: e.target.value })}
+                      disabled={selectedProduct.source === "SUPPLIER"}
+                    />
+                    {selectedProduct.source === "SUPPLIER" ? (
+                      <div className="muted">La giacenza è sincronizzata dal fornitore</div>
+                    ) : null}
                   </label>
                   <label>
                     Immagine URL

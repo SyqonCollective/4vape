@@ -5,6 +5,7 @@ import sensible from "@fastify/sensible";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import jwt from "jsonwebtoken";
+import { importStockFromSupplier } from "./jobs/importer.js";
 import { authRoutes } from "./routes/auth.js";
 import { adminRoutes } from "./routes/admin.js";
 import { catalogRoutes } from "./routes/catalog.js";
@@ -50,3 +51,29 @@ await app.register(orderRoutes, { prefix: "/orders" });
 const port = Number(process.env.PORT || 4000);
 app.get("/health", async () => ({ ok: true }));
 await app.listen({ port, host: "0.0.0.0" });
+
+// Optional: auto-sync supplier stock every N seconds
+const syncEnabled = process.env.ENABLE_STOCK_SYNC === "true";
+const syncIntervalSec = Number(process.env.STOCK_SYNC_INTERVAL_SECONDS || 60);
+let syncRunning = false;
+
+if (syncEnabled && Number.isFinite(syncIntervalSec) && syncIntervalSec > 0) {
+  setInterval(async () => {
+    if (syncRunning) return;
+    syncRunning = true;
+    try {
+      const suppliers = await prisma.supplier.findMany({
+        where: { csvStockUrl: { not: null } },
+      });
+      for (const s of suppliers) {
+        if (s.csvStockUrl) {
+          await importStockFromSupplier(s);
+        }
+      }
+    } catch (err) {
+      app.log.error(err, "stock sync failed");
+    } finally {
+      syncRunning = false;
+    }
+  }, syncIntervalSec * 1000);
+}

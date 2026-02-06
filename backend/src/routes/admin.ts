@@ -97,7 +97,15 @@ export async function adminRoutes(app: FastifyInstance) {
       })
       .parse(request.body);
 
-    return prisma.product.update({ where: { id }, data: body });
+    const existing = await prisma.product.findUnique({ where: { id } });
+    if (!existing) throw app.httpErrors.notFound("Product not found");
+
+    const data = { ...body };
+    if (existing.source === "SUPPLIER") {
+      delete (data as any).stockQty;
+    }
+
+    return prisma.product.update({ where: { id }, data });
   });
 
   app.get("/suppliers", async (request, reply) => {
