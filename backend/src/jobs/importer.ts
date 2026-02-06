@@ -251,7 +251,7 @@ export async function importFullFromSupplier(supplier: Supplier) {
       const brand = p.manufacturer_name || undefined;
       const category = p.id_category_default ? categoryMap.get(String(p.id_category_default)) : undefined;
       const images = p.associations?.images || [];
-      const imageId = images[0]?.id || p.id_default_image || p.id_default_image?.id;
+      const imageId = p.id_default_image || p.id_default_image?.id || images[0]?.id;
       const imageUrl = imageId
         ? `/api/suppliers/${supplier.id}/image?productId=${p.id}&imageId=${imageId}`
         : undefined;
@@ -304,7 +304,7 @@ export async function importFullFromSupplier(supplier: Supplier) {
         ? categoryMap.get(String(parent.id_category_default))
         : undefined;
       const images = parent?.associations?.images || [];
-      const imageId = images[0]?.id || parent?.id_default_image || parent?.id_default_image?.id;
+      const imageId = parent?.id_default_image || parent?.id_default_image?.id || images[0]?.id;
       const imageUrl = imageId
         ? `/api/suppliers/${supplier.id}/image?productId=${parent.id}&imageId=${imageId}`
         : undefined;
