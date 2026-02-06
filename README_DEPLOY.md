@@ -11,8 +11,14 @@ git push production main
 
 ## VPS (Ubuntu) — update backend manuale (se serve)
 ```bash
+# entra in VPS prima
+ssh root@82.165.175.171
+
+# aggiorna il checkout dal bare repo
+GIT_DIR=/var/repo/4vape.git GIT_WORK_TREE=/var/www/4vape git checkout -f
+
+# rebuild backend
 cd /var/www/4vape/backend
-git pull origin main
 npm install
 npm run build
 systemctl restart 4vape-api

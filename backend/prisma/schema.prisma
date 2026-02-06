@@ -26,6 +26,11 @@ enum ProductSource {
   SUPPLIER
 }
 
+enum SupplierApiType {
+  CSV
+  PRESTASHOP
+}
+
 model Company {
   id        String   @id @default(cuid())
   name      String
@@ -56,8 +61,12 @@ model Supplier {
   name        String
   code        String   @unique
   isPrimary   Boolean  @default(false)
+  apiType     SupplierApiType @default(CSV)
   csvFullUrl  String?
   csvStockUrl String?
+  apiBaseUrl  String?
+  apiHost     String?
+  apiKey      String?
   fieldMap    Json?
   createdAt   DateTime @default(now())
 

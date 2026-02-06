@@ -165,7 +165,6 @@ export default function AdminSuppliers() {
             <div>{s.name}</div>
             <div className="mono">{s.code}</div>
             <div className="actions">
-              <button className="btn ghost" onClick={() => updateStock(s.id)}>Aggiorna giacenze</button>
               <button className="btn ghost" onClick={() => viewProducts(s)}>Vedi prodotti</button>
             </div>
           </div>

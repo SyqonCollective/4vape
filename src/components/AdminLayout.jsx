@@ -30,17 +30,24 @@ export default function AdminLayout() {
 
         <nav className="admin-nav">
           {links.map((l) => (
-            <NavLink key={l.to} to={l.to} className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}> 
+            <NavLink key={l.to} to={l.to} className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}>
               {l.label}
             </NavLink>
           ))}
         </nav>
-
-        <button className="btn ghost" onClick={onLogout}>Logout</button>
       </aside>
 
       <main className="admin-main">
-        <Outlet />
+        <div className="admin-main-inner">
+          <div className="admin-topbar">
+            <div>
+              <div className="top-title">Admin Panel</div>
+              <div className="top-sub">4Vape B2B Console</div>
+            </div>
+            <button className="btn ghost" onClick={onLogout}>Logout</button>
+          </div>
+          <Outlet />
+        </div>
       </main>
     </div>
   );
