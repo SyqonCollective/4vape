@@ -28,11 +28,15 @@ export default function AdminSuppliers() {
   const token = getToken();
   const withToken = (url) => {
     if (!url) return url;
-    if (url.startsWith("/api/") && token) {
-      const joiner = url.includes("?") ? "&" : "?";
-      return `${url}${joiner}token=${token}`;
+    let fixed = url;
+    if (fixed.startsWith("/api/suppliers/")) {
+      fixed = fixed.replace("/api/suppliers/", "/api/admin/suppliers/");
     }
-    return url;
+    if (fixed.startsWith("/api/") && token) {
+      const joiner = fixed.includes("?") ? "&" : "?";
+      return `${fixed}${joiner}token=${token}`;
+    }
+    return fixed;
   };
 
   useEffect(() => {
