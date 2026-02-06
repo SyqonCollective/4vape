@@ -8,6 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+ssh-copy-id root@82.165.175.171
+ssh-copy-id root@82.165.175.171.pub
 dist
 dist-ssr
 *.local
