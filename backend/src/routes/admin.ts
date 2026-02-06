@@ -111,16 +111,23 @@ export async function adminRoutes(app: FastifyInstance) {
       if (!category) return reply.badRequest("Category not found");
       categoryName = category.name;
     }
-    return prisma.product.create({
-      data: {
-        ...body,
-        category: categoryName,
-        parentId: body.parentId || null,
-        isParent: body.isParent ?? false,
-        price: body.price ?? 0,
-        source: "MANUAL",
-      },
-    });
+    try {
+      return await prisma.product.create({
+        data: {
+          ...body,
+          category: categoryName,
+          parentId: body.parentId || null,
+          isParent: body.isParent ?? false,
+          price: body.price ?? 0,
+          source: "MANUAL",
+        },
+      });
+    } catch (err: any) {
+      if (err?.code === "P2002") {
+        return reply.code(409).send({ error: "SKU già esistente" });
+      }
+      throw err;
+    }
   });
 
   app.patch("/products/:id", async (request, reply) => {

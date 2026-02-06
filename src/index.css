@@ -515,7 +515,7 @@ button {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(900px, 94vw);
+  width: min(920px, 94vw);
   background: #fff;
   border-radius: 24px;
   box-shadow: var(--shadow-strong);
@@ -573,6 +573,23 @@ button {
   margin-top: 1rem;
 }
 
+.modal.parent-modal .modal-body {
+  grid-template-columns: 1fr;
+}
+
+.parent-upload .upload-drop {
+  min-height: 170px;
+  border-radius: 18px;
+}
+
+.parent-upload img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+}
+
 .modal-media {
   position: relative;
 }
@@ -596,12 +613,13 @@ button {
   max-height: 260px;
   overflow: auto;
   padding-right: 0.4rem;
+  align-items: stretch;
 }
 
 .child-toolbar {
   margin-top: 0.4rem;
   display: grid;
-  grid-template-columns: 1.4fr 1fr auto;
+  grid-template-columns: 1fr 220px auto;
   gap: 0.6rem;
   align-items: center;
 }
@@ -621,6 +639,19 @@ button {
   background: #fff;
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  text-align: left;
+  width: 100%;
+  justify-self: stretch;
+}
+
+.child-row .mono {
+  text-align: left;
+}
+
+@media (max-width: 860px) {
+  .child-toolbar {
+    grid-template-columns: 1fr;
+  }
 }
 
 .child-row:hover {

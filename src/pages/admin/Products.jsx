@@ -33,8 +33,11 @@ export default function AdminProducts() {
   const [childSearch, setChildSearch] = useState("");
   const [childCategory, setChildCategory] = useState("");
   const [childOnlyFree, setChildOnlyFree] = useState(true);
+  const [parentImageFile, setParentImageFile] = useState(null);
+  const [parentImagePreview, setParentImagePreview] = useState("");
   const token = getToken();
   const fileInputRef = useRef(null);
+  const parentFileInputRef = useRef(null);
   const categoryOptions = (() => {
     const byParent = new Map();
     for (const c of categories) {
@@ -257,6 +260,25 @@ export default function AdminProducts() {
           stockQty: 0,
         }),
       });
+      if (parentImageFile) {
+        const form = new FormData();
+        form.append("files", parentImageFile);
+        const res = await fetch(`/api/admin/products/${parent.id}/images`, {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: form,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const uploaded = data?.items?.[0];
+          if (uploaded?.url) {
+            await api(`/admin/products/${parent.id}`, {
+              method: "PATCH",
+              body: JSON.stringify({ imageUrl: uploaded.url }),
+            });
+          }
+        }
+      }
       if (parentChildren.size > 0) {
         await Promise.all(
           Array.from(parentChildren).map((id) =>
@@ -270,6 +292,8 @@ export default function AdminProducts() {
       setShowCreateParent(false);
       setParentDraft({ name: "", sku: "", categoryId: "" });
       setParentChildren(new Set());
+      setParentImageFile(null);
+      setParentImagePreview("");
       const res = await api("/admin/products");
       setItems(res);
       const p = await api("/admin/products?parents=true");
@@ -595,7 +619,7 @@ export default function AdminProducts() {
       {showCreateParent ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setShowCreateParent(false)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal parent-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Crea prodotto genitore</h3>
                 <button className="btn ghost" onClick={() => setShowCreateParent(false)}>
@@ -604,6 +628,38 @@ export default function AdminProducts() {
               </div>
               <div className="modal-body">
                 <div className="modal-info">
+                  <div className="parent-upload">
+                    <div
+                      className="upload-drop"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (!file) return;
+                        setParentImageFile(file);
+                        setParentImagePreview(URL.createObjectURL(file));
+                      }}
+                      onClick={() => parentFileInputRef.current?.click()}
+                    >
+                      {parentImagePreview ? (
+                        <img src={parentImagePreview} alt="Preview" />
+                      ) : (
+                        <div className="muted">Carica immagine prodotto genitore</div>
+                      )}
+                      <input
+                        ref={parentFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setParentImageFile(file);
+                          setParentImagePreview(URL.createObjectURL(file));
+                        }}
+                        style={{ display: "none" }}
+                      />
+                    </div>
+                  </div>
                   <div className="form-grid">
                     <label>
                       Nome
