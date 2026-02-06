@@ -883,11 +883,11 @@ button {
   transform: translateY(-50%) rotate(-18deg);
 }
 .smoke-pass {
-  color: transparent;
-  caret-color: transparent;
-  text-shadow: none;
-  filter: blur(0);
-  -webkit-text-fill-color: transparent;
+  -webkit-text-security: disc;
+  color: rgba(226, 232, 240, 0.85);
+  text-shadow:
+    0 0 6px rgba(180, 210, 255, 0.45),
+    0 0 14px rgba(120, 160, 220, 0.35);
 }
 @keyframes smokeMask {
   0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.85; }
