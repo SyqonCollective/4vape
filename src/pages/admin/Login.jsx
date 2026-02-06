@@ -7,6 +7,7 @@ export default function AdminLogin() {
   const canvasRef = useRef(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -136,7 +137,23 @@ export default function AdminLogin() {
           </label>
           <label>
             Password
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
+            <div className="password-field">
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type={showPassword ? "text" : "text"}
+                className={showPassword ? "" : "smoke-pass"}
+                required
+              />
+              <button
+                type="button"
+                className="eye-btn"
+                aria-label={showPassword ? "Nascondi password" : "Mostra password"}
+                onClick={() => setShowPassword((v) => !v)}
+              >
+                {showPassword ? "🙈" : "👁"}
+              </button>
+            </div>
           </label>
           {error ? <div className="error">{error}</div> : null}
           <button className="btn primary" disabled={loading}>
