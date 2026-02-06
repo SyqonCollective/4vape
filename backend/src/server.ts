@@ -16,12 +16,14 @@ await app.register(cors, { origin: true });
 await app.register(sensible);
 await app.register(jwt, { secret: process.env.JWT_SECRET || "dev_secret" });
 
-await app.register(swagger, {
-  openapi: {
-    info: { title: "4Vape API", version: "0.1.0" },
-  },
-});
-await app.register(swaggerUi, { routePrefix: "/docs" });
+if (process.env.ENABLE_SWAGGER === "true") {
+  await app.register(swagger, {
+    openapi: {
+      info: { title: "4Vape API", version: "0.1.0" },
+    },
+  });
+  await app.register(swaggerUi, { routePrefix: "/docs" });
+}
 
 app.decorate("authenticate", async (request: any, reply: any) => {
   try {
