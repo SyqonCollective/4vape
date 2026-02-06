@@ -839,6 +839,17 @@ button {
   font-weight: 700;
   padding: 0 4px;
 }
+.compare-table {
+  display: grid;
+  gap: 8px;
+}
+.compare-table .row {
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+}
+.compare-table .row.header {
+  color: var(--muted);
+  font-weight: 700;
+}
 .password-field {
   position: relative;
   display: grid;

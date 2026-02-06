@@ -28,6 +28,10 @@ export default function AdminSuppliers() {
   const [priceOverride, setPriceOverride] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedSkus, setSelectedSkus] = useState(new Set());
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [compareItems, setCompareItems] = useState([]);
+  const [compareError, setCompareError] = useState("");
   const token = getToken();
   const withToken = (url) => {
     if (!url) return url;
@@ -59,10 +63,10 @@ export default function AdminSuppliers() {
   })();
 
   useEffect(() => {
-    const open = Boolean(selectedProduct || showSuccess);
+    const open = Boolean(selectedProduct || showSuccess || compareOpen);
     document.body.classList.toggle("modal-open", open);
     return () => document.body.classList.remove("modal-open");
-  }, [selectedProduct, showSuccess]);
+  }, [selectedProduct, showSuccess, compareOpen]);
 
   async function load() {
     try {
@@ -165,6 +169,21 @@ export default function AdminSuppliers() {
     }
   }
 
+  async function openCompare() {
+    if (!selected) return;
+    setCompareError("");
+    setCompareLoading(true);
+    setCompareOpen(true);
+    try {
+      const res = await api(`/admin/suppliers/${selected.id}/compare?limit=200`);
+      setCompareItems(res.items || []);
+    } catch (err) {
+      setCompareError("Errore confronto prezzi");
+    } finally {
+      setCompareLoading(false);
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -236,6 +255,9 @@ export default function AdminSuppliers() {
               </button>
               <button className="btn primary" onClick={promoteSelected} disabled={!bulkMode || selectedSkus.size === 0}>
                 Importa selezionati
+              </button>
+              <button className="btn ghost" onClick={openCompare}>
+                Modalità confronto
               </button>
             </div>
           </div>
@@ -331,6 +353,51 @@ export default function AdminSuppliers() {
             </button>
           </div>
         </div>
+      ) : null}
+
+      {compareOpen ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setCompareOpen(false)}>
+            <div className="modal large" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div className="modal-title">
+                  <h3>Confronto prezzi</h3>
+                  <span className="tag">Matching intelligente</span>
+                </div>
+                <button className="btn ghost" onClick={() => setCompareOpen(false)}>Chiudi</button>
+              </div>
+              <div className="modal-body">
+                {compareLoading ? (
+                  <div className="muted">Analisi in corso…</div>
+                ) : compareError ? (
+                  <div className="error">{compareError}</div>
+                ) : compareItems.length === 0 ? (
+                  <div className="muted">Nessun match trovato</div>
+                ) : (
+                  <div className="compare-table">
+                    <div className="row header">
+                      <div>Prodotto</div>
+                      <div>Prezzo attuale</div>
+                      <div>Miglior prezzo</div>
+                      <div>Fornitore migliore</div>
+                    </div>
+                    {compareItems.map((item) => (
+                      <div className="row" key={item.source.id}>
+                        <div>
+                          <div className="strong">{item.source.name}</div>
+                          <div className="muted mono">{item.source.supplierSku}</div>
+                        </div>
+                        <div>{item.source.price != null ? `€ ${Number(item.source.price).toFixed(2)}` : "-"}</div>
+                        <div>{item.best?.price != null ? `€ ${Number(item.best.price).toFixed(2)}` : "-"}</div>
+                        <div>{item.best?.supplierName || "—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </Portal>
       ) : null}
 
       {selectedProduct ? (
