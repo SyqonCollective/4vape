@@ -608,6 +608,40 @@ button {
   display: grid;
   place-items: center;
   padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at top, #f7f3ea, #efe6d7);
+}
+
+.auth-smoke {
+  position: absolute;
+  inset: -20vh -10vw;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(4px);
+  opacity: 0.9;
+}
+.auth-smoke .smoke {
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 60%),
+    radial-gradient(circle at 70% 60%, rgba(210, 220, 230, 0.45), rgba(255, 255, 255, 0) 65%),
+    radial-gradient(circle at 40% 80%, rgba(180, 190, 210, 0.35), rgba(255, 255, 255, 0) 60%);
+  mix-blend-mode: screen;
+  animation: smokeFloat 24s ease-in-out infinite;
+}
+.auth-smoke .s1 { top: -10vmax; left: -15vmax; animation-duration: 30s; }
+.auth-smoke .s2 { top: 10vmax; right: -10vmax; animation-duration: 26s; animation-delay: -8s; }
+.auth-smoke .s3 { bottom: -15vmax; left: 10vmax; animation-duration: 28s; animation-delay: -12s; }
+.auth-smoke .s4 { bottom: -8vmax; right: 5vmax; animation-duration: 22s; animation-delay: -6s; }
+.auth-smoke .s5 { top: 30vmax; left: 20vmax; animation-duration: 34s; animation-delay: -16s; }
+
+@keyframes smokeFloat {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
+  50% { transform: translate3d(3vmax, -2vmax, 0) scale(1.08); opacity: 0.85; }
+  100% { transform: translate3d(-2vmax, 2vmax, 0) scale(1); opacity: 0.6; }
 }
 
 .auth-card {
@@ -619,6 +653,8 @@ button {
   border: 1px solid var(--stroke);
   backdrop-filter: blur(12px);
   animation: float-in 0.6s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .auth-header {

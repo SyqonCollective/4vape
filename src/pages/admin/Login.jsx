@@ -30,6 +30,13 @@ export default function AdminLogin() {
 
   return (
     <div className="auth-wrap">
+      <div className="auth-smoke">
+        <span className="smoke s1" />
+        <span className="smoke s2" />
+        <span className="smoke s3" />
+        <span className="smoke s4" />
+        <span className="smoke s5" />
+      </div>
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-badge">Admin</div>
