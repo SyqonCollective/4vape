@@ -34,6 +34,8 @@ export default function AdminSuppliers() {
   const [bulkCategoryId, setBulkCategoryId] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryParent, setNewCategoryParent] = useState("");
+  const [editingSupplierId, setEditingSupplierId] = useState(null);
+  const [editingName, setEditingName] = useState("");
   const token = getToken();
   const withToken = (url) => {
     if (!url) return url;
@@ -126,6 +128,34 @@ export default function AdminSuppliers() {
       load();
     } catch (err) {
       setError("Errore aggiornamento giacenze");
+    }
+  }
+
+  async function updateInventory(id) {
+    try {
+      const res = await api(`/admin/suppliers/${id}/import-full`, { method: "POST" });
+      setSuccessTitle("Inventario aggiornato");
+      setSuccessBody(`Creati ${res.created || 0}, aggiornati ${res.updated || 0}, saltati ${res.skipped || 0}`);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+      if (selected?.id === id) viewProducts(selected, 1);
+    } catch (err) {
+      setError("Errore aggiornamento inventario");
+    }
+  }
+
+  async function saveSupplierName(id) {
+    if (!editingName.trim()) return;
+    try {
+      await api(`/admin/suppliers/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: editingName.trim() }),
+      });
+      setEditingSupplierId(null);
+      setEditingName("");
+      load();
+    } catch {
+      setError("Errore rinomina fornitore");
     }
   }
 
@@ -272,9 +302,46 @@ export default function AdminSuppliers() {
         </div>
         {items.map((s) => (
           <div className="row" key={s.id}>
-            <div>{s.name}</div>
+            <div>
+              {editingSupplierId === s.id ? (
+                <div className="input-row">
+                  <input
+                    value={editingName}
+                    onChange={(e) => setEditingName(e.target.value)}
+                  />
+                  <button className="btn primary" onClick={() => saveSupplierName(s.id)}>
+                    Salva
+                  </button>
+                  <button
+                    className="btn ghost"
+                    onClick={() => {
+                      setEditingSupplierId(null);
+                      setEditingName("");
+                    }}
+                  >
+                    Annulla
+                  </button>
+                </div>
+              ) : (
+                <div className="input-row">
+                  <strong>{s.name}</strong>
+                  <button
+                    className="btn ghost"
+                    onClick={() => {
+                      setEditingSupplierId(s.id);
+                      setEditingName(s.name);
+                    }}
+                  >
+                    Rinomina
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="mono">{s.code}</div>
             <div className="actions">
+              <button className="btn ghost" onClick={() => updateInventory(s.id)}>
+                Aggiorna inventario
+              </button>
               <button className="btn ghost" onClick={() => viewProducts(s)}>Vedi prodotti</button>
             </div>
           </div>

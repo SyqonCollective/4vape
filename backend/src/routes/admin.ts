@@ -440,10 +440,22 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!user) return;
     const supplierId = (request.params as any).id as string;
     const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
-    if (!supplier || !supplier.csvFullUrl) throw app.httpErrors.notFound("Supplier or URL missing");
+    if (!supplier) throw app.httpErrors.notFound("Supplier not found");
 
     const result = await importFullFromSupplier(supplier);
     return result;
+  });
+
+  app.patch("/suppliers/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const supplierId = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2),
+      })
+      .parse(request.body);
+    return prisma.supplier.update({ where: { id: supplierId }, data: { name: body.name } });
   });
 
   app.post("/suppliers/:id/update-stock", async (request, reply) => {
