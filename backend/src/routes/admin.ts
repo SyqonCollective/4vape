@@ -307,16 +307,16 @@ export async function adminRoutes(app: FastifyInstance) {
         const data: Prisma.ProductUncheckedUpdateInput = {
           ...(row.name !== undefined ? { name: row.name || undefined } : {}),
           ...(row.price !== undefined
-            ? { price: row.price == null ? null : new Prisma.Decimal(row.price) }
+            ? { price: row.price == null ? undefined : new Prisma.Decimal(row.price) }
             : {}),
           ...(row.listPrice !== undefined
-            ? { listPrice: row.listPrice == null ? null : new Prisma.Decimal(row.listPrice) }
+            ? { listPrice: row.listPrice == null ? undefined : new Prisma.Decimal(row.listPrice) }
             : {}),
           ...(row.purchasePrice !== undefined
-            ? { purchasePrice: row.purchasePrice == null ? null : new Prisma.Decimal(row.purchasePrice) }
+            ? { purchasePrice: row.purchasePrice == null ? undefined : new Prisma.Decimal(row.purchasePrice) }
             : {}),
           ...(row.discountPrice !== undefined
-            ? { discountPrice: row.discountPrice == null ? null : new Prisma.Decimal(row.discountPrice) }
+            ? { discountPrice: row.discountPrice == null ? undefined : new Prisma.Decimal(row.discountPrice) }
             : {}),
           ...(row.discountQty !== undefined ? { discountQty: row.discountQty } : {}),
           ...(row.stockQty !== undefined ? { stockQty: row.stockQty } : {}),
