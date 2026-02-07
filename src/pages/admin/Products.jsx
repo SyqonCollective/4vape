@@ -524,6 +524,7 @@ export default function AdminProducts() {
       discountPrice: p.discountPrice != null ? Number(p.discountPrice).toFixed(2) : "",
       discountQty: p.discountQty ?? "",
       stockQty: p.stockQty ?? "",
+      nicotine: p.nicotine != null ? Number(p.nicotine).toFixed(3) : "",
       categoryId: p.categoryId || "",
       taxRateId: p.taxRateId || "",
       exciseRateId: p.exciseRateId || "",
@@ -559,6 +560,7 @@ export default function AdminProducts() {
             discountPrice: row.discountPrice === "" ? null : Number(row.discountPrice),
             discountQty: row.discountQty === "" ? null : Number(row.discountQty),
             stockQty: row.stockQty === "" ? null : Number(row.stockQty),
+            nicotine: row.nicotine === "" ? null : Number(row.nicotine),
             categoryId: row.categoryId || null,
             taxRateId: row.taxRateId || null,
             exciseRateId: row.exciseRateId || null,
@@ -1360,6 +1362,7 @@ export default function AdminProducts() {
                   <div>Sconto</div>
                   <div>Q.tà Sconto</div>
                   <div>Giacenza</div>
+                  <div>Nicotina</div>
                   <div>Categoria</div>
                   <div>IVA</div>
                   <div>Accisa</div>
@@ -1517,6 +1520,17 @@ export default function AdminProducts() {
                             setBulkRows(next);
                           }}
                           disabled={row.isParent || !isDraftRow}
+                        />
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={row.nicotine}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, nicotine: e.target.value };
+                            setBulkRows(next);
+                          }}
+                          disabled={!isDraftRow}
                         />
                         <select
                           value={row.categoryId}

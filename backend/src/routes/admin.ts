@@ -291,6 +291,7 @@ export async function adminRoutes(app: FastifyInstance) {
             discountPrice: z.number().nullable().optional(),
             discountQty: z.number().nullable().optional(),
             stockQty: z.number().nullable().optional(),
+            nicotine: z.number().nullable().optional(),
             categoryId: z.string().nullable().optional(),
             taxRateId: z.string().nullable().optional(),
             exciseRateId: z.string().nullable().optional(),
@@ -321,6 +322,9 @@ export async function adminRoutes(app: FastifyInstance) {
             : {}),
           ...(row.discountQty !== undefined ? { discountQty: row.discountQty ?? undefined } : {}),
           ...(row.stockQty !== undefined ? { stockQty: row.stockQty ?? undefined } : {}),
+          ...(row.nicotine !== undefined
+            ? { nicotine: row.nicotine == null ? undefined : new Prisma.Decimal(row.nicotine) }
+            : {}),
           ...(row.categoryId !== undefined ? { categoryId: row.categoryId ?? null } : {}),
           ...(row.taxRateId !== undefined ? { taxRateId: row.taxRateId ?? null } : {}),
           ...(row.exciseRateId !== undefined ? { exciseRateId: row.exciseRateId ?? null } : {}),
