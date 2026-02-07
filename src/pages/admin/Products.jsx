@@ -133,6 +133,34 @@ export default function AdminProducts() {
 
   useEffect(() => {
     let active = true;
+    const interval = setInterval(async () => {
+      try {
+        const res = await api("/admin/products/stock");
+        if (!active) return;
+        const map = new Map(res.map((r) => [r.id, r]));
+        setItems((prev) => {
+          let changed = false;
+          const next = prev.map((p) => {
+            const upd = map.get(p.id);
+            if (!upd) return p;
+            if (p.stockQty === upd.stockQty && p.isUnavailable === upd.isUnavailable) return p;
+            changed = true;
+            return { ...p, stockQty: upd.stockQty, isUnavailable: upd.isUnavailable };
+          });
+          return changed ? next : prev;
+        });
+      } catch {
+        // ignore stock refresh errors
+      }
+    }, 60000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     async function loadCategories() {
       try {
         const res = await api("/admin/categories");
