@@ -105,6 +105,7 @@ model Product {
   categoryId  String?
   parentId    String?
   isParent    Boolean       @default(false)
+  isUnavailable Boolean     @default(false)
   price       Decimal       @db.Decimal(12, 2)
   stockQty    Int           @default(0)
   imageUrl    String?

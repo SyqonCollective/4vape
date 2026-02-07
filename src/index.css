@@ -475,6 +475,11 @@ button {
   box-shadow: 0 16px 34px rgba(16, 23, 40, 0.12);
 }
 
+.row.unavailable {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(254, 226, 226, 0.6);
+}
+
 .row .actions {
   display: flex;
   gap: 0.6rem;
@@ -559,6 +564,15 @@ button {
   background: #e6f8f0;
   color: #0f766e;
   border: 1px solid #99f6e4;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.tag.danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   font-size: 0.8rem;

@@ -18,6 +18,7 @@ export default function AdminProducts() {
     categoryId: "",
     parentId: "",
     isParent: false,
+    isUnavailable: false,
   });
   const [categories, setCategories] = useState([]);
   const [parents, setParents] = useState([]);
@@ -36,6 +37,7 @@ export default function AdminProducts() {
   const [childOnlyFree, setChildOnlyFree] = useState(true);
   const [parentImageFile, setParentImageFile] = useState(null);
   const [parentImagePreview, setParentImagePreview] = useState("");
+  const [childLinks, setChildLinks] = useState(new Set());
   const token = getToken();
   const fileInputRef = useRef(null);
   const parentFileInputRef = useRef(null);
@@ -151,8 +153,10 @@ export default function AdminProducts() {
       categoryId: p.categoryId || "",
       parentId: p.parentId || "",
       isParent: Boolean(p.isParent),
+      isUnavailable: Boolean(p.isUnavailable),
     });
     setImages(p.images || []);
+    setChildLinks(new Set((p.children || []).map((c) => c.id)));
   }
 
   async function saveEdit() {
@@ -169,8 +173,22 @@ export default function AdminProducts() {
           categoryId: edit.categoryId || undefined,
           parentId: edit.parentId || undefined,
           isParent: edit.isParent,
+          isUnavailable: edit.isUnavailable,
         }),
       });
+      if (edit.isParent) {
+        const existingChildIds = new Set((selectedProduct.children || []).map((c) => c.id));
+        const toAdd = Array.from(childLinks).filter((id) => !existingChildIds.has(id));
+        const toRemove = Array.from(existingChildIds).filter((id) => !childLinks.has(id));
+        await Promise.all([
+          ...toAdd.map((id) =>
+            api(`/admin/products/${id}`, { method: "PATCH", body: JSON.stringify({ parentId: selectedProduct.id }) })
+          ),
+          ...toRemove.map((id) =>
+            api(`/admin/products/${id}`, { method: "PATCH", body: JSON.stringify({ parentId: null }) })
+          ),
+        ]);
+      }
       setSelectedProduct(null);
       const res = await api("/admin/products");
       setItems(res);
@@ -323,6 +341,7 @@ export default function AdminProducts() {
 
   const filteredChildren = items.filter((p) => {
     if (p.isParent) return false;
+    if (selectedProduct && p.id === selectedProduct.id) return false;
     if (childOnlyFree && p.parentId) return false;
     if (childCategory && p.categoryId !== childCategory) return false;
     if (childSearch.trim()) {
@@ -388,7 +407,7 @@ export default function AdminProducts() {
         </div>
         {filteredItems.map((p) => (
           <div
-            className="row clickable"
+            className={`row clickable ${p.isUnavailable ? "unavailable" : ""}`}
             key={p.id}
             onClick={() => {
               if (bulkMode) {
@@ -443,6 +462,7 @@ export default function AdminProducts() {
             <div>
               {p.name}
               {p.isParent ? <span className="tag">Padre</span> : null}
+              {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
             </div>
             <div>€ {Number(p.price).toFixed(2)}</div>
             <div>{p.stockQty}</div>
@@ -596,17 +616,32 @@ export default function AdminProducts() {
                       <input
                         type="checkbox"
                         checked={edit.isParent}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const checked = e.target.checked;
                           setEdit({
                             ...edit,
-                            isParent: e.target.checked,
-                            parentId: e.target.checked ? "" : edit.parentId,
-                          })
-                        }
+                            isParent: checked,
+                            parentId: checked ? "" : edit.parentId,
+                          });
+                          if (!checked) {
+                            setChildLinks(new Set());
+                          }
+                        }}
                       />
                       <span>Non vendibile</span>
                     </div>
                     <div className="muted">Per creare un nuovo genitore usa “Crea prodotto genitore”.</div>
+                  </label>
+                  <label>
+                    Non disponibile
+                    <div className="toggle">
+                      <input
+                        type="checkbox"
+                        checked={edit.isUnavailable}
+                        onChange={(e) => setEdit({ ...edit, isUnavailable: e.target.checked, stockQty: 0 })}
+                      />
+                      <span>Forza giacenza a 0</span>
+                    </div>
                   </label>
                   <label>
                     Assegna a padre
@@ -631,12 +666,13 @@ export default function AdminProducts() {
                       step="1"
                       value={edit.stockQty}
                       onChange={(e) => setEdit({ ...edit, stockQty: e.target.value })}
-                      disabled={selectedProduct.source === "SUPPLIER" || edit.isParent}
+                      disabled={selectedProduct.source === "SUPPLIER" || edit.isParent || edit.isUnavailable}
                     />
                     {selectedProduct.source === "SUPPLIER" ? (
                       <div className="muted">La giacenza è sincronizzata dal fornitore</div>
                     ) : null}
                     {edit.isParent ? <div className="muted">Prodotto padre non vendibile</div> : null}
+                    {edit.isUnavailable ? <div className="muted">Prodotto non disponibile</div> : null}
                   </label>
                   <label>
                     Immagine URL
@@ -655,6 +691,59 @@ export default function AdminProducts() {
                   <button className="btn primary" onClick={saveEdit}>Salva</button>
                   <button className="btn danger" onClick={() => setConfirmDelete(true)}>Elimina</button>
                 </div>
+                {edit.isParent ? (
+                  <div className="child-assignment">
+                    <div className="child-toolbar">
+                      <div className="child-search">
+                        <input
+                          placeholder="Cerca per nome, SKU o brand..."
+                          value={childSearch}
+                          onChange={(e) => setChildSearch(e.target.value)}
+                        />
+                      </div>
+                      <select
+                        className="select"
+                        value={childCategory || ""}
+                        onChange={(e) => setChildCategory(e.target.value)}
+                      >
+                        <option value="">Tutte le categorie</option>
+                        {categoryOptions.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                      <label className="check">
+                        <input
+                          type="checkbox"
+                          checked={childOnlyFree}
+                          onChange={(e) => setChildOnlyFree(e.target.checked)}
+                        />
+                        <span>Solo non assegnati</span>
+                      </label>
+                    </div>
+                    <div className="muted">Seleziona i prodotti figli da associare:</div>
+                    <div className="child-list">
+                      {filteredChildren.map((p) => (
+                        <button
+                          type="button"
+                          key={p.id}
+                          className={`child-row ${childLinks.has(p.id) ? "active" : ""}`}
+                          onClick={() => {
+                            const next = new Set(childLinks);
+                            if (next.has(p.id)) next.delete(p.id);
+                            else next.add(p.id);
+                            setChildLinks(next);
+                          }}
+                        >
+                          <span className="mono">{p.sku}</span>
+                          <span>{p.name}</span>
+                          {p.parentId ? <span className="tag">Già figlio</span> : null}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
             </div>

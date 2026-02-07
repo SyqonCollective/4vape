@@ -95,6 +95,7 @@ export async function adminRoutes(app: FastifyInstance) {
         categoryId: z.string().optional(),
         parentId: z.string().optional(),
         isParent: z.boolean().optional(),
+        isUnavailable: z.boolean().optional(),
         price: z.number().nonnegative().optional(),
         stockQty: z.number().int().nonnegative().default(0),
         imageUrl: z.string().optional(),
@@ -116,12 +117,13 @@ export async function adminRoutes(app: FastifyInstance) {
         data: {
           ...body,
           category: categoryName,
-          parentId: body.parentId || null,
-          isParent: body.isParent ?? false,
-          price: body.price ?? 0,
-          source: "MANUAL",
-        },
-      });
+        parentId: body.parentId || null,
+        isParent: body.isParent ?? false,
+        isUnavailable: body.isUnavailable ?? false,
+        price: body.price ?? 0,
+        source: "MANUAL",
+      },
+    });
     } catch (err: any) {
       if (err?.code === "P2002") {
         return reply.code(409).send({ error: "SKU già esistente" });
@@ -143,6 +145,7 @@ export async function adminRoutes(app: FastifyInstance) {
         categoryId: z.string().nullable().optional(),
         parentId: z.string().nullable().optional(),
         isParent: z.boolean().optional(),
+        isUnavailable: z.boolean().optional(),
         price: z.number().nonnegative().optional(),
         stockQty: z.number().int().nonnegative().optional(),
         imageUrl: z.string().optional(),
@@ -164,8 +167,12 @@ export async function adminRoutes(app: FastifyInstance) {
     }
     if (body.parentId !== undefined) data.parentId = body.parentId;
     if (body.isParent !== undefined) data.isParent = body.isParent;
+    if (body.isUnavailable !== undefined) data.isUnavailable = body.isUnavailable;
     if (existing.source === "SUPPLIER") {
       delete (data as any).stockQty;
+    }
+    if (data.isUnavailable === true) {
+      data.stockQty = 0;
     }
 
     return prisma.product.update({ where: { id }, data });
