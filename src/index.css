@@ -483,6 +483,27 @@ button {
   box-shadow: 0 16px 34px rgba(16, 23, 40, 0.12);
 }
 
+.row.parent-row {
+  border-left: 4px solid rgba(59, 130, 246, 0.5);
+  background: #f8fafc;
+}
+
+.row.child-row {
+  margin-left: 22px;
+  border-left: 2px solid rgba(148, 163, 184, 0.45);
+  position: relative;
+}
+
+.row.child-row::before {
+  content: "";
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  width: 18px;
+  height: 2px;
+  background: rgba(148, 163, 184, 0.45);
+}
+
 .row.unavailable {
   border-color: rgba(239, 68, 68, 0.35);
   background: rgba(254, 226, 226, 0.6);

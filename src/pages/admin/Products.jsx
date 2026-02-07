@@ -435,6 +435,44 @@ export default function AdminProducts() {
     return true;
   });
 
+  const groupedRows = (() => {
+    if (productFilter !== "all") {
+      return filteredItems.map((p) => ({ type: "single", item: p }));
+    }
+
+    const byParent = new Map();
+    const singles = [];
+    const parentsOnly = items.filter((p) => p.isParent);
+    for (const parent of parentsOnly) {
+      byParent.set(parent.id, []);
+    }
+    for (const item of items) {
+      if (item.isParent) continue;
+      const parentId = item.parentId || item.parent?.id;
+      if (parentId && byParent.has(parentId)) {
+        byParent.get(parentId).push(item);
+      } else {
+        singles.push(item);
+      }
+    }
+    const rows = [];
+    for (const parent of parentsOnly) {
+      rows.push({ type: "parent", item: parent });
+      const children = (byParent.get(parent.id) || []).sort((a, b) => {
+        const an = a.name || "";
+        const bn = b.name || "";
+        return an.localeCompare(bn);
+      });
+      for (const child of children) {
+        rows.push({ type: "child", item: child, parent });
+      }
+    }
+    for (const single of singles) {
+      rows.push({ type: "single", item: single });
+    }
+    return rows;
+  })();
+
   function openBulkEditor() {
     const rows = filteredItems.map((p) => ({
       id: p.id,
@@ -545,9 +583,13 @@ export default function AdminProducts() {
           <div>Brand</div>
           <div>Fornitore</div>
         </div>
-        {filteredItems.map((p) => (
+        {groupedRows.map((row) => {
+          const p = row.item;
+          const isChild = row.type === "child";
+          const isParentRow = row.type === "parent";
+          return (
           <div
-            className={`row clickable ${p.isUnavailable ? "unavailable" : ""}`}
+            className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
             key={p.id}
             onClick={() => {
               if (bulkMode) {
@@ -604,17 +646,18 @@ export default function AdminProducts() {
               {p.isParent ? <span className="tag">Padre</span> : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
             </div>
-            <div>€ {Number(p.price).toFixed(2)}</div>
-            <div>{p.stockQty}</div>
+            <div>{p.isParent ? "-" : `€ ${Number(p.price).toFixed(2)}`}</div>
+            <div>{p.isParent ? "-" : p.stockQty}</div>
             <div>{p.isParent ? "Padre" : p.parentId ? "Figlio" : "Singolo"}</div>
-            <div>{p.parent?.name || "-"}</div>
+            <div>{row.parent?.name || p.parent?.name || "-"}</div>
             <div>{p.category || "-"}</div>
             <div>{p.exciseRateRef?.name || (p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : "-")}</div>
             <div>{p.taxRateRef ? `${p.taxRateRef.name} (${Number(p.taxRateRef.rate).toFixed(2)}%)` : "-"}</div>
             <div>{p.brand || "-"}</div>
             <div>{p.sourceSupplier?.name || (p.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {showDeleteSuccess ? (
