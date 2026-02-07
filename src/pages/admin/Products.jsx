@@ -565,6 +565,7 @@ export default function AdminProducts() {
             vatIncluded: Boolean(row.vatIncluded),
             published: productFilter === "draft" ? false : Boolean(row.published),
             isUnavailable: Boolean(row.isUnavailable),
+            isParent: Boolean(row.isParent),
           })),
         }),
       });
@@ -1365,6 +1366,7 @@ export default function AdminProducts() {
                   <div>IVA incl.</div>
                   <div>Pubblicato</div>
                   <div>Non disp.</div>
+                  <div>Padre?</div>
                   <div>Padre</div>
                 </div>
                 {(() => {
@@ -1603,6 +1605,23 @@ export default function AdminProducts() {
                           />
                           <span />
                         </label>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={row.isParent}
+                            onChange={(e) => {
+                              const next = [...bulkRows];
+                              next[idx] = {
+                                ...row,
+                                isParent: e.target.checked,
+                                parentId: e.target.checked ? "" : row.parentId,
+                              };
+                              setBulkRows(next);
+                            }}
+                            disabled={!isDraftRow}
+                          />
+                          <span />
+                        </label>
                         <select
                           value={row.parentId}
                           onChange={(e) => {
@@ -1610,7 +1629,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, parentId: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={!isDraftRow || row.isParent}
                         >
                           <option value="">Nessun padre</option>
                           {(productFilter === "draft"

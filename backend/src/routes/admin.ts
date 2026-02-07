@@ -297,6 +297,7 @@ export async function adminRoutes(app: FastifyInstance) {
             vatIncluded: z.boolean().optional(),
             published: z.boolean().optional(),
             isUnavailable: z.boolean().optional(),
+            isParent: z.boolean().optional(),
           })
         ),
       })
@@ -325,6 +326,9 @@ export async function adminRoutes(app: FastifyInstance) {
           ...(row.exciseRateId !== undefined ? { exciseRateId: row.exciseRateId ?? null } : {}),
           ...(row.vatIncluded !== undefined ? { vatIncluded: row.vatIncluded } : {}),
           ...(row.published !== undefined ? { published: row.published } : {}),
+          ...(row.isParent !== undefined
+            ? { isParent: row.isParent, parentId: row.isParent ? null : undefined }
+            : {}),
           ...(row.isUnavailable !== undefined
             ? { isUnavailable: row.isUnavailable, stockQty: row.isUnavailable ? 0 : undefined }
             : {}),
