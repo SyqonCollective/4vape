@@ -78,6 +78,8 @@ export async function adminRoutes(app: FastifyInstance) {
         categoryRef: true,
         parent: true,
         images: true,
+        taxRateRef: true,
+        exciseRateRef: true,
         children: { select: { id: true, name: true, sku: true } },
       },
     });
@@ -112,6 +114,9 @@ export async function adminRoutes(app: FastifyInstance) {
         exciseTotal: z.number().optional(),
         taxRate: z.number().optional(),
         taxAmount: z.number().optional(),
+        vatIncluded: z.boolean().optional(),
+        taxRateId: z.string().optional(),
+        exciseRateId: z.string().optional(),
         purchasePrice: z.number().optional(),
         listPrice: z.number().optional(),
         discountPrice: z.number().optional(),
@@ -157,6 +162,9 @@ export async function adminRoutes(app: FastifyInstance) {
         exciseTotal: body.exciseTotal,
         taxRate: body.taxRate,
         taxAmount: body.taxAmount,
+        vatIncluded: body.vatIncluded ?? true,
+        taxRateId: body.taxRateId,
+        exciseRateId: body.exciseRateId,
         purchasePrice: body.purchasePrice,
         listPrice: body.listPrice,
         discountPrice: body.discountPrice,
@@ -204,6 +212,9 @@ export async function adminRoutes(app: FastifyInstance) {
         exciseTotal: z.number().optional(),
         taxRate: z.number().optional(),
         taxAmount: z.number().optional(),
+        vatIncluded: z.boolean().optional(),
+        taxRateId: z.string().nullable().optional(),
+        exciseRateId: z.string().nullable().optional(),
         purchasePrice: z.number().optional(),
         listPrice: z.number().optional(),
         discountPrice: z.number().optional(),
@@ -232,6 +243,9 @@ export async function adminRoutes(app: FastifyInstance) {
     if (body.parentId !== undefined) data.parentId = body.parentId;
     if (body.isParent !== undefined) data.isParent = body.isParent;
     if (body.isUnavailable !== undefined) data.isUnavailable = body.isUnavailable;
+    if (body.vatIncluded !== undefined) data.vatIncluded = body.vatIncluded;
+    if (body.taxRateId !== undefined) data.taxRateId = body.taxRateId;
+    if (body.exciseRateId !== undefined) data.exciseRateId = body.exciseRateId;
     if (existing.source === "SUPPLIER") {
       if (data.isUnavailable === true) {
         data.stockQty = 0;
@@ -398,6 +412,103 @@ export async function adminRoutes(app: FastifyInstance) {
       settings = await prisma.appSetting.create({ data: {} });
     }
     return settings;
+  });
+
+  app.get("/taxes", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.taxRate.findMany({ orderBy: { name: "asc" } });
+  });
+
+  app.post("/taxes", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        name: z.string().min(2),
+        rate: z.number().nonnegative(),
+      })
+      .parse(request.body);
+    return prisma.taxRate.create({
+      data: { name: body.name, rate: new Prisma.Decimal(body.rate) },
+    });
+  });
+
+  app.patch("/taxes/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        rate: z.number().nonnegative().optional(),
+      })
+      .parse(request.body);
+    return prisma.taxRate.update({
+      where: { id },
+      data: {
+        ...(body.name ? { name: body.name } : {}),
+        ...(body.rate != null ? { rate: new Prisma.Decimal(body.rate) } : {}),
+      },
+    });
+  });
+
+  app.delete("/taxes/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.taxRate.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
+  app.get("/excises", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.exciseRate.findMany({ orderBy: { name: "asc" } });
+  });
+
+  app.post("/excises", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        name: z.string().min(2),
+        type: z.enum(["ML", "PRODUCT"]),
+        amount: z.number().nonnegative(),
+      })
+      .parse(request.body);
+    return prisma.exciseRate.create({
+      data: { name: body.name, type: body.type, amount: new Prisma.Decimal(body.amount) },
+    });
+  });
+
+  app.patch("/excises/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        type: z.enum(["ML", "PRODUCT"]).optional(),
+        amount: z.number().nonnegative().optional(),
+      })
+      .parse(request.body);
+    return prisma.exciseRate.update({
+      where: { id },
+      data: {
+        ...(body.name ? { name: body.name } : {}),
+        ...(body.type ? { type: body.type } : {}),
+        ...(body.amount != null ? { amount: new Prisma.Decimal(body.amount) } : {}),
+      },
+    });
+  });
+
+  app.delete("/excises/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.exciseRate.delete({ where: { id } });
+    return reply.code(204).send();
   });
 
   app.patch("/settings", async (request, reply) => {

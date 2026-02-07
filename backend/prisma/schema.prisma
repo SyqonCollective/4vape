@@ -26,6 +26,11 @@ enum ProductSource {
   SUPPLIER
 }
 
+enum ExciseType {
+  ML
+  PRODUCT
+}
+
 enum SupplierApiType {
   CSV
   PRESTASHOP
@@ -142,6 +147,7 @@ model Product {
   exciseTotal Decimal? @db.Decimal(12, 6)
   taxRate     Decimal? @db.Decimal(6, 2)
   taxAmount   Decimal? @db.Decimal(12, 6)
+  vatIncluded Boolean  @default(true)
   price       Decimal       @db.Decimal(12, 2)
   purchasePrice Decimal? @db.Decimal(12, 2)
   listPrice     Decimal? @db.Decimal(12, 2)
@@ -156,12 +162,33 @@ model Product {
 
   sourceSupplierId String?
   sourceSupplier   Supplier? @relation(fields: [sourceSupplierId], references: [id])
+  taxRateId   String?
+  taxRateRef  TaxRate? @relation(fields: [taxRateId], references: [id])
+  exciseRateId String?
+  exciseRateRef ExciseRate? @relation(fields: [exciseRateId], references: [id])
   categoryRef      Category? @relation(fields: [categoryId], references: [id])
   parent           Product?  @relation("ProductParent", fields: [parentId], references: [id])
   children         Product[] @relation("ProductParent")
   images           ProductImage[]
 
   orderItems OrderItem[]
+}
+
+model TaxRate {
+  id        String   @id @default(cuid())
+  name      String
+  rate      Decimal  @db.Decimal(6, 2)
+  createdAt DateTime @default(now())
+  products  Product[]
+}
+
+model ExciseRate {
+  id        String    @id @default(cuid())
+  name      String
+  type      ExciseType
+  amount    Decimal   @db.Decimal(12, 6)
+  createdAt DateTime  @default(now())
+  products  Product[]
 }
 
 model AppSetting {

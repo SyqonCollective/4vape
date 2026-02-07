@@ -19,6 +19,9 @@ export default function AdminProducts() {
     discountPrice: "",
     discountQty: "",
     taxRate: "",
+    taxRateId: "",
+    exciseRateId: "",
+    vatIncluded: true,
     exciseMl: "",
     exciseProduct: "",
     exciseTotal: "",
@@ -39,6 +42,8 @@ export default function AdminProducts() {
   });
   const [categories, setCategories] = useState([]);
   const [parents, setParents] = useState([]);
+  const [taxes, setTaxes] = useState([]);
+  const [excises, setExcises] = useState([]);
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -144,6 +149,24 @@ export default function AdminProducts() {
 
   useEffect(() => {
     let active = true;
+    async function loadRates() {
+      try {
+        const [taxRes, exciseRes] = await Promise.all([api("/admin/taxes"), api("/admin/excises")]);
+        if (!active) return;
+        setTaxes(taxRes || []);
+        setExcises(exciseRes || []);
+      } catch {
+        // ignore
+      }
+    }
+    loadRates();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     async function loadParents() {
       try {
         const res = await api("/admin/products?parents=true");
@@ -171,6 +194,9 @@ export default function AdminProducts() {
       discountPrice: p.discountPrice ? Number(p.discountPrice).toFixed(2) : "",
       discountQty: p.discountQty ?? "",
       taxRate: p.taxRate ? Number(p.taxRate).toFixed(2) : "",
+      taxRateId: p.taxRateId || "",
+      exciseRateId: p.exciseRateId || "",
+      vatIncluded: p.vatIncluded !== false,
       exciseMl: p.exciseMl ? Number(p.exciseMl).toFixed(6) : "",
       exciseProduct: p.exciseProduct ? Number(p.exciseProduct).toFixed(6) : "",
       exciseTotal: p.exciseTotal ? Number(p.exciseTotal).toFixed(6) : "",
@@ -208,6 +234,9 @@ export default function AdminProducts() {
           discountPrice: edit.discountPrice ? Number(edit.discountPrice) : undefined,
           discountQty: edit.discountQty !== "" ? Number(edit.discountQty) : undefined,
           taxRate: edit.taxRate ? Number(edit.taxRate) : undefined,
+          taxRateId: edit.taxRateId || undefined,
+          exciseRateId: edit.exciseRateId || undefined,
+          vatIncluded: edit.vatIncluded,
           exciseMl: edit.exciseMl ? Number(edit.exciseMl) : undefined,
           exciseProduct: edit.exciseProduct ? Number(edit.exciseProduct) : undefined,
           exciseTotal: edit.exciseTotal ? Number(edit.exciseTotal) : undefined,
@@ -447,7 +476,7 @@ export default function AdminProducts() {
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="table wide-11">
+      <div className="table wide-12">
         <div className="row header">
           <div>Immagine</div>
           <div>SKU</div>
@@ -458,6 +487,7 @@ export default function AdminProducts() {
           <div>Padre</div>
           <div>Categoria</div>
           <div>Accisa</div>
+          <div>IVA</div>
           <div>Brand</div>
           <div>Fornitore</div>
         </div>
@@ -525,7 +555,8 @@ export default function AdminProducts() {
             <div>{p.isParent ? "Padre" : p.parentId ? "Figlio" : "Singolo"}</div>
             <div>{p.parent?.name || "-"}</div>
             <div>{p.category || "-"}</div>
-            <div>{p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : "-"}</div>
+            <div>{p.exciseRateRef?.name || (p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : "-")}</div>
+            <div>{p.taxRateRef ? `${p.taxRateRef.name} (${Number(p.taxRateRef.rate).toFixed(2)}%)` : "-"}</div>
             <div>{p.brand || "-"}</div>
             <div>{p.sourceSupplier?.name || (p.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
           </div>
@@ -769,6 +800,47 @@ export default function AdminProducts() {
                       value={edit.exciseTotal}
                       onChange={(e) => setEdit({ ...edit, exciseTotal: e.target.value })}
                     />
+                  </label>
+                  <label>
+                    Aliquota IVA
+                    <select
+                      className="select"
+                      value={edit.taxRateId}
+                      onChange={(e) => setEdit({ ...edit, taxRateId: e.target.value })}
+                    >
+                      <option value="">Nessuna</option>
+                      {taxes.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} ({Number(t.rate).toFixed(2)}%)
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Accisa
+                    <select
+                      className="select"
+                      value={edit.exciseRateId}
+                      onChange={(e) => setEdit({ ...edit, exciseRateId: e.target.value })}
+                    >
+                      <option value="">Nessuna</option>
+                      {excises.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name} ({Number(e.amount).toFixed(6)} {e.type === "ML" ? "/ml" : ""})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    IVA inclusa
+                    <div className="toggle">
+                      <input
+                        type="checkbox"
+                        checked={edit.vatIncluded}
+                        onChange={(e) => setEdit({ ...edit, vatIncluded: e.target.checked })}
+                      />
+                      <span>{edit.vatIncluded ? "Inclusa" : "Esclusa"}</span>
+                    </div>
                   </label>
                   <label>
                     IVA %
