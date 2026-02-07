@@ -28,6 +28,7 @@ export default function AdminSuppliers() {
   const [successTitle, setSuccessTitle] = useState("");
   const [successBody, setSuccessBody] = useState("");
   const [loadingInventory, setLoadingInventory] = useState(false);
+  const [loadingDocked, setLoadingDocked] = useState(false);
   const [priceOverride, setPriceOverride] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedSkus, setSelectedSkus] = useState(new Set());
@@ -69,10 +70,10 @@ export default function AdminSuppliers() {
   })();
 
   useEffect(() => {
-    const open = Boolean(selectedProduct || showSuccess || loadingInventory);
+    const open = Boolean(selectedProduct || showSuccess || (loadingInventory && !loadingDocked));
     document.body.classList.toggle("modal-open", open);
     return () => document.body.classList.remove("modal-open");
-  }, [selectedProduct, showSuccess, loadingInventory]);
+  }, [selectedProduct, showSuccess, loadingInventory, loadingDocked]);
 
   async function load() {
     try {
@@ -135,6 +136,7 @@ export default function AdminSuppliers() {
 
   async function updateInventory(id) {
     try {
+      setLoadingDocked(false);
       setLoadingInventory(true);
       const res = await api(`/admin/suppliers/${id}/import-full`, { method: "POST" });
       setSuccessTitle("Inventario aggiornato");
@@ -148,6 +150,7 @@ export default function AdminSuppliers() {
       setError(msg || "Errore aggiornamento inventario");
     } finally {
       setLoadingInventory(false);
+      setLoadingDocked(false);
     }
   }
 
@@ -302,15 +305,32 @@ export default function AdminSuppliers() {
       ) : null}
       {loadingInventory ? (
         <Portal>
-          <div className="loading-center">
-            <div className="loading-card">
+          {!loadingDocked ? (
+            <div className="loading-center">
+              <div className="loading-card">
+                <button
+                  className="loading-close"
+                  onClick={() => setLoadingDocked(true)}
+                  type="button"
+                >
+                  ×
+                </button>
+                <Lottie animationData={loadingAnim} loop />
+                <div>
+                  <strong>Aggiornamento prodotti</strong>
+                  <div className="muted">Sto sincronizzando l’inventario…</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="loading-dock">
               <Lottie animationData={loadingAnim} loop />
               <div>
                 <strong>Aggiornamento prodotti</strong>
-                <div className="muted">Sto sincronizzando l’inventario…</div>
+                <div className="muted">In corso…</div>
               </div>
             </div>
-          </div>
+          )}
         </Portal>
       ) : null}
 

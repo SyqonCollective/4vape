@@ -1197,8 +1197,57 @@ button {
   gap: 1rem;
   padding: 1.2rem 1.6rem;
   box-shadow: var(--shadow-strong);
-  min-width: 320px;
+  min-width: 260px;
+  max-width: 360px;
   animation: modal-pop 0.35s ease both;
+}
+
+.loading-card > div:first-child {
+  width: 90px;
+  height: 90px;
+}
+
+.loading-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.loading-dock {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  background: #fff;
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0.9rem;
+  box-shadow: var(--shadow-strong);
+  z-index: 1001;
+  animation: slide-in 0.35s ease both;
+}
+
+.loading-dock > div:first-child {
+  width: 44px;
+  height: 44px;
+}
+
+@keyframes slide-in {
+  from { transform: translate3d(40px, 40px, 0); opacity: 0; }
+  to { transform: translate3d(0, 0, 0); opacity: 1; }
 }
 
 .login-success {
