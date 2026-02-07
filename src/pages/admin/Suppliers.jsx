@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
 import successAnim from "../../assets/Success.json";
+import loadingAnim from "../../assets/Loading.json";
 import pulseAnim from "../../assets/Green Pulse Dot.json";
 import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
@@ -26,6 +27,7 @@ export default function AdminSuppliers() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successTitle, setSuccessTitle] = useState("");
   const [successBody, setSuccessBody] = useState("");
+  const [loadingInventory, setLoadingInventory] = useState(false);
   const [priceOverride, setPriceOverride] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedSkus, setSelectedSkus] = useState(new Set());
@@ -67,10 +69,10 @@ export default function AdminSuppliers() {
   })();
 
   useEffect(() => {
-    const open = Boolean(selectedProduct || showSuccess);
+    const open = Boolean(selectedProduct || showSuccess || loadingInventory);
     document.body.classList.toggle("modal-open", open);
     return () => document.body.classList.remove("modal-open");
-  }, [selectedProduct, showSuccess]);
+  }, [selectedProduct, showSuccess, loadingInventory]);
 
   async function load() {
     try {
@@ -133,6 +135,7 @@ export default function AdminSuppliers() {
 
   async function updateInventory(id) {
     try {
+      setLoadingInventory(true);
       const res = await api(`/admin/suppliers/${id}/import-full`, { method: "POST" });
       setSuccessTitle("Inventario aggiornato");
       setSuccessBody(`Creati ${res.created || 0}, aggiornati ${res.updated || 0}, saltati ${res.skipped || 0}`);
@@ -143,6 +146,8 @@ export default function AdminSuppliers() {
       const raw = String(err?.message || "");
       const msg = raw.startsWith("{") ? (() => { try { return JSON.parse(raw)?.message; } catch { return raw; } })() : raw;
       setError(msg || "Errore aggiornamento inventario");
+    } finally {
+      setLoadingInventory(false);
     }
   }
 
@@ -290,6 +295,19 @@ export default function AdminSuppliers() {
               <div>
                 <strong>{successTitle || "Operazione completata"}</strong>
                 <div className="muted">{successBody || "Operazione eseguita"}</div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+      {loadingInventory ? (
+        <Portal>
+          <div className="loading-center">
+            <div className="loading-card">
+              <Lottie animationData={loadingAnim} loop />
+              <div>
+                <strong>Aggiornamento prodotti</strong>
+                <div className="muted">Sto sincronizzando l’inventario…</div>
               </div>
             </div>
           </div>

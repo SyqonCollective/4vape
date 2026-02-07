@@ -1173,6 +1173,34 @@ button {
   animation: modal-pop 0.35s ease both;
 }
 
+.loading-center {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  background: rgba(15, 23, 42, 0.2);
+  z-index: 1001;
+  backdrop-filter: blur(4px);
+}
+
+.loading-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border: 1px solid var(--stroke);
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 1.6rem;
+  box-shadow: var(--shadow-strong);
+  min-width: 320px;
+  animation: modal-pop 0.35s ease both;
+}
+
 .login-success {
   position: fixed;
   inset: 0;
