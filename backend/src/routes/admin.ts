@@ -441,9 +441,13 @@ export async function adminRoutes(app: FastifyInstance) {
     const supplierId = (request.params as any).id as string;
     const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
     if (!supplier) throw app.httpErrors.notFound("Supplier not found");
-
-    const result = await importFullFromSupplier(supplier);
-    return result;
+    try {
+      const result = await importFullFromSupplier(supplier);
+      return result;
+    } catch (err: any) {
+      const message = err?.message || "Import failed";
+      return reply.badRequest(message);
+    }
   });
 
   app.patch("/suppliers/:id", async (request, reply) => {

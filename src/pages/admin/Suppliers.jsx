@@ -140,7 +140,9 @@ export default function AdminSuppliers() {
       setTimeout(() => setShowSuccess(false), 2000);
       if (selected?.id === id) viewProducts(selected, 1);
     } catch (err) {
-      setError("Errore aggiornamento inventario");
+      const raw = String(err?.message || "");
+      const msg = raw.startsWith("{") ? (() => { try { return JSON.parse(raw)?.message; } catch { return raw; } })() : raw;
+      setError(msg || "Errore aggiornamento inventario");
     }
   }
 
