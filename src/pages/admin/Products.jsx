@@ -505,6 +505,8 @@ export default function AdminProducts() {
     return rows;
   })();
 
+  const dash = <span className="cell-muted">—</span>;
+
   function openBulkEditor() {
     const rows = filteredItems.map((p) => ({
       id: p.id,
@@ -695,14 +697,16 @@ export default function AdminProducts() {
               {p.isParent ? <span className="tag">Padre</span> : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
             </div>
-            <div>{p.isParent ? "-" : `€ ${Number(p.price).toFixed(2)}`}</div>
-            <div>{p.isParent ? "-" : p.stockQty}</div>
+            <div>{p.isParent ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
+            <div>{p.isParent ? dash : p.stockQty}</div>
             <div>{p.isParent ? "Padre" : p.parentId ? "Figlio" : "Singolo"}</div>
-            <div>{row.parent?.name || p.parent?.name || "-"}</div>
-            <div>{p.category || "-"}</div>
-            <div>{p.exciseRateRef?.name || (p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : "-")}</div>
-            <div>{p.taxRateRef ? `${p.taxRateRef.name} (${Number(p.taxRateRef.rate).toFixed(2)}%)` : "-"}</div>
-            <div>{p.brand || "-"}</div>
+            <div>{row.parent?.name || p.parent?.name || dash}</div>
+            <div>{p.category || dash}</div>
+            <div>
+              {p.exciseRateRef?.name || (p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : dash)}
+            </div>
+            <div>{p.taxRateRef ? `${p.taxRateRef.name} (${Number(p.taxRateRef.rate).toFixed(2)}%)` : dash}</div>
+            <div>{p.brand || dash}</div>
             <div>{p.sourceSupplier?.name || (p.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
           </div>
         );

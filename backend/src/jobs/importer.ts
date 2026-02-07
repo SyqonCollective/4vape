@@ -336,10 +336,8 @@ export async function importFullFromSupplier(supplier: Supplier) {
   let updated = 0;
   const settings = await getSettings();
   const defaultVat = settings?.vatRateDefault ? Number(settings.vatRateDefault) : undefined;
-  const defaultExciseMl = settings?.exciseMlDefault ? Number(settings.exciseMlDefault) : undefined;
-  const defaultExciseProduct = settings?.exciseProductDefault
-    ? Number(settings.exciseProductDefault)
-    : undefined;
+  const defaultExciseMl = undefined;
+  const defaultExciseProduct = undefined;
 
   if (supplier.apiType === "PRESTASHOP") {
     const [products, combinations, categories] = await Promise.all([

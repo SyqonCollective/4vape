@@ -85,6 +85,18 @@ export async function adminRoutes(app: FastifyInstance) {
     });
   });
 
+  app.get("/products/stock", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.product.findMany({
+      select: {
+        id: true,
+        stockQty: true,
+        isUnavailable: true,
+      },
+    });
+  });
+
   app.post("/products", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -262,6 +274,68 @@ export async function adminRoutes(app: FastifyInstance) {
     }
 
     return prisma.product.update({ where: { id }, data });
+  });
+
+  app.patch("/products/bulk", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        items: z.array(
+          z.object({
+            id: z.string().min(1),
+            name: z.string().nullable().optional(),
+            price: z.number().nullable().optional(),
+            listPrice: z.number().nullable().optional(),
+            purchasePrice: z.number().nullable().optional(),
+            discountPrice: z.number().nullable().optional(),
+            discountQty: z.number().nullable().optional(),
+            stockQty: z.number().nullable().optional(),
+            categoryId: z.string().nullable().optional(),
+            taxRateId: z.string().nullable().optional(),
+            exciseRateId: z.string().nullable().optional(),
+            vatIncluded: z.boolean().optional(),
+            published: z.boolean().optional(),
+            isUnavailable: z.boolean().optional(),
+          })
+        ),
+      })
+      .parse(request.body);
+
+    await prisma.$transaction(
+      body.items.map((row) =>
+        prisma.product.update({
+          where: { id: row.id },
+          data: {
+            ...(row.name !== undefined ? { name: row.name || null } : {}),
+            ...(row.price !== undefined
+              ? { price: row.price == null ? null : new Prisma.Decimal(row.price) }
+              : {}),
+            ...(row.listPrice !== undefined
+              ? { listPrice: row.listPrice == null ? null : new Prisma.Decimal(row.listPrice) }
+              : {}),
+            ...(row.purchasePrice !== undefined
+              ? { purchasePrice: row.purchasePrice == null ? null : new Prisma.Decimal(row.purchasePrice) }
+              : {}),
+            ...(row.discountPrice !== undefined
+              ? { discountPrice: row.discountPrice == null ? null : new Prisma.Decimal(row.discountPrice) }
+              : {}),
+            ...(row.discountQty !== undefined ? { discountQty: row.discountQty } : {}),
+            ...(row.stockQty !== undefined ? { stockQty: row.stockQty } : {}),
+            ...(row.categoryId !== undefined ? { categoryId: row.categoryId } : {}),
+            ...(row.taxRateId !== undefined ? { taxRateId: row.taxRateId } : {}),
+            ...(row.exciseRateId !== undefined ? { exciseRateId: row.exciseRateId } : {}),
+            ...(row.vatIncluded !== undefined ? { vatIncluded: row.vatIncluded } : {}),
+            ...(row.published !== undefined ? { published: row.published } : {}),
+            ...(row.isUnavailable !== undefined
+              ? { isUnavailable: row.isUnavailable, stockQty: row.isUnavailable ? 0 : undefined }
+              : {}),
+          },
+        })
+      )
+    );
+
+    return reply.code(204).send();
   });
 
   app.get("/products/:id/images", async (request, reply) => {
@@ -517,8 +591,6 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         vatRateDefault: z.number().nonnegative().optional(),
-        exciseMlDefault: z.number().nonnegative().optional(),
-        exciseProductDefault: z.number().nonnegative().optional(),
       })
       .parse(request.body);
     let settings = await prisma.appSetting.findFirst();
