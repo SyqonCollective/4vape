@@ -188,11 +188,11 @@ button {
   border-radius: 32px;
   box-shadow: var(--shadow-strong);
   backdrop-filter: blur(16px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .admin-main-inner {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   animation: float-in 0.6s ease;
 }
@@ -371,6 +371,19 @@ button {
   padding-bottom: 0.4rem;
 }
 
+.table::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+}
+
+.table::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .table.wide-6 .row {
   grid-template-columns: 0.7fr 1.2fr 2fr 1fr 1fr 1fr;
 }
@@ -380,13 +393,13 @@ button {
 }
 
 .table.wide-12 .row {
-  grid-template-columns: 0.7fr 1fr 2.4fr 1fr 0.8fr 1fr 1.3fr 1.4fr 1.1fr 1.1fr 1fr 1.3fr;
-  min-width: 1250px;
+  grid-template-columns: 0.7fr 1fr 2.6fr 0.9fr 0.8fr 1fr 1.4fr 1.4fr 1.1fr 1.1fr 1fr 1.4fr;
+  min-width: 1380px;
 }
 
 .table.wide-12 .row.header {
-  grid-template-columns: 0.7fr 1fr 2.4fr 1fr 0.8fr 1fr 1.3fr 1.4fr 1.1fr 1.1fr 1fr 1.3fr;
-  min-width: 1250px;
+  grid-template-columns: 0.7fr 1fr 2.6fr 0.9fr 0.8fr 1fr 1.4fr 1.4fr 1.1fr 1.1fr 1fr 1.4fr;
+  min-width: 1380px;
 }
 .toggle {
   display: flex;
@@ -466,6 +479,22 @@ button {
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.row > div {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row .name-cell {
+  white-space: normal;
+  overflow: visible;
+}
+
+.row .name-cell span {
+  white-space: normal;
+}
+
 .row.header {
   background: transparent;
   border: none;
@@ -527,6 +556,11 @@ button {
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  line-height: 1.25;
+}
+
+.name-cell .tag {
+  white-space: nowrap;
 }
 
 .form-grid {
