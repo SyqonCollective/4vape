@@ -46,6 +46,9 @@ export default function AdminProducts() {
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [showBulkEditor, setShowBulkEditor] = useState(false);
+  const [bulkRows, setBulkRows] = useState([]);
+  const [bulkSaving, setBulkSaving] = useState(false);
   const [productFilter, setProductFilter] = useState("all");
   const [showCreateParent, setShowCreateParent] = useState(false);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
@@ -104,10 +107,12 @@ export default function AdminProducts() {
   };
 
   useEffect(() => {
-    const open = Boolean(selectedProduct || confirmDelete || showDeleteSuccess || showCreateParent);
+    const open = Boolean(
+      selectedProduct || confirmDelete || showDeleteSuccess || showCreateParent || showBulkEditor
+    );
     document.body.classList.toggle("modal-open", open);
     return () => document.body.classList.remove("modal-open");
-  }, [selectedProduct, confirmDelete, showDeleteSuccess, showCreateParent]);
+  }, [selectedProduct, confirmDelete, showDeleteSuccess, showCreateParent, showBulkEditor]);
 
   useEffect(() => {
     let active = true;
@@ -430,6 +435,64 @@ export default function AdminProducts() {
     return true;
   });
 
+  function openBulkEditor() {
+    const rows = filteredItems.map((p) => ({
+      id: p.id,
+      sku: p.sku || "",
+      name: p.name || "",
+      price: p.price != null ? Number(p.price).toFixed(2) : "",
+      listPrice: p.listPrice != null ? Number(p.listPrice).toFixed(2) : "",
+      purchasePrice: p.purchasePrice != null ? Number(p.purchasePrice).toFixed(2) : "",
+      discountPrice: p.discountPrice != null ? Number(p.discountPrice).toFixed(2) : "",
+      discountQty: p.discountQty ?? "",
+      stockQty: p.stockQty ?? "",
+      categoryId: p.categoryId || "",
+      taxRateId: p.taxRateId || "",
+      exciseRateId: p.exciseRateId || "",
+      vatIncluded: p.vatIncluded !== false,
+      published: p.published !== false,
+      isUnavailable: Boolean(p.isUnavailable),
+    }));
+    setBulkRows(rows);
+    setShowBulkEditor(true);
+  }
+
+  async function saveBulk() {
+    if (bulkRows.length === 0) return;
+    setBulkSaving(true);
+    setError("");
+    try {
+      await api("/admin/products/bulk", {
+        method: "PATCH",
+        body: JSON.stringify({
+          items: bulkRows.map((row) => ({
+            id: row.id,
+            name: row.name?.trim() || null,
+            price: row.price === "" ? null : Number(row.price),
+            listPrice: row.listPrice === "" ? null : Number(row.listPrice),
+            purchasePrice: row.purchasePrice === "" ? null : Number(row.purchasePrice),
+            discountPrice: row.discountPrice === "" ? null : Number(row.discountPrice),
+            discountQty: row.discountQty === "" ? null : Number(row.discountQty),
+            stockQty: row.stockQty === "" ? null : Number(row.stockQty),
+            categoryId: row.categoryId || null,
+            taxRateId: row.taxRateId || null,
+            exciseRateId: row.exciseRateId || null,
+            vatIncluded: Boolean(row.vatIncluded),
+            published: Boolean(row.published),
+            isUnavailable: Boolean(row.isUnavailable),
+          })),
+        }),
+      });
+      setShowBulkEditor(false);
+      const res = await api("/admin/products");
+      setItems(res);
+    } catch (err) {
+      setError("Errore salvataggio bulk");
+    } finally {
+      setBulkSaving(false);
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -440,6 +503,9 @@ export default function AdminProducts() {
         <div className="actions">
           <button className="btn primary" onClick={() => setShowCreateParent(true)}>
             Crea prodotto genitore
+          </button>
+          <button className="btn ghost" onClick={openBulkEditor}>
+            Modifica in bulk
           </button>
           <select
             className="select"
@@ -533,8 +599,8 @@ export default function AdminProducts() {
                 p.sku
               )}
             </div>
-            <div>
-              {p.name}
+            <div className="name-cell">
+              <span>{p.name}</span>
               {p.isParent ? <span className="tag">Padre</span> : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
             </div>
@@ -1144,6 +1210,204 @@ export default function AdminProducts() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+
+      {showBulkEditor ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowBulkEditor(false)}>
+            <div className="modal bulk-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Modifica in bulk</h3>
+                <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="bulk-subtitle muted">
+                {bulkRows.length} prodotti — modifica stile Excel
+              </div>
+              <div className="bulk-table">
+                <div className="bulk-row header">
+                  <div>SKU</div>
+                  <div>Nome</div>
+                  <div>Prezzo</div>
+                  <div>Listino</div>
+                  <div>Acquisto</div>
+                  <div>Sconto</div>
+                  <div>Q.tà Sconto</div>
+                  <div>Giacenza</div>
+                  <div>Categoria</div>
+                  <div>IVA</div>
+                  <div>Accisa</div>
+                  <div>IVA incl.</div>
+                  <div>Pubblicato</div>
+                  <div>Non disp.</div>
+                </div>
+                {bulkRows.map((row, idx) => (
+                  <div className="bulk-row" key={row.id}>
+                    <div className="mono">{row.sku}</div>
+                    <input
+                      value={row.name}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, name: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.price}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, price: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.listPrice}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, listPrice: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.purchasePrice}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, purchasePrice: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.discountPrice}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, discountPrice: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    />
+                    <input
+                      type="number"
+                      step="1"
+                      value={row.discountQty}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, discountQty: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    />
+                    <input
+                      type="number"
+                      step="1"
+                      value={row.stockQty}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, stockQty: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    />
+                    <select
+                      value={row.categoryId}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, categoryId: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    >
+                      <option value="">-</option>
+                      {categoryOptions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={row.taxRateId}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, taxRateId: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    >
+                      <option value="">-</option>
+                      {taxes.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={row.exciseRateId}
+                      onChange={(e) => {
+                        const next = [...bulkRows];
+                        next[idx] = { ...row, exciseRateId: e.target.value };
+                        setBulkRows(next);
+                      }}
+                    >
+                      <option value="">-</option>
+                      {excises.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </select>
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={row.vatIncluded}
+                        onChange={(e) => {
+                          const next = [...bulkRows];
+                          next[idx] = { ...row, vatIncluded: e.target.checked };
+                          setBulkRows(next);
+                        }}
+                      />
+                      <span />
+                    </label>
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={row.published}
+                        onChange={(e) => {
+                          const next = [...bulkRows];
+                          next[idx] = { ...row, published: e.target.checked };
+                          setBulkRows(next);
+                        }}
+                      />
+                      <span />
+                    </label>
+                    <label className="switch danger">
+                      <input
+                        type="checkbox"
+                        checked={row.isUnavailable}
+                        onChange={(e) => {
+                          const next = [...bulkRows];
+                          next[idx] = { ...row, isUnavailable: e.target.checked };
+                          setBulkRows(next);
+                        }}
+                      />
+                      <span />
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <div className="actions">
+                <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
+                  Annulla
+                </button>
+                <button className="btn primary" onClick={saveBulk} disabled={bulkSaving}>
+                  {bulkSaving ? "Salvataggio..." : "Salva modifiche"}
+                </button>
               </div>
             </div>
           </div>
