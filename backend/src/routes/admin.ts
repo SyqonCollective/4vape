@@ -318,8 +318,8 @@ export async function adminRoutes(app: FastifyInstance) {
           ...(row.discountPrice !== undefined
             ? { discountPrice: row.discountPrice == null ? undefined : new Prisma.Decimal(row.discountPrice) }
             : {}),
-          ...(row.discountQty !== undefined ? { discountQty: row.discountQty } : {}),
-          ...(row.stockQty !== undefined ? { stockQty: row.stockQty } : {}),
+          ...(row.discountQty !== undefined ? { discountQty: row.discountQty ?? undefined } : {}),
+          ...(row.stockQty !== undefined ? { stockQty: row.stockQty ?? undefined } : {}),
           ...(row.categoryId !== undefined ? { categoryId: row.categoryId ?? null } : {}),
           ...(row.taxRateId !== undefined ? { taxRateId: row.taxRateId ?? null } : {}),
           ...(row.exciseRateId !== undefined ? { exciseRateId: row.exciseRateId ?? null } : {}),
