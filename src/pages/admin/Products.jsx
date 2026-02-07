@@ -492,6 +492,8 @@ export default function AdminProducts() {
       rows.push({ type: "parent", item: parent });
       if (!collapsedParents.has(parent.id)) {
         const children = (byParent.get(parent.id) || []).sort((a, b) => {
+          const orderDiff = (a.parentSort ?? 0) - (b.parentSort ?? 0);
+          if (orderDiff !== 0) return orderDiff;
           const an = a.name || "";
           const bn = b.name || "";
           return an.localeCompare(bn);
@@ -534,12 +536,13 @@ export default function AdminProducts() {
       isParent: Boolean(p.isParent),
       parentId: p.parentId || p.parent?.id || "",
       isDraftRow: p.published === false,
+      parentSort: p.parentSort ?? 0,
     }));
     setBulkRows(rows);
     setShowBulkEditor(true);
   }
 
-  async function saveBulk() {
+  async function saveBulk(forcePublish = false) {
     if (bulkRows.length === 0) return;
     setBulkSaving(true);
     setError("");
@@ -548,6 +551,20 @@ export default function AdminProducts() {
         productFilter === "draft"
           ? bulkRows.filter((row) => row.isDraftRow)
           : bulkRows;
+      const orderMap = new Map();
+      if (productFilter === "draft") {
+        const byParent = new Map();
+        for (const row of rowsToSave) {
+          const parentId = row.parentId || "";
+          if (!parentId) continue;
+          const list = byParent.get(parentId) || [];
+          list.push(row.id);
+          byParent.set(parentId, list);
+        }
+        for (const [parentId, ids] of byParent) {
+          ids.forEach((id, idx) => orderMap.set(id, idx));
+        }
+      }
       await api("/admin/products/bulk", {
         method: "PATCH",
         body: JSON.stringify({
@@ -565,9 +582,11 @@ export default function AdminProducts() {
             taxRateId: row.taxRateId || null,
             exciseRateId: row.exciseRateId || null,
             vatIncluded: Boolean(row.vatIncluded),
-            published: productFilter === "draft" ? false : Boolean(row.published),
+            published: productFilter === "draft" ? (forcePublish ? true : false) : Boolean(row.published),
             isUnavailable: Boolean(row.isUnavailable),
             isParent: Boolean(row.isParent),
+            parentId: row.parentId || null,
+            parentSort: orderMap.has(row.id) ? orderMap.get(row.id) : row.parentSort ?? 0,
           })),
         }),
       });
@@ -1395,11 +1414,22 @@ export default function AdminProducts() {
                     }
                   }
                   for (const single of singles) ordered.push({ type: "single", row: single });
+                  const bulkParentOptions = parents.map((p) => ({ id: p.id, name: p.name, sku: p.sku }));
                   return ordered.map(({ row, type, parent }) => {
                     const idx = bulkRows.findIndex((r) => r.id === row.id);
                     const isChild = type === "child";
                     const isParent = type === "parent";
                     const isDraftRow = row.isDraftRow;
+                    const moveRow = (draggedId, targetId) => {
+                      if (!draggedId || draggedId === targetId) return;
+                      const current = [...bulkRows];
+                      const fromIndex = current.findIndex((r) => r.id === draggedId);
+                      const toIndex = current.findIndex((r) => r.id === targetId);
+                      if (fromIndex === -1 || toIndex === -1) return;
+                      const [moved] = current.splice(fromIndex, 1);
+                      current.splice(toIndex, 0, moved);
+                      setBulkRows(current);
+                    };
                     return (
                       <div
                         className={`bulk-row ${isChild ? "child-row" : ""} ${isParent ? "parent-row" : ""} ${
@@ -1412,20 +1442,27 @@ export default function AdminProducts() {
                           e.dataTransfer.setData("text/plain", row.id);
                         }}
                         onDragOver={(e) => {
-                          if (!isParent) return;
+                          if (!isParent && !isChild) return;
                           e.preventDefault();
                           setBulkDragOver(row.id);
                         }}
                         onDragLeave={() => setBulkDragOver("")}
                         onDrop={(e) => {
-                          if (!isParent) return;
+                          if (!isParent && !isChild) return;
                           e.preventDefault();
                           const draggedId = e.dataTransfer.getData("text/plain");
                           if (!draggedId || draggedId === row.id) return;
-                          const next = bulkRows.map((r) =>
-                            r.id === draggedId ? { ...r, parentId: row.id } : r
-                          );
-                          setBulkRows(next);
+                          if (isParent) {
+                            const next = bulkRows.map((r) =>
+                              r.id === draggedId ? { ...r, parentId: row.id } : r
+                            );
+                            setBulkRows(next);
+                          } else if (isChild) {
+                            const dragged = bulkRows.find((r) => r.id === draggedId);
+                            if (dragged?.parentId === row.parentId) {
+                              moveRow(draggedId, row.id);
+                            }
+                          }
                           setBulkDragOver("");
                         }}
                       >
@@ -1647,8 +1684,11 @@ export default function AdminProducts() {
                         >
                           <option value="">Nessun padre</option>
                           {(productFilter === "draft"
-                            ? parents.filter((p) => p.published === false)
-                            : parents
+                            ? bulkParentOptions.filter((p) => {
+                                const row = bulkRows.find((r) => r.id === p.id);
+                                return row?.isDraftRow;
+                              })
+                            : bulkParentOptions
                           ).map((p) => (
                             <option key={p.id} value={p.id}>
                               {p.name} ({p.sku})
@@ -1660,14 +1700,20 @@ export default function AdminProducts() {
                   });
                 })()}
               </div>
-              <div className="actions">
-                <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
-                  Annulla
-                </button>
-                <button className="btn primary" onClick={saveBulk} disabled={bulkSaving}>
-                  {bulkSaving ? "Salvataggio..." : "Salva modifiche"}
-                </button>
-              </div>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
+                    Annulla
+                  </button>
+                  {productFilter === "draft" ? (
+                    <button className="btn primary" onClick={() => saveBulk(true)} disabled={bulkSaving}>
+                      {bulkSaving ? "Salvataggio..." : "Salva e pubblica"}
+                    </button>
+                  ) : (
+                    <button className="btn primary" onClick={saveBulk} disabled={bulkSaving}>
+                      {bulkSaving ? "Salvataggio..." : "Salva modifiche"}
+                    </button>
+                  )}
+                </div>
             </div>
           </div>
         </Portal>
