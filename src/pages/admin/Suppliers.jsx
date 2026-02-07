@@ -172,14 +172,14 @@ export default function AdminSuppliers() {
   async function promoteToStore(product) {
     if (!selected) return;
     if (!categoryId) {
-      setError("Seleziona una categoria");
-      return;
+      // draft import allowed without category
+      setError("Import draft: nessuna categoria selezionata");
     }
     setActionMsg("");
     try {
       const payload = {
         supplierSku: product.supplierSku,
-        categoryId,
+        categoryId: categoryId || undefined,
         published: false,
       };
       if (priceOverride) payload.price = Number(priceOverride);
@@ -202,8 +202,8 @@ export default function AdminSuppliers() {
   async function promoteSelected() {
     if (!selected || selectedSkus.size === 0) return;
     if (!bulkCategoryId) {
-      setError("Seleziona una categoria per l'import multiplo");
-      return;
+      // draft import allowed without category
+      setError("Import draft multiplo: nessuna categoria selezionata");
     }
     setActionMsg("");
     try {
@@ -211,7 +211,7 @@ export default function AdminSuppliers() {
         method: "POST",
         body: JSON.stringify({
           supplierSkus: Array.from(selectedSkus),
-          categoryId: bulkCategoryId,
+          categoryId: bulkCategoryId || undefined,
           published: false,
         }),
       });

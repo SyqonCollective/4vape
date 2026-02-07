@@ -770,7 +770,7 @@ export async function adminRoutes(app: FastifyInstance) {
         supplierSku: z.string().min(1).optional(),
         supplierSkus: z.array(z.string().min(1)).optional(),
         price: z.number().positive().optional(),
-        categoryId: z.string().min(1),
+        categoryId: z.string().min(1).optional(),
         parentId: z.string().optional(),
         published: z.boolean().optional(),
       })
@@ -799,8 +799,11 @@ export async function adminRoutes(app: FastifyInstance) {
     let already = 0;
     let missing = 0;
 
-    const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
-    if (!category) return reply.badRequest("Category not found");
+    let category = null;
+    if (body.categoryId) {
+      category = await prisma.category.findUnique({ where: { id: body.categoryId } });
+      if (!category) return reply.badRequest("Category not found");
+    }
 
     for (const sp of supplierProducts) {
       const existing = await prisma.product.findUnique({ where: { sku: sp.supplierSku } });
@@ -816,9 +819,9 @@ export async function adminRoutes(app: FastifyInstance) {
             shortDescription: sp.shortDescription,
             description: sp.description,
             brand: sp.brand,
-            category: category.name,
+            category: category?.name ?? null,
             subcategory: sp.subcategory,
-            categoryId: category.id,
+            categoryId: category?.id ?? null,
             parentId: body.parentId || null,
             price: price ?? 0,
             stockQty,
@@ -855,9 +858,8 @@ export async function adminRoutes(app: FastifyInstance) {
             shortDescription: sp.shortDescription ?? existing.shortDescription,
             description: sp.description ?? existing.description,
             brand: sp.brand ?? existing.brand,
-            category: category.name,
+            ...(category ? { category: category.name, categoryId: category.id } : {}),
             subcategory: sp.subcategory ?? existing.subcategory,
-            categoryId: category.id,
             parentId: body.parentId ?? existing.parentId,
             price: price ?? existing.price,
             stockQty,
