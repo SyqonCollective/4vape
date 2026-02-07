@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/db.js";
 import { importFullFromSupplier, importStockFromSupplier } from "../jobs/importer.js";
 import jwt from "jsonwebtoken";
@@ -615,12 +616,18 @@ export async function adminRoutes(app: FastifyInstance) {
             price: price ?? existing.price,
             stockQty,
             imageUrl: sp.imageUrl ?? existing.imageUrl,
-            imageUrls: (sp.imageUrls ?? existing.imageUrls) == null ? undefined : (sp.imageUrls ?? existing.imageUrls),
+            imageUrls:
+              (sp.imageUrls ?? existing.imageUrls) == null
+                ? undefined
+                : (sp.imageUrls ?? existing.imageUrls) as Prisma.InputJsonValue,
             published: sp.published ?? existing.published,
             visibility: sp.visibility ?? existing.visibility,
             productType: sp.productType ?? existing.productType,
             parentSku: sp.parentSku ?? existing.parentSku,
-            childSkus: (sp.childSkus ?? existing.childSkus) == null ? undefined : (sp.childSkus ?? existing.childSkus),
+            childSkus:
+              (sp.childSkus ?? existing.childSkus) == null
+                ? undefined
+                : (sp.childSkus ?? existing.childSkus) as Prisma.InputJsonValue,
             codicePl: sp.codicePl ?? existing.codicePl,
             mlProduct: sp.mlProduct ?? existing.mlProduct,
             nicotine: sp.nicotine ?? existing.nicotine,
