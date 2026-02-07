@@ -512,10 +512,7 @@ export default function AdminProducts() {
   function openBulkEditor() {
     const sourceItems =
       productFilter === "draft"
-        ? [
-            ...items.filter((p) => p.isParent),
-            ...items.filter((p) => p.published === false),
-          ]
+        ? items.filter((p) => p.published === false)
         : filteredItems;
     const rows = sourceItems.map((p) => ({
       id: p.id,
@@ -1616,7 +1613,10 @@ export default function AdminProducts() {
                           disabled={!isDraftRow}
                         >
                           <option value="">Nessun padre</option>
-                          {parents.map((p) => (
+                          {(productFilter === "draft"
+                            ? parents.filter((p) => p.published === false)
+                            : parents
+                          ).map((p) => (
                             <option key={p.id} value={p.id}>
                               {p.name} ({p.sku})
                             </option>
