@@ -169,9 +169,17 @@ export async function adminRoutes(app: FastifyInstance) {
     if (body.isParent !== undefined) data.isParent = body.isParent;
     if (body.isUnavailable !== undefined) data.isUnavailable = body.isUnavailable;
     if (existing.source === "SUPPLIER") {
-      delete (data as any).stockQty;
-    }
-    if (data.isUnavailable === true) {
+      if (data.isUnavailable === true) {
+        data.stockQty = 0;
+      } else if (data.isUnavailable === false) {
+        const sp = await prisma.supplierProduct.findUnique({
+          where: { supplierId_supplierSku: { supplierId: existing.sourceSupplierId || "", supplierSku: existing.sku } },
+        });
+        if (sp?.stockQty != null) data.stockQty = sp.stockQty;
+      } else {
+        delete (data as any).stockQty;
+      }
+    } else if (data.isUnavailable === true) {
       data.stockQty = 0;
     }
 
