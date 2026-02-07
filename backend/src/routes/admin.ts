@@ -303,36 +303,34 @@ export async function adminRoutes(app: FastifyInstance) {
       .parse(request.body);
 
     await prisma.$transaction(
-      body.items.map((row) =>
-        prisma.product.update({
-          where: { id: row.id },
-          data: {
-            ...(row.name !== undefined ? { name: row.name || null } : {}),
-            ...(row.price !== undefined
-              ? { price: row.price == null ? null : new Prisma.Decimal(row.price) }
-              : {}),
-            ...(row.listPrice !== undefined
-              ? { listPrice: row.listPrice == null ? null : new Prisma.Decimal(row.listPrice) }
-              : {}),
-            ...(row.purchasePrice !== undefined
-              ? { purchasePrice: row.purchasePrice == null ? null : new Prisma.Decimal(row.purchasePrice) }
-              : {}),
-            ...(row.discountPrice !== undefined
-              ? { discountPrice: row.discountPrice == null ? null : new Prisma.Decimal(row.discountPrice) }
-              : {}),
-            ...(row.discountQty !== undefined ? { discountQty: row.discountQty } : {}),
-            ...(row.stockQty !== undefined ? { stockQty: row.stockQty } : {}),
-            ...(row.categoryId !== undefined ? { categoryId: row.categoryId } : {}),
-            ...(row.taxRateId !== undefined ? { taxRateId: row.taxRateId } : {}),
-            ...(row.exciseRateId !== undefined ? { exciseRateId: row.exciseRateId } : {}),
-            ...(row.vatIncluded !== undefined ? { vatIncluded: row.vatIncluded } : {}),
-            ...(row.published !== undefined ? { published: row.published } : {}),
-            ...(row.isUnavailable !== undefined
-              ? { isUnavailable: row.isUnavailable, stockQty: row.isUnavailable ? 0 : undefined }
-              : {}),
-          },
-        })
-      )
+      body.items.map((row) => {
+        const data: Prisma.ProductUncheckedUpdateInput = {
+          ...(row.name !== undefined ? { name: row.name || null } : {}),
+          ...(row.price !== undefined
+            ? { price: row.price == null ? null : new Prisma.Decimal(row.price) }
+            : {}),
+          ...(row.listPrice !== undefined
+            ? { listPrice: row.listPrice == null ? null : new Prisma.Decimal(row.listPrice) }
+            : {}),
+          ...(row.purchasePrice !== undefined
+            ? { purchasePrice: row.purchasePrice == null ? null : new Prisma.Decimal(row.purchasePrice) }
+            : {}),
+          ...(row.discountPrice !== undefined
+            ? { discountPrice: row.discountPrice == null ? null : new Prisma.Decimal(row.discountPrice) }
+            : {}),
+          ...(row.discountQty !== undefined ? { discountQty: row.discountQty } : {}),
+          ...(row.stockQty !== undefined ? { stockQty: row.stockQty } : {}),
+          ...(row.categoryId !== undefined ? { categoryId: row.categoryId ?? null } : {}),
+          ...(row.taxRateId !== undefined ? { taxRateId: row.taxRateId ?? null } : {}),
+          ...(row.exciseRateId !== undefined ? { exciseRateId: row.exciseRateId ?? null } : {}),
+          ...(row.vatIncluded !== undefined ? { vatIncluded: row.vatIncluded } : {}),
+          ...(row.published !== undefined ? { published: row.published } : {}),
+          ...(row.isUnavailable !== undefined
+            ? { isUnavailable: row.isUnavailable, stockQty: row.isUnavailable ? 0 : undefined }
+            : {}),
+        };
+        return prisma.product.update({ where: { id: row.id }, data });
+      })
     );
 
     return reply.code(204).send();
