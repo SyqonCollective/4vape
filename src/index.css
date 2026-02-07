@@ -377,6 +377,14 @@ button {
 .table.wide-6 .row.header {
   grid-template-columns: 0.7fr 1.2fr 2fr 1fr 1fr 1fr;
 }
+
+.table.wide-11 .row {
+  grid-template-columns: 0.7fr 1fr 2.2fr 1fr 0.8fr 1fr 1.2fr 1.4fr 1.1fr 1fr 1.2fr;
+}
+
+.table.wide-11 .row.header {
+  grid-template-columns: 0.7fr 1fr 2.2fr 1fr 0.8fr 1fr 1.2fr 1.4fr 1.1fr 1fr 1.2fr;
+}
 .toggle {
   display: flex;
   align-items: center;

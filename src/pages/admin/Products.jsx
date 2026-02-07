@@ -11,8 +11,25 @@ export default function AdminProducts() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [edit, setEdit] = useState({
     name: "",
+    shortDescription: "",
     description: "",
     price: "",
+    listPrice: "",
+    purchasePrice: "",
+    discountPrice: "",
+    discountQty: "",
+    taxRate: "",
+    exciseMl: "",
+    exciseProduct: "",
+    exciseTotal: "",
+    mlProduct: "",
+    nicotine: "",
+    codicePl: "",
+    barcode: "",
+    productType: "",
+    visibility: "",
+    published: true,
+    subcategory: "",
     stockQty: "",
     imageUrl: "",
     categoryId: "",
@@ -146,8 +163,25 @@ export default function AdminProducts() {
     setSelectedProduct(p);
     setEdit({
       name: p.name || "",
+      shortDescription: p.shortDescription || "",
       description: p.description || "",
       price: p.price ? Number(p.price).toFixed(2) : "",
+      listPrice: p.listPrice ? Number(p.listPrice).toFixed(2) : "",
+      purchasePrice: p.purchasePrice ? Number(p.purchasePrice).toFixed(2) : "",
+      discountPrice: p.discountPrice ? Number(p.discountPrice).toFixed(2) : "",
+      discountQty: p.discountQty ?? "",
+      taxRate: p.taxRate ? Number(p.taxRate).toFixed(2) : "",
+      exciseMl: p.exciseMl ? Number(p.exciseMl).toFixed(6) : "",
+      exciseProduct: p.exciseProduct ? Number(p.exciseProduct).toFixed(6) : "",
+      exciseTotal: p.exciseTotal ? Number(p.exciseTotal).toFixed(6) : "",
+      mlProduct: p.mlProduct ? Number(p.mlProduct).toFixed(3) : "",
+      nicotine: p.nicotine ? Number(p.nicotine).toFixed(3) : "",
+      codicePl: p.codicePl || "",
+      barcode: p.barcode || "",
+      productType: p.productType || "",
+      visibility: p.visibility || "",
+      published: p.published !== false,
+      subcategory: p.subcategory || "",
       stockQty: p.stockQty ?? "",
       imageUrl: p.imageUrl || "",
       categoryId: p.categoryId || "",
@@ -166,8 +200,25 @@ export default function AdminProducts() {
         method: "PATCH",
         body: JSON.stringify({
           name: edit.name || undefined,
+          shortDescription: edit.shortDescription || undefined,
           description: edit.description || undefined,
           price: edit.price ? Number(edit.price) : undefined,
+          listPrice: edit.listPrice ? Number(edit.listPrice) : undefined,
+          purchasePrice: edit.purchasePrice ? Number(edit.purchasePrice) : undefined,
+          discountPrice: edit.discountPrice ? Number(edit.discountPrice) : undefined,
+          discountQty: edit.discountQty !== "" ? Number(edit.discountQty) : undefined,
+          taxRate: edit.taxRate ? Number(edit.taxRate) : undefined,
+          exciseMl: edit.exciseMl ? Number(edit.exciseMl) : undefined,
+          exciseProduct: edit.exciseProduct ? Number(edit.exciseProduct) : undefined,
+          exciseTotal: edit.exciseTotal ? Number(edit.exciseTotal) : undefined,
+          mlProduct: edit.mlProduct ? Number(edit.mlProduct) : undefined,
+          nicotine: edit.nicotine ? Number(edit.nicotine) : undefined,
+          codicePl: edit.codicePl || undefined,
+          barcode: edit.barcode || undefined,
+          productType: edit.productType || undefined,
+          visibility: edit.visibility || undefined,
+          published: edit.published,
+          subcategory: edit.subcategory || undefined,
           stockQty: edit.stockQty !== "" ? Number(edit.stockQty) : undefined,
           imageUrl: edit.imageUrl || undefined,
           categoryId: edit.categoryId || undefined,
@@ -396,13 +447,18 @@ export default function AdminProducts() {
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="table wide-6">
+      <div className="table wide-11">
         <div className="row header">
           <div>Immagine</div>
           <div>SKU</div>
           <div>Nome</div>
           <div>Prezzo</div>
           <div>Giacenza</div>
+          <div>Prodotto</div>
+          <div>Padre</div>
+          <div>Categoria</div>
+          <div>Accisa</div>
+          <div>Brand</div>
           <div>Fornitore</div>
         </div>
         {filteredItems.map((p) => (
@@ -466,6 +522,11 @@ export default function AdminProducts() {
             </div>
             <div>€ {Number(p.price).toFixed(2)}</div>
             <div>{p.stockQty}</div>
+            <div>{p.isParent ? "Padre" : p.parentId ? "Figlio" : "Singolo"}</div>
+            <div>{p.parent?.name || "-"}</div>
+            <div>{p.category || "-"}</div>
+            <div>{p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : "-"}</div>
+            <div>{p.brand || "-"}</div>
             <div>{p.sourceSupplier?.name || (p.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
           </div>
         ))}
@@ -586,6 +647,13 @@ export default function AdminProducts() {
                     <input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
                   </label>
                   <label>
+                    Breve descrizione
+                    <input
+                      value={edit.shortDescription}
+                      onChange={(e) => setEdit({ ...edit, shortDescription: e.target.value })}
+                    />
+                  </label>
+                  <label>
                     Prezzo
                     <input
                       type="number"
@@ -593,6 +661,42 @@ export default function AdminProducts() {
                       value={edit.price}
                       onChange={(e) => setEdit({ ...edit, price: e.target.value })}
                       disabled={edit.isParent}
+                    />
+                  </label>
+                  <label>
+                    Prezzo listino
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={edit.listPrice}
+                      onChange={(e) => setEdit({ ...edit, listPrice: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Prezzo acquisto
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={edit.purchasePrice}
+                      onChange={(e) => setEdit({ ...edit, purchasePrice: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Prezzo scontato
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={edit.discountPrice}
+                      onChange={(e) => setEdit({ ...edit, discountPrice: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Q.tà per sconto
+                    <input
+                      type="number"
+                      step="1"
+                      value={edit.discountQty}
+                      onChange={(e) => setEdit({ ...edit, discountQty: e.target.value })}
                     />
                   </label>
                   <label>
@@ -609,6 +713,100 @@ export default function AdminProducts() {
                         </option>
                       ))}
                     </select>
+                  </label>
+                  <label>
+                    Sottocategoria
+                    <input
+                      value={edit.subcategory}
+                      onChange={(e) => setEdit({ ...edit, subcategory: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Codice PL
+                    <input value={edit.codicePl} onChange={(e) => setEdit({ ...edit, codicePl: e.target.value })} />
+                  </label>
+                  <label>
+                    ML Prodotto
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={edit.mlProduct}
+                      onChange={(e) => setEdit({ ...edit, mlProduct: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Nicotina
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={edit.nicotine}
+                      onChange={(e) => setEdit({ ...edit, nicotine: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Accisa ML
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={edit.exciseMl}
+                      onChange={(e) => setEdit({ ...edit, exciseMl: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Accisa prodotto
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={edit.exciseProduct}
+                      onChange={(e) => setEdit({ ...edit, exciseProduct: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Accisa totale
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={edit.exciseTotal}
+                      onChange={(e) => setEdit({ ...edit, exciseTotal: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    IVA %
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={edit.taxRate}
+                      onChange={(e) => setEdit({ ...edit, taxRate: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Tipo prodotto
+                    <input
+                      value={edit.productType}
+                      onChange={(e) => setEdit({ ...edit, productType: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Visibilità
+                    <input
+                      value={edit.visibility}
+                      onChange={(e) => setEdit({ ...edit, visibility: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Pubblicato
+                    <div className="toggle">
+                      <input
+                        type="checkbox"
+                        checked={edit.published}
+                        onChange={(e) => setEdit({ ...edit, published: e.target.checked })}
+                      />
+                      <span>{edit.published ? "Visibile" : "Nascosto"}</span>
+                    </div>
+                  </label>
+                  <label>
+                    Barcode
+                    <input value={edit.barcode} onChange={(e) => setEdit({ ...edit, barcode: e.target.value })} />
                   </label>
                   <label>
                     Prodotto padre
