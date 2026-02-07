@@ -772,6 +772,7 @@ export async function adminRoutes(app: FastifyInstance) {
         price: z.number().positive().optional(),
         categoryId: z.string().min(1),
         parentId: z.string().optional(),
+        published: z.boolean().optional(),
       })
       .parse(request.body);
 
@@ -806,6 +807,7 @@ export async function adminRoutes(app: FastifyInstance) {
       const price = body.price ?? sp.price ?? undefined;
       const stockQty = sp.stockQty ?? 0;
 
+      const published = body.published ?? sp.published ?? existing?.published ?? false;
       if (!existing) {
         await prisma.product.create({
           data: {
@@ -822,7 +824,7 @@ export async function adminRoutes(app: FastifyInstance) {
             stockQty,
             imageUrl: sp.imageUrl,
             imageUrls: sp.imageUrls == null ? undefined : sp.imageUrls,
-            published: sp.published,
+            published,
             visibility: sp.visibility,
             productType: sp.productType,
             parentSku: sp.parentSku,
@@ -864,7 +866,7 @@ export async function adminRoutes(app: FastifyInstance) {
               (sp.imageUrls ?? existing.imageUrls) == null
                 ? undefined
                 : (sp.imageUrls ?? existing.imageUrls) as Prisma.InputJsonValue,
-            published: sp.published ?? existing.published,
+            published,
             visibility: sp.visibility ?? existing.visibility,
             productType: sp.productType ?? existing.productType,
             parentSku: sp.parentSku ?? existing.parentSku,

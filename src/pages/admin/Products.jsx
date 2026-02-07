@@ -51,6 +51,7 @@ export default function AdminProducts() {
   const [bulkSaving, setBulkSaving] = useState(false);
   const [collapsedParents, setCollapsedParents] = useState(new Set());
   const [bulkCollapsedParents, setBulkCollapsedParents] = useState(new Set());
+  const [bulkDragOver, setBulkDragOver] = useState("");
   const [productFilter, setProductFilter] = useState("all");
   const [showCreateParent, setShowCreateParent] = useState(false);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
@@ -462,6 +463,7 @@ export default function AdminProducts() {
     if (productFilter === "parents") return Boolean(p.isParent);
     if (productFilter === "children") return Boolean(p.parentId || p.parent?.id);
     if (productFilter === "single") return !p.isParent && !(p.parentId || p.parent?.id);
+    if (productFilter === "draft") return p.published === false;
     return true;
   });
 
@@ -590,6 +592,7 @@ export default function AdminProducts() {
             <option value="parents">Solo genitori</option>
             <option value="children">Solo figli</option>
             <option value="single">Solo singoli</option>
+            <option value="draft">Solo draft</option>
           </select>
           <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
             {bulkMode ? "Selezione attiva" : "Multi selection"}
@@ -625,7 +628,7 @@ export default function AdminProducts() {
           const isParentRow = row.type === "parent";
           return (
           <div
-            className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
+            className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
             key={p.id}
             onClick={() => {
               if (bulkMode) {
@@ -638,7 +641,24 @@ export default function AdminProducts() {
               openEdit(p);
             }}
           >
-            <div>
+            <div className="thumb-cell">
+              {isParentRow ? (
+                <button
+                  type="button"
+                  className="collapse-toggle"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const next = new Set(collapsedParents);
+                    if (next.has(p.id)) next.delete(p.id);
+                    else next.add(p.id);
+                    setCollapsedParents(next);
+                  }}
+                >
+                  {collapsedParents.has(p.id) ? "+" : "−"}
+                </button>
+              ) : (
+                <span className="collapse-spacer" />
+              )}
               {p.imageUrl ? (
                 <img
                   className="thumb"
@@ -678,24 +698,10 @@ export default function AdminProducts() {
               )}
             </div>
             <div className="name-cell">
-              {isParentRow ? (
-                <button
-                  type="button"
-                  className="collapse-toggle"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const next = new Set(collapsedParents);
-                    if (next.has(p.id)) next.delete(p.id);
-                    else next.add(p.id);
-                    setCollapsedParents(next);
-                  }}
-                >
-                  {collapsedParents.has(p.id) ? "+" : "−"}
-                </button>
-              ) : null}
               <span>{p.name}</span>
               {p.isParent ? <span className="tag">Padre</span> : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
+              {p.published === false ? <span className="tag warn">Draft</span> : null}
             </div>
             <div>{p.isParent ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
             <div>{p.isParent ? dash : p.stockQty}</div>
@@ -1365,12 +1371,39 @@ export default function AdminProducts() {
                     }
                   }
                   for (const single of singles) ordered.push({ type: "single", row: single });
-                  return ordered.map(({ row, type }) => {
+                  return ordered.map(({ row, type, parent }) => {
                     const idx = bulkRows.findIndex((r) => r.id === row.id);
                     const isChild = type === "child";
                     const isParent = type === "parent";
                     return (
-                      <div className={`bulk-row ${isChild ? "child-row" : ""} ${isParent ? "parent-row" : ""}`} key={row.id}>
+                      <div
+                        className={`bulk-row ${isChild ? "child-row" : ""} ${isParent ? "parent-row" : ""} ${
+                          bulkDragOver === row.id ? "drag-over" : ""
+                        }`}
+                        key={row.id}
+                        draggable={!isParent}
+                        onDragStart={(e) => {
+                          if (isParent) return;
+                          e.dataTransfer.setData("text/plain", row.id);
+                        }}
+                        onDragOver={(e) => {
+                          if (!isParent) return;
+                          e.preventDefault();
+                          setBulkDragOver(row.id);
+                        }}
+                        onDragLeave={() => setBulkDragOver("")}
+                        onDrop={(e) => {
+                          if (!isParent) return;
+                          e.preventDefault();
+                          const draggedId = e.dataTransfer.getData("text/plain");
+                          if (!draggedId || draggedId === row.id) return;
+                          const next = bulkRows.map((r) =>
+                            r.id === draggedId ? { ...r, parentId: row.id } : r
+                          );
+                          setBulkRows(next);
+                          setBulkDragOver("");
+                        }}
+                      >
                         <div className="mono">
                           {isParent ? (
                             <button

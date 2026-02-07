@@ -180,6 +180,7 @@ export default function AdminSuppliers() {
       const payload = {
         supplierSku: product.supplierSku,
         categoryId,
+        published: false,
       };
       if (priceOverride) payload.price = Number(priceOverride);
       const res = await api(`/admin/suppliers/${selected.id}/promote`, {
@@ -208,7 +209,11 @@ export default function AdminSuppliers() {
     try {
       const res = await api(`/admin/suppliers/${selected.id}/promote`, {
         method: "POST",
-        body: JSON.stringify({ supplierSkus: Array.from(selectedSkus), categoryId: bulkCategoryId }),
+        body: JSON.stringify({
+          supplierSkus: Array.from(selectedSkus),
+          categoryId: bulkCategoryId,
+          published: false,
+        }),
       });
       setActionMsg(`${res.created} prodotti importati con successo`);
       setSuccessTitle("Importazione completata");
@@ -425,7 +430,21 @@ export default function AdminSuppliers() {
               <div>Brand</div>
             </div>
             {supplierProducts.map((p) => (
-              <div className="row clickable" key={p.id} onClick={() => setSelectedProduct(p)}>
+              <div
+                className="row clickable"
+                key={p.id}
+                onClick={() => {
+                  if (bulkMode) {
+                    if (p.isImported) return;
+                    const next = new Set(selectedSkus);
+                    if (next.has(p.supplierSku)) next.delete(p.supplierSku);
+                    else next.add(p.supplierSku);
+                    setSelectedSkus(next);
+                    return;
+                  }
+                  setSelectedProduct(p);
+                }}
+              >
                 <div>
                   <div className="thumb-wrap">
                     {p.isImported ? (

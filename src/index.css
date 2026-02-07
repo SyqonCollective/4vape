@@ -194,7 +194,7 @@ button {
 .admin-main-inner {
   max-width: 100%;
   margin: 0 auto;
-  animation: float-in 0.6s ease;
+  animation: none;
 }
 
 .admin-topbar {
@@ -473,9 +473,11 @@ button {
   align-items: center;
   padding: 0.9rem 1.1rem;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(16, 23, 40, 0.08);
-  box-shadow: 0 12px 30px rgba(16, 23, 40, 0.06);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -516,14 +518,18 @@ button {
 }
 
 .row.parent-row {
-  border-left: 4px solid rgba(59, 130, 246, 0.5);
-  background: #f8fafc;
+  border-left: 4px solid rgba(59, 130, 246, 0.6);
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.95));
+  box-shadow:
+    0 16px 32px rgba(59, 130, 246, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .row.child-row {
   margin-left: 22px;
   border-left: 2px solid rgba(148, 163, 184, 0.45);
   position: relative;
+  background: rgba(255, 255, 255, 0.94);
 }
 
 .row.child-row::before {
@@ -539,6 +545,11 @@ button {
 .row.unavailable {
   border-color: rgba(239, 68, 68, 0.35);
   background: rgba(254, 226, 226, 0.6);
+}
+
+.row.draft {
+  border-color: rgba(251, 146, 60, 0.5);
+  background: linear-gradient(135deg, rgba(255, 237, 213, 0.8), rgba(255, 255, 255, 0.96));
 }
 
 .row .actions {
@@ -561,6 +572,27 @@ button {
 
 .name-cell .tag {
   white-space: nowrap;
+}
+
+.tag.warn {
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.thumb-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.collapse-spacer {
+  width: 26px;
+  height: 26px;
+  display: inline-block;
 }
 
 .form-grid {
@@ -1681,4 +1713,9 @@ button {
 .bulk-row.parent-row {
   background: #f8fafc;
   border-left: 4px solid rgba(59, 130, 246, 0.45);
+}
+
+.bulk-row.drag-over {
+  outline: 2px dashed rgba(59, 130, 246, 0.6);
+  background: rgba(239, 246, 255, 0.9);
 }
