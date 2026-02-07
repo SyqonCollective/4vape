@@ -7,12 +7,31 @@ import https from "node:https";
 const FIELD_KEYS = [
   "sku",
   "name",
+  "shortDescription",
   "description",
   "price",
   "stockQty",
   "imageUrl",
+  "imageUrls",
   "brand",
   "category",
+  "subcategory",
+  "published",
+  "visibility",
+  "productType",
+  "parentSku",
+  "childSkus",
+  "codicePl",
+  "mlProduct",
+  "nicotine",
+  "exciseMl",
+  "exciseProduct",
+  "taxRate",
+  "purchasePrice",
+  "listPrice",
+  "discountPrice",
+  "discountQty",
+  "barcode",
 ] as const;
 
 type FieldKey = (typeof FIELD_KEYS)[number];
@@ -20,6 +39,28 @@ type FieldKey = (typeof FIELD_KEYS)[number];
 type FieldMap = Record<FieldKey, string | undefined>;
 
 type ParsedRow = Record<string, string>;
+
+async function getSettings() {
+  return prisma.appSetting.findFirst();
+}
+
+function computeTaxes(input: {
+  price?: number;
+  taxRate?: number;
+  exciseMl?: number;
+  exciseProduct?: number;
+  mlProduct?: number;
+}) {
+  const exciseTotal =
+    input.exciseProduct != null
+      ? input.exciseProduct
+      : input.exciseMl != null && input.mlProduct != null
+      ? input.exciseMl * input.mlProduct
+      : undefined;
+  const taxAmount =
+    input.price != null && input.taxRate != null ? (input.price * input.taxRate) / 100 : undefined;
+  return { exciseTotal, taxAmount };
+}
 
 function normalize(value: string) {
   return value
@@ -33,6 +74,23 @@ function parseNumber(value: string | undefined) {
   const cleaned = value.replace(/\./g, "").replace(/,/g, ".").trim();
   const num = Number(cleaned);
   return Number.isFinite(num) ? num : undefined;
+}
+
+function parseBoolean(value: string | undefined) {
+  if (value == null) return undefined;
+  const v = value.trim().toLowerCase();
+  if (v === "1" || v === "true" || v === "si" || v === "sì" || v === "yes") return true;
+  if (v === "0" || v === "false" || v === "no") return false;
+  return undefined;
+}
+
+function parseList(value: string | undefined) {
+  if (!value) return undefined;
+  const parts = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts : undefined;
 }
 
 function buildFieldMap(headers: string[], supplierMap?: any): FieldMap {
@@ -59,12 +117,31 @@ function buildFieldMap(headers: string[], supplierMap?: any): FieldMap {
   const synonyms: Record<FieldKey, string[]> = {
     sku: ["sku", "codice", "codice_sku", "codice_prodotto", "codiceart", "articolo"],
     name: ["nome", "name", "descrizione_breve", "titolo", "prodotto"],
+    shortDescription: ["breve_descrizione", "descrizione_breve", "short_description"],
     description: ["descrizione", "descrizione_lunga", "description"],
     price: ["prezzo", "price", "prezzo_listino", "prezzo_netto", "prezzo_wls"],
     stockQty: ["giacenza", "stock", "qty", "quantita", "quantità", "qta"],
     imageUrl: ["immagine", "image", "image_url", "img"],
+    imageUrls: ["immagini", "image_list", "image_urls"],
     brand: ["brand", "marca", "produttore"],
     category: ["categoria", "category", "famiglia", "albero_categorie"],
+    subcategory: ["sottocategorie", "sottocategoria", "subcategory"],
+    published: ["pubblicato", "published"],
+    visibility: ["visibilità_nel_catalogo", "visibilita_nel_catalogo", "visibility"],
+    productType: ["prodotto", "tipo_prodotto", "product_type"],
+    parentSku: ["padre", "parent", "parent_sku"],
+    childSkus: ["figli", "children", "child_skus"],
+    codicePl: ["codice_pl", "codice_pls", "codicepl"],
+    mlProduct: ["ml_prodotto", "ml", "ml_prodotto"],
+    nicotine: ["nicotina", "nicotine"],
+    exciseMl: ["accisa_ml", "accisa_ml", "accisa_ml"],
+    exciseProduct: ["accisa_prodotto", "accisa_prodotto"],
+    taxRate: ["aliquota_di_imposta", "aliquota_imposta", "iva", "tax_rate"],
+    purchasePrice: ["prezzo_di_acquisto", "prezzo_acquisto"],
+    listPrice: ["prezzo_di_listino", "prezzo_listino"],
+    discountPrice: ["prezzi_scontato_per_quantità", "prezzo_scontato", "discount_price"],
+    discountQty: ["quantità_per_sconto", "quantita_per_sconto", "discount_qty"],
+    barcode: ["codice_a_barre", "barcode", "ean"],
   };
 
   for (const key of FIELD_KEYS) {
@@ -206,12 +283,31 @@ function mapRow(row: ParsedRow, fieldMap: FieldMap) {
   return {
     sku: get("sku")?.trim(),
     name: get("name")?.trim(),
+    shortDescription: get("shortDescription")?.trim(),
     description: get("description")?.trim(),
     brand: get("brand")?.trim(),
     category: get("category")?.trim(),
+    subcategory: get("subcategory")?.trim(),
     price: parseNumber(get("price")),
     stockQty: parseNumber(get("stockQty")),
     imageUrl: get("imageUrl")?.trim(),
+    imageUrls: parseList(get("imageUrls")),
+    published: parseBoolean(get("published")),
+    visibility: get("visibility")?.trim(),
+    productType: get("productType")?.trim(),
+    parentSku: get("parentSku")?.trim(),
+    childSkus: parseList(get("childSkus")),
+    codicePl: get("codicePl")?.trim(),
+    mlProduct: parseNumber(get("mlProduct")),
+    nicotine: parseNumber(get("nicotine")),
+    exciseMl: parseNumber(get("exciseMl")),
+    exciseProduct: parseNumber(get("exciseProduct")),
+    taxRate: parseNumber(get("taxRate")),
+    purchasePrice: parseNumber(get("purchasePrice")),
+    listPrice: parseNumber(get("listPrice")),
+    discountPrice: parseNumber(get("discountPrice")),
+    discountQty: parseNumber(get("discountQty")),
+    barcode: get("barcode")?.trim(),
   };
 }
 
@@ -219,6 +315,12 @@ export async function importFullFromSupplier(supplier: Supplier) {
   let created = 0;
   let skipped = 0;
   let updated = 0;
+  const settings = await getSettings();
+  const defaultVat = settings?.vatRateDefault ? Number(settings.vatRateDefault) : undefined;
+  const defaultExciseMl = settings?.exciseMlDefault ? Number(settings.exciseMlDefault) : undefined;
+  const defaultExciseProduct = settings?.exciseProductDefault
+    ? Number(settings.exciseProductDefault)
+    : undefined;
 
   if (supplier.apiType === "PRESTASHOP") {
     const [products, combinations, categories] = await Promise.all([
@@ -255,6 +357,17 @@ export async function importFullFromSupplier(supplier: Supplier) {
       const imageUrl = imageId
         ? `/api/suppliers/${supplier.id}/image?productId=${p.id}&imageId=${imageId}`
         : undefined;
+      const taxRate = defaultVat;
+      const exciseMl = defaultExciseMl;
+      const exciseProduct = defaultExciseProduct;
+      const mlProduct = undefined;
+      const { exciseTotal, taxAmount } = computeTaxes({
+        price,
+        taxRate,
+        exciseMl,
+        exciseProduct,
+        mlProduct,
+      });
 
       await prisma.supplierProduct.upsert({
         where: {
@@ -269,6 +382,11 @@ export async function importFullFromSupplier(supplier: Supplier) {
           brand,
           category,
           price: price != null ? new Prisma.Decimal(price) : undefined,
+          taxRate: taxRate != null ? new Prisma.Decimal(taxRate) : undefined,
+          exciseMl: exciseMl != null ? new Prisma.Decimal(exciseMl) : undefined,
+          exciseProduct: exciseProduct != null ? new Prisma.Decimal(exciseProduct) : undefined,
+          exciseTotal: exciseTotal != null ? new Prisma.Decimal(exciseTotal) : undefined,
+          taxAmount: taxAmount != null ? new Prisma.Decimal(taxAmount) : undefined,
           stockQty,
           imageUrl,
           raw: p,
@@ -282,6 +400,11 @@ export async function importFullFromSupplier(supplier: Supplier) {
           brand,
           category,
           price: price != null ? new Prisma.Decimal(price) : undefined,
+          taxRate: taxRate != null ? new Prisma.Decimal(taxRate) : undefined,
+          exciseMl: exciseMl != null ? new Prisma.Decimal(exciseMl) : undefined,
+          exciseProduct: exciseProduct != null ? new Prisma.Decimal(exciseProduct) : undefined,
+          exciseTotal: exciseTotal != null ? new Prisma.Decimal(exciseTotal) : undefined,
+          taxAmount: taxAmount != null ? new Prisma.Decimal(taxAmount) : undefined,
           stockQty,
           imageUrl,
           raw: p,
@@ -308,6 +431,17 @@ export async function importFullFromSupplier(supplier: Supplier) {
       const imageUrl = imageId
         ? `/api/suppliers/${supplier.id}/image?productId=${parent.id}&imageId=${imageId}`
         : undefined;
+      const taxRate = defaultVat;
+      const exciseMl = defaultExciseMl;
+      const exciseProduct = defaultExciseProduct;
+      const mlProduct = undefined;
+      const { exciseTotal, taxAmount } = computeTaxes({
+        price,
+        taxRate,
+        exciseMl,
+        exciseProduct,
+        mlProduct,
+      });
 
       await prisma.supplierProduct.upsert({
         where: {
@@ -322,6 +456,11 @@ export async function importFullFromSupplier(supplier: Supplier) {
           brand,
           category,
           price: price != null ? new Prisma.Decimal(price) : undefined,
+          taxRate: taxRate != null ? new Prisma.Decimal(taxRate) : undefined,
+          exciseMl: exciseMl != null ? new Prisma.Decimal(exciseMl) : undefined,
+          exciseProduct: exciseProduct != null ? new Prisma.Decimal(exciseProduct) : undefined,
+          exciseTotal: exciseTotal != null ? new Prisma.Decimal(exciseTotal) : undefined,
+          taxAmount: taxAmount != null ? new Prisma.Decimal(taxAmount) : undefined,
           stockQty,
           imageUrl,
           raw: c,
@@ -335,6 +474,11 @@ export async function importFullFromSupplier(supplier: Supplier) {
           brand,
           category,
           price: price != null ? new Prisma.Decimal(price) : undefined,
+          taxRate: taxRate != null ? new Prisma.Decimal(taxRate) : undefined,
+          exciseMl: exciseMl != null ? new Prisma.Decimal(exciseMl) : undefined,
+          exciseProduct: exciseProduct != null ? new Prisma.Decimal(exciseProduct) : undefined,
+          exciseTotal: exciseTotal != null ? new Prisma.Decimal(exciseTotal) : undefined,
+          taxAmount: taxAmount != null ? new Prisma.Decimal(taxAmount) : undefined,
           stockQty,
           imageUrl,
           raw: c,
@@ -356,6 +500,18 @@ export async function importFullFromSupplier(supplier: Supplier) {
   for (const row of rows) {
     const data = mapRow(row, fieldMap);
     if (!data.sku) continue;
+    const taxRate = data.taxRate ?? defaultVat;
+    const exciseMl = data.exciseMl ?? defaultExciseMl;
+    const exciseProduct = data.exciseProduct ?? defaultExciseProduct;
+    const mlProduct = data.mlProduct;
+    const price = data.listPrice ?? data.price;
+    const { exciseTotal, taxAmount } = computeTaxes({
+      price,
+      taxRate,
+      exciseMl,
+      exciseProduct,
+      mlProduct,
+    });
 
     await prisma.supplierProduct.upsert({
       where: {
@@ -366,12 +522,33 @@ export async function importFullFromSupplier(supplier: Supplier) {
       },
       update: {
         name: data.name,
+        shortDescription: data.shortDescription,
         description: data.description,
         brand: data.brand,
         category: data.category,
-        price: data.price ? new Prisma.Decimal(data.price) : undefined,
+        subcategory: data.subcategory,
+        published: data.published,
+        visibility: data.visibility,
+        productType: data.productType,
+        parentSku: data.parentSku,
+        childSkus: data.childSkus,
+        codicePl: data.codicePl,
+        mlProduct: data.mlProduct != null ? new Prisma.Decimal(data.mlProduct) : undefined,
+        nicotine: data.nicotine != null ? new Prisma.Decimal(data.nicotine) : undefined,
+        exciseMl: exciseMl != null ? new Prisma.Decimal(exciseMl) : undefined,
+        exciseProduct: exciseProduct != null ? new Prisma.Decimal(exciseProduct) : undefined,
+        exciseTotal: exciseTotal != null ? new Prisma.Decimal(exciseTotal) : undefined,
+        taxRate: taxRate != null ? new Prisma.Decimal(taxRate) : undefined,
+        taxAmount: taxAmount != null ? new Prisma.Decimal(taxAmount) : undefined,
+        price: price != null ? new Prisma.Decimal(price) : undefined,
+        purchasePrice: data.purchasePrice != null ? new Prisma.Decimal(data.purchasePrice) : undefined,
+        listPrice: data.listPrice != null ? new Prisma.Decimal(data.listPrice) : undefined,
+        discountPrice: data.discountPrice != null ? new Prisma.Decimal(data.discountPrice) : undefined,
+        discountQty: data.discountQty != null ? Math.trunc(data.discountQty) : undefined,
         stockQty: data.stockQty ? Math.trunc(data.stockQty) : undefined,
         imageUrl: data.imageUrl,
+        imageUrls: data.imageUrls,
+        barcode: data.barcode,
         raw: row,
         lastSeenAt: new Date(),
       },
@@ -379,12 +556,33 @@ export async function importFullFromSupplier(supplier: Supplier) {
         supplierId: supplier.id,
         supplierSku: data.sku,
         name: data.name,
+        shortDescription: data.shortDescription,
         description: data.description,
         brand: data.brand,
         category: data.category,
-        price: data.price ? new Prisma.Decimal(data.price) : undefined,
+        subcategory: data.subcategory,
+        published: data.published,
+        visibility: data.visibility,
+        productType: data.productType,
+        parentSku: data.parentSku,
+        childSkus: data.childSkus,
+        codicePl: data.codicePl,
+        mlProduct: data.mlProduct != null ? new Prisma.Decimal(data.mlProduct) : undefined,
+        nicotine: data.nicotine != null ? new Prisma.Decimal(data.nicotine) : undefined,
+        exciseMl: exciseMl != null ? new Prisma.Decimal(exciseMl) : undefined,
+        exciseProduct: exciseProduct != null ? new Prisma.Decimal(exciseProduct) : undefined,
+        exciseTotal: exciseTotal != null ? new Prisma.Decimal(exciseTotal) : undefined,
+        taxRate: taxRate != null ? new Prisma.Decimal(taxRate) : undefined,
+        taxAmount: taxAmount != null ? new Prisma.Decimal(taxAmount) : undefined,
+        price: price != null ? new Prisma.Decimal(price) : undefined,
+        purchasePrice: data.purchasePrice != null ? new Prisma.Decimal(data.purchasePrice) : undefined,
+        listPrice: data.listPrice != null ? new Prisma.Decimal(data.listPrice) : undefined,
+        discountPrice: data.discountPrice != null ? new Prisma.Decimal(data.discountPrice) : undefined,
+        discountQty: data.discountQty != null ? Math.trunc(data.discountQty) : undefined,
         stockQty: data.stockQty ? Math.trunc(data.stockQty) : undefined,
         imageUrl: data.imageUrl,
+        imageUrls: data.imageUrls,
+        barcode: data.barcode,
         raw: row,
       },
     });

@@ -80,12 +80,33 @@ model SupplierProduct {
   supplierSku  String
   name         String?
   description  String?
+  shortDescription String?
   brand        String?
   category     String?
+  subcategory  String?
   categoryId   String?
+  published    Boolean? @default(true)
+  visibility   String?
+  productType  String?
+  parentSku    String?
+  childSkus    Json?
+  codicePl     String?
+  mlProduct    Decimal? @db.Decimal(12, 3)
+  nicotine     Decimal? @db.Decimal(12, 3)
+  exciseMl     Decimal? @db.Decimal(12, 6)
+  exciseProduct Decimal? @db.Decimal(12, 6)
+  exciseTotal  Decimal? @db.Decimal(12, 6)
+  taxRate      Decimal? @db.Decimal(6, 2)
+  taxAmount    Decimal? @db.Decimal(12, 6)
   price        Decimal? @db.Decimal(12, 2)
+  purchasePrice Decimal? @db.Decimal(12, 2)
+  listPrice     Decimal? @db.Decimal(12, 2)
+  discountPrice Decimal? @db.Decimal(12, 2)
+  discountQty   Int?
   stockQty     Int?
   imageUrl     String?
+  imageUrls    Json?
+  barcode      String?
   raw          Json?
   lastSeenAt   DateTime @default(now())
 
@@ -100,15 +121,36 @@ model Product {
   sku         String        @unique
   name        String
   description String?
+  shortDescription String?
   brand       String?
   category    String?
+  subcategory String?
   categoryId  String?
   parentId    String?
   isParent    Boolean       @default(false)
   isUnavailable Boolean     @default(false)
+  published   Boolean?      @default(true)
+  visibility  String?
+  productType String?
+  parentSku   String?
+  childSkus   Json?
+  codicePl    String?
+  mlProduct   Decimal? @db.Decimal(12, 3)
+  nicotine    Decimal? @db.Decimal(12, 3)
+  exciseMl    Decimal? @db.Decimal(12, 6)
+  exciseProduct Decimal? @db.Decimal(12, 6)
+  exciseTotal Decimal? @db.Decimal(12, 6)
+  taxRate     Decimal? @db.Decimal(6, 2)
+  taxAmount   Decimal? @db.Decimal(12, 6)
   price       Decimal       @db.Decimal(12, 2)
+  purchasePrice Decimal? @db.Decimal(12, 2)
+  listPrice     Decimal? @db.Decimal(12, 2)
+  discountPrice Decimal? @db.Decimal(12, 2)
+  discountQty   Int?
   stockQty    Int           @default(0)
   imageUrl    String?
+  imageUrls   Json?
+  barcode     String?
   source      ProductSource @default(MANUAL)
   createdAt   DateTime      @default(now())
 
@@ -120,6 +162,15 @@ model Product {
   images           ProductImage[]
 
   orderItems OrderItem[]
+}
+
+model AppSetting {
+  id              String   @id @default(cuid())
+  vatRateDefault  Decimal? @db.Decimal(6, 2)
+  exciseMlDefault Decimal? @db.Decimal(12, 6)
+  exciseProductDefault Decimal? @db.Decimal(12, 6)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Category {

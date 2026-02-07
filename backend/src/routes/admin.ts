@@ -326,6 +326,34 @@ export async function adminRoutes(app: FastifyInstance) {
     };
   });
 
+  app.get("/settings", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    let settings = await prisma.appSetting.findFirst();
+    if (!settings) {
+      settings = await prisma.appSetting.create({ data: {} });
+    }
+    return settings;
+  });
+
+  app.patch("/settings", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        vatRateDefault: z.number().nonnegative().optional(),
+        exciseMlDefault: z.number().nonnegative().optional(),
+        exciseProductDefault: z.number().nonnegative().optional(),
+      })
+      .parse(request.body);
+    let settings = await prisma.appSetting.findFirst();
+    if (!settings) {
+      settings = await prisma.appSetting.create({ data: body });
+      return settings;
+    }
+    return prisma.appSetting.update({ where: { id: settings.id }, data: body });
+  });
+
   app.get("/categories", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -538,21 +566,77 @@ export async function adminRoutes(app: FastifyInstance) {
           data: {
             sku: sp.supplierSku,
             name: sp.name || sp.supplierSku,
+            shortDescription: sp.shortDescription,
             description: sp.description,
             brand: sp.brand,
             category: category.name,
+            subcategory: sp.subcategory,
             categoryId: category.id,
             parentId: body.parentId || null,
             price: price ?? 0,
             stockQty,
             imageUrl: sp.imageUrl,
+            imageUrls: sp.imageUrls,
+            published: sp.published,
+            visibility: sp.visibility,
+            productType: sp.productType,
+            parentSku: sp.parentSku,
+            childSkus: sp.childSkus,
+            codicePl: sp.codicePl,
+            mlProduct: sp.mlProduct,
+            nicotine: sp.nicotine,
+            exciseMl: sp.exciseMl,
+            exciseProduct: sp.exciseProduct,
+            exciseTotal: sp.exciseTotal,
+            taxRate: sp.taxRate,
+            taxAmount: sp.taxAmount,
+            purchasePrice: sp.purchasePrice,
+            listPrice: sp.listPrice,
+            discountPrice: sp.discountPrice,
+            discountQty: sp.discountQty,
+            barcode: sp.barcode,
             source: "SUPPLIER",
             sourceSupplierId: supplierId,
           },
         });
         created += 1;
       } else {
-        already += 1;
+        await prisma.product.update({
+          where: { id: existing.id },
+          data: {
+            name: sp.name || existing.name,
+            shortDescription: sp.shortDescription ?? existing.shortDescription,
+            description: sp.description ?? existing.description,
+            brand: sp.brand ?? existing.brand,
+            category: category.name,
+            subcategory: sp.subcategory ?? existing.subcategory,
+            categoryId: category.id,
+            parentId: body.parentId ?? existing.parentId,
+            price: price ?? existing.price,
+            stockQty,
+            imageUrl: sp.imageUrl ?? existing.imageUrl,
+            imageUrls: sp.imageUrls ?? existing.imageUrls,
+            published: sp.published ?? existing.published,
+            visibility: sp.visibility ?? existing.visibility,
+            productType: sp.productType ?? existing.productType,
+            parentSku: sp.parentSku ?? existing.parentSku,
+            childSkus: sp.childSkus ?? existing.childSkus,
+            codicePl: sp.codicePl ?? existing.codicePl,
+            mlProduct: sp.mlProduct ?? existing.mlProduct,
+            nicotine: sp.nicotine ?? existing.nicotine,
+            exciseMl: sp.exciseMl ?? existing.exciseMl,
+            exciseProduct: sp.exciseProduct ?? existing.exciseProduct,
+            exciseTotal: sp.exciseTotal ?? existing.exciseTotal,
+            taxRate: sp.taxRate ?? existing.taxRate,
+            taxAmount: sp.taxAmount ?? existing.taxAmount,
+            purchasePrice: sp.purchasePrice ?? existing.purchasePrice,
+            listPrice: sp.listPrice ?? existing.listPrice,
+            discountPrice: sp.discountPrice ?? existing.discountPrice,
+            discountQty: sp.discountQty ?? existing.discountQty,
+            barcode: sp.barcode ?? existing.barcode,
+          },
+        });
+        updated += 1;
       }
     }
 

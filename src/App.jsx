@@ -7,6 +7,7 @@ import AdminSuppliers from "./pages/admin/Suppliers.jsx";
 import AdminCategories from "./pages/admin/Categories.jsx";
 import AdminOrders from "./pages/admin/Orders.jsx";
 import AdminUsers from "./pages/admin/Users.jsx";
+import AdminSettings from "./pages/admin/Settings.jsx";
 import { getToken } from "./lib/api.js";
 
 function RequireAuth({ children }) {
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="products" element={<AdminProducts />} />
         <Route path="categories" element={<AdminCategories />} />
         <Route path="suppliers" element={<AdminSuppliers />} />
+        <Route path="settings" element={<AdminSettings />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="users" element={<AdminUsers />} />
         <Route index element={<Navigate to="/admin/dashboard" replace />} />

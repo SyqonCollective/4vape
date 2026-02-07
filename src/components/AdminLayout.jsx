@@ -8,6 +8,7 @@ const links = [
   { to: "/admin/products", label: "Prodotti" },
   { to: "/admin/categories", label: "Categorie" },
   { to: "/admin/suppliers", label: "Fornitori" },
+  { to: "/admin/settings", label: "Impostazioni" },
   { to: "/admin/orders", label: "Ordini" },
   { to: "/admin/users", label: "Utenti" },
 ];
