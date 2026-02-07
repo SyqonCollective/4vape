@@ -1579,7 +1579,8 @@ button {
     150px
     90px
     100px
-    100px;
+    100px
+    180px;
   gap: 0.6rem;
   align-items: center;
   padding: 0.6rem 0.8rem;
@@ -1718,4 +1719,9 @@ button {
 .bulk-row.drag-over {
   outline: 2px dashed rgba(59, 130, 246, 0.6);
   background: rgba(239, 246, 255, 0.9);
+}
+
+.bulk-row.draft-row {
+  border-left-color: rgba(251, 146, 60, 0.6);
+  background: rgba(255, 247, 237, 0.9);
 }

@@ -247,7 +247,7 @@ export default function AdminProducts() {
     setChildLinks(new Set((p.children || []).map((c) => c.id)));
   }
 
-  async function saveEdit() {
+  async function saveEdit(forcePublish = false) {
     if (!selectedProduct) return;
     try {
       await api(`/admin/products/${selectedProduct.id}`, {
@@ -270,7 +270,7 @@ export default function AdminProducts() {
           barcode: edit.barcode || undefined,
           productType: edit.productType || undefined,
           visibility: edit.visibility || undefined,
-          published: edit.published,
+          published: forcePublish ? true : edit.published,
           subcategory: edit.subcategory || undefined,
           stockQty: edit.stockQty !== "" ? Number(edit.stockQty) : undefined,
           imageUrl: edit.imageUrl || undefined,
@@ -510,7 +510,14 @@ export default function AdminProducts() {
   const dash = <span className="cell-muted">—</span>;
 
   function openBulkEditor() {
-    const rows = filteredItems.map((p) => ({
+    const sourceItems =
+      productFilter === "draft"
+        ? [
+            ...items.filter((p) => p.isParent),
+            ...items.filter((p) => p.published === false),
+          ]
+        : filteredItems;
+    const rows = sourceItems.map((p) => ({
       id: p.id,
       sku: p.sku || "",
       name: p.name || "",
@@ -528,6 +535,7 @@ export default function AdminProducts() {
       isUnavailable: Boolean(p.isUnavailable),
       isParent: Boolean(p.isParent),
       parentId: p.parentId || p.parent?.id || "",
+      isDraftRow: p.published === false,
     }));
     setBulkRows(rows);
     setShowBulkEditor(true);
@@ -538,10 +546,14 @@ export default function AdminProducts() {
     setBulkSaving(true);
     setError("");
     try {
+      const rowsToSave =
+        productFilter === "draft"
+          ? bulkRows.filter((row) => row.isDraftRow)
+          : bulkRows;
       await api("/admin/products/bulk", {
         method: "PATCH",
         body: JSON.stringify({
-          items: bulkRows.map((row) => ({
+          items: rowsToSave.map((row) => ({
             id: row.id,
             name: row.name?.trim() || null,
             price: row.price === "" ? null : Number(row.price),
@@ -554,7 +566,7 @@ export default function AdminProducts() {
             taxRateId: row.taxRateId || null,
             exciseRateId: row.exciseRateId || null,
             vatIncluded: Boolean(row.vatIncluded),
-            published: Boolean(row.published),
+            published: productFilter === "draft" ? false : Boolean(row.published),
             isUnavailable: Boolean(row.isUnavailable),
           })),
         }),
@@ -1096,7 +1108,16 @@ export default function AdminProducts() {
                   />
                 </label>
                 <div className="actions">
-                  <button className="btn primary" onClick={saveEdit}>Salva</button>
+                  {selectedProduct.published === false ? (
+                    <button
+                      className="btn primary"
+                      onClick={() => saveEdit(true)}
+                    >
+                      Salva e pubblica
+                    </button>
+                  ) : (
+                    <button className="btn primary" onClick={saveEdit}>Salva</button>
+                  )}
                   <button className="btn danger" onClick={() => setConfirmDelete(true)}>Elimina</button>
                 </div>
                 {edit.isParent ? (
@@ -1347,6 +1368,7 @@ export default function AdminProducts() {
                   <div>IVA incl.</div>
                   <div>Pubblicato</div>
                   <div>Non disp.</div>
+                  <div>Padre</div>
                 </div>
                 {(() => {
                   const byParent = new Map();
@@ -1375,15 +1397,16 @@ export default function AdminProducts() {
                     const idx = bulkRows.findIndex((r) => r.id === row.id);
                     const isChild = type === "child";
                     const isParent = type === "parent";
+                    const isDraftRow = row.isDraftRow;
                     return (
                       <div
                         className={`bulk-row ${isChild ? "child-row" : ""} ${isParent ? "parent-row" : ""} ${
                           bulkDragOver === row.id ? "drag-over" : ""
-                        }`}
+                        } ${isDraftRow ? "draft-row" : ""}`}
                         key={row.id}
-                        draggable={!isParent}
+                        draggable={!isParent && isDraftRow}
                         onDragStart={(e) => {
-                          if (isParent) return;
+                          if (isParent || !isDraftRow) return;
                           e.dataTransfer.setData("text/plain", row.id);
                         }}
                         onDragOver={(e) => {
@@ -1428,6 +1451,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, name: e.target.value };
                             setBulkRows(next);
                           }}
+                          disabled={!isDraftRow}
                         />
                         <input
                           type="number"
@@ -1438,7 +1462,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, price: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={row.isParent}
+                          disabled={row.isParent || !isDraftRow}
                         />
                         <input
                           type="number"
@@ -1449,6 +1473,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, listPrice: e.target.value };
                             setBulkRows(next);
                           }}
+                          disabled={!isDraftRow}
                         />
                         <input
                           type="number"
@@ -1459,6 +1484,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, purchasePrice: e.target.value };
                             setBulkRows(next);
                           }}
+                          disabled={!isDraftRow}
                         />
                         <input
                           type="number"
@@ -1469,6 +1495,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, discountPrice: e.target.value };
                             setBulkRows(next);
                           }}
+                          disabled={!isDraftRow}
                         />
                         <input
                           type="number"
@@ -1479,6 +1506,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, discountQty: e.target.value };
                             setBulkRows(next);
                           }}
+                          disabled={!isDraftRow}
                         />
                         <input
                           type="number"
@@ -1489,7 +1517,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, stockQty: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={row.isParent}
+                          disabled={row.isParent || !isDraftRow}
                         />
                         <select
                           value={row.categoryId}
@@ -1498,6 +1526,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, categoryId: e.target.value };
                             setBulkRows(next);
                           }}
+                          disabled={!isDraftRow}
                         >
                           <option value="">-</option>
                           {categoryOptions.map((c) => (
@@ -1513,6 +1542,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, taxRateId: e.target.value };
                             setBulkRows(next);
                           }}
+                          disabled={!isDraftRow}
                         >
                           <option value="">-</option>
                           {taxes.map((t) => (
@@ -1528,6 +1558,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, exciseRateId: e.target.value };
                             setBulkRows(next);
                           }}
+                          disabled={!isDraftRow}
                         >
                           <option value="">-</option>
                           {excises.map((e) => (
@@ -1545,6 +1576,7 @@ export default function AdminProducts() {
                               next[idx] = { ...row, vatIncluded: e.target.checked };
                               setBulkRows(next);
                             }}
+                            disabled={!isDraftRow}
                           />
                           <span />
                         </label>
@@ -1557,6 +1589,7 @@ export default function AdminProducts() {
                               next[idx] = { ...row, published: e.target.checked };
                               setBulkRows(next);
                             }}
+                            disabled={!isDraftRow}
                           />
                           <span />
                         </label>
@@ -1569,9 +1602,26 @@ export default function AdminProducts() {
                               next[idx] = { ...row, isUnavailable: e.target.checked };
                               setBulkRows(next);
                             }}
+                            disabled={!isDraftRow}
                           />
                           <span />
                         </label>
+                        <select
+                          value={row.parentId}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, parentId: e.target.value };
+                            setBulkRows(next);
+                          }}
+                          disabled={!isDraftRow}
+                        >
+                          <option value="">Nessun padre</option>
+                          {parents.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} ({p.sku})
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     );
                   });
