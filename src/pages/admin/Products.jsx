@@ -552,17 +552,21 @@ export default function AdminProducts() {
           ? bulkRows.filter((row) => row.isDraftRow)
           : bulkRows;
       const orderMap = new Map();
-      if (productFilter === "draft") {
-        const byParent = new Map();
-        for (const row of rowsToSave) {
-          const parentId = row.parentId || "";
-          if (!parentId) continue;
-          const list = byParent.get(parentId) || [];
-          list.push(row.id);
-          byParent.set(parentId, list);
-        }
-        for (const [parentId, ids] of byParent) {
-          ids.forEach((id, idx) => orderMap.set(id, idx));
+      const byParent = new Map();
+      for (const row of rowsToSave) {
+        const parentId = row.parentId || "";
+        if (!parentId) continue;
+        const list = byParent.get(parentId) || [];
+        list.push(row.id);
+        byParent.set(parentId, list);
+      }
+      for (const [parentId, ids] of byParent) {
+        ids.forEach((id, idx) => orderMap.set(id, idx));
+      }
+      const parentCategoryMap = new Map();
+      for (const row of rowsToSave) {
+        if (row.isParent && row.categoryId) {
+          parentCategoryMap.set(row.id, row.categoryId);
         }
       }
       await api("/admin/products/bulk", {
@@ -578,7 +582,10 @@ export default function AdminProducts() {
             discountQty: row.discountQty === "" ? null : Number(row.discountQty),
             stockQty: row.stockQty === "" ? null : Number(row.stockQty),
             nicotine: row.nicotine === "" ? null : Number(row.nicotine),
-            categoryId: row.categoryId || null,
+            categoryId:
+              row.categoryId ||
+              (row.parentId && parentCategoryMap.get(row.parentId)) ||
+              null,
             taxRateId: row.taxRateId || null,
             exciseRateId: row.exciseRateId || null,
             vatIncluded: Boolean(row.vatIncluded),
@@ -1436,9 +1443,9 @@ export default function AdminProducts() {
                           bulkDragOver === row.id ? "drag-over" : ""
                         } ${isDraftRow ? "draft-row" : ""}`}
                         key={row.id}
-                        draggable={!isParent && isDraftRow}
+                        draggable={!isParent}
                         onDragStart={(e) => {
-                          if (isParent || !isDraftRow) return;
+                          if (isParent) return;
                           e.dataTransfer.setData("text/plain", row.id);
                         }}
                         onDragOver={(e) => {
@@ -1626,7 +1633,7 @@ export default function AdminProducts() {
                               next[idx] = { ...row, vatIncluded: e.target.checked };
                               setBulkRows(next);
                             }}
-                            disabled={!isDraftRow}
+                          disabled={!isDraftRow}
                           />
                           <span />
                         </label>
@@ -1639,7 +1646,7 @@ export default function AdminProducts() {
                               next[idx] = { ...row, published: e.target.checked };
                               setBulkRows(next);
                             }}
-                            disabled={!isDraftRow}
+                          disabled={!isDraftRow}
                           />
                           <span />
                         </label>
@@ -1669,7 +1676,7 @@ export default function AdminProducts() {
                               };
                               setBulkRows(next);
                             }}
-                            disabled={!isDraftRow}
+                            disabled={false}
                           />
                           <span />
                         </label>
@@ -1680,7 +1687,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, parentId: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow || row.isParent}
+                          disabled={row.isParent}
                         >
                           <option value="">Nessun padre</option>
                           {(productFilter === "draft"

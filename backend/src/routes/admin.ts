@@ -299,6 +299,7 @@ export async function adminRoutes(app: FastifyInstance) {
             published: z.boolean().optional(),
             isUnavailable: z.boolean().optional(),
             isParent: z.boolean().optional(),
+            parentId: z.string().nullable().optional(),
             parentSort: z.number().nullable().optional(),
           })
         ),
@@ -334,6 +335,7 @@ export async function adminRoutes(app: FastifyInstance) {
           ...(row.isParent !== undefined
             ? { isParent: row.isParent, parentId: row.isParent ? null : undefined }
             : {}),
+          ...(row.parentId !== undefined ? { parentId: row.parentId } : {}),
           ...(row.parentSort !== undefined ? { parentSort: row.parentSort ?? undefined } : {}),
           ...(row.isUnavailable !== undefined
             ? { isUnavailable: row.isUnavailable, stockQty: row.isUnavailable ? 0 : undefined }
