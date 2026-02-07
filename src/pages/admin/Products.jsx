@@ -49,6 +49,8 @@ export default function AdminProducts() {
   const [showBulkEditor, setShowBulkEditor] = useState(false);
   const [bulkRows, setBulkRows] = useState([]);
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [collapsedParents, setCollapsedParents] = useState(new Set());
+  const [bulkCollapsedParents, setBulkCollapsedParents] = useState(new Set());
   const [productFilter, setProductFilter] = useState("all");
   const [showCreateParent, setShowCreateParent] = useState(false);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
@@ -486,13 +488,15 @@ export default function AdminProducts() {
     const rows = [];
     for (const parent of parentsOnly) {
       rows.push({ type: "parent", item: parent });
-      const children = (byParent.get(parent.id) || []).sort((a, b) => {
-        const an = a.name || "";
-        const bn = b.name || "";
-        return an.localeCompare(bn);
-      });
-      for (const child of children) {
-        rows.push({ type: "child", item: child, parent });
+      if (!collapsedParents.has(parent.id)) {
+        const children = (byParent.get(parent.id) || []).sort((a, b) => {
+          const an = a.name || "";
+          const bn = b.name || "";
+          return an.localeCompare(bn);
+        });
+        for (const child of children) {
+          rows.push({ type: "child", item: child, parent });
+        }
       }
     }
     for (const single of singles) {
@@ -518,6 +522,8 @@ export default function AdminProducts() {
       vatIncluded: p.vatIncluded !== false,
       published: p.published !== false,
       isUnavailable: Boolean(p.isUnavailable),
+      isParent: Boolean(p.isParent),
+      parentId: p.parentId || p.parent?.id || "",
     }));
     setBulkRows(rows);
     setShowBulkEditor(true);
@@ -670,6 +676,21 @@ export default function AdminProducts() {
               )}
             </div>
             <div className="name-cell">
+              {isParentRow ? (
+                <button
+                  type="button"
+                  className="collapse-toggle"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const next = new Set(collapsedParents);
+                    if (next.has(p.id)) next.delete(p.id);
+                    else next.add(p.id);
+                    setCollapsedParents(next);
+                  }}
+                >
+                  {collapsedParents.has(p.id) ? "+" : "−"}
+                </button>
+              ) : null}
               <span>{p.name}</span>
               {p.isParent ? <span className="tag">Padre</span> : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
@@ -1317,160 +1338,207 @@ export default function AdminProducts() {
                   <div>Pubblicato</div>
                   <div>Non disp.</div>
                 </div>
-                {bulkRows.map((row, idx) => (
-                  <div className="bulk-row" key={row.id}>
-                    <div className="mono">{row.sku}</div>
-                    <input
-                      value={row.name}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, name: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.price}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, price: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.listPrice}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, listPrice: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.purchasePrice}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, purchasePrice: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.discountPrice}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, discountPrice: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    />
-                    <input
-                      type="number"
-                      step="1"
-                      value={row.discountQty}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, discountQty: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    />
-                    <input
-                      type="number"
-                      step="1"
-                      value={row.stockQty}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, stockQty: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    />
-                    <select
-                      value={row.categoryId}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, categoryId: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    >
-                      <option value="">-</option>
-                      {categoryOptions.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={row.taxRateId}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, taxRateId: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    >
-                      <option value="">-</option>
-                      {taxes.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={row.exciseRateId}
-                      onChange={(e) => {
-                        const next = [...bulkRows];
-                        next[idx] = { ...row, exciseRateId: e.target.value };
-                        setBulkRows(next);
-                      }}
-                    >
-                      <option value="">-</option>
-                      {excises.map((e) => (
-                        <option key={e.id} value={e.id}>
-                          {e.name}
-                        </option>
-                      ))}
-                    </select>
-                    <label className="switch">
-                      <input
-                        type="checkbox"
-                        checked={row.vatIncluded}
-                        onChange={(e) => {
-                          const next = [...bulkRows];
-                          next[idx] = { ...row, vatIncluded: e.target.checked };
-                          setBulkRows(next);
-                        }}
-                      />
-                      <span />
-                    </label>
-                    <label className="switch">
-                      <input
-                        type="checkbox"
-                        checked={row.published}
-                        onChange={(e) => {
-                          const next = [...bulkRows];
-                          next[idx] = { ...row, published: e.target.checked };
-                          setBulkRows(next);
-                        }}
-                      />
-                      <span />
-                    </label>
-                    <label className="switch danger">
-                      <input
-                        type="checkbox"
-                        checked={row.isUnavailable}
-                        onChange={(e) => {
-                          const next = [...bulkRows];
-                          next[idx] = { ...row, isUnavailable: e.target.checked };
-                          setBulkRows(next);
-                        }}
-                      />
-                      <span />
-                    </label>
-                  </div>
-                ))}
+                {(() => {
+                  const byParent = new Map();
+                  const parents = bulkRows.filter((r) => r.isParent);
+                  for (const parent of parents) byParent.set(parent.id, []);
+                  const singles = [];
+                  for (const row of bulkRows) {
+                    if (row.isParent) continue;
+                    if (row.parentId && byParent.has(row.parentId)) {
+                      byParent.get(row.parentId).push(row);
+                    } else {
+                      singles.push(row);
+                    }
+                  }
+                  const ordered = [];
+                  for (const parent of parents) {
+                    ordered.push({ type: "parent", row: parent });
+                    if (!bulkCollapsedParents.has(parent.id)) {
+                      for (const child of byParent.get(parent.id) || []) {
+                        ordered.push({ type: "child", row: child, parent });
+                      }
+                    }
+                  }
+                  for (const single of singles) ordered.push({ type: "single", row: single });
+                  return ordered.map(({ row, type }) => {
+                    const idx = bulkRows.findIndex((r) => r.id === row.id);
+                    const isChild = type === "child";
+                    const isParent = type === "parent";
+                    return (
+                      <div className={`bulk-row ${isChild ? "child-row" : ""} ${isParent ? "parent-row" : ""}`} key={row.id}>
+                        <div className="mono">
+                          {isParent ? (
+                            <button
+                              type="button"
+                              className="collapse-toggle"
+                              onClick={() => {
+                                const next = new Set(bulkCollapsedParents);
+                                if (next.has(row.id)) next.delete(row.id);
+                                else next.add(row.id);
+                                setBulkCollapsedParents(next);
+                              }}
+                            >
+                              {bulkCollapsedParents.has(row.id) ? "+" : "−"}
+                            </button>
+                          ) : null}
+                          {row.sku}
+                        </div>
+                        <input
+                          value={row.name}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, name: e.target.value };
+                            setBulkRows(next);
+                          }}
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={row.price}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, price: e.target.value };
+                            setBulkRows(next);
+                          }}
+                          disabled={row.isParent}
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={row.listPrice}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, listPrice: e.target.value };
+                            setBulkRows(next);
+                          }}
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={row.purchasePrice}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, purchasePrice: e.target.value };
+                            setBulkRows(next);
+                          }}
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={row.discountPrice}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, discountPrice: e.target.value };
+                            setBulkRows(next);
+                          }}
+                        />
+                        <input
+                          type="number"
+                          step="1"
+                          value={row.discountQty}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, discountQty: e.target.value };
+                            setBulkRows(next);
+                          }}
+                        />
+                        <input
+                          type="number"
+                          step="1"
+                          value={row.stockQty}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, stockQty: e.target.value };
+                            setBulkRows(next);
+                          }}
+                          disabled={row.isParent}
+                        />
+                        <select
+                          value={row.categoryId}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, categoryId: e.target.value };
+                            setBulkRows(next);
+                          }}
+                        >
+                          <option value="">-</option>
+                          {categoryOptions.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.label}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={row.taxRateId}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, taxRateId: e.target.value };
+                            setBulkRows(next);
+                          }}
+                        >
+                          <option value="">-</option>
+                          {taxes.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={row.exciseRateId}
+                          onChange={(e) => {
+                            const next = [...bulkRows];
+                            next[idx] = { ...row, exciseRateId: e.target.value };
+                            setBulkRows(next);
+                          }}
+                        >
+                          <option value="">-</option>
+                          {excises.map((e) => (
+                            <option key={e.id} value={e.id}>
+                              {e.name}
+                            </option>
+                          ))}
+                        </select>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={row.vatIncluded}
+                            onChange={(e) => {
+                              const next = [...bulkRows];
+                              next[idx] = { ...row, vatIncluded: e.target.checked };
+                              setBulkRows(next);
+                            }}
+                          />
+                          <span />
+                        </label>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={row.published}
+                            onChange={(e) => {
+                              const next = [...bulkRows];
+                              next[idx] = { ...row, published: e.target.checked };
+                              setBulkRows(next);
+                            }}
+                          />
+                          <span />
+                        </label>
+                        <label className="switch danger">
+                          <input
+                            type="checkbox"
+                            checked={row.isUnavailable}
+                            onChange={(e) => {
+                              const next = [...bulkRows];
+                              next[idx] = { ...row, isUnavailable: e.target.checked };
+                              setBulkRows(next);
+                            }}
+                          />
+                          <span />
+                        </label>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
               <div className="actions">
                 <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
