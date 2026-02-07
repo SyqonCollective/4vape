@@ -305,7 +305,7 @@ export async function adminRoutes(app: FastifyInstance) {
     await prisma.$transaction(
       body.items.map((row) => {
         const data: Prisma.ProductUncheckedUpdateInput = {
-          ...(row.name !== undefined ? { name: row.name || null } : {}),
+          ...(row.name !== undefined ? { name: row.name || undefined } : {}),
           ...(row.price !== undefined
             ? { price: row.price == null ? null : new Prisma.Decimal(row.price) }
             : {}),
