@@ -737,7 +737,7 @@ export default function AdminProducts() {
             </div>
             <div className="name-cell">
               <span>{p.name}</span>
-              {p.isParent ? <span className="tag">Padre</span> : null}
+              {p.isParent ? null : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
               {p.published === false ? <span className="tag warn">Draft</span> : null}
             </div>
