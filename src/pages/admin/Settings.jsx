@@ -11,8 +11,6 @@ export default function AdminSettings() {
   const [newExcise, setNewExcise] = useState({ name: "", type: "ML", amount: "" });
   const [form, setForm] = useState({
     vatRateDefault: "",
-    exciseMlDefault: "",
-    exciseProductDefault: "",
   });
 
   useEffect(() => {
@@ -27,8 +25,6 @@ export default function AdminSettings() {
         if (!active) return;
         setForm({
           vatRateDefault: res?.vatRateDefault ?? "",
-          exciseMlDefault: res?.exciseMlDefault ?? "",
-          exciseProductDefault: res?.exciseProductDefault ?? "",
         });
         setTaxes(taxRes || []);
         setExcises(exciseRes || []);
@@ -50,9 +46,6 @@ export default function AdminSettings() {
         method: "PATCH",
         body: JSON.stringify({
           vatRateDefault: form.vatRateDefault === "" ? undefined : Number(form.vatRateDefault),
-          exciseMlDefault: form.exciseMlDefault === "" ? undefined : Number(form.exciseMlDefault),
-          exciseProductDefault:
-            form.exciseProductDefault === "" ? undefined : Number(form.exciseProductDefault),
         }),
       });
     } catch {
@@ -117,7 +110,7 @@ export default function AdminSettings() {
       <div className="page-header">
         <div>
           <h1>Impostazioni</h1>
-          <p>Parametri fiscali di default per importazione</p>
+          <p>Imposta i valori fiscali disponibili per il catalogo</p>
         </div>
         <div className="actions">
           <button className="btn primary" onClick={save} disabled={saving}>
@@ -138,26 +131,6 @@ export default function AdminSettings() {
               value={form.vatRateDefault}
               onChange={(e) => setForm({ ...form, vatRateDefault: e.target.value })}
               placeholder="22.00"
-            />
-          </label>
-          <label>
-            Accisa per ML (€)
-            <input
-              type="number"
-              step="0.000001"
-              value={form.exciseMlDefault}
-              onChange={(e) => setForm({ ...form, exciseMlDefault: e.target.value })}
-              placeholder="0.000000"
-            />
-          </label>
-          <label>
-            Accisa per Prodotto (€)
-            <input
-              type="number"
-              step="0.000001"
-              value={form.exciseProductDefault}
-              onChange={(e) => setForm({ ...form, exciseProductDefault: e.target.value })}
-              placeholder="0.000000"
             />
           </label>
         </div>

@@ -136,7 +136,10 @@ export default function AdminSuppliers() {
   async function updateInventory(id) {
     try {
       setLoadingInventory(true);
-      const res = await api(`/admin/suppliers/${id}/import-full`, { method: "POST" });
+      const res = await api(`/admin/suppliers/${id}/import-full`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
       setSuccessTitle("Inventario aggiornato");
       setSuccessBody(`Creati ${res.created || 0}, aggiornati ${res.updated || 0}, saltati ${res.skipped || 0}`);
       setShowSuccess(true);

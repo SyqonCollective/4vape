@@ -555,6 +555,17 @@ button {
   animation: modal-pop 0.35s ease both;
 }
 
+.modal.product-modal {
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal.product-modal .modal-body {
+  overflow-y: auto;
+  padding-right: 0.4rem;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1382,6 +1393,14 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .modal.product-modal {
+    width: min(720px, 94vw);
+  }
+
+  .modal.product-modal .modal-body {
+    padding-right: 0;
+  }
+
   .panel.grid-2 {
     grid-template-columns: 1fr;
   }
@@ -1407,6 +1426,15 @@ button {
 
   .image-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modal.product-modal {
+    width: 94vw;
+    padding: 1.2rem 1.1rem;
+  }
+
+  .modal.product-modal .modal-body {
+    gap: 1rem;
   }
 }
 .modal-backdrop {

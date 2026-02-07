@@ -18,13 +18,9 @@ export default function AdminProducts() {
     purchasePrice: "",
     discountPrice: "",
     discountQty: "",
-    taxRate: "",
     taxRateId: "",
     exciseRateId: "",
     vatIncluded: true,
-    exciseMl: "",
-    exciseProduct: "",
-    exciseTotal: "",
     mlProduct: "",
     nicotine: "",
     codicePl: "",
@@ -193,13 +189,9 @@ export default function AdminProducts() {
       purchasePrice: p.purchasePrice ? Number(p.purchasePrice).toFixed(2) : "",
       discountPrice: p.discountPrice ? Number(p.discountPrice).toFixed(2) : "",
       discountQty: p.discountQty ?? "",
-      taxRate: p.taxRate ? Number(p.taxRate).toFixed(2) : "",
       taxRateId: p.taxRateId || "",
       exciseRateId: p.exciseRateId || "",
       vatIncluded: p.vatIncluded !== false,
-      exciseMl: p.exciseMl ? Number(p.exciseMl).toFixed(6) : "",
-      exciseProduct: p.exciseProduct ? Number(p.exciseProduct).toFixed(6) : "",
-      exciseTotal: p.exciseTotal ? Number(p.exciseTotal).toFixed(6) : "",
       mlProduct: p.mlProduct ? Number(p.mlProduct).toFixed(3) : "",
       nicotine: p.nicotine ? Number(p.nicotine).toFixed(3) : "",
       codicePl: p.codicePl || "",
@@ -233,13 +225,9 @@ export default function AdminProducts() {
           purchasePrice: edit.purchasePrice ? Number(edit.purchasePrice) : undefined,
           discountPrice: edit.discountPrice ? Number(edit.discountPrice) : undefined,
           discountQty: edit.discountQty !== "" ? Number(edit.discountQty) : undefined,
-          taxRate: edit.taxRate ? Number(edit.taxRate) : undefined,
           taxRateId: edit.taxRateId || undefined,
           exciseRateId: edit.exciseRateId || undefined,
           vatIncluded: edit.vatIncluded,
-          exciseMl: edit.exciseMl ? Number(edit.exciseMl) : undefined,
-          exciseProduct: edit.exciseProduct ? Number(edit.exciseProduct) : undefined,
-          exciseTotal: edit.exciseTotal ? Number(edit.exciseTotal) : undefined,
           mlProduct: edit.mlProduct ? Number(edit.mlProduct) : undefined,
           nicotine: edit.nicotine ? Number(edit.nicotine) : undefined,
           codicePl: edit.codicePl || undefined,
@@ -580,7 +568,7 @@ export default function AdminProducts() {
       {selectedProduct ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Modifica prodotto</h3>
               <button className="btn ghost" onClick={() => setSelectedProduct(null)}>Chiudi</button>
@@ -775,33 +763,6 @@ export default function AdminProducts() {
                     />
                   </label>
                   <label>
-                    Accisa ML
-                    <input
-                      type="number"
-                      step="0.000001"
-                      value={edit.exciseMl}
-                      onChange={(e) => setEdit({ ...edit, exciseMl: e.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Accisa prodotto
-                    <input
-                      type="number"
-                      step="0.000001"
-                      value={edit.exciseProduct}
-                      onChange={(e) => setEdit({ ...edit, exciseProduct: e.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Accisa totale
-                    <input
-                      type="number"
-                      step="0.000001"
-                      value={edit.exciseTotal}
-                      onChange={(e) => setEdit({ ...edit, exciseTotal: e.target.value })}
-                    />
-                  </label>
-                  <label>
                     Aliquota IVA
                     <select
                       className="select"
@@ -832,6 +793,15 @@ export default function AdminProducts() {
                     </select>
                   </label>
                   <label>
+                    Accisa calcolata
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={selectedProduct.exciseTotal ? Number(selectedProduct.exciseTotal).toFixed(6) : ""}
+                      disabled
+                    />
+                  </label>
+                  <label>
                     IVA inclusa
                     <div className="toggle">
                       <input
@@ -843,12 +813,12 @@ export default function AdminProducts() {
                     </div>
                   </label>
                   <label>
-                    IVA %
+                    IVA calcolata
                     <input
                       type="number"
-                      step="0.01"
-                      value={edit.taxRate}
-                      onChange={(e) => setEdit({ ...edit, taxRate: e.target.value })}
+                      step="0.000001"
+                      value={selectedProduct.taxAmount ? Number(selectedProduct.taxAmount).toFixed(6) : ""}
+                      disabled
                     />
                   </label>
                   <label>
