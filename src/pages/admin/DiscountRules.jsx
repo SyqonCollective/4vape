@@ -828,7 +828,6 @@ export default function AdminDiscountRules() {
                           </label>
                         </div>
                       ) : null}
-                      </div>
 
                       <div className="rules-preview">
                         <div className="muted">Anteprima regola</div>
