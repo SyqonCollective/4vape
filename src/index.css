@@ -351,6 +351,125 @@ button {
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
 }
+.analytics-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin: 1rem 0 1.6rem;
+}
+.analytics-filters {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.analytics-filters label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.analytics-filters input[type="date"] {
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 0.55rem 0.8rem;
+  background: #fff;
+  color: var(--text);
+}
+.analytics-quick {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.analytics-export {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.analytics-cards {
+  margin-bottom: 1.4rem;
+}
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.analytics-panel {
+  background: #fff;
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.chart-stack {
+  display: grid;
+  gap: 1rem;
+}
+.chart-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 0.8rem;
+  align-items: center;
+}
+.chart-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.chart-label.revenue {
+  color: #0f766e;
+}
+.chart-label.cost {
+  color: #ea580c;
+}
+.chart-label.vat {
+  color: #2563eb;
+}
+.chart-label.excise {
+  color: #9333ea;
+}
+.analytics-area,
+.analytics-line {
+  width: 100%;
+  height: 160px;
+  color: #0ea5e9;
+}
+.analytics-line {
+  color: #94a3b8;
+}
+.analytics-stacked {
+  width: 100%;
+  height: 200px;
+}
+.analytics-stacked .stack-cost {
+  fill: #f97316;
+}
+.analytics-stacked .stack-vat {
+  fill: #3b82f6;
+}
+.analytics-stacked .stack-excise {
+  fill: #a855f7;
+}
+.analytics-stacked .stack-margin {
+  fill: #10b981;
+}
+@media (max-width: 980px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  .chart-row {
+    grid-template-columns: 1fr;
+  }
+}
 .table.compact .row {
   grid-template-columns: 2fr 1fr 1fr;
 }

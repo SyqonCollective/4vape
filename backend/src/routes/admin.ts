@@ -488,6 +488,283 @@ export async function adminRoutes(app: FastifyInstance) {
     };
   });
 
+  app.get("/analytics", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const query = request.query as { start?: string; end?: string };
+    const now = new Date();
+    const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : now;
+    const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : new Date(end);
+    if (!query.start) start.setDate(end.getDate() - 29);
+
+    const orders = await prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: start,
+          lte: end,
+        },
+      },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: { sourceSupplier: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const days = [];
+    const dayIndex = new Map<string, number>();
+    const cursor = new Date(start);
+    while (cursor <= end) {
+      const key = cursor.toISOString().slice(0, 10);
+      dayIndex.set(key, days.length);
+      days.push({
+        date: key,
+        revenue: 0,
+        cost: 0,
+        vat: 0,
+        excise: 0,
+        orders: 0,
+        items: 0,
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    let revenue = 0;
+    let cost = 0;
+    let vat = 0;
+    let excise = 0;
+    let items = 0;
+    let orderCount = 0;
+    const productAgg = new Map<string, { id: string; name: string; sku: string; revenue: number; qty: number }>();
+    const supplierAgg = new Map<string, { id: string; name: string; revenue: number; qty: number }>();
+    const categoryAgg = new Map<string, { name: string; revenue: number; qty: number; cost: number }>();
+
+    for (const order of orders) {
+      const key = order.createdAt.toISOString().slice(0, 10);
+      const idx = dayIndex.get(key);
+      if (idx != null) {
+        days[idx].orders += 1;
+      }
+      orderCount += 1;
+      for (const item of order.items) {
+        const lineTotal = Number(item.lineTotal);
+        const qty = item.qty;
+        const product = item.product;
+        const purchase = Number(product?.purchasePrice || 0);
+        const rate = Number(product?.taxRate || product?.taxRateRef?.rate || 0);
+        const vatIncluded = product?.vatIncluded ?? true;
+        const vatAmount =
+          rate > 0
+            ? vatIncluded
+              ? lineTotal - lineTotal / (1 + rate / 100)
+              : lineTotal * (rate / 100)
+            : 0;
+        const exciseUnit = Number(
+          product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
+        );
+        const exciseAmount = exciseUnit * qty;
+
+        revenue += lineTotal;
+        cost += purchase * qty;
+        vat += vatAmount;
+        excise += exciseAmount;
+        items += qty;
+
+        if (idx != null) {
+          days[idx].revenue += lineTotal;
+          days[idx].cost += purchase * qty;
+          days[idx].vat += vatAmount;
+          days[idx].excise += exciseAmount;
+          days[idx].items += qty;
+        }
+
+        if (product) {
+          const existing = productAgg.get(product.id) || {
+            id: product.id,
+            name: product.name,
+            sku: product.sku,
+            revenue: 0,
+            qty: 0,
+          };
+          existing.revenue += lineTotal;
+          existing.qty += qty;
+          productAgg.set(product.id, existing);
+        }
+
+        const supplier = product?.sourceSupplier;
+        if (supplier) {
+          const existing = supplierAgg.get(supplier.id) || {
+            id: supplier.id,
+            name: supplier.name,
+            revenue: 0,
+            qty: 0,
+          };
+          existing.revenue += lineTotal;
+          existing.qty += qty;
+          supplierAgg.set(supplier.id, existing);
+        }
+
+        const categoryName =
+          product?.categoryRef?.name ||
+          product?.category ||
+          "-";
+        if (categoryName) {
+          const existing = categoryAgg.get(categoryName) || {
+            name: categoryName,
+            revenue: 0,
+            qty: 0,
+            cost: 0,
+          };
+          existing.revenue += lineTotal;
+          existing.qty += qty;
+          existing.cost += purchase * qty;
+          categoryAgg.set(categoryName, existing);
+        }
+      }
+    }
+
+    for (const d of days) {
+      d.margin = d.revenue - d.cost - d.vat - d.excise;
+    }
+
+    const topProducts = Array.from(productAgg.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 8);
+    const topSuppliers = Array.from(supplierAgg.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 8);
+    const topCategories = Array.from(categoryAgg.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 8);
+
+    const grossMargin = revenue - cost;
+    const netRevenue = revenue - vat - excise;
+    const margin = revenue - cost - vat - excise;
+    const avgOrderValue = orderCount ? revenue / orderCount : 0;
+    const avgItemsPerOrder = orderCount ? items / orderCount : 0;
+    const marginPct = revenue ? (grossMargin / revenue) * 100 : 0;
+    const vatPct = revenue ? (vat / revenue) * 100 : 0;
+    const excisePct = revenue ? (excise / revenue) * 100 : 0;
+
+    return {
+      totals: {
+        revenue,
+        cost,
+        vat,
+        excise,
+        margin,
+        grossMargin,
+        netRevenue,
+        orders: orderCount,
+        items,
+      },
+      kpis: {
+        avgOrderValue,
+        avgItemsPerOrder,
+        marginPct,
+        vatPct,
+        excisePct,
+      },
+      daily: days,
+      topProducts,
+      topSuppliers,
+      topCategories,
+    };
+  });
+
+  app.get("/analytics/export", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const query = request.query as { start?: string; end?: string; format?: string };
+    const format = (query.format || "csv").toLowerCase();
+    const start = query.start || "";
+    const end = query.end || "";
+    // Reuse analytics endpoint logic via internal call
+    const analytics = await (async () => {
+      const res = await (app as any).inject({
+        method: "GET",
+        url: `/admin/analytics?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`,
+        headers: { authorization: request.headers.authorization || "" },
+      });
+      return JSON.parse(res.payload);
+    })();
+
+    const rows = analytics.daily || [];
+    const header = [
+      "Date",
+      "Orders",
+      "Items",
+      "Revenue",
+      "Cost",
+      "VAT",
+      "Excise",
+      "Margin",
+    ];
+    const csvEscape = (v: any) => {
+      const s = String(v ?? "");
+      if (s.includes(",") || s.includes("\"") || s.includes("\n")) {
+        return `"${s.replace(/\"/g, "\"\"")}"`;
+      }
+      return s;
+    };
+
+    if (format === "xlsx" || format === "xls") {
+      const sheetRows = rows
+        .map((r: any) => [
+          r.date,
+          r.orders,
+          r.items,
+          Number(r.revenue || 0).toFixed(2),
+          Number(r.cost || 0).toFixed(2),
+          Number(r.vat || 0).toFixed(2),
+          Number(r.excise || 0).toFixed(2),
+          Number(r.margin || 0).toFixed(2),
+        ]);
+      const xml = `<?xml version="1.0"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Worksheet ss:Name="Analytics">
+  <Table>
+   ${[header, ...sheetRows]
+     .map(
+       (row) =>
+         `<Row>${row
+           .map((cell: any) => `<Cell><Data ss:Type="String">${String(cell)}</Data></Cell>`)
+           .join("")}</Row>`
+     )
+     .join("")}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+      reply.header("Content-Type", "application/vnd.ms-excel");
+      reply.header("Content-Disposition", `attachment; filename="analytics_${start}_${end}.xls"`);
+      return reply.send(xml);
+    }
+
+    const csv = [header, ...rows.map((r: any) => ([
+      r.date,
+      r.orders,
+      r.items,
+      Number(r.revenue || 0).toFixed(2),
+      Number(r.cost || 0).toFixed(2),
+      Number(r.vat || 0).toFixed(2),
+      Number(r.excise || 0).toFixed(2),
+      Number(r.margin || 0).toFixed(2),
+    ]))]
+      .map((row) => row.map(csvEscape).join(","))
+      .join("\n");
+    reply.header("Content-Type", "text/csv; charset=utf-8");
+    reply.header("Content-Disposition", `attachment; filename="analytics_${start}_${end}.csv"`);
+    return reply.send(csv);
+  });
+
   app.get("/settings", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
