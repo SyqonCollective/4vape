@@ -47,6 +47,7 @@ enum RuleScope {
   CATEGORY
   BRAND
   SUPPLIER
+  PARENT
 }
 
 model Company {

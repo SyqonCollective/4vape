@@ -865,7 +865,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         name: z.string().min(2),
-        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER"]).default("ORDER"),
+        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).default("ORDER"),
         target: z.string().optional(),
         type: z.enum(["PERCENT", "FIXED"]).default("PERCENT"),
         value: z.number().nonnegative(),
@@ -897,7 +897,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         name: z.string().min(2).optional(),
-        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER"]).optional(),
+        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).optional(),
         target: z.string().optional(),
         type: z.enum(["PERCENT", "FIXED"]).optional(),
         value: z.number().nonnegative().optional(),
@@ -946,7 +946,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         name: z.string().min(2),
         active: z.boolean().optional(),
-        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER"]).default("ORDER"),
+        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).default("ORDER"),
         target: z.string().optional(),
         type: z.enum(["PERCENT", "FIXED"]).default("PERCENT"),
         value: z.number().nonnegative(),
@@ -998,7 +998,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         name: z.string().min(2).optional(),
         active: z.boolean().optional(),
-        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER"]).optional(),
+        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).optional(),
         target: z.string().optional(),
         type: z.enum(["PERCENT", "FIXED"]).optional(),
         value: z.number().nonnegative().optional(),

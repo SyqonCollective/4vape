@@ -49,6 +49,12 @@ function matchRuleScope(rule: any, product: any) {
       product.sourceSupplier?.name?.toLowerCase() === target
     );
   }
+  if (rule.scope === "PARENT") {
+    return (
+      product.parentId?.toLowerCase() === target ||
+      product.parentSku?.toLowerCase() === target
+    );
+  }
   return true;
 }
 

@@ -647,6 +647,19 @@ button {
   padding-top: 0.75rem;
   border-top: 1px dashed rgba(148, 163, 184, 0.35);
 }
+@media (max-width: 820px) {
+  .modal {
+    width: min(680px, 94vw);
+    padding: 1.2rem 1.2rem;
+  }
+  .rules-grid,
+  .modal-body.modal-body-single .rules-grid {
+    grid-template-columns: 1fr;
+  }
+  .target-list {
+    max-height: 180px;
+  }
+}
 .day-picker {
   display: flex;
   gap: 0.5rem;
@@ -1053,6 +1066,9 @@ button {
 }
 .modal-body.modal-body-single {
   grid-template-columns: 1fr;
+  max-height: 78vh;
+  overflow-y: auto;
+  padding-right: 0.6rem;
 }
 .modal-body.modal-body-single .rules-grid {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

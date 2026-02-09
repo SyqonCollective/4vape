@@ -101,6 +101,8 @@ function scopeLabel(scope) {
       return "Brand";
     case "SUPPLIER":
       return "Fornitore";
+    case "PARENT":
+      return "Prodotti padre";
     default:
       return "—";
   }
@@ -118,7 +120,12 @@ function TargetPicker({
   const [query, setQuery] = useState("");
   const values = useMemo(() => parseTargetList(target), [target]);
 
-  const list = scope === "CATEGORY" ? categories : products;
+  const list =
+    scope === "CATEGORY"
+      ? categories
+      : scope === "PARENT"
+      ? products.filter((p) => p.isParent)
+      : products;
   const filtered = useMemo(() => {
     if (!query.trim()) return list.slice(0, 200);
     const term = query.trim().toLowerCase();
@@ -144,13 +151,19 @@ function TargetPicker({
     );
   }
 
-  if (scope === "PRODUCT" || scope === "CATEGORY") {
+  if (scope === "PRODUCT" || scope === "CATEGORY" || scope === "PARENT") {
     return (
       <div className="target-picker">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={scope === "CATEGORY" ? "Cerca categoria" : "Cerca prodotto per SKU o nome"}
+          placeholder={
+            scope === "CATEGORY"
+              ? "Cerca categoria"
+              : scope === "PARENT"
+              ? "Cerca prodotto padre"
+              : "Cerca prodotto per SKU o nome"
+          }
         />
         {loading ? <div className="muted">Caricamento elenco...</div> : null}
         <div className="target-list">
@@ -247,6 +260,13 @@ export default function AdminDiscountRules() {
     }
   }
 
+  function handleScopeChange(value, setter) {
+    if (value === "PRODUCT" || value === "CATEGORY" || value === "PARENT") {
+      ensureOptions();
+    }
+    setter(value);
+  }
+
   function resetDraft() {
     setDraft(emptyRule);
     setEditingId("");
@@ -260,7 +280,7 @@ export default function AdminDiscountRules() {
   async function onSave(e) {
     e.preventDefault();
     if (!draft.name.trim()) return;
-    if ((draft.scope === "PRODUCT" || draft.scope === "CATEGORY") && !draft.target) {
+    if ((draft.scope === "PRODUCT" || draft.scope === "CATEGORY" || draft.scope === "PARENT") && !draft.target) {
       setError("Seleziona almeno un target per la regola.");
       return;
     }
@@ -324,7 +344,7 @@ export default function AdminDiscountRules() {
   async function onSaveDiscount(e) {
     e.preventDefault();
     if (!discountDraft.name.trim()) return;
-    if ((discountDraft.scope === "PRODUCT" || discountDraft.scope === "CATEGORY") && !discountDraft.target) {
+    if ((discountDraft.scope === "PRODUCT" || discountDraft.scope === "CATEGORY" || discountDraft.scope === "PARENT") && !discountDraft.target) {
       setError("Seleziona almeno un target per lo sconto.");
       return;
     }
@@ -476,10 +496,15 @@ export default function AdminDiscountRules() {
                           <select
                             className="select"
                             value={discountDraft.scope}
-                            onChange={(e) => setDiscountDraft({ ...discountDraft, scope: e.target.value })}
+                            onChange={(e) =>
+                              handleScopeChange(e.target.value, (scope) =>
+                                setDiscountDraft({ ...discountDraft, scope })
+                              )
+                            }
                           >
                             <option value="ORDER">Ordine</option>
                             <option value="PRODUCT">Prodotti selezionati</option>
+                            <option value="PARENT">Prodotti padre</option>
                             <option value="CATEGORY">Categoria</option>
                           </select>
                         </label>
@@ -647,10 +672,13 @@ export default function AdminDiscountRules() {
                           <select
                             className="select"
                             value={draft.scope}
-                            onChange={(e) => setDraft({ ...draft, scope: e.target.value })}
+                            onChange={(e) =>
+                              handleScopeChange(e.target.value, (scope) => setDraft({ ...draft, scope }))
+                            }
                           >
                             <option value="ORDER">Ordine</option>
                             <option value="PRODUCT">Prodotti selezionati</option>
+                            <option value="PARENT">Prodotti padre</option>
                             <option value="CATEGORY">Categoria</option>
                             <option value="BRAND">Brand</option>
                             <option value="SUPPLIER">Fornitore</option>
