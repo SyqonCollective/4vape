@@ -53,6 +53,7 @@ export default function AdminProducts() {
   const [bulkCollapsedParents, setBulkCollapsedParents] = useState(new Set());
   const [bulkDragOver, setBulkDragOver] = useState("");
   const [productFilter, setProductFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("name-asc");
   const [showCreateParent, setShowCreateParent] = useState(false);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
   const [parentChildren, setParentChildren] = useState(new Set());
@@ -480,14 +481,64 @@ export default function AdminProducts() {
     return true;
   });
 
+  const sortItems = (list) => {
+    const itemsCopy = [...list];
+    const byText = (a, b, key, dir = "asc") => {
+      const av = (a[key] || "").toString().toLowerCase();
+      const bv = (b[key] || "").toString().toLowerCase();
+      const cmp = av.localeCompare(bv);
+      return dir === "asc" ? cmp : -cmp;
+    };
+    const byNumber = (a, b, key, dir = "asc") => {
+      const av = Number(a[key] ?? 0);
+      const bv = Number(b[key] ?? 0);
+      const cmp = av - bv;
+      return dir === "asc" ? cmp : -cmp;
+    };
+    switch (sortBy) {
+      case "name-desc":
+        return itemsCopy.sort((a, b) => byText(a, b, "name", "desc"));
+      case "sku-asc":
+        return itemsCopy.sort((a, b) => byText(a, b, "sku", "asc"));
+      case "sku-desc":
+        return itemsCopy.sort((a, b) => byText(a, b, "sku", "desc"));
+      case "price-asc":
+        return itemsCopy.sort((a, b) => byNumber(a, b, "price", "asc"));
+      case "price-desc":
+        return itemsCopy.sort((a, b) => byNumber(a, b, "price", "desc"));
+      case "stock-asc":
+        return itemsCopy.sort((a, b) => byNumber(a, b, "stockQty", "asc"));
+      case "stock-desc":
+        return itemsCopy.sort((a, b) => byNumber(a, b, "stockQty", "desc"));
+      case "brand-asc":
+        return itemsCopy.sort((a, b) => byText(a, b, "brand", "asc"));
+      case "brand-desc":
+        return itemsCopy.sort((a, b) => byText(a, b, "brand", "desc"));
+      case "supplier-asc":
+        return itemsCopy.sort((a, b) => {
+          const av = (a.sourceSupplier?.name || "").toLowerCase();
+          const bv = (b.sourceSupplier?.name || "").toLowerCase();
+          return av.localeCompare(bv);
+        });
+      case "supplier-desc":
+        return itemsCopy.sort((a, b) => {
+          const av = (a.sourceSupplier?.name || "").toLowerCase();
+          const bv = (b.sourceSupplier?.name || "").toLowerCase();
+          return bv.localeCompare(av);
+        });
+      default:
+        return itemsCopy.sort((a, b) => byText(a, b, "name", "asc"));
+    }
+  };
+
   const groupedRows = (() => {
     if (productFilter !== "all") {
-      return filteredItems.map((p) => ({ type: "single", item: p }));
+      return sortItems(filteredItems).map((p) => ({ type: "single", item: p }));
     }
 
     const byParent = new Map();
     const singles = [];
-    const parentsOnly = items.filter((p) => p.isParent);
+    const parentsOnly = sortItems(items.filter((p) => p.isParent));
     for (const parent of parentsOnly) {
       byParent.set(parent.id, []);
     }
@@ -516,7 +567,7 @@ export default function AdminProducts() {
         }
       }
     }
-    for (const single of singles) {
+    for (const single of sortItems(singles)) {
       rows.push({ type: "single", item: single });
     }
     return rows;
@@ -634,6 +685,24 @@ export default function AdminProducts() {
           <button className="btn ghost" onClick={openBulkEditor}>
             Modifica in bulk
           </button>
+          <select
+            className="select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="name-asc">Ordina per: Nome (A-Z)</option>
+            <option value="name-desc">Ordina per: Nome (Z-A)</option>
+            <option value="sku-asc">Ordina per: SKU (A-Z)</option>
+            <option value="sku-desc">Ordina per: SKU (Z-A)</option>
+            <option value="price-asc">Ordina per: Prezzo (crescente)</option>
+            <option value="price-desc">Ordina per: Prezzo (decrescente)</option>
+            <option value="stock-asc">Ordina per: Giacenza (crescente)</option>
+            <option value="stock-desc">Ordina per: Giacenza (decrescente)</option>
+            <option value="brand-asc">Ordina per: Brand (A-Z)</option>
+            <option value="brand-desc">Ordina per: Brand (Z-A)</option>
+            <option value="supplier-asc">Ordina per: Fornitore (A-Z)</option>
+            <option value="supplier-desc">Ordina per: Fornitore (Z-A)</option>
+          </select>
           <select
             className="select"
             value={productFilter}
