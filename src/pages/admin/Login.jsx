@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import correctAnim from "../../assets/Correct.json";
+import logo from "../../assets/logo.png";
 import { api, setToken } from "../../lib/api.js";
 
 export default function AdminLogin() {
@@ -139,6 +140,7 @@ export default function AdminLogin() {
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-badge">Admin</div>
+          <img src={logo} alt="4Vape B2B" className="auth-logo" />
           <h1>4Vape B2B</h1>
           <p>Accesso area amministrazione</p>
         </div>

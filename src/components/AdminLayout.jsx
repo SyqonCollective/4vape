@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { clearToken } from "../lib/api.js";
 import Portal from "./Portal.jsx";
+import logo from "../assets/logo.png";
 
 const links = [
   { to: "/admin/dashboard", label: "Dashboard" },
@@ -25,7 +26,9 @@ export default function AdminLayout() {
     <div className="admin-shell">
       <aside className="admin-sidebar">
         <div className="brand">
-          <div className="brand-mark">4V</div>
+          <div className="brand-mark">
+            <img src={logo} alt="4Vape B2B" className="brand-logo" />
+          </div>
           <div className="brand-text">
             <div className="brand-title">4Vape B2B</div>
             <div className="brand-sub">Console Admin</div>
