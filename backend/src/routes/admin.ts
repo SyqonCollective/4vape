@@ -508,7 +508,7 @@ export async function adminRoutes(app: FastifyInstance) {
         items: {
           include: {
             product: {
-              include: { sourceSupplier: true },
+              include: { sourceSupplier: true, taxRateRef: true, categoryRef: true },
             },
           },
         },
@@ -516,7 +516,16 @@ export async function adminRoutes(app: FastifyInstance) {
       orderBy: { createdAt: "asc" },
     });
 
-    const days = [];
+    const days: Array<{
+      date: string;
+      revenue: number;
+      cost: number;
+      vat: number;
+      excise: number;
+      orders: number;
+      items: number;
+      margin: number;
+    }> = [];
     const dayIndex = new Map<string, number>();
     const cursor = new Date(start);
     while (cursor <= end) {
@@ -530,6 +539,7 @@ export async function adminRoutes(app: FastifyInstance) {
         excise: 0,
         orders: 0,
         items: 0,
+        margin: 0,
       });
       cursor.setDate(cursor.getDate() + 1);
     }
