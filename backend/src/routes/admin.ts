@@ -853,6 +853,204 @@ export async function adminRoutes(app: FastifyInstance) {
     });
   });
 
+  app.get("/discounts", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.discount.findMany({ orderBy: { createdAt: "desc" } });
+  });
+
+  app.post("/discounts", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        name: z.string().min(2),
+        type: z.enum(["PERCENT", "FIXED"]).default("PERCENT"),
+        value: z.number().nonnegative(),
+        active: z.boolean().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        notes: z.string().optional(),
+      })
+      .parse(request.body);
+    return prisma.discount.create({
+      data: {
+        name: body.name,
+        type: body.type,
+        value: new Prisma.Decimal(body.value),
+        active: body.active ?? true,
+        startDate: body.startDate ? new Date(body.startDate) : null,
+        endDate: body.endDate ? new Date(body.endDate) : null,
+        notes: body.notes,
+      },
+    });
+  });
+
+  app.patch("/discounts/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        type: z.enum(["PERCENT", "FIXED"]).optional(),
+        value: z.number().nonnegative().optional(),
+        active: z.boolean().optional(),
+        startDate: z.string().nullable().optional(),
+        endDate: z.string().nullable().optional(),
+        notes: z.string().optional(),
+      })
+      .parse(request.body);
+    return prisma.discount.update({
+      where: { id },
+      data: {
+        ...(body.name ? { name: body.name } : {}),
+        ...(body.type ? { type: body.type } : {}),
+        ...(body.value !== undefined ? { value: new Prisma.Decimal(body.value) } : {}),
+        ...(body.active !== undefined ? { active: body.active } : {}),
+        ...(body.startDate !== undefined
+          ? { startDate: body.startDate ? new Date(body.startDate) : null }
+          : {}),
+        ...(body.endDate !== undefined ? { endDate: body.endDate ? new Date(body.endDate) : null } : {}),
+        ...(body.notes !== undefined ? { notes: body.notes } : {}),
+      },
+    });
+  });
+
+  app.delete("/discounts/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.discount.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
+  app.get("/rules", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.discountRule.findMany({ orderBy: { createdAt: "desc" } });
+  });
+
+  app.post("/rules", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        name: z.string().min(2),
+        active: z.boolean().optional(),
+        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER"]).default("ORDER"),
+        target: z.string().optional(),
+        type: z.enum(["PERCENT", "FIXED"]).default("PERCENT"),
+        value: z.number().nonnegative(),
+        maxDiscount: z.number().nonnegative().optional(),
+        minQty: z.number().int().nonnegative().optional(),
+        minSpend: z.number().nonnegative().optional(),
+        stackable: z.boolean().optional(),
+        priority: z.number().int().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        days: z.array(z.string()).optional(),
+        timeFrom: z.string().optional(),
+        timeTo: z.string().optional(),
+        includeSkus: z.string().optional(),
+        excludeSkus: z.string().optional(),
+        notes: z.string().optional(),
+      })
+      .parse(request.body);
+    return prisma.discountRule.create({
+      data: {
+        name: body.name,
+        active: body.active ?? true,
+        scope: body.scope,
+        target: body.target,
+        type: body.type,
+        value: new Prisma.Decimal(body.value),
+        maxDiscount: body.maxDiscount !== undefined ? new Prisma.Decimal(body.maxDiscount) : null,
+        minQty: body.minQty,
+        minSpend: body.minSpend !== undefined ? new Prisma.Decimal(body.minSpend) : null,
+        stackable: body.stackable ?? false,
+        priority: body.priority ?? 50,
+        startDate: body.startDate ? new Date(body.startDate) : null,
+        endDate: body.endDate ? new Date(body.endDate) : null,
+        days: body.days || [],
+        timeFrom: body.timeFrom,
+        timeTo: body.timeTo,
+        includeSkus: body.includeSkus,
+        excludeSkus: body.excludeSkus,
+        notes: body.notes,
+      },
+    });
+  });
+
+  app.patch("/rules/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        active: z.boolean().optional(),
+        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER"]).optional(),
+        target: z.string().optional(),
+        type: z.enum(["PERCENT", "FIXED"]).optional(),
+        value: z.number().nonnegative().optional(),
+        maxDiscount: z.number().nonnegative().nullable().optional(),
+        minQty: z.number().int().nonnegative().nullable().optional(),
+        minSpend: z.number().nonnegative().nullable().optional(),
+        stackable: z.boolean().optional(),
+        priority: z.number().int().optional(),
+        startDate: z.string().nullable().optional(),
+        endDate: z.string().nullable().optional(),
+        days: z.array(z.string()).optional(),
+        timeFrom: z.string().nullable().optional(),
+        timeTo: z.string().nullable().optional(),
+        includeSkus: z.string().nullable().optional(),
+        excludeSkus: z.string().nullable().optional(),
+        notes: z.string().nullable().optional(),
+      })
+      .parse(request.body);
+    return prisma.discountRule.update({
+      where: { id },
+      data: {
+        ...(body.name ? { name: body.name } : {}),
+        ...(body.active !== undefined ? { active: body.active } : {}),
+        ...(body.scope ? { scope: body.scope } : {}),
+        ...(body.target !== undefined ? { target: body.target || null } : {}),
+        ...(body.type ? { type: body.type } : {}),
+        ...(body.value !== undefined ? { value: new Prisma.Decimal(body.value) } : {}),
+        ...(body.maxDiscount !== undefined
+          ? { maxDiscount: body.maxDiscount != null ? new Prisma.Decimal(body.maxDiscount) : null }
+          : {}),
+        ...(body.minQty !== undefined ? { minQty: body.minQty ?? null } : {}),
+        ...(body.minSpend !== undefined
+          ? { minSpend: body.minSpend != null ? new Prisma.Decimal(body.minSpend) : null }
+          : {}),
+        ...(body.stackable !== undefined ? { stackable: body.stackable } : {}),
+        ...(body.priority !== undefined ? { priority: body.priority } : {}),
+        ...(body.startDate !== undefined
+          ? { startDate: body.startDate ? new Date(body.startDate) : null }
+          : {}),
+        ...(body.endDate !== undefined
+          ? { endDate: body.endDate ? new Date(body.endDate) : null }
+          : {}),
+        ...(body.days !== undefined ? { days: body.days } : {}),
+        ...(body.timeFrom !== undefined ? { timeFrom: body.timeFrom || null } : {}),
+        ...(body.timeTo !== undefined ? { timeTo: body.timeTo || null } : {}),
+        ...(body.includeSkus !== undefined ? { includeSkus: body.includeSkus || null } : {}),
+        ...(body.excludeSkus !== undefined ? { excludeSkus: body.excludeSkus || null } : {}),
+        ...(body.notes !== undefined ? { notes: body.notes || null } : {}),
+      },
+    });
+  });
+
+  app.delete("/rules/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.discountRule.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
   app.patch("/excises/:id", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
