@@ -994,6 +994,23 @@ button {
   gap: 1.5rem;
   margin-top: 1rem;
 }
+.modal-body.modal-body-single {
+  grid-template-columns: 1fr;
+}
+.modal-body.modal-body-single .rules-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.modal-body.modal-body-single .rules-grid .full {
+  grid-column: 1 / -1;
+}
+.modal-body.modal-body-single .rules-form {
+  padding-top: 0;
+  border-top: none;
+  margin-top: 0;
+}
+.modal-body.modal-body-single .actions {
+  margin-top: 1.2rem;
+}
 
 .modal.parent-modal .modal-body {
   grid-template-columns: 1fr;

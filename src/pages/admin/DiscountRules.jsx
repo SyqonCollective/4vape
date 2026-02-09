@@ -296,7 +296,7 @@ export default function AdminDiscountRules() {
                       Chiudi
                     </button>
                   </div>
-                  <div className="modal-body">
+              <div className="modal-body modal-body-single">
                     <form onSubmit={onSaveDiscount} className="rules-form">
                       <div className="rules-header">
                         <div>
@@ -440,7 +440,7 @@ export default function AdminDiscountRules() {
                       Chiudi
                     </button>
                   </div>
-                  <div className="modal-body">
+              <div className="modal-body modal-body-single">
                     <form onSubmit={onSave} className="rules-form">
                       <div className="rules-header">
                         <div>
