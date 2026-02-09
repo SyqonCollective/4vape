@@ -1565,7 +1565,7 @@ export default function AdminProducts() {
       {showCreateManual ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setShowCreateManual(false)}>
-            <div className="modal manual-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Crea prodotto manuale</h3>
                 <button className="btn ghost" onClick={() => setShowCreateManual(false)}>
@@ -1573,39 +1573,55 @@ export default function AdminProducts() {
                 </button>
               </div>
               <div className="modal-body">
-                <div className="modal-info">
-                  <div className="parent-upload">
-                    <div
-                      className="upload-drop"
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const file = e.dataTransfer.files?.[0];
+                <div className="modal-media" onClick={(e) => e.stopPropagation()}>
+                  <div className="cover-wrap">
+                    {manualImagePreview ? (
+                      <>
+                        <img src={manualImagePreview} alt="Preview" />
+                        <button
+                          type="button"
+                          className="cover-clear"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setManualImageFile(null);
+                            setManualImagePreview("");
+                          }}
+                        >
+                          ×
+                        </button>
+                      </>
+                    ) : (
+                      <div className="thumb placeholder large" />
+                    )}
+                  </div>
+                  <div
+                    className="upload-drop"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files?.[0];
+                      if (!file) return;
+                      setManualImageFile(file);
+                      setManualImagePreview(URL.createObjectURL(file));
+                    }}
+                    onClick={() => manualFileInputRef.current?.click()}
+                  >
+                    <div className="muted">Trascina immagini qui o clicca per caricare</div>
+                    <input
+                      ref={manualFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
                         if (!file) return;
                         setManualImageFile(file);
                         setManualImagePreview(URL.createObjectURL(file));
                       }}
-                      onClick={() => manualFileInputRef.current?.click()}
-                    >
-                      {manualImagePreview ? (
-                        <img src={manualImagePreview} alt="Preview" />
-                      ) : (
-                        <div className="muted">Carica immagine principale</div>
-                      )}
-                      <input
-                        ref={manualFileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          setManualImageFile(file);
-                          setManualImagePreview(URL.createObjectURL(file));
-                        }}
-                        style={{ display: "none" }}
-                      />
-                    </div>
+                      style={{ display: "none" }}
+                    />
                   </div>
+                </div>
+                <div className="modal-info">
                   <div className="form-grid">
                     <label>
                       Nome
