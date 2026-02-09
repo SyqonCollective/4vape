@@ -1009,7 +1009,6 @@ export default function AdminProducts() {
                       disabled
                     />
                   </label>
-                  <div className="muted">IVA sempre esclusa (prezzo + IVA)</div>
                   <label>
                     IVA calcolata
                     <input
