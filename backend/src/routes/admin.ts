@@ -174,7 +174,7 @@ export async function adminRoutes(app: FastifyInstance) {
         exciseTotal: body.exciseTotal,
         taxRate: body.taxRate,
         taxAmount: body.taxAmount,
-        vatIncluded: body.vatIncluded ?? true,
+        vatIncluded: false,
         taxRateId: body.taxRateId,
         exciseRateId: body.exciseRateId,
         purchasePrice: body.purchasePrice,
@@ -255,7 +255,7 @@ export async function adminRoutes(app: FastifyInstance) {
     if (body.parentId !== undefined) data.parentId = body.parentId;
     if (body.isParent !== undefined) data.isParent = body.isParent;
     if (body.isUnavailable !== undefined) data.isUnavailable = body.isUnavailable;
-    if (body.vatIncluded !== undefined) data.vatIncluded = body.vatIncluded;
+    data.vatIncluded = false;
     if (body.taxRateId !== undefined) data.taxRateId = body.taxRateId;
     if (body.exciseRateId !== undefined) data.exciseRateId = body.exciseRateId;
     if (existing.source === "SUPPLIER") {
@@ -330,7 +330,7 @@ export async function adminRoutes(app: FastifyInstance) {
           ...(row.categoryId !== undefined ? { categoryId: row.categoryId ?? null } : {}),
           ...(row.taxRateId !== undefined ? { taxRateId: row.taxRateId ?? null } : {}),
           ...(row.exciseRateId !== undefined ? { exciseRateId: row.exciseRateId ?? null } : {}),
-          ...(row.vatIncluded !== undefined ? { vatIncluded: row.vatIncluded } : {}),
+          vatIncluded: false,
           ...(row.published !== undefined ? { published: row.published } : {}),
           ...(row.isParent !== undefined
             ? { isParent: row.isParent, parentId: row.isParent ? null : undefined }
@@ -852,6 +852,7 @@ export async function adminRoutes(app: FastifyInstance) {
             exciseTotal: sp.exciseTotal,
             taxRate: sp.taxRate,
             taxAmount: sp.taxAmount,
+            vatIncluded: false,
             purchasePrice: sp.purchasePrice,
             listPrice: sp.listPrice,
             discountPrice: sp.discountPrice,
@@ -896,6 +897,7 @@ export async function adminRoutes(app: FastifyInstance) {
             exciseTotal: sp.exciseTotal ?? existing.exciseTotal,
             taxRate: sp.taxRate ?? existing.taxRate,
             taxAmount: sp.taxAmount ?? existing.taxAmount,
+            vatIncluded: false,
             purchasePrice: sp.purchasePrice ?? existing.purchasePrice,
             listPrice: sp.listPrice ?? existing.listPrice,
             discountPrice: sp.discountPrice ?? existing.discountPrice,

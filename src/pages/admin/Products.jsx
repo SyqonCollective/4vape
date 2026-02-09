@@ -20,7 +20,7 @@ export default function AdminProducts() {
     discountQty: "",
     taxRateId: "",
     exciseRateId: "",
-    vatIncluded: true,
+    vatIncluded: false,
     mlProduct: "",
     nicotine: "",
     codicePl: "",
@@ -146,7 +146,9 @@ export default function AdminProducts() {
           const next = prev.map((p) => {
             const upd = map.get(p.id);
             if (!upd) return p;
-            if (p.stockQty === upd.stockQty && p.isUnavailable === upd.isUnavailable) return p;
+            const prevStock = p.stockQty == null ? null : Number(p.stockQty);
+            const nextStock = upd.stockQty == null ? null : Number(upd.stockQty);
+            if (prevStock === nextStock && p.isUnavailable === upd.isUnavailable) return p;
             changed = true;
             return { ...p, stockQty: upd.stockQty, isUnavailable: upd.isUnavailable };
           });
@@ -227,7 +229,7 @@ export default function AdminProducts() {
       discountQty: p.discountQty ?? "",
       taxRateId: p.taxRateId || "",
       exciseRateId: p.exciseRateId || "",
-      vatIncluded: p.vatIncluded !== false,
+      vatIncluded: false,
       mlProduct: p.mlProduct ? Number(p.mlProduct).toFixed(3) : "",
       nicotine: p.nicotine ? Number(p.nicotine).toFixed(3) : "",
       codicePl: p.codicePl || "",
@@ -263,7 +265,7 @@ export default function AdminProducts() {
           discountQty: edit.discountQty !== "" ? Number(edit.discountQty) : undefined,
           taxRateId: edit.taxRateId || undefined,
           exciseRateId: edit.exciseRateId || undefined,
-          vatIncluded: edit.vatIncluded,
+          vatIncluded: false,
           mlProduct: edit.mlProduct ? Number(edit.mlProduct) : undefined,
           nicotine: edit.nicotine ? Number(edit.nicotine) : undefined,
           codicePl: edit.codicePl || undefined,
@@ -530,7 +532,7 @@ export default function AdminProducts() {
       categoryId: p.categoryId || "",
       taxRateId: p.taxRateId || "",
       exciseRateId: p.exciseRateId || "",
-      vatIncluded: p.vatIncluded !== false,
+      vatIncluded: false,
       published: p.published !== false,
       isUnavailable: Boolean(p.isUnavailable),
       isParent: Boolean(p.isParent),
@@ -588,7 +590,7 @@ export default function AdminProducts() {
               null,
             taxRateId: row.taxRateId || null,
             exciseRateId: row.exciseRateId || null,
-            vatIncluded: Boolean(row.vatIncluded),
+            vatIncluded: false,
             published: productFilter === "draft" ? (forcePublish ? true : false) : Boolean(row.published),
             isUnavailable: Boolean(row.isUnavailable),
             isParent: Boolean(row.isParent),
@@ -1007,17 +1009,7 @@ export default function AdminProducts() {
                       disabled
                     />
                   </label>
-                  <label>
-                    IVA inclusa
-                    <div className="toggle">
-                      <input
-                        type="checkbox"
-                        checked={edit.vatIncluded}
-                        onChange={(e) => setEdit({ ...edit, vatIncluded: e.target.checked })}
-                      />
-                      <span>{edit.vatIncluded ? "Inclusa" : "Esclusa"}</span>
-                    </div>
-                  </label>
+                  <div className="muted">IVA sempre esclusa (prezzo + IVA)</div>
                   <label>
                     IVA calcolata
                     <input
@@ -1392,7 +1384,6 @@ export default function AdminProducts() {
                   <div>Categoria</div>
                   <div>IVA</div>
                   <div>Accisa</div>
-                  <div>IVA incl.</div>
                   <div>Pubblicato</div>
                   <div>Non disp.</div>
                   <div>Padre?</div>
@@ -1624,19 +1615,6 @@ export default function AdminProducts() {
                             </option>
                           ))}
                         </select>
-                        <label className="switch">
-                          <input
-                            type="checkbox"
-                            checked={row.vatIncluded}
-                            onChange={(e) => {
-                              const next = [...bulkRows];
-                              next[idx] = { ...row, vatIncluded: e.target.checked };
-                              setBulkRows(next);
-                            }}
-                          disabled={!isDraftRow}
-                          />
-                          <span />
-                        </label>
                         <label className="switch">
                           <input
                             type="checkbox"
