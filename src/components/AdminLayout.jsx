@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { clearToken } from "../lib/api.js";
 import Portal from "./Portal.jsx";
 import logo from "../assets/logo.png";
@@ -22,6 +22,7 @@ export default function AdminLayout() {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [dragging, setDragging] = useState(null);
   const [dragOver, setDragOver] = useState(null);
+  const baseOrderRef = useRef(null);
 
   const orderedLinks = useMemo(() => {
     const saved = localStorage.getItem(ORDER_KEY);
@@ -51,26 +52,30 @@ export default function AdminLayout() {
   }
 
   function onDragStart(item) {
+    baseOrderRef.current = order;
     setDragging(item.to);
   }
 
   function onDragOverItem(e, item) {
     e.preventDefault();
-    if (dragging && item.to !== dragging) setDragOver(item.to);
+    if (!dragging || item.to === dragging) return;
+    setDragOver(item.to);
+    const current = [...order];
+    const fromIdx = current.findIndex((l) => l.to === dragging);
+    const toIdx = current.findIndex((l) => l.to === item.to);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+    const [moved] = current.splice(fromIdx, 1);
+    current.splice(toIdx, 0, moved);
+    setOrder(current);
   }
 
   function onDropItem(e, item) {
     e.preventDefault();
     if (!dragging) return;
-    const current = [...order];
-    const fromIdx = current.findIndex((l) => l.to === dragging);
-    const toIdx = current.findIndex((l) => l.to === item.to);
-    if (fromIdx === -1 || toIdx === -1) return;
-    const [moved] = current.splice(fromIdx, 1);
-    current.splice(toIdx, 0, moved);
-    persist(current);
+    persist(order);
     setDragging(null);
     setDragOver(null);
+    baseOrderRef.current = null;
   }
 
   return (
@@ -96,8 +101,10 @@ export default function AdminLayout() {
               onDragOver={(e) => onDragOverItem(e, l)}
               onDrop={(e) => onDropItem(e, l)}
               onDragEnd={() => {
+                if (baseOrderRef.current) setOrder(baseOrderRef.current);
                 setDragging(null);
                 setDragOver(null);
+                baseOrderRef.current = null;
               }}
               className={({ isActive }) => {
                 const classes = ["nav-item"];
