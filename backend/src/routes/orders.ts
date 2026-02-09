@@ -125,7 +125,9 @@ export async function orderRoutes(app: FastifyInstance) {
 
     const activeDiscounts = discounts.filter((d) => isRuleActive(d, now));
     const bestDiscount = activeDiscounts.reduce<Prisma.Decimal>((best, d) => {
-      const base = subtotal;
+      const applicable = items.filter((i) => matchRuleScope(d, i._product));
+      if (!applicable.length) return best;
+      const base = applicable.reduce((sum, i) => sum.add(i.lineTotal), new Prisma.Decimal(0));
       const value =
         d.type === "PERCENT"
           ? base.mul(new Prisma.Decimal(d.value).div(100))

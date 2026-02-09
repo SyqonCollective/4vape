@@ -5,6 +5,8 @@ import Portal from "../../components/Portal.jsx";
 const emptyDiscount = {
   name: "",
   active: true,
+  scope: "ORDER",
+  target: "",
   type: "percent",
   value: "",
   startDate: "",
@@ -14,7 +16,7 @@ const emptyDiscount = {
 const emptyRule = {
   name: "",
   active: true,
-  scope: "order",
+  scope: "ORDER",
   target: "",
   type: "percent",
   value: "",
@@ -51,16 +53,18 @@ function formatDiscount(rule) {
 
 function buildSummary(rule) {
   const scopeLabel =
-    rule.scope === "order"
+    rule.scope === "ORDER"
       ? "Ordine"
-      : rule.scope === "category"
+      : rule.scope === "CATEGORY"
       ? "Categoria"
-      : rule.scope === "brand"
+      : rule.scope === "BRAND"
       ? "Brand"
-      : rule.scope === "supplier"
+      : rule.scope === "SUPPLIER"
       ? "Fornitore"
       : "Prodotto";
-  const target = rule.target ? ` · ${rule.target}` : "";
+  const targets = parseTargetList(rule.target);
+  const targetLabel = targets.length > 1 ? `${targets.length} selezionati` : targets[0];
+  const target = targetLabel ? ` · ${targetLabel}` : "";
   const minQty = rule.minQty ? `Min ${rule.minQty} pezzi` : "";
   const minSpend = rule.minSpend ? `Min € ${Number(rule.minSpend).toFixed(2)}` : "";
   const limits = [minQty, minSpend].filter(Boolean).join(" | ");
@@ -77,6 +81,112 @@ function buildSummary(rule) {
     .join(" · ");
 }
 
+function parseTargetList(value) {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+function scopeLabel(scope) {
+  switch (scope) {
+    case "ORDER":
+      return "Ordine";
+    case "PRODUCT":
+      return "Prodotti";
+    case "CATEGORY":
+      return "Categoria";
+    case "BRAND":
+      return "Brand";
+    case "SUPPLIER":
+      return "Fornitore";
+    default:
+      return "—";
+  }
+}
+
+function TargetPicker({
+  scope,
+  target,
+  onChange,
+  products,
+  categories,
+  loading,
+  placeholder,
+}) {
+  const [query, setQuery] = useState("");
+  const values = useMemo(() => parseTargetList(target), [target]);
+
+  const list = scope === "CATEGORY" ? categories : products;
+  const filtered = useMemo(() => {
+    if (!query.trim()) return list.slice(0, 200);
+    const term = query.trim().toLowerCase();
+    return list
+      .filter((item) =>
+        scope === "CATEGORY"
+          ? item.name?.toLowerCase().includes(term)
+          : `${item.sku} ${item.name}`.toLowerCase().includes(term)
+      )
+      .slice(0, 200);
+  }, [list, query, scope]);
+
+  function toggle(value) {
+    const next = new Set(values);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    onChange(Array.from(next).join(", "));
+  }
+
+  if (scope === "ORDER") {
+    return (
+      <div className="muted">Nessun target richiesto per l'intero ordine</div>
+    );
+  }
+
+  if (scope === "PRODUCT" || scope === "CATEGORY") {
+    return (
+      <div className="target-picker">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={scope === "CATEGORY" ? "Cerca categoria" : "Cerca prodotto per SKU o nome"}
+        />
+        {loading ? <div className="muted">Caricamento elenco...</div> : null}
+        <div className="target-list">
+          {filtered.map((item) => {
+            const id = scope === "CATEGORY" ? item.id : item.sku;
+            const label = scope === "CATEGORY" ? item.name : `${item.sku} · ${item.name}`;
+            const active = values.includes(id);
+            return (
+              <button
+                type="button"
+                key={id}
+                className={`target-row ${active ? "active" : ""}`}
+                onClick={() => toggle(id)}
+              >
+                <span className={`target-check ${active ? "active" : ""}`}>{active ? "✓" : ""}</span>
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="target-meta">
+          {values.length ? `${values.length} selezionati` : placeholder}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <input
+      value={target}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+    />
+  );
+}
+
 export default function AdminDiscountRules() {
   const [rules, setRules] = useState([]);
   const [discounts, setDiscounts] = useState([]);
@@ -88,6 +198,11 @@ export default function AdminDiscountRules() {
   const [showRuleForm, setShowRuleForm] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [optionsLoaded, setOptionsLoaded] = useState(false);
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [productOptions, setProductOptions] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -114,6 +229,24 @@ export default function AdminDiscountRules() {
     };
   }, []);
 
+  async function ensureOptions() {
+    if (optionsLoaded || optionsLoading) return;
+    setOptionsLoading(true);
+    try {
+      const [productsRes, categoriesRes] = await Promise.all([
+        api("/admin/products"),
+        api("/admin/categories"),
+      ]);
+      setProductOptions(productsRes || []);
+      setCategoryOptions(categoriesRes || []);
+      setOptionsLoaded(true);
+    } catch {
+      setError("Impossibile caricare elenco prodotti/categorie");
+    } finally {
+      setOptionsLoading(false);
+    }
+  }
+
   function resetDraft() {
     setDraft(emptyRule);
     setEditingId("");
@@ -127,9 +260,14 @@ export default function AdminDiscountRules() {
   async function onSave(e) {
     e.preventDefault();
     if (!draft.name.trim()) return;
+    if ((draft.scope === "PRODUCT" || draft.scope === "CATEGORY") && !draft.target) {
+      setError("Seleziona almeno un target per la regola.");
+      return;
+    }
     const payload = {
       ...draft,
       id: editingId || crypto.randomUUID(),
+      scope: draft.scope || "ORDER",
       value: draft.value ? Number(draft.value) : 0,
       maxDiscount: draft.maxDiscount ? Number(draft.maxDiscount) : 0,
       minQty: draft.minQty ? Number(draft.minQty) : 0,
@@ -147,6 +285,7 @@ export default function AdminDiscountRules() {
       }
       const res = await api("/admin/rules");
       setRules(res || []);
+      setShowAdvanced(false);
       resetDraft();
       setShowRuleForm(false);
     } catch {
@@ -157,6 +296,9 @@ export default function AdminDiscountRules() {
   function onEdit(rule) {
     setEditingId(rule.id);
     setShowRuleForm(true);
+    if (rule.scope === "PRODUCT" || rule.scope === "CATEGORY") {
+      ensureOptions();
+    }
     setDraft({
       ...rule,
       value: rule.value?.toString() || "",
@@ -182,9 +324,14 @@ export default function AdminDiscountRules() {
   async function onSaveDiscount(e) {
     e.preventDefault();
     if (!discountDraft.name.trim()) return;
+    if ((discountDraft.scope === "PRODUCT" || discountDraft.scope === "CATEGORY") && !discountDraft.target) {
+      setError("Seleziona almeno un target per lo sconto.");
+      return;
+    }
     const payload = {
       ...discountDraft,
       id: editingDiscountId || crypto.randomUUID(),
+      scope: discountDraft.scope || "ORDER",
       value: discountDraft.value ? Number(discountDraft.value) : 0,
     };
     try {
@@ -208,6 +355,9 @@ export default function AdminDiscountRules() {
   function onEditDiscount(rule) {
     setEditingDiscountId(rule.id);
     setShowDiscountForm(true);
+    if (rule.scope === "PRODUCT" || rule.scope === "CATEGORY") {
+      ensureOptions();
+    }
     setDiscountDraft({
       ...rule,
       value: rule.value?.toString() || "",
@@ -250,6 +400,7 @@ export default function AdminDiscountRules() {
                 className="btn primary"
                 onClick={() => {
                   resetDiscountDraft();
+                  ensureOptions();
                   setShowDiscountForm(true);
                 }}
               >
@@ -257,20 +408,20 @@ export default function AdminDiscountRules() {
               </button>
             </div>
             <div className="rules-table">
-              <div className="row header">
-                <div>Nome</div>
-                <div>Tipo</div>
-                <div>Valore</div>
-                <div>Validità</div>
-                <div>Azioni</div>
-              </div>
+                <div className="row header">
+                  <div>Nome</div>
+                  <div>Ambito</div>
+                  <div>Valore</div>
+                  <div>Validità</div>
+                  <div>Azioni</div>
+                </div>
               {discounts.map((r) => (
                 <div className="row" key={r.id}>
                   <div>
                     <strong>{r.name}</strong>
                     {!r.active ? <span className="tag warn">Disattivo</span> : null}
                   </div>
-                  <div>{r.type === "percent" ? "%" : "€"}</div>
+                  <div>{scopeLabel(r.scope || "ORDER")}</div>
                   <div>{formatDiscount(r)}</div>
                   <div>{r.startDate || "—"} → {r.endDate || "—"}</div>
                   <div className="actions">
@@ -311,13 +462,37 @@ export default function AdminDiscountRules() {
                           <span>Attivo</span>
                         </label>
                       </div>
-                      <div className="rules-grid">
+                      <div className="rules-grid rules-grid-compact">
                         <label className="full">
                           Nome sconto
                           <input
                             value={discountDraft.name}
                             onChange={(e) => setDiscountDraft({ ...discountDraft, name: e.target.value })}
                             placeholder="Es. Sconto vetrina 5%"
+                          />
+                        </label>
+                        <label>
+                          Ambito
+                          <select
+                            className="select"
+                            value={discountDraft.scope}
+                            onChange={(e) => setDiscountDraft({ ...discountDraft, scope: e.target.value })}
+                          >
+                            <option value="ORDER">Ordine</option>
+                            <option value="PRODUCT">Prodotti selezionati</option>
+                            <option value="CATEGORY">Categoria</option>
+                          </select>
+                        </label>
+                        <label className="full">
+                          Target
+                          <TargetPicker
+                            scope={discountDraft.scope}
+                            target={discountDraft.target}
+                            onChange={(value) => setDiscountDraft({ ...discountDraft, target: value })}
+                            products={productOptions}
+                            categories={categoryOptions}
+                            loading={optionsLoading}
+                            placeholder="Seleziona target"
                           />
                         </label>
                         <label>
@@ -392,6 +567,7 @@ export default function AdminDiscountRules() {
                 className="btn primary"
                 onClick={() => {
                   resetDraft();
+                  ensureOptions();
                   setShowRuleForm(true);
                 }}
               >
@@ -413,7 +589,7 @@ export default function AdminDiscountRules() {
                     <strong>{r.name}</strong>
                     {!r.active ? <span className="tag warn">Disattiva</span> : null}
                   </div>
-                  <div>{r.scope}</div>
+                  <div>{scopeLabel(r.scope)}</div>
                   <div>{formatDiscount(r)}</div>
                   <div>{r.startDate || "—"} → {r.endDate || "—"}</div>
                   <div>{r.priority}</div>
@@ -456,7 +632,7 @@ export default function AdminDiscountRules() {
                         </label>
                       </div>
 
-                      <div className="rules-grid">
+                      <div className="rules-grid rules-grid-compact">
                         <label className="full">
                           Nome regola
                           <input
@@ -473,18 +649,22 @@ export default function AdminDiscountRules() {
                             value={draft.scope}
                             onChange={(e) => setDraft({ ...draft, scope: e.target.value })}
                           >
-                            <option value="order">Ordine</option>
-                            <option value="product">Prodotto specifico</option>
-                            <option value="category">Categoria</option>
-                            <option value="brand">Brand</option>
-                            <option value="supplier">Fornitore</option>
+                            <option value="ORDER">Ordine</option>
+                            <option value="PRODUCT">Prodotti selezionati</option>
+                            <option value="CATEGORY">Categoria</option>
+                            <option value="BRAND">Brand</option>
+                            <option value="SUPPLIER">Fornitore</option>
                           </select>
                         </label>
-                        <label>
+                        <label className="full">
                           Target
-                          <input
-                            value={draft.target}
-                            onChange={(e) => setDraft({ ...draft, target: e.target.value })}
+                          <TargetPicker
+                            scope={draft.scope}
+                            target={draft.target}
+                            onChange={(value) => setDraft({ ...draft, target: value })}
+                            products={productOptions}
+                            categories={categoryOptions}
+                            loading={optionsLoading}
                             placeholder="SKU, nome brand, categoria..."
                           />
                         </label>
@@ -509,16 +689,6 @@ export default function AdminDiscountRules() {
                             onChange={(e) => setDraft({ ...draft, value: e.target.value })}
                           />
                         </label>
-                        <label>
-                          Sconto massimo (€)
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={draft.maxDiscount}
-                            onChange={(e) => setDraft({ ...draft, maxDiscount: e.target.value })}
-                          />
-                        </label>
-
                         <label>
                           Minimo pezzi
                           <input
@@ -570,68 +740,94 @@ export default function AdminDiscountRules() {
                             onChange={(e) => setDraft({ ...draft, endDate: e.target.value })}
                           />
                         </label>
-                        <label>
-                          Orario da
-                          <input
-                            type="time"
-                            value={draft.timeFrom}
-                            onChange={(e) => setDraft({ ...draft, timeFrom: e.target.value })}
-                          />
-                        </label>
-                        <label>
-                          Orario a
-                          <input
-                            type="time"
-                            value={draft.timeTo}
-                            onChange={(e) => setDraft({ ...draft, timeTo: e.target.value })}
-                          />
-                        </label>
+                      </div>
 
-                        <div className="full">
-                          <div className="muted">Giorni validità</div>
-                          <div className="day-picker">
-                            {dayOptions.map((d) => (
-                              <button
-                                type="button"
-                                key={d.id}
-                                className={`day-pill ${draft.days.includes(d.id) ? "active" : ""}`}
-                                onClick={() => {
-                                  const next = new Set(draft.days);
-                                  if (next.has(d.id)) next.delete(d.id);
-                                  else next.add(d.id);
-                                  setDraft({ ...draft, days: Array.from(next) });
-                                }}
-                              >
-                                {d.label}
-                              </button>
-                            ))}
+                      <button
+                        type="button"
+                        className="btn ghost small"
+                        onClick={() => {
+                          if (!showAdvanced) ensureOptions();
+                          setShowAdvanced((prev) => !prev);
+                        }}
+                      >
+                        {showAdvanced ? "Nascondi avanzate" : "Mostra avanzate"}
+                      </button>
+
+                      {showAdvanced ? (
+                        <div className="rules-grid rules-advanced">
+                          <label>
+                            Sconto massimo (€)
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={draft.maxDiscount}
+                              onChange={(e) => setDraft({ ...draft, maxDiscount: e.target.value })}
+                            />
+                          </label>
+                          <label>
+                            Orario da
+                            <input
+                              type="time"
+                              value={draft.timeFrom}
+                              onChange={(e) => setDraft({ ...draft, timeFrom: e.target.value })}
+                            />
+                          </label>
+                          <label>
+                            Orario a
+                            <input
+                              type="time"
+                              value={draft.timeTo}
+                              onChange={(e) => setDraft({ ...draft, timeTo: e.target.value })}
+                            />
+                          </label>
+
+                          <div className="full">
+                            <div className="muted">Giorni validità</div>
+                            <div className="day-picker">
+                              {dayOptions.map((d) => (
+                                <button
+                                  type="button"
+                                  key={d.id}
+                                  className={`day-pill ${draft.days.includes(d.id) ? "active" : ""}`}
+                                  onClick={() => {
+                                    const next = new Set(draft.days);
+                                    if (next.has(d.id)) next.delete(d.id);
+                                    else next.add(d.id);
+                                    setDraft({ ...draft, days: Array.from(next) });
+                                  }}
+                                >
+                                  {d.label}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
 
-                        <label className="full">
-                          SKU inclusi (separati da virgola)
-                          <input
-                            value={draft.includeSkus}
-                            onChange={(e) => setDraft({ ...draft, includeSkus: e.target.value })}
-                            placeholder="SKU1, SKU2, SKU3"
-                          />
-                        </label>
-                        <label className="full">
-                          SKU esclusi (separati da virgola)
-                          <input
-                            value={draft.excludeSkus}
-                            onChange={(e) => setDraft({ ...draft, excludeSkus: e.target.value })}
-                            placeholder="SKU4, SKU5"
-                          />
-                        </label>
-                        <label className="full">
-                          Note interne
-                          <textarea
-                            rows={3}
-                            value={draft.notes}
-                            onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
-                          />
-                        </label>
+                          <label className="full">
+                            SKU inclusi (separati da virgola)
+                            <input
+                              value={draft.includeSkus}
+                              onChange={(e) => setDraft({ ...draft, includeSkus: e.target.value })}
+                              placeholder="SKU1, SKU2, SKU3"
+                            />
+                          </label>
+                          <label className="full">
+                            SKU esclusi (separati da virgola)
+                            <input
+                              value={draft.excludeSkus}
+                              onChange={(e) => setDraft({ ...draft, excludeSkus: e.target.value })}
+                              placeholder="SKU4, SKU5"
+                            />
+                          </label>
+                          <label className="full">
+                            Note interne
+                            <textarea
+                              rows={3}
+                              value={draft.notes}
+                              onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+                            />
+                          </label>
+                        </div>
+                      ) : null}
                       </div>
 
                       <div className="rules-preview">

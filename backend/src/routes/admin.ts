@@ -865,6 +865,8 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         name: z.string().min(2),
+        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER"]).default("ORDER"),
+        target: z.string().optional(),
         type: z.enum(["PERCENT", "FIXED"]).default("PERCENT"),
         value: z.number().nonnegative(),
         active: z.boolean().optional(),
@@ -876,6 +878,8 @@ export async function adminRoutes(app: FastifyInstance) {
     return prisma.discount.create({
       data: {
         name: body.name,
+        scope: body.scope,
+        target: body.target,
         type: body.type,
         value: new Prisma.Decimal(body.value),
         active: body.active ?? true,
@@ -893,6 +897,8 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         name: z.string().min(2).optional(),
+        scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER"]).optional(),
+        target: z.string().optional(),
         type: z.enum(["PERCENT", "FIXED"]).optional(),
         value: z.number().nonnegative().optional(),
         active: z.boolean().optional(),
@@ -905,6 +911,8 @@ export async function adminRoutes(app: FastifyInstance) {
       where: { id },
       data: {
         ...(body.name ? { name: body.name } : {}),
+        ...(body.scope ? { scope: body.scope } : {}),
+        ...(body.target !== undefined ? { target: body.target } : {}),
         ...(body.type ? { type: body.type } : {}),
         ...(body.value !== undefined ? { value: new Prisma.Decimal(body.value) } : {}),
         ...(body.active !== undefined ? { active: body.active } : {}),

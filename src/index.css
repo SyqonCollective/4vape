@@ -590,6 +590,63 @@ button {
 .rules-table .row {
   grid-template-columns: 1.6fr 0.7fr 0.8fr 1fr 0.6fr 0.8fr;
 }
+.target-picker {
+  display: grid;
+  gap: 0.6rem;
+}
+.target-list {
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 0.35rem;
+  max-height: 220px;
+  overflow: auto;
+  background: rgba(248, 250, 252, 0.7);
+}
+.target-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 0.65rem;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.target-row:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+.target-row.active {
+  background: rgba(37, 99, 235, 0.12);
+}
+.target-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--stroke);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #fff;
+  background: #fff;
+}
+.target-check.active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+.target-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rules-advanced {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.35);
+}
 .day-picker {
   display: flex;
   gap: 0.5rem;
