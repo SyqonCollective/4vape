@@ -55,17 +55,40 @@ export default function AdminProducts() {
   const [productFilter, setProductFilter] = useState("all");
   const [sortBy, setSortBy] = useState("name-asc");
   const [showCreateParent, setShowCreateParent] = useState(false);
+  const [showCreateManual, setShowCreateManual] = useState(false);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
+  const [manualDraft, setManualDraft] = useState({
+    name: "",
+    sku: "",
+    price: "",
+    stockQty: "",
+    brand: "",
+    categoryId: "",
+    shortDescription: "",
+    description: "",
+    purchasePrice: "",
+    listPrice: "",
+    discountPrice: "",
+    discountQty: "",
+    mlProduct: "",
+    nicotine: "",
+    taxRateId: "",
+    exciseRateId: "",
+    barcode: "",
+  });
   const [parentChildren, setParentChildren] = useState(new Set());
   const [childSearch, setChildSearch] = useState("");
   const [childCategory, setChildCategory] = useState("");
   const [childOnlyFree, setChildOnlyFree] = useState(true);
   const [parentImageFile, setParentImageFile] = useState(null);
   const [parentImagePreview, setParentImagePreview] = useState("");
+  const [manualImageFile, setManualImageFile] = useState(null);
+  const [manualImagePreview, setManualImagePreview] = useState("");
   const [childLinks, setChildLinks] = useState(new Set());
   const token = getToken();
   const fileInputRef = useRef(null);
   const parentFileInputRef = useRef(null);
+  const manualFileInputRef = useRef(null);
   const categoryOptions = (() => {
     const byParent = new Map();
     for (const c of categories) {
@@ -393,6 +416,11 @@ export default function AdminProducts() {
     setParentDraft((prev) => ({ ...prev, sku }));
   }
 
+  function generateManualSku() {
+    const sku = String(Math.floor(100000 + Math.random() * 900000));
+    setManualDraft((prev) => ({ ...prev, sku }));
+  }
+
   async function createParentProduct() {
     if (!parentDraft.name.trim() || !parentDraft.sku.trim()) {
       setError("Nome e SKU sono obbligatori");
@@ -454,6 +482,86 @@ export default function AdminProducts() {
       setParents(p);
     } catch (err) {
       setError("Errore creazione prodotto genitore");
+    }
+  }
+
+  async function createManualProduct() {
+    if (!manualDraft.name.trim() || !manualDraft.sku.trim()) {
+      setError("Nome e SKU sono obbligatori");
+      return;
+    }
+    if (!manualDraft.price) {
+      setError("Prezzo obbligatorio");
+      return;
+    }
+    try {
+      const product = await api("/admin/products", {
+        method: "POST",
+        body: JSON.stringify({
+          name: manualDraft.name.trim(),
+          sku: manualDraft.sku.trim(),
+          price: Number(manualDraft.price),
+          stockQty: manualDraft.stockQty ? Number(manualDraft.stockQty) : 0,
+          brand: manualDraft.brand || undefined,
+          categoryId: manualDraft.categoryId || undefined,
+          shortDescription: manualDraft.shortDescription || undefined,
+          description: manualDraft.description || undefined,
+          purchasePrice: manualDraft.purchasePrice ? Number(manualDraft.purchasePrice) : undefined,
+          listPrice: manualDraft.listPrice ? Number(manualDraft.listPrice) : undefined,
+          discountPrice: manualDraft.discountPrice ? Number(manualDraft.discountPrice) : undefined,
+          discountQty: manualDraft.discountQty ? Number(manualDraft.discountQty) : undefined,
+          mlProduct: manualDraft.mlProduct ? Number(manualDraft.mlProduct) : undefined,
+          nicotine: manualDraft.nicotine ? Number(manualDraft.nicotine) : undefined,
+          taxRateId: manualDraft.taxRateId || undefined,
+          exciseRateId: manualDraft.exciseRateId || undefined,
+          barcode: manualDraft.barcode || undefined,
+        }),
+      });
+      if (manualImageFile) {
+        const form = new FormData();
+        form.append("files", manualImageFile);
+        const res = await fetch(`/api/admin/products/${product.id}/images`, {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: form,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const first = data?.items?.[0];
+          if (first?.url) {
+            await api(`/admin/products/${product.id}`, {
+              method: "PATCH",
+              body: JSON.stringify({ imageUrl: first.url }),
+            });
+          }
+        }
+      }
+      setShowCreateManual(false);
+      setManualDraft({
+        name: "",
+        sku: "",
+        price: "",
+        stockQty: "",
+        brand: "",
+        categoryId: "",
+        shortDescription: "",
+        description: "",
+        purchasePrice: "",
+        listPrice: "",
+        discountPrice: "",
+        discountQty: "",
+        mlProduct: "",
+        nicotine: "",
+        taxRateId: "",
+        exciseRateId: "",
+        barcode: "",
+      });
+      setManualImageFile(null);
+      setManualImagePreview("");
+      const res = await api("/admin/products");
+      setItems(res);
+    } catch (err) {
+      setError("Errore creazione prodotto manuale");
     }
   }
 
@@ -684,6 +792,9 @@ export default function AdminProducts() {
         <div className="toolbar-left">
           <button className="btn primary" onClick={() => setShowCreateParent(true)}>
             Crea prodotto genitore
+          </button>
+          <button className="btn ghost" onClick={() => setShowCreateManual(true)}>
+            Crea prodotto manuale
           </button>
           <button className="btn ghost" onClick={openBulkEditor}>
             Modifica in bulk
@@ -1442,6 +1553,230 @@ export default function AdminProducts() {
                     </button>
                     <button className="btn primary" onClick={createParentProduct}>
                       Crea e associa {parentChildren.size} prodotti
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+
+      {showCreateManual ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowCreateManual(false)}>
+            <div className="modal manual-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Crea prodotto manuale</h3>
+                <button className="btn ghost" onClick={() => setShowCreateManual(false)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="modal-info">
+                  <div className="parent-upload">
+                    <div
+                      className="upload-drop"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (!file) return;
+                        setManualImageFile(file);
+                        setManualImagePreview(URL.createObjectURL(file));
+                      }}
+                      onClick={() => manualFileInputRef.current?.click()}
+                    >
+                      {manualImagePreview ? (
+                        <img src={manualImagePreview} alt="Preview" />
+                      ) : (
+                        <div className="muted">Carica immagine principale</div>
+                      )}
+                      <input
+                        ref={manualFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setManualImageFile(file);
+                          setManualImagePreview(URL.createObjectURL(file));
+                        }}
+                        style={{ display: "none" }}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-grid">
+                    <label>
+                      Nome
+                      <input
+                        value={manualDraft.name}
+                        onChange={(e) => setManualDraft({ ...manualDraft, name: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      SKU
+                      <div className="input-row">
+                        <input
+                          value={manualDraft.sku}
+                          onChange={(e) => setManualDraft({ ...manualDraft, sku: e.target.value })}
+                        />
+                        <button type="button" className="btn ghost" onClick={generateManualSku}>
+                          Genera SKU
+                        </button>
+                      </div>
+                    </label>
+                    <label>
+                      Prezzo vendita
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={manualDraft.price}
+                        onChange={(e) => setManualDraft({ ...manualDraft, price: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Giacenza
+                      <input
+                        type="number"
+                        value={manualDraft.stockQty}
+                        onChange={(e) => setManualDraft({ ...manualDraft, stockQty: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Categoria
+                      <select
+                        className="select"
+                        value={manualDraft.categoryId}
+                        onChange={(e) => setManualDraft({ ...manualDraft, categoryId: e.target.value })}
+                      >
+                        <option value="">Seleziona categoria</option>
+                        {categoryOptions.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Brand
+                      <input
+                        value={manualDraft.brand}
+                        onChange={(e) => setManualDraft({ ...manualDraft, brand: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Prezzo acquisto
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={manualDraft.purchasePrice}
+                        onChange={(e) => setManualDraft({ ...manualDraft, purchasePrice: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Listino
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={manualDraft.listPrice}
+                        onChange={(e) => setManualDraft({ ...manualDraft, listPrice: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Prezzo sconto
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={manualDraft.discountPrice}
+                        onChange={(e) => setManualDraft({ ...manualDraft, discountPrice: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Q.tà sconto
+                      <input
+                        type="number"
+                        value={manualDraft.discountQty}
+                        onChange={(e) => setManualDraft({ ...manualDraft, discountQty: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      ML Prodotto
+                      <input
+                        type="number"
+                        step="0.001"
+                        value={manualDraft.mlProduct}
+                        onChange={(e) => setManualDraft({ ...manualDraft, mlProduct: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Nicotina
+                      <input
+                        type="number"
+                        step="0.001"
+                        value={manualDraft.nicotine}
+                        onChange={(e) => setManualDraft({ ...manualDraft, nicotine: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Aliquota IVA
+                      <select
+                        className="select"
+                        value={manualDraft.taxRateId}
+                        onChange={(e) => setManualDraft({ ...manualDraft, taxRateId: e.target.value })}
+                      >
+                        <option value="">Nessuna</option>
+                        {taxes.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name} ({Number(t.rate).toFixed(2)}%)
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Accisa
+                      <select
+                        className="select"
+                        value={manualDraft.exciseRateId}
+                        onChange={(e) => setManualDraft({ ...manualDraft, exciseRateId: e.target.value })}
+                      >
+                        <option value="">Nessuna</option>
+                        {excises.map((e) => (
+                          <option key={e.id} value={e.id}>
+                            {e.name} ({Number(e.amount).toFixed(6)} {e.type === "ML" ? "/ml" : ""})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Codice a barre
+                      <input
+                        value={manualDraft.barcode}
+                        onChange={(e) => setManualDraft({ ...manualDraft, barcode: e.target.value })}
+                      />
+                    </label>
+                    <label className="full">
+                      Breve descrizione
+                      <input
+                        value={manualDraft.shortDescription}
+                        onChange={(e) => setManualDraft({ ...manualDraft, shortDescription: e.target.value })}
+                      />
+                    </label>
+                    <label className="full">
+                      Descrizione
+                      <textarea
+                        rows={4}
+                        value={manualDraft.description}
+                        onChange={(e) => setManualDraft({ ...manualDraft, description: e.target.value })}
+                      />
+                    </label>
+                  </div>
+                  <div className="actions">
+                    <button className="btn ghost" onClick={() => setShowCreateManual(false)}>
+                      Annulla
+                    </button>
+                    <button className="btn primary" onClick={createManualProduct}>
+                      Crea prodotto
                     </button>
                   </div>
                 </div>

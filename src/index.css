@@ -797,6 +797,9 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   margin-top: 1rem;
 }
+.form-grid .full {
+  grid-column: 1 / -1;
+}
 
 .thumb {
   width: 48px;
