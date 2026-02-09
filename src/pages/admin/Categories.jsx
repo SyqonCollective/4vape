@@ -38,6 +38,17 @@ export default function AdminCategories() {
     }
   }
 
+  async function deleteCategory(id) {
+    setError("");
+    if (!confirm("Eliminare questa categoria?")) return;
+    try {
+      await api(`/admin/categories/${id}`, { method: "DELETE" });
+      load();
+    } catch (err) {
+      setError("Impossibile eliminare: rimuovi prima le sottocategorie.");
+    }
+  }
+
   const byParent = new Map();
   for (const c of items) {
     const key = c.parentId || "root";
@@ -98,15 +109,21 @@ export default function AdminCategories() {
         </form>
       </div>
 
-      <div className="table">
+      <div className="table category-table">
         <div className="row header">
           <div>Categoria</div>
           <div>Parent</div>
+          <div>Azioni</div>
         </div>
         {flat.map((c) => (
           <div className="row" key={c.id}>
             <div>{c.label}</div>
             <div className="muted">{c.parentId ? "Sottocategoria" : "Principale"}</div>
+            <div>
+              <button className="btn ghost small" onClick={() => deleteCategory(c.id)}>
+                Elimina
+              </button>
+            </div>
           </div>
         ))}
       </div>

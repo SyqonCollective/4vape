@@ -6,6 +6,7 @@ import logo from "../assets/logo.png";
 
 const links = [
   { to: "/admin/dashboard", label: "Dashboard" },
+  { to: "/admin/analytics", label: "Analytics" },
   { to: "/admin/products", label: "Prodotti" },
   { to: "/admin/categories", label: "Categorie" },
   { to: "/admin/suppliers", label: "Fornitori" },
