@@ -582,6 +582,11 @@ button {
   align-items: center;
   margin-bottom: 1rem;
 }
+.rules-form {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.4);
+}
 .rules-table .row {
   grid-template-columns: 1.6fr 0.7fr 0.8fr 1fr 0.6fr 0.8fr;
 }
