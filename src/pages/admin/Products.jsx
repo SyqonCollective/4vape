@@ -85,6 +85,17 @@ export default function AdminProducts() {
     return result;
   })();
   const parentOptions = parents.map((p) => ({ id: p.id, name: p.name, sku: p.sku }));
+  const selectedTax = taxes.find((t) => t.id === edit.taxRateId);
+  const selectedExcise = excises.find((e) => e.id === edit.exciseRateId);
+  const basePrice = edit.price ? Number(edit.price) : 0;
+  const mlValue = edit.mlProduct ? Number(edit.mlProduct) : 0;
+  const exciseComputed =
+    selectedExcise?.type === "ML"
+      ? Number(selectedExcise.amount) * mlValue
+      : selectedExcise
+      ? Number(selectedExcise.amount)
+      : 0;
+  const vatComputed = selectedTax ? (basePrice * Number(selectedTax.rate)) / 100 : 0;
   const withToken = (url) => {
     if (!url) return url;
     let fixed = url;
@@ -1005,7 +1016,7 @@ export default function AdminProducts() {
                     <input
                       type="number"
                       step="0.000001"
-                      value={selectedProduct.exciseTotal ? Number(selectedProduct.exciseTotal).toFixed(6) : ""}
+                      value={exciseComputed ? exciseComputed.toFixed(6) : ""}
                       disabled
                     />
                   </label>
@@ -1014,7 +1025,7 @@ export default function AdminProducts() {
                     <input
                       type="number"
                       step="0.000001"
-                      value={selectedProduct.taxAmount ? Number(selectedProduct.taxAmount).toFixed(6) : ""}
+                      value={vatComputed ? vatComputed.toFixed(6) : ""}
                       disabled
                     />
                   </label>
