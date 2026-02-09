@@ -501,6 +501,48 @@ button {
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--stroke);
 }
+.products-panel {
+  padding: 1.2rem 1.4rem;
+  margin-top: 1.2rem;
+}
+.products-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: var(--shadow-soft);
+}
+.toolbar-left {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.toolbar-right {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.toolbar-group {
+  display: grid;
+  gap: 6px;
+}
+.toolbar-group.compact {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+.toolbar-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
 
 .list {
   margin: 0.7rem 0 0;

@@ -678,55 +678,69 @@ export default function AdminProducts() {
           <h1>Prodotti</h1>
           <p>Catalogo principale con giacenze</p>
         </div>
-        <div className="actions">
+      </div>
+
+      <div className="products-toolbar">
+        <div className="toolbar-left">
           <button className="btn primary" onClick={() => setShowCreateParent(true)}>
             Crea prodotto genitore
           </button>
           <button className="btn ghost" onClick={openBulkEditor}>
             Modifica in bulk
           </button>
-          <select
-            className="select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="name-asc">Ordina per: Nome (A-Z)</option>
-            <option value="name-desc">Ordina per: Nome (Z-A)</option>
-            <option value="sku-asc">Ordina per: SKU (A-Z)</option>
-            <option value="sku-desc">Ordina per: SKU (Z-A)</option>
-            <option value="price-asc">Ordina per: Prezzo (crescente)</option>
-            <option value="price-desc">Ordina per: Prezzo (decrescente)</option>
-            <option value="stock-asc">Ordina per: Giacenza (crescente)</option>
-            <option value="stock-desc">Ordina per: Giacenza (decrescente)</option>
-            <option value="brand-asc">Ordina per: Brand (A-Z)</option>
-            <option value="brand-desc">Ordina per: Brand (Z-A)</option>
-            <option value="supplier-asc">Ordina per: Fornitore (A-Z)</option>
-            <option value="supplier-desc">Ordina per: Fornitore (Z-A)</option>
-          </select>
-          <select
-            className="select"
-            value={productFilter}
-            onChange={(e) => setProductFilter(e.target.value)}
-          >
-            <option value="all">Tutti i prodotti</option>
-            <option value="parents">Solo genitori</option>
-            <option value="children">Solo figli</option>
-            <option value="single">Solo singoli</option>
-            <option value="draft">Solo draft</option>
-          </select>
-          <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
-            {bulkMode ? "Selezione attiva" : "Multi selection"}
-          </button>
-          {bulkMode ? (
-            <button className="btn danger" onClick={() => setConfirmDelete(true)} disabled={selectedIds.size === 0}>
-              Elimina selezionati
+        </div>
+        <div className="toolbar-right">
+          <div className="toolbar-group">
+            <div className="toolbar-label">Ordina per</div>
+            <select
+              className="select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="name-asc">Nome (A-Z)</option>
+              <option value="name-desc">Nome (Z-A)</option>
+              <option value="sku-asc">SKU (A-Z)</option>
+              <option value="sku-desc">SKU (Z-A)</option>
+              <option value="price-asc">Prezzo (crescente)</option>
+              <option value="price-desc">Prezzo (decrescente)</option>
+              <option value="stock-asc">Giacenza (crescente)</option>
+              <option value="stock-desc">Giacenza (decrescente)</option>
+              <option value="brand-asc">Brand (A-Z)</option>
+              <option value="brand-desc">Brand (Z-A)</option>
+              <option value="supplier-asc">Fornitore (A-Z)</option>
+              <option value="supplier-desc">Fornitore (Z-A)</option>
+            </select>
+          </div>
+          <div className="toolbar-group">
+            <div className="toolbar-label">Filtro</div>
+            <select
+              className="select"
+              value={productFilter}
+              onChange={(e) => setProductFilter(e.target.value)}
+            >
+              <option value="all">Tutti i prodotti</option>
+              <option value="parents">Solo genitori</option>
+              <option value="children">Solo figli</option>
+              <option value="single">Solo singoli</option>
+              <option value="draft">Solo draft</option>
+            </select>
+          </div>
+          <div className="toolbar-group compact">
+            <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
+              {bulkMode ? "Selezione attiva" : "Multi selection"}
             </button>
-          ) : null}
+            {bulkMode ? (
+              <button className="btn danger" onClick={() => setConfirmDelete(true)} disabled={selectedIds.size === 0}>
+                Elimina selezionati
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
 
       <InlineError message={error} onClose={() => setError("")} />
 
+      <div className="panel products-panel">
       <div className="table wide-12">
         <div className="row header">
           <div>Immagine</div>
@@ -837,6 +851,7 @@ export default function AdminProducts() {
           </div>
         );
         })}
+      </div>
       </div>
 
       {showDeleteSuccess ? (
