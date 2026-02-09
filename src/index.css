@@ -261,6 +261,26 @@ button {
   background: transparent;
   border: 1px solid transparent;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: grab;
+}
+.nav-item:active {
+  cursor: grabbing;
+}
+.nav-grip {
+  color: rgba(148, 163, 184, 0.9);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+}
+.nav-item.dragging {
+  opacity: 0.6;
+  transform: scale(0.98);
+}
+.nav-item.drag-over {
+  border-color: rgba(14, 165, 233, 0.5);
+  box-shadow: 0 10px 22px rgba(14, 165, 233, 0.18);
 }
 
 .nav-item::before {
