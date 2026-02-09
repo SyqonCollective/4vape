@@ -543,6 +543,71 @@ button {
   letter-spacing: 0.18em;
   color: var(--muted);
 }
+.rules-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 1.5rem;
+  margin-top: 1.2rem;
+}
+.rules-card,
+.rules-list {
+  background: #fff;
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow-soft);
+}
+.rules-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.rules-preview {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+  background: rgba(248, 250, 252, 0.8);
+}
+.rules-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.rules-table .row {
+  grid-template-columns: 1.6fr 0.7fr 0.8fr 1fr 0.6fr 0.8fr;
+}
+.day-picker {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.day-pill {
+  border: 1px solid var(--stroke);
+  background: #fff;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.day-pill.active {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.4);
+  color: #1d4ed8;
+}
+@media (max-width: 1024px) {
+  .rules-layout {
+    grid-template-columns: 1fr;
+  }
+}
 
 .list {
   margin: 0.7rem 0 0;

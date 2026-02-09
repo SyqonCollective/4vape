@@ -5,6 +5,7 @@ import AdminDashboard from "./pages/admin/Dashboard.jsx";
 import AdminAnalytics from "./pages/admin/Analytics.jsx";
 import AdminProducts from "./pages/admin/Products.jsx";
 import AdminSuppliers from "./pages/admin/Suppliers.jsx";
+import AdminDiscounts from "./pages/admin/DiscountRules.jsx";
 import AdminCategories from "./pages/admin/Categories.jsx";
 import AdminOrders from "./pages/admin/Orders.jsx";
 import AdminUsers from "./pages/admin/Users.jsx";
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="products" element={<AdminProducts />} />
         <Route path="categories" element={<AdminCategories />} />
         <Route path="suppliers" element={<AdminSuppliers />} />
+        <Route path="discounts" element={<AdminDiscounts />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="users" element={<AdminUsers />} />
