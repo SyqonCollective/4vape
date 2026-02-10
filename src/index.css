@@ -2278,7 +2278,7 @@ button {
 .order-lines-header,
 .order-line {
   display: grid;
-  grid-template-columns: 2fr 120px 90px 110px 90px;
+  grid-template-columns: minmax(220px, 2.2fr) 110px 80px 110px 90px;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -2303,6 +2303,10 @@ button {
 
 .line-title {
   font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .line-meta {
@@ -2390,15 +2394,23 @@ button {
 }
 
 .summary-actions .ghost {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 255, 0.12);
   color: #f8fafc;
-  border-color: transparent;
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .summary-actions .primary {
-  background: #38bdf8;
-  color: #0f172a;
+  background: #3b82f6;
+  color: #fff;
   border: none;
+}
+
+.order-line > div:first-child {
+  min-width: 220px;
+}
+
+.order-line .btn.ghost {
+  padding: 6px 12px;
 }
 
 .order-modal .ghost,
