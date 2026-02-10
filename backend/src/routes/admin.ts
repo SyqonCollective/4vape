@@ -206,6 +206,27 @@ export async function adminRoutes(app: FastifyInstance) {
     return prisma.user.update({ where: { id }, data: { approved: true } });
   });
 
+  app.delete("/users/:id/reject", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) return reply.code(204).send();
+    const companyId = existing.companyId;
+    await prisma.user.delete({ where: { id } });
+    if (companyId) {
+      const remaining = await prisma.user.count({ where: { companyId } });
+      if (remaining === 0) {
+        try {
+          await prisma.company.delete({ where: { id: companyId } });
+        } catch {
+          // company might be linked to orders; ignore to allow rejection
+        }
+      }
+    }
+    return reply.code(204).send();
+  });
+
   app.get("/companies", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;

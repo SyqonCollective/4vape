@@ -11,6 +11,7 @@ export default function AdminCompanies() {
   const [editingCompany, setEditingCompany] = useState(null);
   const [showPendingDetails, setShowPendingDetails] = useState(false);
   const [pendingDetails, setPendingDetails] = useState(null);
+  const [confirmRejectUser, setConfirmRejectUser] = useState(null);
   const [companyName, setCompanyName] = useState("");
   const [vatNumber, setVatNumber] = useState("");
   const [contactFirstName, setContactFirstName] = useState("");
@@ -247,7 +248,7 @@ export default function AdminCompanies() {
                   <button className="btn primary" onClick={() => approveUser(u.id)}>
                     Approva
                   </button>
-                  <button className="btn danger" onClick={() => rejectUser(u.id)}>
+                  <button className="btn danger" onClick={() => setConfirmRejectUser(u)}>
                     Rifiuta
                   </button>
                 </div>
@@ -294,7 +295,7 @@ export default function AdminCompanies() {
                       ? "Revocata"
                       : c.status === "PENDING"
                       ? "In attesa"
-                      : "Attiva"}
+                      : "Attivo"}
                   </span>
                   <button className="btn ghost" onClick={() => openEditCompany(c)}>
                     Modifica
@@ -370,6 +371,44 @@ export default function AdminCompanies() {
                 </button>
                 <button className="btn primary" onClick={() => approveUser(pendingDetails.id)}>
                   Approva
+                </button>
+                <button className="btn danger" onClick={() => setConfirmRejectUser(pendingDetails)}>
+                  Rifiuta
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {confirmRejectUser ? (
+        <div className="modal-backdrop" onClick={() => setConfirmRejectUser(null)}>
+          <div className="modal modal-compact" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Rifiuta richiesta</div>
+                <div className="modal-subtitle">
+                  Sei sicuro di voler rifiutare questa richiesta?
+                </div>
+              </div>
+              <button className="btn ghost" onClick={() => setConfirmRejectUser(null)}>
+                Chiudi
+              </button>
+            </div>
+            <div className="modal-body modal-body-single">
+              <div className="actions">
+                <button className="btn ghost" onClick={() => setConfirmRejectUser(null)}>
+                  Annulla
+                </button>
+                <button
+                  className="btn danger"
+                  onClick={async () => {
+                    const id = confirmRejectUser.id;
+                    setConfirmRejectUser(null);
+                    await rejectUser(id);
+                  }}
+                >
+                  Rifiuta
                 </button>
               </div>
             </div>
