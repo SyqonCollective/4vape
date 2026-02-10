@@ -7,7 +7,7 @@ const emptyDiscount = {
   active: true,
   scope: "ORDER",
   target: "",
-  type: "percent",
+  type: "PERCENT",
   value: "",
   startDate: "",
   endDate: "",
@@ -18,7 +18,7 @@ const emptyRule = {
   active: true,
   scope: "ORDER",
   target: "",
-  type: "percent",
+  type: "PERCENT",
   value: "",
   maxDiscount: "",
   minQty: "",
@@ -47,7 +47,7 @@ const dayOptions = [
 
 function formatDiscount(rule) {
   const value = rule.value ? Number(rule.value) : 0;
-  if (rule.type === "percent") return `${value.toFixed(2)}%`;
+  if (String(rule.type).toUpperCase() === "PERCENT") return `${value.toFixed(2)}%`;
   return `€ ${value.toFixed(2)}`;
 }
 
@@ -233,8 +233,12 @@ export default function AdminDiscountRules() {
           api("/admin/discounts"),
         ]);
         if (!active) return;
-        setRules(ruleRes || []);
-        setDiscounts(discountRes || []);
+        const normalizeType = (item) => ({
+          ...item,
+          type: item?.type ? String(item.type).toUpperCase() : item.type,
+        });
+        setRules((ruleRes || []).map(normalizeType));
+        setDiscounts((discountRes || []).map(normalizeType));
       } catch {
         setError("Impossibile caricare sconti e regole");
       } finally {
@@ -536,8 +540,8 @@ export default function AdminDiscountRules() {
                             value={discountDraft.type}
                             onChange={(e) => setDiscountDraft({ ...discountDraft, type: e.target.value })}
                           >
-                            <option value="percent">Percentuale</option>
-                            <option value="fixed">Valore fisso (€)</option>
+                            <option value="PERCENT">Percentuale</option>
+                            <option value="FIXED">Valore fisso (€)</option>
                           </select>
                         </label>
                         <label>
@@ -713,8 +717,8 @@ export default function AdminDiscountRules() {
                             value={draft.type}
                             onChange={(e) => setDraft({ ...draft, type: e.target.value })}
                           >
-                            <option value="percent">Percentuale</option>
-                            <option value="fixed">Valore fisso (€)</option>
+                            <option value="PERCENT">Percentuale</option>
+                            <option value="FIXED">Valore fisso (€)</option>
                           </select>
                         </label>
                         <label>

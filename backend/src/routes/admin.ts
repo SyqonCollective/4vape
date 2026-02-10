@@ -1174,7 +1174,10 @@ export async function adminRoutes(app: FastifyInstance) {
         name: z.string().min(2),
         scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).default("ORDER"),
         target: z.string().optional(),
-        type: z.enum(["PERCENT", "FIXED"]).default("PERCENT"),
+        type: z
+          .enum(["PERCENT", "FIXED", "percent", "fixed"])
+          .default("PERCENT")
+          .transform((v) => v.toUpperCase() as "PERCENT" | "FIXED"),
         value: z.number().nonnegative(),
         active: z.boolean().optional(),
         startDate: z.string().optional(),
@@ -1206,7 +1209,10 @@ export async function adminRoutes(app: FastifyInstance) {
         name: z.string().min(2).optional(),
         scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).optional(),
         target: z.string().optional(),
-        type: z.enum(["PERCENT", "FIXED"]).optional(),
+        type: z
+          .enum(["PERCENT", "FIXED", "percent", "fixed"])
+          .optional()
+          .transform((v) => (v ? (v.toUpperCase() as "PERCENT" | "FIXED") : undefined)),
         value: z.number().nonnegative().optional(),
         active: z.boolean().optional(),
         startDate: z.string().nullable().optional(),
@@ -1255,7 +1261,10 @@ export async function adminRoutes(app: FastifyInstance) {
         active: z.boolean().optional(),
         scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).default("ORDER"),
         target: z.string().optional(),
-        type: z.enum(["PERCENT", "FIXED"]).default("PERCENT"),
+        type: z
+          .enum(["PERCENT", "FIXED", "percent", "fixed"])
+          .default("PERCENT")
+          .transform((v) => v.toUpperCase() as "PERCENT" | "FIXED"),
         value: z.number().nonnegative(),
         maxDiscount: z.number().nonnegative().optional(),
         minQty: z.number().int().nonnegative().optional(),
@@ -1307,7 +1316,10 @@ export async function adminRoutes(app: FastifyInstance) {
         active: z.boolean().optional(),
         scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).optional(),
         target: z.string().optional(),
-        type: z.enum(["PERCENT", "FIXED"]).optional(),
+        type: z
+          .enum(["PERCENT", "FIXED", "percent", "fixed"])
+          .optional()
+          .transform((v) => (v ? (v.toUpperCase() as "PERCENT" | "FIXED") : undefined)),
         value: z.number().nonnegative().optional(),
         maxDiscount: z.number().nonnegative().nullable().optional(),
         minQty: z.number().int().nonnegative().nullable().optional(),

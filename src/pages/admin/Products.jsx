@@ -40,6 +40,8 @@ export default function AdminProducts() {
   const [parents, setParents] = useState([]);
   const [taxes, setTaxes] = useState([]);
   const [excises, setExcises] = useState([]);
+  const [vatRateDefault, setVatRateDefault] = useState("");
+  const [defaultTaxRateId, setDefaultTaxRateId] = useState("");
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -171,6 +173,23 @@ export default function AdminProducts() {
 
   useEffect(() => {
     let active = true;
+    async function loadSettings() {
+      try {
+        const res = await api("/admin/settings");
+        if (!active) return;
+        setVatRateDefault(res?.vatRateDefault ? String(res.vatRateDefault) : "");
+      } catch {
+        // ignore
+      }
+    }
+    loadSettings();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     const interval = setInterval(async () => {
       try {
         const res = await api("/admin/products/stock");
@@ -235,6 +254,17 @@ export default function AdminProducts() {
   }, []);
 
   useEffect(() => {
+    if (!vatRateDefault || taxes.length === 0) return;
+    const rate = Number(vatRateDefault);
+    if (!Number.isFinite(rate)) return;
+    const match = taxes.find((t) => Number(t.rate) === rate);
+    if (match && match.id !== defaultTaxRateId) {
+      setDefaultTaxRateId(match.id);
+      setManualDraft((prev) => (prev.taxRateId ? prev : { ...prev, taxRateId: match.id }));
+    }
+  }, [vatRateDefault, taxes, defaultTaxRateId]);
+
+  useEffect(() => {
     let active = true;
     async function loadParents() {
       try {
@@ -262,7 +292,7 @@ export default function AdminProducts() {
       purchasePrice: p.purchasePrice ? Number(p.purchasePrice).toFixed(2) : "",
       discountPrice: p.discountPrice ? Number(p.discountPrice).toFixed(2) : "",
       discountQty: p.discountQty ?? "",
-      taxRateId: p.taxRateId || "",
+      taxRateId: p.taxRateId || defaultTaxRateId || "",
       exciseRateId: p.exciseRateId || "",
       vatIncluded: true,
       mlProduct: p.mlProduct ? Number(p.mlProduct).toFixed(3) : "",
@@ -436,6 +466,7 @@ export default function AdminProducts() {
           isParent: true,
           price: 0,
           stockQty: 0,
+          taxRateId: defaultTaxRateId || undefined,
         }),
       });
       if (parentImageFile) {
@@ -512,7 +543,7 @@ export default function AdminProducts() {
           discountQty: manualDraft.discountQty ? Number(manualDraft.discountQty) : undefined,
           mlProduct: manualDraft.mlProduct ? Number(manualDraft.mlProduct) : undefined,
           nicotine: manualDraft.nicotine ? Number(manualDraft.nicotine) : undefined,
-          taxRateId: manualDraft.taxRateId || undefined,
+          taxRateId: manualDraft.taxRateId || defaultTaxRateId || undefined,
           exciseRateId: manualDraft.exciseRateId || undefined,
           barcode: manualDraft.barcode || undefined,
         }),
@@ -552,7 +583,7 @@ export default function AdminProducts() {
         discountQty: "",
         mlProduct: "",
         nicotine: "",
-        taxRateId: "",
+        taxRateId: defaultTaxRateId || "",
         exciseRateId: "",
         barcode: "",
       });
@@ -647,6 +678,15 @@ export default function AdminProducts() {
   };
 
   const groupedRows = (() => {
+    if (productFilter === "single") {
+      const singles = items.filter((p) => !p.isParent && !(p.parentId || p.parent?.id));
+      const parentSingles = items.filter((p) => p.isParent && p.price != null);
+      const combined = [...singles, ...parentSingles];
+      return sortItems(combined).map((p) => ({
+        type: p.isParent ? "single-parent" : "single",
+        item: p,
+      }));
+    }
     if (productFilter !== "all") {
       return sortItems(filteredItems).map((p) => ({ type: "single", item: p }));
     }
@@ -669,6 +709,9 @@ export default function AdminProducts() {
     const rows = [];
     for (const parent of parentsOnly) {
       rows.push({ type: "parent", item: parent });
+      if (parent.price != null) {
+        rows.push({ type: "single-parent", item: parent, parent });
+      }
       if (!collapsedParents.has(parent.id)) {
         const children = (byParent.get(parent.id) || []).sort((a, b) => {
           const orderDiff = (a.parentSort ?? 0) - (b.parentSort ?? 0);
@@ -896,6 +939,8 @@ export default function AdminProducts() {
           const p = row.item;
           const isChild = row.type === "child";
           const isParentRow = row.type === "parent";
+          const isParentSingle = row.type === "single-parent";
+          const hasParentSingle = isParentRow && p.price != null;
           return (
           <div
             className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
@@ -969,13 +1014,16 @@ export default function AdminProducts() {
             </div>
             <div className="name-cell">
               <span>{p.name}</span>
-              {isParentRow && p.price != null ? <span className="tag info">Singolo + Padre</span> : null}
+              {hasParentSingle ? <span className="tag info">Padre + singolo</span> : null}
+              {isParentSingle ? <span className="tag info">Singolo (da padre)</span> : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
               {p.published === false ? <span className="tag warn">Draft</span> : null}
             </div>
             <div>{isParentRow && p.price == null ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
             <div>{isParentRow && p.price == null ? dash : p.stockQty}</div>
-            <div>{isParentRow ? "Padre" : p.parentId ? "Figlio" : "Singolo"}</div>
+            <div>
+              {isParentRow ? (hasParentSingle ? "Padre + singolo" : "Padre") : isParentSingle ? "Singolo" : p.parentId ? "Figlio" : "Singolo"}
+            </div>
             <div>{row.parent?.sku || p.parent?.sku || dash}</div>
             <div>{p.category || dash}</div>
             <div>
