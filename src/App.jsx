@@ -10,6 +10,7 @@ import AdminCategories from "./pages/admin/Categories.jsx";
 import AdminOrders from "./pages/admin/Orders.jsx";
 import AdminUsers from "./pages/admin/Users.jsx";
 import AdminSettings from "./pages/admin/Settings.jsx";
+import RegisterCompany from "./pages/RegisterCompany.jsx";
 import { getToken } from "./lib/api.js";
 
 function RequireAuth({ children }) {
@@ -23,6 +24,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/admin/login" replace />} />
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/register" element={<RegisterCompany />} />
       <Route
         path="/admin"
         element={

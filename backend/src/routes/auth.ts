@@ -10,8 +10,16 @@ export async function authRoutes(app: FastifyInstance) {
       .object({
         email: z.string().email(),
         password: z.string().min(8),
-        companyName: z.string().min(2),
-        vatNumber: z.string().optional(),
+        contactFirstName: z.string().min(1),
+        contactLastName: z.string().min(1),
+        legalName: z.string().min(2),
+        vatNumber: z.string().min(1),
+        sdiCode: z.string().min(1),
+        address: z.string().min(1),
+        cap: z.string().min(1),
+        city: z.string().min(1),
+        province: z.string().min(1),
+        phone: z.string().min(1),
       })
       .parse(request.body);
 
@@ -20,8 +28,18 @@ export async function authRoutes(app: FastifyInstance) {
 
     const company = await prisma.company.create({
       data: {
-        name: body.companyName,
+        name: body.legalName,
+        legalName: body.legalName,
         vatNumber: body.vatNumber,
+        contactFirstName: body.contactFirstName,
+        contactLastName: body.contactLastName,
+        sdiCode: body.sdiCode,
+        address: body.address,
+        cap: body.cap,
+        city: body.city,
+        province: body.province,
+        phone: body.phone,
+        email: body.email,
         status: "PENDING",
       },
     });

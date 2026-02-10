@@ -1497,6 +1497,36 @@ button {
   z-index: 3;
 }
 
+.register-card {
+  width: min(840px, 92vw);
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.2);
+}
+
+.register-page .auth-header p {
+  color: #475569;
+}
+
+.register-form .form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.register-form .form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.success-banner {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #0f766e;
+  font-weight: 600;
+}
+
 .auth-header {
   text-align: center;
   margin-bottom: 1.8rem;
