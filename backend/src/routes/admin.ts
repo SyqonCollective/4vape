@@ -66,7 +66,11 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/users/pending", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
-    return prisma.user.findMany({ where: { approved: false } });
+    return prisma.user.findMany({
+      where: { approved: false },
+      include: { company: true },
+      orderBy: { createdAt: "desc" },
+    });
   });
 
   app.get("/users", async (request, reply) => {
@@ -127,6 +131,72 @@ export async function adminRoutes(app: FastifyInstance) {
       },
     });
     return reply.code(201).send(created);
+  });
+
+  app.patch("/companies/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        vatNumber: z.string().min(1).nullable().optional(),
+        contactFirstName: z.string().min(1).nullable().optional(),
+        contactLastName: z.string().min(1).nullable().optional(),
+        legalName: z.string().min(1).nullable().optional(),
+        sdiCode: z.string().min(1).nullable().optional(),
+        address: z.string().min(1).nullable().optional(),
+        cap: z.string().min(1).nullable().optional(),
+        city: z.string().min(1).nullable().optional(),
+        province: z.string().min(1).nullable().optional(),
+        phone: z.string().min(1).nullable().optional(),
+        email: z.string().min(1).nullable().optional(),
+        customerCode: z.string().nullable().optional(),
+        pec: z.string().nullable().optional(),
+        licenseNumber: z.string().nullable().optional(),
+        cmnr: z.string().nullable().optional(),
+        signNumber: z.string().nullable().optional(),
+        adminVatNumber: z.string().nullable().optional(),
+        status: z.string().optional(),
+      })
+      .parse(request.body);
+    return prisma.company.update({
+      where: { id },
+      data: {
+        ...(body.name ? { name: body.name } : {}),
+        ...(body.vatNumber !== undefined ? { vatNumber: body.vatNumber || null } : {}),
+        ...(body.contactFirstName !== undefined
+          ? { contactFirstName: body.contactFirstName || null }
+          : {}),
+        ...(body.contactLastName !== undefined ? { contactLastName: body.contactLastName || null } : {}),
+        ...(body.legalName !== undefined ? { legalName: body.legalName || null } : {}),
+        ...(body.sdiCode !== undefined ? { sdiCode: body.sdiCode || null } : {}),
+        ...(body.address !== undefined ? { address: body.address || null } : {}),
+        ...(body.cap !== undefined ? { cap: body.cap || null } : {}),
+        ...(body.city !== undefined ? { city: body.city || null } : {}),
+        ...(body.province !== undefined ? { province: body.province || null } : {}),
+        ...(body.phone !== undefined ? { phone: body.phone || null } : {}),
+        ...(body.email !== undefined ? { email: body.email || null } : {}),
+        ...(body.customerCode !== undefined ? { customerCode: body.customerCode || null } : {}),
+        ...(body.pec !== undefined ? { pec: body.pec || null } : {}),
+        ...(body.licenseNumber !== undefined ? { licenseNumber: body.licenseNumber || null } : {}),
+        ...(body.cmnr !== undefined ? { cmnr: body.cmnr || null } : {}),
+        ...(body.signNumber !== undefined ? { signNumber: body.signNumber || null } : {}),
+        ...(body.adminVatNumber !== undefined ? { adminVatNumber: body.adminVatNumber || null } : {}),
+        ...(body.status ? { status: body.status } : {}),
+      },
+    });
+  });
+
+  app.delete("/companies/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const orders = await prisma.order.count({ where: { companyId: id } });
+    if (orders > 0) return reply.code(409).send({ error: "Company has orders" });
+    await prisma.user.deleteMany({ where: { companyId: id } });
+    await prisma.company.delete({ where: { id } });
+    return reply.code(204).send();
   });
 
   app.patch("/users/:id/approve", async (request, reply) => {

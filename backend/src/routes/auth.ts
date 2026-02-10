@@ -68,6 +68,12 @@ export async function authRoutes(app: FastifyInstance) {
     const ok = await verifyPassword(body.password, user.passwordHash);
     if (!ok) return reply.unauthorized("Invalid credentials");
     if (!user.approved) return reply.forbidden("User not approved");
+    if (user.companyId) {
+      const company = await prisma.company.findUnique({ where: { id: user.companyId } });
+      if (company?.status && company.status !== "ACTIVE") {
+        return reply.forbidden("Company not active");
+      }
+    }
 
     const token = jwt.sign(
       {
