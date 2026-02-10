@@ -56,6 +56,15 @@ export default function AdminCompanies() {
     }
   }
 
+  async function rejectUser(id) {
+    try {
+      await api(`/admin/users/${id}/reject`, { method: "DELETE" });
+      load();
+    } catch {
+      setError("Errore rifiuto richiesta");
+    }
+  }
+
   function openPendingDetails(user) {
     setPendingDetails(user);
     setShowPendingDetails(true);
@@ -168,6 +177,7 @@ export default function AdminCompanies() {
           cmnr: cmnr.trim() || undefined,
           signNumber: signNumber.trim() || undefined,
           adminVatNumber: adminVatNumber.trim() || undefined,
+          status: "ACTIVE",
         }),
       });
       setCompanyName("");
@@ -237,6 +247,9 @@ export default function AdminCompanies() {
                   <button className="btn primary" onClick={() => approveUser(u.id)}>
                     Approva
                   </button>
+                  <button className="btn danger" onClick={() => rejectUser(u.id)}>
+                    Rifiuta
+                  </button>
                 </div>
               </div>
             ))
@@ -272,8 +285,16 @@ export default function AdminCompanies() {
                 </div>
                 <div>{c.email || "—"}</div>
                 <div className="actions">
-                  <span className={`tag ${c.status === "SUSPENDED" ? "danger" : c.status === "PENDING" ? "warn" : "success"}`}>
-                    {c.status || "—"}
+                  <span
+                    className={`tag ${
+                      c.status === "SUSPENDED" ? "danger" : c.status === "PENDING" ? "warn" : "success"
+                    }`}
+                  >
+                    {c.status === "SUSPENDED"
+                      ? "Revocata"
+                      : c.status === "PENDING"
+                      ? "In attesa"
+                      : "Attiva"}
                   </span>
                   <button className="btn ghost" onClick={() => openEditCompany(c)}>
                     Modifica
@@ -544,12 +565,15 @@ export default function AdminCompanies() {
                 </label>
               </div>
               <div className="actions">
-                <button className="btn ghost" onClick={() => toggleCompany("SUSPENDED")}>
-                  Revoca accesso
-                </button>
-                <button className="btn ghost" onClick={() => toggleCompany("ACTIVE")}>
-                  Ripristina accesso
-                </button>
+                {editingCompany.status === "SUSPENDED" ? (
+                  <button className="btn ghost" onClick={() => toggleCompany("ACTIVE")}>
+                    Ripristina accesso
+                  </button>
+                ) : (
+                  <button className="btn ghost" onClick={() => toggleCompany("SUSPENDED")}>
+                    Revoca accesso
+                  </button>
+                )}
                 <button className="btn danger" onClick={deleteCompany}>
                   Elimina
                 </button>
