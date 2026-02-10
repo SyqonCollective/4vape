@@ -75,11 +75,47 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         name: z.string().min(2),
-        vatNumber: z.string().optional(),
+        vatNumber: z.string().min(1),
+        contactFirstName: z.string().min(1),
+        contactLastName: z.string().min(1),
+        legalName: z.string().min(1),
+        sdiCode: z.string().min(1),
+        address: z.string().min(1),
+        cap: z.string().min(1),
+        city: z.string().min(1),
+        province: z.string().min(1),
+        phone: z.string().min(1),
+        email: z.string().min(1),
+        customerCode: z.string().optional(),
+        pec: z.string().optional(),
+        licenseNumber: z.string().optional(),
+        cmnr: z.string().optional(),
+        signNumber: z.string().optional(),
+        adminVatNumber: z.string().optional(),
       })
       .parse(request.body);
     const created = await prisma.company.create({
-      data: { name: body.name, vatNumber: body.vatNumber || null, status: "ACTIVE" },
+      data: {
+        name: body.name,
+        vatNumber: body.vatNumber,
+        status: "ACTIVE",
+        contactFirstName: body.contactFirstName,
+        contactLastName: body.contactLastName,
+        legalName: body.legalName,
+        sdiCode: body.sdiCode,
+        address: body.address,
+        cap: body.cap,
+        city: body.city,
+        province: body.province,
+        phone: body.phone,
+        email: body.email,
+        customerCode: body.customerCode || null,
+        pec: body.pec || null,
+        licenseNumber: body.licenseNumber || null,
+        cmnr: body.cmnr || null,
+        signNumber: body.signNumber || null,
+        adminVatNumber: body.adminVatNumber || null,
+      },
     });
     return reply.code(201).send(created);
   });

@@ -55,6 +55,22 @@ model Company {
   name      String
   vatNumber String?  @unique
   status    String   @default("PENDING")
+  contactFirstName String?
+  contactLastName  String?
+  legalName        String?
+  sdiCode          String?
+  address          String?
+  cap              String?
+  city             String?
+  province         String?
+  phone            String?
+  email            String?
+  customerCode     String?
+  pec              String?
+  licenseNumber    String?
+  cmnr             String?
+  signNumber       String?
+  adminVatNumber   String?
   createdAt DateTime @default(now())
 
   users  User[]

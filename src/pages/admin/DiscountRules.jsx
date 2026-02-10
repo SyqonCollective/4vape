@@ -289,9 +289,11 @@ export default function AdminDiscountRules() {
       setError("Seleziona almeno un target per la regola.");
       return;
     }
+    const ruleId =
+      editingId || (crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
     const payload = {
       ...draft,
-      id: editingId || crypto.randomUUID(),
+      id: ruleId,
       scope: draft.scope || "ORDER",
       value: draft.value ? Number(draft.value) : 0,
       maxDiscount: draft.maxDiscount ? Number(draft.maxDiscount) : 0,
@@ -353,9 +355,11 @@ export default function AdminDiscountRules() {
       setError("Seleziona almeno un target per lo sconto.");
       return;
     }
+    const discountId =
+      editingDiscountId || (crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
     const payload = {
       ...discountDraft,
-      id: editingDiscountId || crypto.randomUUID(),
+      id: discountId,
       scope: discountDraft.scope || "ORDER",
       value: discountDraft.value ? Number(discountDraft.value) : 0,
     };
