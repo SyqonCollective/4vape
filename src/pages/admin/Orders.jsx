@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
+import Portal from "../../components/Portal.jsx";
 
 const STATUS_OPTIONS = [
   { value: "DRAFT", label: "Bozza" },
@@ -225,8 +226,9 @@ export default function AdminOrders() {
       </div>
 
       {showCreate ? (
-        <div className="modal-backdrop" onClick={() => setShowCreate(false)}>
-          <div className="modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowCreate(false)}>
+            <div className="modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
                 <div className="modal-title">Crea ordine manuale</div>
@@ -397,8 +399,9 @@ export default function AdminOrders() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
-        </div>
+        </Portal>
       ) : null}
     </section>
   );

@@ -989,8 +989,9 @@ button {
   width: 100vw;
   height: 100vh;
   background: rgba(15, 23, 42, 0.22);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px 16px;
   z-index: 1000;
   backdrop-filter: blur(3px);
@@ -2166,6 +2167,7 @@ button {
   max-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
+  margin: auto;
 }
 
 .order-modal .modal-body {
