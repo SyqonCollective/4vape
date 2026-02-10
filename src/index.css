@@ -2160,14 +2160,15 @@ button {
 
 .order-modal {
   width: min(1120px, 94vw);
-  position: relative;
-  top: auto;
-  left: auto;
-  transform: none;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
   max-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
-  margin: auto;
+  margin: 0 !important;
+  z-index: 1001;
 }
 
 .order-modal .modal-body {
