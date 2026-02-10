@@ -2162,6 +2162,8 @@ button {
 
 .order-modal .modal-body {
   overflow-y: auto;
+  display: block;
+  grid-template-columns: 1fr;
 }
 
 .order-form {
