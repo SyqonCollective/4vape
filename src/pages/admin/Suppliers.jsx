@@ -227,6 +227,21 @@ export default function AdminSuppliers() {
     }
   }
 
+  function toggleSelectAllPage() {
+    if (!bulkMode) return;
+    const ids = supplierProducts
+      .filter((p) => !p.isImported)
+      .map((p) => p.supplierSku);
+    const allSelected = ids.length > 0 && ids.every((id) => selectedSkus.has(id));
+    const next = new Set(selectedSkus);
+    if (allSelected) {
+      ids.forEach((id) => next.delete(id));
+    } else {
+      ids.forEach((id) => next.add(id));
+    }
+    setSelectedSkus(next);
+  }
+
   async function viewProducts(supplier, nextPage = page) {
     setSelected(supplier);
     setCategoryId("");
@@ -401,6 +416,11 @@ export default function AdminSuppliers() {
               <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
                 {bulkMode ? "Selezione attiva" : "Import multiplo"}
               </button>
+              {bulkMode ? (
+                <button className="btn ghost" onClick={toggleSelectAllPage}>
+                  Seleziona tutti in pagina
+                </button>
+              ) : null}
               <button className="btn primary" onClick={promoteSelected} disabled={!bulkMode || selectedSkus.size === 0}>
                 Importa selezionati
               </button>

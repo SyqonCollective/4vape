@@ -168,8 +168,13 @@ function TargetPicker({
         {loading ? <div className="muted">Caricamento elenco...</div> : null}
         <div className="target-list">
           {filtered.map((item) => {
-            const id = scope === "CATEGORY" ? item.id : item.sku;
-            const label = scope === "CATEGORY" ? item.name : `${item.sku} · ${item.name}`;
+            const id = scope === "CATEGORY" || scope === "PARENT" ? item.id : item.sku;
+            const label =
+              scope === "CATEGORY"
+                ? item.name
+                : scope === "PARENT"
+                ? `${item.sku} · ${item.name}`
+                : `${item.sku} · ${item.name}`;
             const active = values.includes(id);
             return (
               <button

@@ -9,6 +9,8 @@ export default function AdminSettings() {
   const [excises, setExcises] = useState([]);
   const [newTax, setNewTax] = useState({ name: "", rate: "" });
   const [newExcise, setNewExcise] = useState({ name: "", type: "ML", amount: "" });
+  const [editingExciseId, setEditingExciseId] = useState("");
+  const [editingExcise, setEditingExcise] = useState({ name: "", type: "ML", amount: "" });
   const [form, setForm] = useState({
     vatRateDefault: "",
   });
@@ -105,6 +107,25 @@ export default function AdminSettings() {
     }
   }
 
+  async function saveExcise() {
+    if (!editingExciseId) return;
+    try {
+      const payload = {
+        name: editingExcise.name.trim(),
+        type: editingExcise.type,
+        amount: Number(editingExcise.amount),
+      };
+      const res = await api(`/admin/excises/${editingExciseId}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      setExcises((prev) => prev.map((e) => (e.id === editingExciseId ? res : e)));
+      setEditingExciseId("");
+    } catch {
+      setError("Errore modifica accisa");
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -125,13 +146,18 @@ export default function AdminSettings() {
         <div className="form-grid">
           <label>
             IVA default (%)
-            <input
-              type="number"
-              step="0.01"
+            <select
+              className="select"
               value={form.vatRateDefault}
               onChange={(e) => setForm({ ...form, vatRateDefault: e.target.value })}
-              placeholder="22.00"
-            />
+            >
+              <option value="">Seleziona IVA di default</option>
+              {taxes.map((t) => (
+                <option key={t.id} value={Number(t.rate).toFixed(2)}>
+                  {t.name} ({Number(t.rate).toFixed(2)}%)
+                </option>
+              ))}
+            </select>
           </label>
         </div>
       </div>
@@ -210,12 +236,59 @@ export default function AdminSettings() {
           </div>
           {excises.map((e) => (
             <div className="row" key={e.id}>
-              <div>{e.name}</div>
-              <div>{e.type === "ML" ? "Per ML" : "Per prodotto"}</div>
-              <div>{Number(e.amount).toFixed(6)}</div>
-              <div className="actions">
-                <button className="btn danger" onClick={() => deleteExcise(e.id)}>Elimina</button>
-              </div>
+              {editingExciseId === e.id ? (
+                <>
+                  <div>
+                    <input
+                      value={editingExcise.name}
+                      onChange={(ev) => setEditingExcise({ ...editingExcise, name: ev.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <select
+                      value={editingExcise.type}
+                      onChange={(ev) => setEditingExcise({ ...editingExcise, type: ev.target.value })}
+                    >
+                      <option value="ML">Per ML</option>
+                      <option value="PRODUCT">Per prodotto</option>
+                    </select>
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={editingExcise.amount}
+                      onChange={(ev) => setEditingExcise({ ...editingExcise, amount: ev.target.value })}
+                    />
+                  </div>
+                  <div className="actions">
+                    <button className="btn ghost" onClick={() => setEditingExciseId("")}>Annulla</button>
+                    <button className="btn primary" onClick={saveExcise}>Salva</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>{e.name}</div>
+                  <div>{e.type === "ML" ? "Per ML" : "Per prodotto"}</div>
+                  <div>{Number(e.amount).toFixed(6)}</div>
+                  <div className="actions">
+                    <button
+                      className="btn ghost"
+                      onClick={() => {
+                        setEditingExciseId(e.id);
+                        setEditingExcise({
+                          name: e.name,
+                          type: e.type,
+                          amount: Number(e.amount).toFixed(6),
+                        });
+                      }}
+                    >
+                      Modifica
+                    </button>
+                    <button className="btn danger" onClick={() => deleteExcise(e.id)}>Elimina</button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

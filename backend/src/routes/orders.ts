@@ -50,10 +50,7 @@ function matchRuleScope(rule: any, product: any) {
     );
   }
   if (rule.scope === "PARENT") {
-    return (
-      product.parentId?.toLowerCase() === target ||
-      product.parentSku?.toLowerCase() === target
-    );
+    return product.parentId?.toLowerCase() === target;
   }
   return true;
 }
@@ -105,7 +102,7 @@ export async function orderRoutes(app: FastifyInstance) {
     const items = body.items.map((item) => {
       const product = products.find((p) => p.id === item.productId);
       if (!product) throw app.httpErrors.notFound("Product not found");
-      if ((product as any).isParent) throw app.httpErrors.badRequest("Parent product not orderable");
+      // allow products that are also parent to be ordered
       const unitPrice = overrideMap.get(product.id) ?? product.price;
       const lineTotal = unitPrice.mul(item.qty);
 

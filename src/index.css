@@ -726,6 +726,14 @@ button {
   grid-template-columns: 0.7fr 1fr 2.6fr 0.9fr 0.8fr 1fr 1.4fr 1.4fr 1.1fr 1.1fr 1fr 1.4fr;
   min-width: 1380px;
 }
+.table.wide-11 .row {
+  grid-template-columns: 0.7fr 1fr 2.6fr 0.9fr 0.8fr 1fr 1.2fr 1.4fr 1.1fr 1fr 1.4fr;
+  min-width: 1260px;
+}
+.table.wide-11 .row.header {
+  grid-template-columns: 0.7fr 1fr 2.6fr 0.9fr 0.8fr 1fr 1.2fr 1.4fr 1.1fr 1fr 1.4fr;
+  min-width: 1260px;
+}
 .category-table .row {
   grid-template-columns: 2fr 1fr 120px;
 }
@@ -1033,6 +1041,14 @@ button {
   background: #fee2e2;
   color: #b91c1c;
   border: 1px solid #fecaca;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+.tag.info {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   font-size: 0.8rem;

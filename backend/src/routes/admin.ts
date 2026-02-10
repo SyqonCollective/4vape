@@ -47,6 +47,16 @@ function slugify(value: string) {
 }
 
 export async function adminRoutes(app: FastifyInstance) {
+  async function resolveDefaultTaxRateId() {
+    const settings = await prisma.appSetting.findFirst();
+    if (!settings?.vatRateDefault) return null;
+    const rate = Number(settings.vatRateDefault);
+    if (!Number.isFinite(rate)) return null;
+    const tax = await prisma.taxRate.findFirst({
+      where: { rate: new Prisma.Decimal(rate) },
+    });
+    return tax?.id || null;
+  }
   app.get("/ping", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -152,6 +162,7 @@ export async function adminRoutes(app: FastifyInstance) {
       categoryName = category.name;
     }
     try {
+      const defaultTaxRateId = await resolveDefaultTaxRateId();
       return await prisma.product.create({
         data: {
           ...body,
@@ -174,8 +185,8 @@ export async function adminRoutes(app: FastifyInstance) {
         exciseTotal: body.exciseTotal,
         taxRate: body.taxRate,
         taxAmount: body.taxAmount,
-        vatIncluded: false,
-        taxRateId: body.taxRateId,
+        vatIncluded: true,
+        taxRateId: body.taxRateId || defaultTaxRateId || undefined,
         exciseRateId: body.exciseRateId,
         purchasePrice: body.purchasePrice,
         listPrice: body.listPrice,
@@ -255,7 +266,7 @@ export async function adminRoutes(app: FastifyInstance) {
     if (body.parentId !== undefined) data.parentId = body.parentId;
     if (body.isParent !== undefined) data.isParent = body.isParent;
     if (body.isUnavailable !== undefined) data.isUnavailable = body.isUnavailable;
-    data.vatIncluded = false;
+    data.vatIncluded = true;
     if (body.taxRateId !== undefined) data.taxRateId = body.taxRateId;
     if (body.exciseRateId !== undefined) data.exciseRateId = body.exciseRateId;
     if (existing.source === "SUPPLIER") {
@@ -330,7 +341,7 @@ export async function adminRoutes(app: FastifyInstance) {
           ...(row.categoryId !== undefined ? { categoryId: row.categoryId ?? null } : {}),
           ...(row.taxRateId !== undefined ? { taxRateId: row.taxRateId ?? null } : {}),
           ...(row.exciseRateId !== undefined ? { exciseRateId: row.exciseRateId ?? null } : {}),
-          vatIncluded: false,
+          vatIncluded: true,
           ...(row.published !== undefined ? { published: row.published } : {}),
           ...(row.isParent !== undefined
             ? { isParent: row.isParent, parentId: row.isParent ? null : undefined }
@@ -853,6 +864,27 @@ export async function adminRoutes(app: FastifyInstance) {
     });
   });
 
+  app.patch("/excises/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        type: z.enum(["ML", "PRODUCT"]).optional(),
+        amount: z.number().nonnegative().optional(),
+      })
+      .parse(request.body);
+    return prisma.exciseRate.update({
+      where: { id },
+      data: {
+        ...(body.name ? { name: body.name } : {}),
+        ...(body.type ? { type: body.type } : {}),
+        ...(body.amount !== undefined ? { amount: new Prisma.Decimal(body.amount) } : {}),
+      },
+    });
+  });
+
   app.get("/discounts", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -1310,6 +1342,7 @@ export async function adminRoutes(app: FastifyInstance) {
       if (!category) return reply.badRequest("Category not found");
     }
 
+    const defaultTaxRateId = await resolveDefaultTaxRateId();
     for (const sp of supplierProducts) {
       const existing = await prisma.product.findUnique({ where: { sku: sp.supplierSku } });
       const price = body.price ?? sp.price ?? undefined;
@@ -1345,7 +1378,8 @@ export async function adminRoutes(app: FastifyInstance) {
             exciseTotal: sp.exciseTotal,
             taxRate: sp.taxRate,
             taxAmount: sp.taxAmount,
-            vatIncluded: false,
+            vatIncluded: true,
+            taxRateId: defaultTaxRateId || null,
             purchasePrice: sp.purchasePrice,
             listPrice: sp.listPrice,
             discountPrice: sp.discountPrice,
@@ -1390,7 +1424,10 @@ export async function adminRoutes(app: FastifyInstance) {
             exciseTotal: sp.exciseTotal ?? existing.exciseTotal,
             taxRate: sp.taxRate ?? existing.taxRate,
             taxAmount: sp.taxAmount ?? existing.taxAmount,
-            vatIncluded: false,
+            vatIncluded: true,
+            ...(existing.taxRateId == null && defaultTaxRateId
+              ? { taxRateId: defaultTaxRateId }
+              : {}),
             purchasePrice: sp.purchasePrice ?? existing.purchasePrice,
             listPrice: sp.listPrice ?? existing.listPrice,
             discountPrice: sp.discountPrice ?? existing.discountPrice,

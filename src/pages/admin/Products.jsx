@@ -264,7 +264,7 @@ export default function AdminProducts() {
       discountQty: p.discountQty ?? "",
       taxRateId: p.taxRateId || "",
       exciseRateId: p.exciseRateId || "",
-      vatIncluded: false,
+      vatIncluded: true,
       mlProduct: p.mlProduct ? Number(p.mlProduct).toFixed(3) : "",
       nicotine: p.nicotine ? Number(p.nicotine).toFixed(3) : "",
       codicePl: p.codicePl || "",
@@ -300,7 +300,7 @@ export default function AdminProducts() {
           discountQty: edit.discountQty !== "" ? Number(edit.discountQty) : undefined,
           taxRateId: edit.taxRateId || undefined,
           exciseRateId: edit.exciseRateId || undefined,
-          vatIncluded: false,
+          vatIncluded: true,
           mlProduct: edit.mlProduct ? Number(edit.mlProduct) : undefined,
           nicotine: edit.nicotine ? Number(edit.nicotine) : undefined,
           codicePl: edit.codicePl || undefined,
@@ -584,7 +584,10 @@ export default function AdminProducts() {
   const filteredItems = items.filter((p) => {
     if (productFilter === "parents") return Boolean(p.isParent);
     if (productFilter === "children") return Boolean(p.parentId || p.parent?.id);
-    if (productFilter === "single") return !p.isParent && !(p.parentId || p.parent?.id);
+    if (productFilter === "single") {
+      if (p.parentId || p.parent?.id) return false;
+      return !p.isParent || p.price != null;
+    }
     if (productFilter === "draft") return p.published === false;
     return true;
   });
@@ -604,6 +607,10 @@ export default function AdminProducts() {
       return dir === "asc" ? cmp : -cmp;
     };
     switch (sortBy) {
+      case "created-desc":
+        return itemsCopy.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      case "created-asc":
+        return itemsCopy.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
       case "name-desc":
         return itemsCopy.sort((a, b) => byText(a, b, "name", "desc"));
       case "sku-asc":
@@ -675,6 +682,11 @@ export default function AdminProducts() {
         }
       }
     }
+    for (const parent of parentsOnly) {
+      if (parent.price != null && parent.published !== false) {
+        rows.push({ type: "single-parent", item: parent });
+      }
+    }
     for (const single of sortItems(singles)) {
       rows.push({ type: "single", item: single });
     }
@@ -682,6 +694,18 @@ export default function AdminProducts() {
   })();
 
   const dash = <span className="cell-muted">—</span>;
+
+  function toggleSelectAllPage() {
+    const ids = Array.from(new Set(groupedRows.map((row) => row.item.id)));
+    const allSelected = ids.every((id) => selectedIds.has(id));
+    const next = new Set(selectedIds);
+    if (allSelected) {
+      ids.forEach((id) => next.delete(id));
+    } else {
+      ids.forEach((id) => next.add(id));
+    }
+    setSelectedIds(next);
+  }
 
   function openBulkEditor() {
     const sourceItems =
@@ -702,7 +726,7 @@ export default function AdminProducts() {
       categoryId: p.categoryId || "",
       taxRateId: p.taxRateId || "",
       exciseRateId: p.exciseRateId || "",
-      vatIncluded: false,
+      vatIncluded: true,
       published: p.published !== false,
       isUnavailable: Boolean(p.isUnavailable),
       isParent: Boolean(p.isParent),
@@ -760,7 +784,7 @@ export default function AdminProducts() {
               null,
             taxRateId: row.taxRateId || null,
             exciseRateId: row.exciseRateId || null,
-            vatIncluded: false,
+            vatIncluded: true,
             published: productFilter === "draft" ? (forcePublish ? true : false) : Boolean(row.published),
             isUnavailable: Boolean(row.isUnavailable),
             isParent: Boolean(row.isParent),
@@ -810,6 +834,8 @@ export default function AdminProducts() {
             >
               <option value="name-asc">Nome (A-Z)</option>
               <option value="name-desc">Nome (Z-A)</option>
+              <option value="created-desc">Novità (più recenti)</option>
+              <option value="created-asc">Prime creazioni</option>
               <option value="sku-asc">SKU (A-Z)</option>
               <option value="sku-desc">SKU (Z-A)</option>
               <option value="price-asc">Prezzo (crescente)</option>
@@ -841,6 +867,11 @@ export default function AdminProducts() {
               {bulkMode ? "Selezione attiva" : "Multi selection"}
             </button>
             {bulkMode ? (
+              <button className="btn ghost" onClick={toggleSelectAllPage}>
+                Seleziona tutti in pagina
+              </button>
+            ) : null}
+            {bulkMode ? (
               <button className="btn danger" onClick={() => setConfirmDelete(true)} disabled={selectedIds.size === 0}>
                 Elimina selezionati
               </button>
@@ -852,7 +883,7 @@ export default function AdminProducts() {
       <InlineError message={error} onClose={() => setError("")} />
 
       <div className="panel products-panel">
-      <div className="table wide-12">
+      <div className="table wide-11">
         <div className="row header">
           <div>Immagine</div>
           <div>SKU</div>
@@ -863,7 +894,6 @@ export default function AdminProducts() {
           <div>Padre</div>
           <div>Categoria</div>
           <div>Accisa</div>
-          <div>IVA</div>
           <div>Brand</div>
           <div>Fornitore</div>
         </div>
@@ -871,6 +901,7 @@ export default function AdminProducts() {
           const p = row.item;
           const isChild = row.type === "child";
           const isParentRow = row.type === "parent";
+          const isParentSingle = row.type === "single-parent";
           return (
           <div
             className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
@@ -944,19 +975,18 @@ export default function AdminProducts() {
             </div>
             <div className="name-cell">
               <span>{p.name}</span>
-              {p.isParent ? null : null}
+              {isParentSingle ? <span className="tag info">Singolo + Padre</span> : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
               {p.published === false ? <span className="tag warn">Draft</span> : null}
             </div>
-            <div>{p.isParent ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
-            <div>{p.isParent ? dash : p.stockQty}</div>
-            <div>{p.isParent ? "Padre" : p.parentId ? "Figlio" : "Singolo"}</div>
-            <div>{row.parent?.name || p.parent?.name || dash}</div>
+            <div>{isParentRow ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
+            <div>{isParentRow ? dash : p.stockQty}</div>
+            <div>{isParentRow ? "Padre" : p.parentId ? "Figlio" : "Singolo"}</div>
+            <div>{row.parent?.sku || p.parent?.sku || dash}</div>
             <div>{p.category || dash}</div>
             <div>
               {p.exciseRateRef?.name || (p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : dash)}
             </div>
-            <div>{p.taxRateRef ? `${p.taxRateRef.name} (${Number(p.taxRateRef.rate).toFixed(2)}%)` : dash}</div>
             <div>{p.brand || dash}</div>
             <div>{p.sourceSupplier?.name || (p.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
           </div>
@@ -1093,7 +1123,6 @@ export default function AdminProducts() {
                       step="0.01"
                       value={edit.price}
                       onChange={(e) => setEdit({ ...edit, price: e.target.value })}
-                      disabled={edit.isParent}
                     />
                   </label>
                   <label>
@@ -1264,16 +1293,16 @@ export default function AdminProducts() {
                           setEdit({
                             ...edit,
                             isParent: checked,
-                            parentId: checked ? "" : edit.parentId,
+                            parentId: edit.parentId,
                           });
                           if (!checked) {
                             setChildLinks(new Set());
                           }
                         }}
                       />
-                      <span>Non vendibile</span>
+                      <span>Raggruppa varianti</span>
                     </div>
-                    <div className="muted">Per creare un nuovo genitore usa “Crea prodotto genitore”.</div>
+                    <div className="muted">Può essere vendibile e apparire anche come singolo.</div>
                   </label>
                   <label>
                     Non disponibile
@@ -1292,7 +1321,6 @@ export default function AdminProducts() {
                       className="select"
                       value={edit.parentId || ""}
                       onChange={(e) => setEdit({ ...edit, parentId: e.target.value })}
-                      disabled={edit.isParent}
                     >
                       <option value="">Nessuno</option>
                       {parentOptions.map((p) => (
@@ -1309,12 +1337,11 @@ export default function AdminProducts() {
                       step="1"
                       value={edit.stockQty}
                       onChange={(e) => setEdit({ ...edit, stockQty: e.target.value })}
-                      disabled={selectedProduct.source === "SUPPLIER" || edit.isParent || edit.isUnavailable}
+                      disabled={selectedProduct.source === "SUPPLIER" || edit.isUnavailable}
                     />
                     {selectedProduct.source === "SUPPLIER" ? (
                       <div className="muted">La giacenza è sincronizzata dal fornitore</div>
                     ) : null}
-                    {edit.isParent ? <div className="muted">Prodotto padre non vendibile</div> : null}
                     {edit.isUnavailable ? <div className="muted">Prodotto non disponibile</div> : null}
                   </label>
                   <label>
