@@ -76,13 +76,134 @@ export async function adminRoutes(app: FastifyInstance) {
     return prisma.user.update({ where: { id }, data: { approved: true } });
   });
 
+  app.get("/companies", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.company.findMany({ orderBy: { name: "asc" } });
+  });
+
+  app.get("/orders", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const status = (request.query as any)?.status as string | undefined;
+    const where = status ? { status: status as any } : undefined;
+    return prisma.order.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        company: true,
+        createdBy: true,
+        items: true,
+      },
+    });
+  });
+
+  app.post("/orders", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        companyId: z.string().min(1),
+        status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"]).optional(),
+        discountTotal: z.number().optional(),
+        items: z.array(
+          z.object({
+            productId: z.string(),
+            qty: z.number().int().positive(),
+            unitPrice: z.number().optional(),
+          })
+        ),
+      })
+      .parse(request.body);
+
+    const company = await prisma.company.findUnique({ where: { id: body.companyId } });
+    if (!company) return reply.notFound("Company not found");
+
+    const productIds = body.items.map((i) => i.productId);
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      include: { sourceSupplier: true },
+    });
+    const overrides = await prisma.productPrice.findMany({
+      where: { companyId: body.companyId },
+    });
+    const overrideMap = new Map(overrides.map((o) => [o.productId, o.price]));
+
+    const items = body.items.map((item) => {
+      const product = products.find((p) => p.id === item.productId);
+      if (!product) throw app.httpErrors.notFound("Product not found");
+      const unitPrice =
+        item.unitPrice != null
+          ? new Prisma.Decimal(item.unitPrice)
+          : overrideMap.get(product.id) ?? product.price;
+      const lineTotal = unitPrice.mul(item.qty);
+      return {
+        productId: product.id,
+        sku: product.sku,
+        name: product.name,
+        qty: item.qty,
+        unitPrice,
+        lineTotal,
+        supplierId: product.sourceSupplierId,
+      };
+    });
+
+    const subtotal = items.reduce((sum, i) => sum.add(i.lineTotal), new Prisma.Decimal(0));
+    const discountTotal = body.discountTotal ? new Prisma.Decimal(body.discountTotal) : new Prisma.Decimal(0);
+    const total = Prisma.Decimal.max(subtotal.sub(discountTotal), new Prisma.Decimal(0));
+
+    const order = await prisma.order.create({
+      data: {
+        companyId: company.id,
+        createdById: user.id,
+        status: body.status ?? "SUBMITTED",
+        total,
+        discountTotal,
+        items: { create: items },
+      },
+      include: { company: true, items: true },
+    });
+
+    return reply.code(201).send(order);
+  });
+
+  app.patch("/orders/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"]),
+      })
+      .parse(request.body);
+    return prisma.order.update({ where: { id }, data: { status: body.status } });
+  });
+
   app.get("/products", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
     const parentOnly = (request.query as any)?.parents === "true";
+    const q = (request.query as any)?.q as string | undefined;
+    const limitRaw = (request.query as any)?.limit as string | undefined;
+    const orderBy = (request.query as any)?.orderBy as string | undefined;
+    const take = limitRaw ? Math.min(Math.max(Number(limitRaw) || 0, 0), 200) : undefined;
+    const where: Prisma.ProductWhereInput = parentOnly ? { isParent: true } : {};
+    if (q && q.trim()) {
+      where.OR = [
+        { name: { contains: q.trim(), mode: "insensitive" } },
+        { sku: { contains: q.trim(), mode: "insensitive" } },
+      ];
+    }
+    const orderByMap: Record<string, Prisma.ProductOrderByWithRelationInput> = {
+      "created-desc": { createdAt: "desc" },
+      "created-asc": { createdAt: "asc" },
+      "name-asc": { name: "asc" },
+      "name-desc": { name: "desc" },
+    };
     return prisma.product.findMany({
-      where: parentOnly ? { isParent: true } : undefined,
-      orderBy: { createdAt: "desc" },
+      where,
+      orderBy: orderByMap[orderBy || "created-desc"] || { createdAt: "desc" },
+      take,
       include: {
         sourceSupplier: true,
         categoryRef: true,
