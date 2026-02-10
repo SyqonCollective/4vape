@@ -69,6 +69,21 @@ export async function adminRoutes(app: FastifyInstance) {
     return prisma.user.findMany({ where: { approved: false } });
   });
 
+  app.post("/companies", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        name: z.string().min(2),
+        vatNumber: z.string().optional(),
+      })
+      .parse(request.body);
+    const created = await prisma.company.create({
+      data: { name: body.name, vatNumber: body.vatNumber || null, status: "ACTIVE" },
+    });
+    return reply.code(201).send(created);
+  });
+
   app.patch("/users/:id/approve", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -93,7 +108,13 @@ export async function adminRoutes(app: FastifyInstance) {
       include: {
         company: true,
         createdBy: true,
-        items: true,
+        items: {
+          include: {
+            product: {
+              include: { sourceSupplier: true, taxRateRef: true },
+            },
+          },
+        },
       },
     });
   });

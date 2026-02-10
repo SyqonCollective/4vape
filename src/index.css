@@ -2281,10 +2281,29 @@ button {
 .order-lines-header,
 .order-line {
   display: grid;
-  grid-template-columns: minmax(260px, 2.6fr) 120px 90px 120px 90px;
+  grid-template-columns: minmax(260px, 2.6fr) 120px 90px 120px 120px;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.summary-grid strong {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.summary-stack {
+  display: grid;
+  gap: 10px;
 }
 
 .order-lines-header {

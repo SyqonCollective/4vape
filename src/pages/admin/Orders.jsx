@@ -23,10 +23,9 @@ export default function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showCreate, setShowCreate] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [summaryOrder, setSummaryOrder] = useState(null);
   const [companyId, setCompanyId] = useState("");
   const [orderStatus, setOrderStatus] = useState("SUBMITTED");
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [lineItems, setLineItems] = useState([]);
@@ -329,14 +328,20 @@ export default function AdminOrders() {
           <div></div>
         </div>
         {items.map((o) => (
-          <div className="row" key={o.id}>
+          <div className="row" key={o.id} onClick={() => setSummaryOrder(o)}>
             <div className="mono">{o.id.slice(0, 8)}</div>
             <div>{o.company?.name || "-"}</div>
             <div>{STATUS_OPTIONS.find((s) => s.value === o.status)?.label || o.status}</div>
             <div>{formatCurrency(o.total)}</div>
             <div>{new Date(o.createdAt).toLocaleString()}</div>
             <div>
-              <button className="btn ghost" onClick={() => setEditingOrder(o)}>
+              <button
+                className="btn ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingOrder(o);
+                }}
+              >
                 Modifica
               </button>
             </div>
@@ -362,48 +367,21 @@ export default function AdminOrders() {
                 <div className="order-left">
                   <div className="order-card">
                     <div className="card-title">Dettagli ordine</div>
-                    <div className="order-form">
-                      <div className="field">
-                        <label>Azienda</label>
-                        <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-                          {companies.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="field">
-                        <label>Cliente (utente)</label>
-                        <div className="field-hint">
-                          In arrivo: per ora collega manualmente il referente.
-                        </div>
-                        <select disabled>
-                          <option>Selezione utente non disponibile</option>
-                        </select>
-                      </div>
-                      <div className="field">
-                        <label>Referente (nome)</label>
-                        <input
-                          type="text"
-                          placeholder="Es. Mario Rossi"
-                          value={customerName}
-                          onChange={(e) => setCustomerName(e.target.value)}
-                        />
-                      </div>
-                      <div className="field">
-                        <label>Referente (email)</label>
-                        <input
-                          type="email"
-                          placeholder="cliente@azienda.it"
-                          value={customerEmail}
-                          onChange={(e) => setCustomerEmail(e.target.value)}
-                        />
-                      </div>
-                      <div className="field">
-                        <label>Stato ordine</label>
-                        <select value={orderStatus} onChange={(e) => setOrderStatus(e.target.value)}>
-                          {STATUS_OPTIONS.map((s) => (
+                <div className="order-form">
+                  <div className="field">
+                    <label>Azienda</label>
+                    <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+                      {companies.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Stato ordine</label>
+                    <select value={orderStatus} onChange={(e) => setOrderStatus(e.target.value)}>
+                      {STATUS_OPTIONS.map((s) => (
                             <option key={s.value} value={s.value}>
                               {s.label}
                             </option>
@@ -523,6 +501,113 @@ export default function AdminOrders() {
         </Portal>
       ) : null}
 
+      {summaryOrder ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setSummaryOrder(null)}>
+            <div className="modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">Riepilogo ordine</div>
+                  <div className="modal-subtitle">
+                    {summaryOrder.id.slice(0, 8)} • {summaryOrder.company?.name || "-"}
+                  </div>
+                </div>
+                <button className="btn ghost" onClick={() => setSummaryOrder(null)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="order-layout">
+                  <div className="order-left">
+                    <div className="order-card">
+                      <div className="card-title">Dettagli</div>
+                      <div className="summary-grid">
+                        <div>
+                          <strong>Stato</strong>
+                          <div>{STATUS_OPTIONS.find((s) => s.value === summaryOrder.status)?.label || summaryOrder.status}</div>
+                        </div>
+                        <div>
+                          <strong>Creato</strong>
+                          <div>{new Date(summaryOrder.createdAt).toLocaleString()}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="order-card">
+                      <div className="card-title">Righe ordine</div>
+                      <div className="order-lines">
+                        <div className="order-lines-header">
+                          <div>Prodotto</div>
+                          <div>Prezzo</div>
+                          <div>Qta</div>
+                          <div>Totale</div>
+                          <div>Fornitore</div>
+                        </div>
+                        {(summaryOrder.items || []).map((item) => (
+                          <div className="order-line" key={item.id}>
+                            <div>
+                              <div className="line-title">{item.name}</div>
+                              <div className="line-meta mono">{item.sku}</div>
+                            </div>
+                            <div>{formatCurrency(item.unitPrice)}</div>
+                            <div>{item.qty}</div>
+                            <div>{formatCurrency(item.lineTotal)}</div>
+                            <div>{item.product?.sourceSupplier?.name || "-"}</div>
+                          </div>
+                        ))}
+                        {!summaryOrder.items?.length ? (
+                          <div className="empty">Nessuna riga ordine.</div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="order-right">
+                    <div className="order-card order-summary-card">
+                      <div className="card-title">Totali</div>
+                      {(() => {
+                        const totals = (summaryOrder.items || []).reduce(
+                          (acc, item) => {
+                            const lineTotal = Number(item.lineTotal || 0);
+                            const qty = Number(item.qty || 0);
+                            const product = item.product;
+                            const rate = Number(product?.taxRate || product?.taxRateRef?.rate || 0);
+                            const vatIncluded = product?.vatIncluded ?? true;
+                            const vat = rate > 0 ? (vatIncluded ? lineTotal - lineTotal / (1 + rate / 100) : lineTotal * (rate / 100)) : 0;
+                            const exciseUnit = Number(
+                              product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
+                            );
+                            const excise = exciseUnit * qty;
+                            acc.revenue += lineTotal;
+                            acc.vat += vat;
+                            acc.excise += excise;
+                            return acc;
+                          },
+                          { revenue: 0, vat: 0, excise: 0 }
+                        );
+                        return (
+                          <div className="summary-stack">
+                            <div className="summary-row">
+                              <span>Totale ordine</span>
+                              <strong>{formatCurrency(totals.revenue)}</strong>
+                            </div>
+                            <div className="summary-row">
+                              <span>IVA totale</span>
+                              <strong>{formatCurrency(totals.vat)}</strong>
+                            </div>
+                            <div className="summary-row">
+                              <span>Accise totali</span>
+                              <strong>{formatCurrency(totals.excise)}</strong>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
       {editingOrder ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setEditingOrder(null)}>
