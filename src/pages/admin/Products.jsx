@@ -682,11 +682,6 @@ export default function AdminProducts() {
         }
       }
     }
-    for (const parent of parentsOnly) {
-      if (parent.price != null && parent.published !== false) {
-        rows.push({ type: "single-parent", item: parent });
-      }
-    }
     for (const single of sortItems(singles)) {
       rows.push({ type: "single", item: single });
     }
@@ -901,7 +896,6 @@ export default function AdminProducts() {
           const p = row.item;
           const isChild = row.type === "child";
           const isParentRow = row.type === "parent";
-          const isParentSingle = row.type === "single-parent";
           return (
           <div
             className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
@@ -975,12 +969,12 @@ export default function AdminProducts() {
             </div>
             <div className="name-cell">
               <span>{p.name}</span>
-              {isParentSingle ? <span className="tag info">Singolo + Padre</span> : null}
+              {isParentRow && p.price != null ? <span className="tag info">Singolo + Padre</span> : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
               {p.published === false ? <span className="tag warn">Draft</span> : null}
             </div>
-            <div>{isParentRow ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
-            <div>{isParentRow ? dash : p.stockQty}</div>
+            <div>{isParentRow && p.price == null ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
+            <div>{isParentRow && p.price == null ? dash : p.stockQty}</div>
             <div>{isParentRow ? "Padre" : p.parentId ? "Figlio" : "Singolo"}</div>
             <div>{row.parent?.sku || p.parent?.sku || dash}</div>
             <div>{p.category || dash}</div>
