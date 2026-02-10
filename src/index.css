@@ -44,6 +44,11 @@ body.modal-open {
   overflow: hidden;
 }
 
+body.modal-open .admin-main,
+body.modal-open .admin-sidebar {
+  backdrop-filter: none !important;
+}
+
 body::before,
 body::after {
   content: "";
