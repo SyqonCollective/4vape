@@ -260,7 +260,10 @@ export async function adminRoutes(app: FastifyInstance) {
     const user = requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
-    await prisma.order.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.orderItem.deleteMany({ where: { orderId: id } }),
+      prisma.order.delete({ where: { id } }),
+    ]);
     return reply.code(204).send();
   });
 
@@ -639,6 +642,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const days = 14;
     const startRange = new Date(startOfToday);
     startRange.setDate(startRange.getDate() - (days - 1));
+    const revenueStatuses: Prisma.OrderStatus[] = ["APPROVED", "FULFILLED"];
 
     const [
       totalProducts,
@@ -655,7 +659,10 @@ export async function adminRoutes(app: FastifyInstance) {
       prisma.order.count(),
       prisma.user.count({ where: { approved: false } }),
       prisma.company.count({ where: { status: "PENDING" } }),
-      prisma.order.aggregate({ _sum: { total: true } }),
+      prisma.order.aggregate({
+        _sum: { total: true },
+        where: { status: { in: revenueStatuses } },
+      }),
       prisma.order.findMany({
         orderBy: { createdAt: "desc" },
         take: 6,
@@ -667,7 +674,9 @@ export async function adminRoutes(app: FastifyInstance) {
       }),
     ]);
 
-    const ordersToday = await prisma.order.count({ where: { createdAt: { gte: startOfToday } } });
+    const ordersToday = await prisma.order.count({
+      where: { createdAt: { gte: startOfToday }, status: { in: revenueStatuses } },
+    });
 
     const daily = Array.from({ length: days }).map((_, i) => {
       const d = new Date(startRange);
@@ -677,6 +686,7 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     const index = new Map(daily.map((d, i) => [d.date, i]));
     for (const order of ordersLastDays) {
+      if (!revenueStatuses.includes(order.status)) continue;
       const key = order.createdAt.toISOString().slice(0, 10);
       const idx = index.get(key);
       if (idx == null) continue;
@@ -713,6 +723,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : now;
     const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : new Date(end);
     if (!query.start) start.setDate(end.getDate() - 29);
+    const revenueStatuses: Prisma.OrderStatus[] = ["APPROVED", "FULFILLED"];
 
     const orders = await prisma.order.findMany({
       where: {
@@ -720,6 +731,7 @@ export async function adminRoutes(app: FastifyInstance) {
           gte: start,
           lte: end,
         },
+        status: { in: revenueStatuses },
       },
       include: {
         items: {
