@@ -984,10 +984,13 @@ button {
   width: 100vw;
   height: 100vh;
   background: rgba(15, 23, 42, 0.22);
-  display: block;
-  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
   z-index: 1000;
   backdrop-filter: blur(3px);
+  overflow-y: auto;
 }
 
 .modal {
@@ -2149,6 +2152,17 @@ button {
 
 .order-modal {
   width: min(1120px, 94vw);
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.order-modal .modal-body {
+  overflow-y: auto;
 }
 
 .order-form {
@@ -2373,6 +2387,20 @@ button {
 }
 
 @media (max-width: 900px) {
+  .modal {
+    width: min(900px, 96vw);
+    padding: 1.2rem 1.4rem;
+  }
+
+  .order-modal {
+    width: min(900px, 96vw);
+    max-height: calc(100vh - 32px);
+  }
+
+  .order-modal .modal-body {
+    overflow-y: auto;
+  }
+
   .orders-table .row,
   .orders-table .row.header {
     grid-template-columns: 90px 1fr;
@@ -2386,5 +2414,26 @@ button {
 
   .order-results {
     max-height: 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .modal {
+    padding: 1rem 1.1rem;
+    border-radius: 18px;
+  }
+
+  .modal-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .order-lines-header {
+    display: none;
+  }
+
+  .order-line {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
