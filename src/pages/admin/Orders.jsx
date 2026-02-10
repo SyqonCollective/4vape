@@ -23,6 +23,8 @@ export default function AdminOrders() {
   const [showCreate, setShowCreate] = useState(false);
   const [companyId, setCompanyId] = useState("");
   const [orderStatus, setOrderStatus] = useState("SUBMITTED");
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [lineItems, setLineItems] = useState([]);
@@ -167,7 +169,7 @@ export default function AdminOrders() {
           <p>Gestione ordini B2B</p>
         </div>
         <div className="page-actions">
-          <button className="primary" onClick={() => setShowCreate(true)}>
+          <button className="primary order-cta" onClick={() => setShowCreate(true)}>
             Crea ordine manuale
           </button>
         </div>
@@ -247,6 +249,33 @@ export default function AdminOrders() {
                   </select>
                 </div>
                 <div className="field">
+                  <label>Cliente (utente)</label>
+                  <div className="field-hint">
+                    In arrivo: per ora collega manualmente il referente.
+                  </div>
+                  <select disabled>
+                    <option>Selezione utente non disponibile</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Referente (nome)</label>
+                  <input
+                    type="text"
+                    placeholder="Es. Mario Rossi"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label>Referente (email)</label>
+                  <input
+                    type="email"
+                    placeholder="cliente@azienda.it"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                  />
+                </div>
+                <div className="field">
                   <label>Stato ordine</label>
                   <select value={orderStatus} onChange={(e) => setOrderStatus(e.target.value)}>
                     {STATUS_OPTIONS.map((s) => (
@@ -259,26 +288,35 @@ export default function AdminOrders() {
               </div>
 
               <div className="order-search">
-                <label>Cerca prodotto</label>
-                <input
-                  type="search"
-                  placeholder="SKU o nome prodotto"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchResults.length ? (
-                  <div className="order-results">
-                    {searchResults.map((p) => (
-                      <button key={p.id} className="result-item" onClick={() => addItem(p)}>
-                        <div className="result-title">{p.name}</div>
-                        <div className="result-meta">
-                          <span className="mono">{p.sku}</span>
-                          <span>{formatCurrency(p.price)}</span>
-                        </div>
-                      </button>
-                    ))}
+                <div className="order-search-header">
+                  <label>Cerca prodotto</label>
+                  <span className="muted">Seleziona per aggiungere alle righe ordine</span>
+                </div>
+                <div className="order-search-grid">
+                  <div className="order-search-input">
+                    <input
+                      type="search"
+                      placeholder="SKU o nome prodotto"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
-                ) : null}
+                  <div className="order-results">
+                    {searchResults.length ? (
+                      searchResults.map((p) => (
+                        <button key={p.id} className="result-item" onClick={() => addItem(p)}>
+                          <div className="result-title">{p.name}</div>
+                          <div className="result-meta">
+                            <span className="mono">{p.sku}</span>
+                            <span>{formatCurrency(p.price)}</span>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="empty small">Nessun risultato</div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="order-lines">

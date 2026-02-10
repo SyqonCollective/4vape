@@ -2158,6 +2158,45 @@ button {
   margin-bottom: 18px;
 }
 
+.order-cta {
+  background: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+  border: none;
+  padding: 10px 18px;
+  border-radius: 14px;
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.25);
+}
+
+.order-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 34px rgba(37, 99, 235, 0.3);
+}
+
+.field-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.order-search-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.order-search-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.4fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.order-search-input {
+  position: sticky;
+  top: 0;
+}
+
 .order-search {
   margin-bottom: 18px;
 }
@@ -2167,9 +2206,11 @@ button {
 }
 
 .order-results {
-  margin-top: 10px;
   display: grid;
   gap: 10px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 6px;
 }
 
 .result-item {
@@ -2265,5 +2306,13 @@ button {
   .order-lines-header,
   .order-line {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .order-search-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-results {
+    max-height: 220px;
   }
 }
