@@ -69,6 +69,15 @@ export async function adminRoutes(app: FastifyInstance) {
     return prisma.user.findMany({ where: { approved: false } });
   });
 
+  app.get("/users", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.user.findMany({
+      include: { company: true },
+      orderBy: { createdAt: "desc" },
+    });
+  });
+
   app.post("/companies", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;

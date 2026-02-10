@@ -13,7 +13,8 @@ const links = [
   { to: "/admin/discounts", label: "Sconti e Regole" },
   { to: "/admin/settings", label: "Impostazioni" },
   { to: "/admin/orders", label: "Ordini" },
-  { to: "/admin/users", label: "Utenti" },
+  { to: "/admin/companies", label: "Clienti/Aziende" },
+  { to: "/admin/users", label: "Utenti admin" },
 ];
 
 const ORDER_KEY = "admin_sidebar_order";
