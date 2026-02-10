@@ -999,7 +999,10 @@ button {
 }
 
 .modal {
-  position: relative;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: min(1040px, 94vw);
   background: #fff;
   border-radius: 24px;
@@ -1012,7 +1015,7 @@ button {
 }
 
 .modal-backdrop .modal {
-  margin: auto;
+  margin: 0;
 }
 
 .modal.product-modal {
@@ -2278,7 +2281,7 @@ button {
 .order-lines-header,
 .order-line {
   display: grid;
-  grid-template-columns: minmax(220px, 2.2fr) 110px 80px 110px 90px;
+  grid-template-columns: minmax(260px, 2.6fr) 120px 90px 120px 90px;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -2394,8 +2397,8 @@ button {
 }
 
 .summary-actions .ghost {
-  background: rgba(255, 255, 255, 0.12);
-  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.35);
+  color: #e2e8f0;
   border-color: rgba(255, 255, 255, 0.25);
 }
 
