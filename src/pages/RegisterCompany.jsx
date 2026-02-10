@@ -56,78 +56,134 @@ export default function RegisterCompany() {
   }
 
   return (
-    <div className="auth-wrap auth-epic register-page">
-      <div className="auth-card register-card">
-        <div className="auth-header">
-          <img src={logo} alt="4Vape B2B" className="auth-logo" />
-          <h1>Iscrizione nuova azienda</h1>
-          <p>Compila tutti i campi per inviare la richiesta</p>
-        </div>
-        <form onSubmit={onSubmit} className="auth-form register-form">
-          <div className="form-grid">
-            <label>
-              Nome referente
-              <input value={form.contactFirstName} onChange={(e) => updateField("contactFirstName", e.target.value)} required />
-            </label>
-            <label>
-              Cognome referente
-              <input value={form.contactLastName} onChange={(e) => updateField("contactLastName", e.target.value)} required />
-            </label>
-            <label className="full">
-              Ragione sociale
-              <input value={form.legalName} onChange={(e) => updateField("legalName", e.target.value)} required />
-            </label>
-            <label>
-              Partita IVA
-              <input value={form.vatNumber} onChange={(e) => updateField("vatNumber", e.target.value)} required />
-            </label>
-            <label>
-              Codice univoco SDI
-              <input value={form.sdiCode} onChange={(e) => updateField("sdiCode", e.target.value)} required />
-            </label>
-            <label className="full">
-              Indirizzo
-              <input value={form.address} onChange={(e) => updateField("address", e.target.value)} required />
-            </label>
-            <label>
-              CAP
-              <input value={form.cap} onChange={(e) => updateField("cap", e.target.value)} required />
-            </label>
-            <label>
-              Città
-              <input value={form.city} onChange={(e) => updateField("city", e.target.value)} required />
-            </label>
-            <label>
-              Provincia
-              <input list="province-list" value={form.province} onChange={(e) => updateField("province", e.target.value.toUpperCase())} required />
-              <datalist id="province-list">
-                {PROVINCES.map((p) => (
-                  <option key={p} value={p} />
-                ))}
-              </datalist>
-            </label>
-            <label>
-              Telefono
-              <input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} required />
-            </label>
-            <label>
-              Email
-              <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} required />
-            </label>
-            <label>
-              Password
-              <input type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} required minLength={8} />
-            </label>
+    <div className="auth-wrap register-page">
+      <div className="register-layout">
+        <aside className="register-hero">
+          <div className="register-hero-inner">
+            <img src={logo} alt="4Vape B2B" className="register-logo" />
+            <span className="register-badge">Accesso B2B</span>
+            <h1>Iscrizione nuova azienda</h1>
+            <p>
+              Compila i dati dell&apos;azienda e del referente. La tua richiesta verrà verificata
+              dal team commerciale prima dell&apos;abilitazione.
+            </p>
+            <div className="register-highlight">
+              <div>
+                <strong>Verifica rapida</strong>
+                <span>Riceverai conferma via email.</span>
+              </div>
+              <div>
+                <strong>Listini dedicati</strong>
+                <span>Prezzi B2B e condizioni personalizzate.</span>
+              </div>
+              <div>
+                <strong>Assistenza dedicata</strong>
+                <span>Supporto commerciale prioritario.</span>
+              </div>
+            </div>
           </div>
-          {error ? <div className="error">{error}</div> : null}
-          {success ? <div className="success-banner">Richiesta inviata. Attendi approvazione.</div> : null}
-          <button className="btn primary" disabled={loading}>
-            {loading ? "Invio..." : "Invia richiesta"}
-          </button>
-          <button type="button" className="btn ghost" onClick={() => navigate("/admin/login")}>
-            Torna al login
-          </button>
-        </form>
+          <div className="register-hero-gradient" />
+        </aside>
+
+        <div className="register-card">
+          <div className="register-header">
+            <div>
+              <h2>Richiesta di accesso</h2>
+              <p>Tutti i campi sono obbligatori</p>
+            </div>
+            <button type="button" className="btn ghost" onClick={() => navigate("/admin/login")}>
+              Torna al login
+            </button>
+          </div>
+
+          <form onSubmit={onSubmit} className="register-form">
+            <div className="form-section">
+              <div className="section-title">Referente</div>
+              <div className="form-grid">
+                <label>
+                  Nome
+                  <input value={form.contactFirstName} onChange={(e) => updateField("contactFirstName", e.target.value)} required />
+                </label>
+                <label>
+                  Cognome
+                  <input value={form.contactLastName} onChange={(e) => updateField("contactLastName", e.target.value)} required />
+                </label>
+                <label className="full">
+                  Email
+                  <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} required />
+                </label>
+                <label>
+                  Telefono
+                  <input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} required />
+                </label>
+                <label>
+                  Password
+                  <input type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} required minLength={8} />
+                </label>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="section-title">Azienda</div>
+              <div className="form-grid">
+                <label className="full">
+                  Ragione sociale
+                  <input value={form.legalName} onChange={(e) => updateField("legalName", e.target.value)} required />
+                </label>
+                <label>
+                  Partita IVA
+                  <input value={form.vatNumber} onChange={(e) => updateField("vatNumber", e.target.value)} required />
+                </label>
+                <label>
+                  Codice univoco SDI
+                  <input value={form.sdiCode} onChange={(e) => updateField("sdiCode", e.target.value)} required />
+                </label>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="section-title">Sede legale</div>
+              <div className="form-grid">
+                <label className="full">
+                  Indirizzo
+                  <input value={form.address} onChange={(e) => updateField("address", e.target.value)} required />
+                </label>
+                <label>
+                  CAP
+                  <input value={form.cap} onChange={(e) => updateField("cap", e.target.value)} required />
+                </label>
+                <label>
+                  Città
+                  <input value={form.city} onChange={(e) => updateField("city", e.target.value)} required />
+                </label>
+                <label>
+                  Provincia
+                  <input
+                    list="province-list"
+                    value={form.province}
+                    onChange={(e) => updateField("province", e.target.value.toUpperCase())}
+                    required
+                  />
+                  <datalist id="province-list">
+                    {PROVINCES.map((p) => (
+                      <option key={p} value={p} />
+                    ))}
+                  </datalist>
+                </label>
+              </div>
+            </div>
+
+            {error ? <div className="error">{error}</div> : null}
+            {success ? <div className="success-banner">Richiesta inviata. Attendi approvazione.</div> : null}
+
+            <div className="register-actions">
+              <button className="btn primary" disabled={loading}>
+                {loading ? "Invio..." : "Invia richiesta"}
+              </button>
+              <span className="register-note">Riceverai una mail di conferma.</span>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
