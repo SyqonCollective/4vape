@@ -2148,7 +2148,7 @@ button {
 }
 
 .order-modal {
-  width: min(900px, 92vw);
+  width: min(1120px, 94vw);
 }
 
 .order-form {
@@ -2187,14 +2187,13 @@ button {
 .order-search-grid {
   margin-top: 10px;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.4fr);
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 10px;
   align-items: start;
 }
 
 .order-search-input {
-  position: sticky;
-  top: 0;
+  position: relative;
 }
 
 .order-search {
@@ -2208,7 +2207,7 @@ button {
 .order-results {
   display: grid;
   gap: 10px;
-  max-height: 260px;
+  max-height: 320px;
   overflow: auto;
   padding-right: 6px;
 }
@@ -2246,7 +2245,7 @@ button {
 .order-lines-header,
 .order-line {
   display: grid;
-  grid-template-columns: 2fr 140px 110px 130px 100px;
+  grid-template-columns: 2fr 120px 90px 110px 90px;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -2303,8 +2302,9 @@ button {
 
 .order-layout {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1fr 1fr;
   gap: 18px;
+  align-items: start;
 }
 
 .order-left,
@@ -2351,6 +2351,7 @@ button {
 .summary-actions {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .summary-actions .ghost {
@@ -2365,6 +2366,12 @@ button {
   border: none;
 }
 
+@media (max-width: 1100px) {
+  .order-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .orders-table .row,
   .orders-table .row.header {
@@ -2375,14 +2382,6 @@ button {
   .order-lines-header,
   .order-line {
     grid-template-columns: 1fr 1fr;
-  }
-
-  .order-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .order-search-grid {
-    grid-template-columns: 1fr;
   }
 
   .order-results {
