@@ -22,6 +22,7 @@ export default function AdminOrders() {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showCreate, setShowCreate] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
   const [companyId, setCompanyId] = useState("");
   const [orderStatus, setOrderStatus] = useState("SUBMITTED");
   const [customerName, setCustomerName] = useState("");
@@ -30,6 +31,11 @@ export default function AdminOrders() {
   const [searchResults, setSearchResults] = useState([]);
   const [lineItems, setLineItems] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [editCompanyId, setEditCompanyId] = useState("");
+  const [editStatus, setEditStatus] = useState("SUBMITTED");
+  const [editLineItems, setEditLineItems] = useState([]);
+  const [editSearchQuery, setEditSearchQuery] = useState("");
+  const [editSearchResults, setEditSearchResults] = useState([]);
 
   async function loadOrders() {
     try {
@@ -60,6 +66,25 @@ export default function AdminOrders() {
   }, [showCreate]);
 
   useEffect(() => {
+    if (editingOrder) {
+      loadCompanies();
+      setEditCompanyId(editingOrder.companyId || "");
+      setEditStatus(editingOrder.status || "SUBMITTED");
+      setEditLineItems(
+        (editingOrder.items || []).map((i) => ({
+          productId: i.productId,
+          sku: i.sku,
+          name: i.name,
+          unitPrice: Number(i.unitPrice || 0),
+          qty: Number(i.qty || 1),
+        }))
+      );
+      setEditSearchQuery("");
+      setEditSearchResults([]);
+    }
+  }, [editingOrder]);
+
+  useEffect(() => {
     let active = true;
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -81,6 +106,28 @@ export default function AdminOrders() {
     };
   }, [searchQuery]);
 
+  useEffect(() => {
+    let active = true;
+    if (!editSearchQuery.trim()) {
+      setEditSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api(
+          `/admin/products?q=${encodeURIComponent(editSearchQuery.trim())}&limit=20&orderBy=name-asc`
+        );
+        if (active) setEditSearchResults(res);
+      } catch (err) {
+        if (active) setEditSearchResults([]);
+      }
+    }, 250);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [editSearchQuery]);
+
   const totals = useMemo(() => {
     const subtotal = lineItems.reduce(
       (sum, item) => sum + Number(item.unitPrice || 0) * Number(item.qty || 0),
@@ -88,6 +135,14 @@ export default function AdminOrders() {
     );
     return { subtotal };
   }, [lineItems]);
+
+  const editTotals = useMemo(() => {
+    const subtotal = editLineItems.reduce(
+      (sum, item) => sum + Number(item.unitPrice || 0) * Number(item.qty || 0),
+      0
+    );
+    return { subtotal };
+  }, [editLineItems]);
 
   function addItem(product) {
     setLineItems((prev) => {
@@ -118,6 +173,37 @@ export default function AdminOrders() {
 
   function removeItem(id) {
     setLineItems((prev) => prev.filter((i) => i.productId !== id));
+  }
+
+  function addEditItem(product) {
+    setEditLineItems((prev) => {
+      const existing = prev.find((i) => i.productId === product.id);
+      if (existing) {
+        return prev.map((i) =>
+          i.productId === product.id ? { ...i, qty: i.qty + 1 } : i
+        );
+      }
+      return [
+        ...prev,
+        {
+          productId: product.id,
+          sku: product.sku,
+          name: product.name,
+          unitPrice: Number(product.price || 0),
+          qty: 1,
+        },
+      ];
+    });
+  }
+
+  function updateEditItem(id, patch) {
+    setEditLineItems((prev) =>
+      prev.map((i) => (i.productId === id ? { ...i, ...patch } : i))
+    );
+  }
+
+  function removeEditItem(id) {
+    setEditLineItems((prev) => prev.filter((i) => i.productId !== id));
   }
 
   async function createOrder() {
@@ -162,6 +248,47 @@ export default function AdminOrders() {
     }
   }
 
+  async function saveEdit() {
+    if (!editingOrder) return;
+    setSaving(true);
+    try {
+      await api(`/admin/orders/${editingOrder.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          companyId: editCompanyId,
+          status: editStatus,
+          items: editLineItems.map((i) => ({
+            productId: i.productId,
+            qty: Number(i.qty || 1),
+            unitPrice: Number(i.unitPrice || 0),
+          })),
+        }),
+      });
+      setEditingOrder(null);
+      await loadOrders();
+    } catch (err) {
+      setError("Impossibile salvare ordine");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteOrder() {
+    if (!editingOrder) return;
+    const ok = window.confirm("Vuoi eliminare questo ordine?");
+    if (!ok) return;
+    setSaving(true);
+    try {
+      await api(`/admin/orders/${editingOrder.id}`, { method: "DELETE" });
+      setEditingOrder(null);
+      await loadOrders();
+    } catch (err) {
+      setError("Impossibile eliminare ordine");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -199,28 +326,20 @@ export default function AdminOrders() {
           <div>Stato</div>
           <div>Totale</div>
           <div>Creato</div>
-          <div>Righe</div>
+          <div></div>
         </div>
         {items.map((o) => (
           <div className="row" key={o.id}>
             <div className="mono">{o.id.slice(0, 8)}</div>
             <div>{o.company?.name || "-"}</div>
-            <div>
-              <select
-                className="status-select"
-                value={o.status}
-                onChange={(e) => updateStatus(o.id, e.target.value)}
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <div>{STATUS_OPTIONS.find((s) => s.value === o.status)?.label || o.status}</div>
             <div>{formatCurrency(o.total)}</div>
             <div>{new Date(o.createdAt).toLocaleString()}</div>
-            <div>{o.items?.length || 0}</div>
+            <div>
+              <button className="btn ghost" onClick={() => setEditingOrder(o)}>
+                Modifica
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -399,6 +518,167 @@ export default function AdminOrders() {
                 </div>
               </div>
             </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+
+      {editingOrder ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setEditingOrder(null)}>
+            <div className="modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">Modifica ordine</div>
+                  <div className="modal-subtitle">Aggiorna dettagli, righe e stato</div>
+                </div>
+                <button className="btn ghost" onClick={() => setEditingOrder(null)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="order-layout">
+                  <div className="order-left">
+                    <div className="order-card">
+                      <div className="card-title">Dettagli ordine</div>
+                      <div className="order-form">
+                        <div className="field">
+                          <label>Azienda</label>
+                          <select value={editCompanyId} onChange={(e) => setEditCompanyId(e.target.value)}>
+                            {companies.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="field">
+                          <label>Stato ordine</label>
+                          <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)}>
+                            {STATUS_OPTIONS.map((s) => (
+                              <option key={s.value} value={s.value}>
+                                {s.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="order-card">
+                      <div className="card-title">Righe ordine</div>
+                      <div className="order-lines">
+                        <div className="order-lines-header">
+                          <div>Prodotto</div>
+                          <div>Prezzo</div>
+                          <div>Qta</div>
+                          <div>Totale</div>
+                          <div></div>
+                        </div>
+                        {editLineItems.map((item) => (
+                          <div className="order-line" key={item.productId}>
+                            <div>
+                              <div className="line-title">{item.name}</div>
+                              <div className="line-meta mono">{item.sku}</div>
+                            </div>
+                            <div>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={item.unitPrice}
+                                onChange={(e) =>
+                                  updateEditItem(item.productId, { unitPrice: Number(e.target.value) })
+                                }
+                              />
+                            </div>
+                            <div>
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.qty}
+                                onChange={(e) =>
+                                  updateEditItem(item.productId, { qty: Number(e.target.value) })
+                                }
+                              />
+                            </div>
+                            <div>
+                              {formatCurrency(Number(item.unitPrice || 0) * Number(item.qty || 0))}
+                            </div>
+                            <div>
+                              <button className="btn ghost" onClick={() => removeEditItem(item.productId)}>
+                                Rimuovi
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {!editLineItems.length ? (
+                          <div className="empty">Aggiungi prodotti per creare l'ordine.</div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="order-right">
+                    <div className="order-card">
+                      <div className="card-title">Aggiungi prodotti</div>
+                      <div className="order-search">
+                        <div className="order-search-header">
+                          <label>Cerca prodotto</label>
+                          <span className="muted">Seleziona per aggiungere alle righe ordine</span>
+                        </div>
+                        <div className="order-search-grid">
+                          <div className="order-search-input">
+                            <input
+                              type="search"
+                              placeholder="SKU o nome prodotto"
+                              value={editSearchQuery}
+                              onChange={(e) => setEditSearchQuery(e.target.value)}
+                            />
+                          </div>
+                          <div className="order-results">
+                            {editSearchResults.length ? (
+                              editSearchResults.map((p) => (
+                                <button
+                                  key={p.id}
+                                  className="result-item"
+                                  onClick={() => addEditItem(p)}
+                                >
+                                  <div className="result-title">{p.name}</div>
+                                  <div className="result-meta">
+                                    <span className="mono">{p.sku}</span>
+                                    <span>{formatCurrency(p.price)}</span>
+                                  </div>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="empty small">Nessun risultato</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="order-card order-summary-card">
+                      <div className="card-title">Riepilogo</div>
+                      <div className="summary-row">
+                        <span>Totale ordine</span>
+                        <strong>{formatCurrency(editTotals.subtotal)}</strong>
+                      </div>
+                      <div className="summary-actions">
+                        <button className="btn ghost" onClick={() => setEditingOrder(null)}>
+                          Annulla
+                        </button>
+                        <button className="btn ghost" onClick={deleteOrder} disabled={saving}>
+                          Elimina
+                        </button>
+                        <button className="btn primary" onClick={saveEdit} disabled={saving}>
+                          {saving ? "Salvataggio..." : "Salva"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </Portal>

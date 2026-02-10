@@ -173,10 +173,95 @@ export async function adminRoutes(app: FastifyInstance) {
     const id = (request.params as any).id as string;
     const body = z
       .object({
-        status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"]),
+        status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"]).optional(),
+        companyId: z.string().optional(),
+        discountTotal: z.number().optional(),
+        items: z
+          .array(
+            z.object({
+              productId: z.string(),
+              qty: z.number().int().positive(),
+              unitPrice: z.number().optional(),
+            })
+          )
+          .optional(),
       })
       .parse(request.body);
-    return prisma.order.update({ where: { id }, data: { status: body.status } });
+
+    const existing = await prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
+    });
+    if (!existing) return reply.notFound("Order not found");
+
+    let itemsPayload: Prisma.OrderItemCreateManyOrderInput[] | undefined;
+    let total = existing.total;
+    let discountTotal =
+      body.discountTotal != null ? new Prisma.Decimal(body.discountTotal) : existing.discountTotal;
+
+    if (body.items) {
+      const productIds = body.items.map((i) => i.productId);
+      const products = await prisma.product.findMany({
+        where: { id: { in: productIds } },
+        include: { sourceSupplier: true },
+      });
+      const overrides = await prisma.productPrice.findMany({
+        where: { companyId: body.companyId || existing.companyId },
+      });
+      const overrideMap = new Map(overrides.map((o) => [o.productId, o.price]));
+      itemsPayload = body.items.map((item) => {
+        const product = products.find((p) => p.id === item.productId);
+        if (!product) throw app.httpErrors.notFound("Product not found");
+        const unitPrice =
+          item.unitPrice != null
+            ? new Prisma.Decimal(item.unitPrice)
+            : overrideMap.get(product.id) ?? product.price;
+        const lineTotal = unitPrice.mul(item.qty);
+        return {
+          productId: product.id,
+          sku: product.sku,
+          name: product.name,
+          qty: item.qty,
+          unitPrice,
+          lineTotal,
+          supplierId: product.sourceSupplierId,
+        };
+      });
+      const subtotal = itemsPayload.reduce(
+        (sum, i) => sum.add(i.lineTotal),
+        new Prisma.Decimal(0)
+      );
+      const discountValue = discountTotal || new Prisma.Decimal(0);
+      total = Prisma.Decimal.max(subtotal.sub(discountValue), new Prisma.Decimal(0));
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id },
+        data: {
+          status: body.status ?? existing.status,
+          companyId: body.companyId ?? existing.companyId,
+          discountTotal,
+          total,
+          items: itemsPayload
+            ? {
+                deleteMany: {},
+                createMany: { data: itemsPayload },
+              }
+            : undefined,
+        },
+        include: { items: true, company: true },
+      });
+      return updated;
+    });
+  });
+
+  app.delete("/orders/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.order.delete({ where: { id } });
+    return reply.code(204).send();
   });
 
   app.get("/products", async (request, reply) => {
