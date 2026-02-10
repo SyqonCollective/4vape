@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import { Prisma, OrderStatus } from "@prisma/client";
 import { prisma } from "../lib/db.js";
 import { importFullFromSupplier, importStockFromSupplier } from "../jobs/importer.js";
 import jwt from "jsonwebtoken";
@@ -642,7 +642,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const days = 14;
     const startRange = new Date(startOfToday);
     startRange.setDate(startRange.getDate() - (days - 1));
-    const revenueStatuses = ["APPROVED", "FULFILLED"] as const;
+    const revenueStatuses: OrderStatus[] = ["APPROVED", "FULFILLED"];
 
     const [
       totalProducts,
@@ -702,7 +702,7 @@ export async function adminRoutes(app: FastifyInstance) {
         ordersToday,
         pendingUsers,
         pendingCompanies,
-        revenue: Number(totalRevenueAgg._sum.total || 0),
+        revenue: Number(totalRevenueAgg._sum?.total || 0),
       },
       daily,
       recentOrders: recentOrders.map((o) => ({
@@ -723,7 +723,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : now;
     const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : new Date(end);
     if (!query.start) start.setDate(end.getDate() - 29);
-    const revenueStatuses = ["APPROVED", "FULFILLED"] as const;
+    const revenueStatuses: OrderStatus[] = ["APPROVED", "FULFILLED"];
 
     const orders = await prisma.order.findMany({
       where: {
