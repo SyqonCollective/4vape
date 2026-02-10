@@ -2296,6 +2296,75 @@ button {
   gap: 12px;
 }
 
+.shopify-modal {
+  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.order-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 18px;
+}
+
+.order-left,
+.order-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order-card {
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 16px;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.06);
+}
+
+.card-title {
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.order-summary-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+}
+
+.order-summary-card .card-title {
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.summary-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.summary-actions .ghost {
+  background: rgba(148, 163, 184, 0.2);
+  color: #f8fafc;
+  border-color: transparent;
+}
+
+.summary-actions .primary {
+  background: #38bdf8;
+  color: #0f172a;
+  border: none;
+}
+
 @media (max-width: 900px) {
   .orders-table .row,
   .orders-table .row.header {
@@ -2306,6 +2375,10 @@ button {
   .order-lines-header,
   .order-line {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .order-layout {
+    grid-template-columns: 1fr;
   }
 
   .order-search-grid {

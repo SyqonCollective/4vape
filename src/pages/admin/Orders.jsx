@@ -226,7 +226,7 @@ export default function AdminOrders() {
 
       {showCreate ? (
         <div className="modal-backdrop" onClick={() => setShowCreate(false)}>
-          <div className="modal order-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
                 <div className="modal-title">Crea ordine manuale</div>
@@ -237,141 +237,164 @@ export default function AdminOrders() {
               </button>
             </div>
             <div className="modal-body">
-              <div className="order-form">
-                <div className="field">
-                  <label>Azienda</label>
-                  <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-                    {companies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Cliente (utente)</label>
-                  <div className="field-hint">
-                    In arrivo: per ora collega manualmente il referente.
+              <div className="order-layout">
+                <div className="order-left">
+                  <div className="order-card">
+                    <div className="card-title">Dettagli ordine</div>
+                    <div className="order-form">
+                      <div className="field">
+                        <label>Azienda</label>
+                        <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+                          {companies.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label>Cliente (utente)</label>
+                        <div className="field-hint">
+                          In arrivo: per ora collega manualmente il referente.
+                        </div>
+                        <select disabled>
+                          <option>Selezione utente non disponibile</option>
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label>Referente (nome)</label>
+                        <input
+                          type="text"
+                          placeholder="Es. Mario Rossi"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Referente (email)</label>
+                        <input
+                          type="email"
+                          placeholder="cliente@azienda.it"
+                          value={customerEmail}
+                          onChange={(e) => setCustomerEmail(e.target.value)}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Stato ordine</label>
+                        <select value={orderStatus} onChange={(e) => setOrderStatus(e.target.value)}>
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s.value} value={s.value}>
+                              {s.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                  <select disabled>
-                    <option>Selezione utente non disponibile</option>
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Referente (nome)</label>
-                  <input
-                    type="text"
-                    placeholder="Es. Mario Rossi"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label>Referente (email)</label>
-                  <input
-                    type="email"
-                    placeholder="cliente@azienda.it"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label>Stato ordine</label>
-                  <select value={orderStatus} onChange={(e) => setOrderStatus(e.target.value)}>
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s.value} value={s.value}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
-              <div className="order-search">
-                <div className="order-search-header">
-                  <label>Cerca prodotto</label>
-                  <span className="muted">Seleziona per aggiungere alle righe ordine</span>
-                </div>
-                <div className="order-search-grid">
-                  <div className="order-search-input">
-                    <input
-                      type="search"
-                      placeholder="SKU o nome prodotto"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  <div className="order-results">
-                    {searchResults.length ? (
-                      searchResults.map((p) => (
-                        <button key={p.id} className="result-item" onClick={() => addItem(p)}>
-                          <div className="result-title">{p.name}</div>
-                          <div className="result-meta">
-                            <span className="mono">{p.sku}</span>
-                            <span>{formatCurrency(p.price)}</span>
+                  <div className="order-card">
+                    <div className="card-title">Righe ordine</div>
+                    <div className="order-lines">
+                      <div className="order-lines-header">
+                        <div>Prodotto</div>
+                        <div>Prezzo</div>
+                        <div>Qta</div>
+                        <div>Totale</div>
+                        <div></div>
+                      </div>
+                      {lineItems.map((item) => (
+                        <div className="order-line" key={item.productId}>
+                          <div>
+                            <div className="line-title">{item.name}</div>
+                            <div className="line-meta mono">{item.sku}</div>
                           </div>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="empty small">Nessun risultato</div>
-                    )}
+                          <div>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.unitPrice}
+                              onChange={(e) =>
+                                updateItem(item.productId, { unitPrice: Number(e.target.value) })
+                              }
+                            />
+                          </div>
+                          <div>
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.qty}
+                              onChange={(e) =>
+                                updateItem(item.productId, { qty: Number(e.target.value) })
+                              }
+                            />
+                          </div>
+                          <div>{formatCurrency(Number(item.unitPrice || 0) * Number(item.qty || 0))}</div>
+                          <div>
+                            <button className="ghost" onClick={() => removeItem(item.productId)}>
+                              Rimuovi
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {!lineItems.length ? (
+                        <div className="empty">Aggiungi prodotti per creare l'ordine.</div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="order-lines">
-                <div className="order-lines-header">
-                  <div>Prodotto</div>
-                  <div>Prezzo</div>
-                  <div>Qta</div>
-                  <div>Totale</div>
-                  <div></div>
-                </div>
-                {lineItems.map((item) => (
-                  <div className="order-line" key={item.productId}>
-                    <div>
-                      <div className="line-title">{item.name}</div>
-                      <div className="line-meta mono">{item.sku}</div>
+                <div className="order-right">
+                  <div className="order-card">
+                    <div className="card-title">Aggiungi prodotti</div>
+                    <div className="order-search">
+                      <div className="order-search-header">
+                        <label>Cerca prodotto</label>
+                        <span className="muted">Seleziona per aggiungere alle righe ordine</span>
+                      </div>
+                      <div className="order-search-grid">
+                        <div className="order-search-input">
+                          <input
+                            type="search"
+                            placeholder="SKU o nome prodotto"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                          />
+                        </div>
+                        <div className="order-results">
+                          {searchResults.length ? (
+                            searchResults.map((p) => (
+                              <button key={p.id} className="result-item" onClick={() => addItem(p)}>
+                                <div className="result-title">{p.name}</div>
+                                <div className="result-meta">
+                                  <span className="mono">{p.sku}</span>
+                                  <span>{formatCurrency(p.price)}</span>
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="empty small">Nessun risultato</div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={item.unitPrice}
-                        onChange={(e) => updateItem(item.productId, { unitPrice: Number(e.target.value) })}
-                      />
+                  </div>
+
+                  <div className="order-card order-summary-card">
+                    <div className="card-title">Riepilogo</div>
+                    <div className="summary-row">
+                      <span>Totale ordine</span>
+                      <strong>{formatCurrency(totals.subtotal)}</strong>
                     </div>
-                    <div>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.qty}
-                        onChange={(e) => updateItem(item.productId, { qty: Number(e.target.value) })}
-                      />
-                    </div>
-                    <div>{formatCurrency(Number(item.unitPrice || 0) * Number(item.qty || 0))}</div>
-                    <div>
-                      <button className="ghost" onClick={() => removeItem(item.productId)}>
-                        Rimuovi
+                    <div className="summary-actions">
+                      <button className="ghost" onClick={() => setShowCreate(false)}>
+                        Annulla
+                      </button>
+                      <button className="primary" onClick={createOrder} disabled={saving}>
+                        {saving ? "Salvataggio..." : "Crea ordine"}
                       </button>
                     </div>
                   </div>
-                ))}
-                {!lineItems.length ? <div className="empty">Aggiungi prodotti per creare l'ordine.</div> : null}
-              </div>
-
-              <div className="order-summary">
-                <div>Totale ordine</div>
-                <strong>{formatCurrency(totals.subtotal)}</strong>
-              </div>
-
-              <div className="actions">
-                <button className="ghost" onClick={() => setShowCreate(false)}>
-                  Annulla
-                </button>
-                <button className="primary" onClick={createOrder} disabled={saving}>
-                  {saving ? "Salvataggio..." : "Crea ordine"}
-                </button>
+                </div>
               </div>
             </div>
           </div>
