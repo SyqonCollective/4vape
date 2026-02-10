@@ -1091,27 +1091,6 @@ export async function adminRoutes(app: FastifyInstance) {
     return reply.code(204).send();
   });
 
-  app.patch("/excises/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
-    if (!user) return;
-    const id = (request.params as any).id as string;
-    const body = z
-      .object({
-        name: z.string().min(2).optional(),
-        type: z.enum(["ML", "PRODUCT"]).optional(),
-        amount: z.number().nonnegative().optional(),
-      })
-      .parse(request.body);
-    return prisma.exciseRate.update({
-      where: { id },
-      data: {
-        ...(body.name ? { name: body.name } : {}),
-        ...(body.type ? { type: body.type } : {}),
-        ...(body.amount != null ? { amount: new Prisma.Decimal(body.amount) } : {}),
-      },
-    });
-  });
-
   app.delete("/excises/:id", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
