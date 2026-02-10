@@ -97,8 +97,10 @@ if (syncEnabled && Number.isFinite(syncIntervalSec) && syncIntervalSec > 0) {
         },
       });
       for (const s of suppliers) {
-        if (s.csvStockUrl) {
+        try {
           await importStockFromSupplier(s);
+        } catch (err) {
+          app.log.error(err, `stock sync failed for ${s.code || s.id}`);
         }
       }
     } catch (err) {
