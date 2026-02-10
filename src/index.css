@@ -1012,7 +1012,7 @@ button {
 }
 
 .modal-backdrop .modal {
-  margin: 0;
+  margin: auto;
 }
 
 .modal.product-modal {

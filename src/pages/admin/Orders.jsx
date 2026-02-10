@@ -234,7 +234,7 @@ export default function AdminOrders() {
                 <div className="modal-title">Crea ordine manuale</div>
                 <div className="modal-subtitle">Compila i dettagli e aggiungi i prodotti</div>
               </div>
-              <button className="ghost" onClick={() => setShowCreate(false)}>
+              <button className="btn ghost" onClick={() => setShowCreate(false)}>
                 Chiudi
               </button>
             </div>
@@ -332,9 +332,9 @@ export default function AdminOrders() {
                           </div>
                           <div>{formatCurrency(Number(item.unitPrice || 0) * Number(item.qty || 0))}</div>
                           <div>
-                            <button className="ghost" onClick={() => removeItem(item.productId)}>
-                              Rimuovi
-                            </button>
+                      <button className="btn ghost" onClick={() => removeItem(item.productId)}>
+                        Rimuovi
+                      </button>
                           </div>
                         </div>
                       ))}
@@ -388,10 +388,10 @@ export default function AdminOrders() {
                       <strong>{formatCurrency(totals.subtotal)}</strong>
                     </div>
                     <div className="summary-actions">
-                      <button className="ghost" onClick={() => setShowCreate(false)}>
+                      <button className="btn ghost" onClick={() => setShowCreate(false)}>
                         Annulla
                       </button>
-                      <button className="primary" onClick={createOrder} disabled={saving}>
+                      <button className="btn primary" onClick={createOrder} disabled={saving}>
                         {saving ? "Salvataggio..." : "Crea ordine"}
                       </button>
                     </div>
