@@ -77,7 +77,10 @@ export default function AdminSuppliers() {
   async function load() {
     try {
       const res = await api("/admin/suppliers");
-      setItems(res);
+      const sorted = [...(res || [])].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setItems(sorted);
     } catch (err) {
       setError("Impossibile caricare fornitori");
     }
