@@ -136,7 +136,7 @@ export default function AdminOrders() {
       (sum, item) => {
         const lineTotal = Number(item.unitPrice || 0) * Number(item.qty || 0);
         const rate = Number(item.taxRate || 0);
-        const vat = rate > 0 ? lineTotal * (rate / 100) : 0;
+        const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
         const exciseUnit = Number(
           item.exciseTotal ?? (Number(item.exciseMl || 0) + Number(item.exciseProduct || 0))
         );
@@ -157,7 +157,7 @@ export default function AdminOrders() {
       (sum, item) => {
         const lineTotal = Number(item.unitPrice || 0) * Number(item.qty || 0);
         const rate = Number(item.taxRate || 0);
-        const vat = rate > 0 ? lineTotal * (rate / 100) : 0;
+        const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
         const exciseUnit = Number(
           item.exciseTotal ?? (Number(item.exciseMl || 0) + Number(item.exciseProduct || 0))
         );
@@ -620,11 +620,11 @@ export default function AdminOrders() {
                             const qty = Number(item.qty || 0);
                             const product = item.product;
                             const rate = Number(product?.taxRate || product?.taxRateRef?.rate || 0);
-                            const vat = rate > 0 ? lineTotal * (rate / 100) : 0;
                             const exciseUnit = Number(
                               product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
                             );
                             const excise = exciseUnit * qty;
+                            const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
                             acc.revenue += lineTotal;
                             acc.vat += vat;
                             acc.excise += excise;

@@ -326,10 +326,12 @@ export async function adminRoutes(app: FastifyInstance) {
     });
 
     const subtotal = items.reduce((sum, i) => sum.add(i.lineTotal), new Prisma.Decimal(0));
-    const vatTotal = items.reduce(
-      (sum, i: any) => sum + Number(i.lineTotal) * (Number(i.__taxRate || 0) / 100),
-      0
-    );
+    const vatTotal = items.reduce((sum, i: any) => {
+      const rate = Number(i.__taxRate || 0);
+      const exciseLine = Number(i.__exciseUnit || 0) * Number(i.qty || 0);
+      const base = Number(i.lineTotal) + exciseLine;
+      return sum + (rate > 0 ? base * (rate / 100) : 0);
+    }, 0);
     const exciseTotal = items.reduce(
       (sum, i: any) => sum + Number(i.__exciseUnit || 0) * Number(i.qty || 0),
       0
@@ -423,10 +425,12 @@ export async function adminRoutes(app: FastifyInstance) {
         (sum, i) => sum.add(new Prisma.Decimal(i.lineTotal as any)),
         new Prisma.Decimal(0)
       );
-      const vatTotal = itemsPayload.reduce(
-        (sum: number, i: any) => sum + Number(i.lineTotal) * (Number(i.__taxRate || 0) / 100),
-        0
-      );
+      const vatTotal = itemsPayload.reduce((sum: number, i: any) => {
+        const rate = Number(i.__taxRate || 0);
+        const exciseLine = Number(i.__exciseUnit || 0) * Number(i.qty || 0);
+        const base = Number(i.lineTotal) + exciseLine;
+        return sum + (rate > 0 ? base * (rate / 100) : 0);
+      }, 0);
       const exciseTotal = itemsPayload.reduce(
         (sum: number, i: any) => sum + Number(i.__exciseUnit || 0) * Number(i.qty || 0),
         0
@@ -1020,11 +1024,11 @@ export async function adminRoutes(app: FastifyInstance) {
         const product = item.product;
         const purchase = Number(product?.purchasePrice || 0);
         const rate = Number(product?.taxRate || product?.taxRateRef?.rate || 0);
-        const vatAmount = rate > 0 ? lineTotal * (rate / 100) : 0;
         const exciseUnit = Number(
           product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
         );
         const exciseAmount = exciseUnit * qty;
+        const vatAmount = rate > 0 ? (lineTotal + exciseAmount) * (rate / 100) : 0;
 
         cost += purchase * qty;
         vat += vatAmount;
