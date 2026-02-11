@@ -143,6 +143,7 @@ model SupplierProduct {
   imageUrls    Json?
   barcode      String?
   raw          Json?
+  createdAt    DateTime @default(now())
   lastSeenAt   DateTime @default(now())
 
   supplier Supplier @relation(fields: [supplierId], references: [id])
