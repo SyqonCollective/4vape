@@ -1587,7 +1587,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const [supplierProducts, total] = await Promise.all([
       prisma.supplierProduct.findMany({
         where,
-        orderBy: { lastSeenAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { lastSeenAt: "desc" }],
         take: Math.min(limit, perPage),
         skip,
       }),
