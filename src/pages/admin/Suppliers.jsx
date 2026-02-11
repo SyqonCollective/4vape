@@ -253,7 +253,12 @@ export default function AdminSuppliers() {
       const res = await api(
         `/admin/suppliers/${supplier.id}/products?page=${nextPage}&perPage=${perPage}&q=${encodeURIComponent(search)}`
       );
-      setSupplierProducts(res.items || []);
+      const sorted = [...(res.items || [])].sort((a, b) => {
+        const aDate = new Date(a.createdAt || a.lastSeenAt || 0).getTime();
+        const bDate = new Date(b.createdAt || b.lastSeenAt || 0).getTime();
+        return bDate - aDate;
+      });
+      setSupplierProducts(sorted);
       setTotalProducts(res.total || 0);
       setPage(res.page || nextPage);
       setSelectedSkus(new Set());
