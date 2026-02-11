@@ -1007,10 +1007,13 @@ export async function adminRoutes(app: FastifyInstance) {
     for (const order of orders) {
       const key = order.createdAt.toISOString().slice(0, 10);
       const idx = dayIndex.get(key);
+      const orderRevenue = Number(order.total || 0);
       if (idx != null) {
         days[idx].orders += 1;
+        days[idx].revenue += orderRevenue;
       }
       orderCount += 1;
+      revenue += orderRevenue;
       for (const item of order.items) {
         const lineTotal = Number(item.lineTotal);
         const qty = item.qty;
@@ -1023,14 +1026,12 @@ export async function adminRoutes(app: FastifyInstance) {
         );
         const exciseAmount = exciseUnit * qty;
 
-        revenue += lineTotal;
         cost += purchase * qty;
         vat += vatAmount;
         excise += exciseAmount;
         items += qty;
 
         if (idx != null) {
-          days[idx].revenue += lineTotal;
           days[idx].cost += purchase * qty;
           days[idx].vat += vatAmount;
           days[idx].excise += exciseAmount;
