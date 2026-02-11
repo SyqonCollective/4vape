@@ -136,11 +136,11 @@ export default function AdminOrders() {
       (sum, item) => {
         const lineTotal = Number(item.unitPrice || 0) * Number(item.qty || 0);
         const rate = Number(item.taxRate || 0);
-        const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
         const exciseUnit = Number(
           item.exciseTotal ?? (Number(item.exciseMl || 0) + Number(item.exciseProduct || 0))
         );
         const excise = exciseUnit * Number(item.qty || 0);
+        const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
         return {
           subtotal: sum.subtotal + lineTotal,
           vat: sum.vat + vat,
@@ -157,11 +157,11 @@ export default function AdminOrders() {
       (sum, item) => {
         const lineTotal = Number(item.unitPrice || 0) * Number(item.qty || 0);
         const rate = Number(item.taxRate || 0);
-        const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
         const exciseUnit = Number(
           item.exciseTotal ?? (Number(item.exciseMl || 0) + Number(item.exciseProduct || 0))
         );
         const excise = exciseUnit * Number(item.qty || 0);
+        const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
         return {
           subtotal: sum.subtotal + lineTotal,
           vat: sum.vat + vat,
