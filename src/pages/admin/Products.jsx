@@ -59,6 +59,9 @@ export default function AdminProducts() {
   const [showCreateParent, setShowCreateParent] = useState(false);
   const [showCreateManual, setShowCreateManual] = useState(false);
   const [importingCsv, setImportingCsv] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importSummary, setImportSummary] = useState(null);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
   const [manualDraft, setManualDraft] = useState({
     name: "",
@@ -197,13 +200,16 @@ export default function AdminProducts() {
         body: form,
       });
       if (!res.ok) throw new Error();
-      await res.json();
+      const summary = await res.json();
+      setImportSummary(summary);
       await reloadProducts();
     } catch {
       setError("Errore import CSV");
     } finally {
       setImportingCsv(false);
       if (csvInputRef.current) csvInputRef.current.value = "";
+      setShowImportConfirm(false);
+      setImportFile(null);
     }
   }
 
@@ -925,7 +931,12 @@ export default function AdminProducts() {
             type="file"
             accept=".csv"
             style={{ display: "none" }}
-            onChange={(e) => importCsv(e.target.files?.[0])}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setImportFile(file);
+              setShowImportConfirm(true);
+            }}
           />
         </div>
         <div className="toolbar-right">
@@ -1930,6 +1941,81 @@ export default function AdminProducts() {
                       Crea prodotto
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+
+      {showImportConfirm && importFile ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowImportConfirm(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">Conferma import CSV</div>
+                  <div className="modal-subtitle">
+                    Verranno aggiornati i prodotti che hanno lo stesso SKU.
+                  </div>
+                </div>
+                <button className="btn ghost" onClick={() => setShowImportConfirm(false)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body modal-body-single">
+                <div className="summary-grid">
+                  <div>
+                    <strong>File</strong>
+                    <div>{importFile.name}</div>
+                  </div>
+                  <div>
+                    <strong>Dimensione</strong>
+                    <div>{(importFile.size / 1024).toFixed(1)} KB</div>
+                  </div>
+                </div>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setShowImportConfirm(false)}>
+                    Annulla
+                  </button>
+                  <button className="btn primary" onClick={() => importCsv(importFile)} disabled={importingCsv}>
+                    {importingCsv ? "Importazione..." : "Importa"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+
+      {importSummary ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setImportSummary(null)}>
+            <div className="modal modal-compact" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">Import completato</div>
+                  <div className="modal-subtitle">Riepilogo aggiornamenti</div>
+                </div>
+                <button className="btn ghost" onClick={() => setImportSummary(null)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body modal-body-single">
+                <div className="summary-grid">
+                  <div>
+                    <strong>Aggiornati</strong>
+                    <div>{importSummary.updated ?? 0}</div>
+                  </div>
+                  <div>
+                    <strong>Saltati</strong>
+                    <div>{importSummary.skipped ?? 0}</div>
+                  </div>
+                </div>
+                <div className="actions">
+                  <button className="btn primary" onClick={() => setImportSummary(null)}>
+                    Ok
+                  </button>
                 </div>
               </div>
             </div>
