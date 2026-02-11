@@ -57,6 +57,22 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     return tax?.id || null;
   }
+
+  async function resolveExciseTotal(
+    exciseRateId?: string | null,
+    mlProduct?: number | null,
+    fallback?: number | null
+  ) {
+    if (!exciseRateId) return fallback ?? null;
+    const rate = await prisma.exciseRate.findUnique({ where: { id: exciseRateId } });
+    if (!rate) return fallback ?? null;
+    const amount = Number(rate.amount || 0);
+    if (rate.type === "ML") {
+      const ml = Number(mlProduct || 0);
+      return amount * ml;
+    }
+    return amount;
+  }
   app.get("/ping", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -559,41 +575,46 @@ export async function adminRoutes(app: FastifyInstance) {
     }
     try {
       const defaultTaxRateId = await resolveDefaultTaxRateId();
+      const exciseTotal = await resolveExciseTotal(
+        body.exciseRateId,
+        body.mlProduct ?? null,
+        body.exciseTotal ?? null
+      );
       return await prisma.product.create({
         data: {
           ...body,
           category: categoryName,
-        parentId: body.parentId || null,
-        isParent: body.isParent ?? false,
-        isUnavailable: body.isUnavailable ?? false,
-        shortDescription: body.shortDescription,
-        subcategory: body.subcategory,
-        published: body.published,
-        visibility: body.visibility,
-        productType: body.productType,
-        parentSku: body.parentSku,
-        childSkus: body.childSkus,
-        codicePl: body.codicePl,
-        mlProduct: body.mlProduct,
-        nicotine: body.nicotine,
-        exciseMl: body.exciseMl,
-        exciseProduct: body.exciseProduct,
-        exciseTotal: body.exciseTotal,
-        taxRate: body.taxRate,
-        taxAmount: body.taxAmount,
-        vatIncluded: true,
-        taxRateId: body.taxRateId || defaultTaxRateId || undefined,
-        exciseRateId: body.exciseRateId,
-        purchasePrice: body.purchasePrice,
-        listPrice: body.listPrice,
-        discountPrice: body.discountPrice,
-        discountQty: body.discountQty,
-        imageUrls: body.imageUrls,
-        barcode: body.barcode,
-        price: body.price ?? 0,
-        source: "MANUAL",
-      },
-    });
+          parentId: body.parentId || null,
+          isParent: body.isParent ?? false,
+          isUnavailable: body.isUnavailable ?? false,
+          shortDescription: body.shortDescription,
+          subcategory: body.subcategory,
+          published: body.published,
+          visibility: body.visibility,
+          productType: body.productType,
+          parentSku: body.parentSku,
+          childSkus: body.childSkus,
+          codicePl: body.codicePl,
+          mlProduct: body.mlProduct,
+          nicotine: body.nicotine,
+          exciseMl: body.exciseMl,
+          exciseProduct: body.exciseProduct,
+          exciseTotal: exciseTotal ?? body.exciseTotal,
+          taxRate: body.taxRate,
+          taxAmount: body.taxAmount,
+          vatIncluded: true,
+          taxRateId: body.taxRateId || defaultTaxRateId || undefined,
+          exciseRateId: body.exciseRateId,
+          purchasePrice: body.purchasePrice,
+          listPrice: body.listPrice,
+          discountPrice: body.discountPrice,
+          discountQty: body.discountQty,
+          imageUrls: body.imageUrls,
+          barcode: body.barcode,
+          price: body.price ?? 0,
+          source: "MANUAL",
+        },
+      });
     } catch (err: any) {
       if (err?.code === "P2002") {
         return reply.code(409).send({ error: "SKU già esistente" });
@@ -665,6 +686,19 @@ export async function adminRoutes(app: FastifyInstance) {
     data.vatIncluded = true;
     if (body.taxRateId !== undefined) data.taxRateId = body.taxRateId;
     if (body.exciseRateId !== undefined) data.exciseRateId = body.exciseRateId;
+
+    if (
+      body.exciseRateId !== undefined ||
+      body.mlProduct !== undefined ||
+      body.exciseTotal !== undefined
+    ) {
+      const exciseRateId =
+        data.exciseRateId !== undefined ? data.exciseRateId : existing.exciseRateId;
+      const mlProduct = data.mlProduct !== undefined ? data.mlProduct : existing.mlProduct;
+      const fallback =
+        data.exciseTotal !== undefined ? data.exciseTotal : existing.exciseTotal;
+      data.exciseTotal = await resolveExciseTotal(exciseRateId, mlProduct, fallback);
+    }
     if (existing.source === "SUPPLIER") {
       if (data.isUnavailable === true) {
         data.stockQty = 0;
