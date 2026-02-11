@@ -66,11 +66,36 @@ export async function adminRoutes(app: FastifyInstance) {
     return Number.isFinite(num) ? num : undefined;
   };
 
+  const toPercent = (value: any) => {
+    if (value === null || value === undefined || value === "") return undefined;
+    const cleaned = String(value)
+      .replace("%", "")
+      .replace(/\s/g, "")
+      .replace(",", ".");
+    const num = Number(cleaned);
+    return Number.isFinite(num) ? num : undefined;
+  };
+
   const toBool = (value: any) => {
     if (value === null || value === undefined || value === "") return undefined;
     const v = String(value).trim().toLowerCase();
     if (["1", "true", "yes", "si", "sì"].includes(v)) return true;
     if (["0", "false", "no"].includes(v)) return false;
+    return undefined;
+  };
+
+  const normalizeKey = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+  const pick = (row: Record<string, any>, keys: string[]) => {
+    for (const k of keys) {
+      if (row[k] !== undefined) return row[k];
+    }
     return undefined;
   };
 
@@ -635,9 +660,9 @@ export async function adminRoutes(app: FastifyInstance) {
     for (const raw of records) {
       const row: Record<string, any> = {};
       for (const [k, v] of Object.entries(raw)) {
-        row[String(k).trim().toLowerCase()] = v;
+        row[normalizeKey(String(k).trim())] = v;
       }
-      const sku = row.sku || row.codice || row.codice_sku;
+      const sku = pick(row, ["sku", "codice", "codice_sku"]);
       if (!sku) {
         skipped += 1;
         continue;
@@ -649,37 +674,38 @@ export async function adminRoutes(app: FastifyInstance) {
       }
 
       const data: any = {};
-      const name = row.name ?? row.nome;
+      const name = pick(row, ["name", "nome"]);
       if (name) data.name = String(name).trim();
-      const price = toNumber(row.price ?? row.prezzo);
+      const price = toNumber(pick(row, ["price", "prezzo"]));
       if (price !== undefined) data.price = price;
-      const stockQty = toNumber(row.stockqty ?? row.giacenza);
+      const stockQty = toNumber(pick(row, ["stockqty", "giacenza", "magazzino"]));
       if (stockQty !== undefined) data.stockQty = Math.max(0, Math.floor(stockQty));
-      const brand = row.brand ?? row.marca;
+      const brand = pick(row, ["brand", "marca", "marchi"]);
       if (brand) data.brand = String(brand).trim();
-      const shortDescription = row.shortdescription ?? row.descrizionebreve;
+      const shortDescription = pick(row, ["shortdescription", "breve_descrizione", "descrizionebreve"]);
       if (shortDescription) data.shortDescription = String(shortDescription);
-      const description = row.description ?? row.descrizione;
+      const description = pick(row, ["description", "descrizione"]);
       if (description) data.description = String(description);
-      const productType = row.producttype ?? row.tipo;
+      const productType = pick(row, ["producttype", "tipo", "prodotto"]);
       if (productType) data.productType = String(productType).trim();
-      const visibility = row.visibility ?? row.visibilita;
+      const visibility = pick(row, ["visibility", "visibilita_nel_catalogo", "visibilita"]);
       if (visibility) data.visibility = String(visibility).trim();
-      const barcode = row.barcode ?? row.ean;
+      const barcode = pick(row, ["barcode", "ean", "codice_a_barre"]);
       if (barcode) data.barcode = String(barcode).trim();
 
-      const isParent = toBool(row.isparent ?? row.padre);
+      const kind = String(pick(row, ["prodotto", "tipo_prodotto"]) || "").toLowerCase();
+      const isParent = kind.includes("padre") ? true : toBool(pick(row, ["isparent", "padre"]));
       if (isParent !== undefined) data.isParent = isParent;
-      const isUnavailable = toBool(row.isunavailable ?? row.non_disponibile);
+      const isUnavailable = toBool(pick(row, ["isunavailable", "non_disponibile"]));
       if (isUnavailable !== undefined) data.isUnavailable = isUnavailable;
 
-      const mlProduct = toNumber(row.mlproduct ?? row.ml);
+      const mlProduct = toNumber(pick(row, ["mlproduct", "ml_prodotto", "ml"]));
       if (mlProduct !== undefined) data.mlProduct = mlProduct;
-      const nicotine = toNumber(row.nicotine ?? row.nicotina);
+      const nicotine = toNumber(pick(row, ["nicotine", "nicotina"]));
       if (nicotine !== undefined) data.nicotine = nicotine;
 
-      const categoryId = row.categoryid;
-      const categoryName = row.category ?? row.categoria;
+      const categoryId = pick(row, ["categoryid"]);
+      const categoryName = pick(row, ["category", "categoria", "categorie"]);
       if (categoryId) {
         const cat = categories.find((c) => c.id === String(categoryId));
         if (cat) {
@@ -696,14 +722,14 @@ export async function adminRoutes(app: FastifyInstance) {
         }
       }
 
-      const parentSku = row.parentsku ?? row.padresku;
+      const parentSku = pick(row, ["parentsku", "padresku", "padre"]);
       if (parentSku) {
         const parent = await prisma.product.findUnique({ where: { sku: String(parentSku).trim() } });
         if (parent) data.parentId = parent.id;
       }
 
-      const taxRateId = row.taxrateid;
-      const taxRate = toNumber(row.taxrate ?? row.iva);
+      const taxRateId = pick(row, ["taxrateid"]);
+      const taxRate = toPercent(pick(row, ["taxrate", "aliquota_di_imposta", "iva"]));
       if (taxRateId) {
         data.taxRateId = String(taxRateId);
       } else if (taxRate !== undefined) {
@@ -711,8 +737,8 @@ export async function adminRoutes(app: FastifyInstance) {
         if (t) data.taxRateId = t.id;
       }
 
-      const exciseRateId = row.exciserateid;
-      const exciseRateName = row.exciserate ?? row.accisa;
+      const exciseRateId = pick(row, ["exciserateid"]);
+      const exciseRateName = pick(row, ["exciserate", "accisa"]);
       if (exciseRateId) {
         data.exciseRateId = String(exciseRateId);
       } else if (exciseRateName) {
@@ -720,8 +746,38 @@ export async function adminRoutes(app: FastifyInstance) {
         if (e) data.exciseRateId = e.id;
       }
 
-      const exciseTotal = toNumber(row.excisetotal ?? row.accisa_calcolata);
+      const exciseMl = toNumber(pick(row, ["accisa_ml", "excise_ml"]));
+      if (exciseMl !== undefined) data.exciseMl = exciseMl;
+      const exciseProduct = toNumber(pick(row, ["accisa_prodotto", "excise_product"]));
+      if (exciseProduct !== undefined) data.exciseProduct = exciseProduct;
+      const exciseTotal = toNumber(pick(row, ["excisetotal", "accisa_calcolata"]));
       if (exciseTotal !== undefined) data.exciseTotal = exciseTotal;
+
+      const imageValue = pick(row, ["immagine", "immagini", "image", "image_urls"]);
+      if (imageValue) {
+        const parts = String(imageValue)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (parts.length) {
+          data.imageUrl = parts[0];
+          data.imageUrls = parts;
+        }
+      }
+
+      const purchasePrice = toNumber(pick(row, ["prezzo_di_acquisto", "purchase_price"]));
+      if (purchasePrice !== undefined) data.purchasePrice = purchasePrice;
+      const listPrice = toNumber(pick(row, ["prezzo_di_listino", "list_price"]));
+      if (listPrice !== undefined) data.listPrice = listPrice;
+      const discountPrice = toNumber(
+        pick(row, ["prezzi_scontato_per_quantita", "prezzo_scontato", "discount_price"])
+      );
+      if (discountPrice !== undefined) data.discountPrice = discountPrice;
+      const discountQty = toNumber(pick(row, ["quantita_per_sconto", "discount_qty"]));
+      if (discountQty !== undefined) data.discountQty = discountQty;
+
+      const subcategory = pick(row, ["sottocategorie", "sottocategoria", "subcategory"]);
+      if (subcategory) data.subcategory = String(subcategory);
 
       if (
         data.exciseRateId !== undefined ||
@@ -733,6 +789,12 @@ export async function adminRoutes(app: FastifyInstance) {
         const mlFinal = data.mlProduct !== undefined ? data.mlProduct : product.mlProduct;
         const fallback = data.exciseTotal !== undefined ? data.exciseTotal : product.exciseTotal;
         data.exciseTotal = await resolveExciseTotal(exciseRateIdFinal, mlFinal, fallback);
+      } else if (data.exciseMl !== undefined || data.exciseProduct !== undefined) {
+        const mlFinal = data.mlProduct ?? product.mlProduct ?? 0;
+        const exciseLine =
+          Number(data.exciseMl ?? product.exciseMl ?? 0) * Number(mlFinal) +
+          Number(data.exciseProduct ?? product.exciseProduct ?? 0);
+        data.exciseTotal = exciseLine;
       }
 
       if (Object.keys(data).length === 0) {
