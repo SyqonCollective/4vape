@@ -302,12 +302,25 @@ export async function adminRoutes(app: FastifyInstance) {
         unitPrice,
         lineTotal,
         supplierId: product.sourceSupplierId,
+        __taxRate: Number(product.taxRate || 0),
+        __exciseUnit: Number(
+          product.exciseTotal ?? (Number(product.exciseMl || 0) + Number(product.exciseProduct || 0))
+        ),
       };
     });
 
     const subtotal = items.reduce((sum, i) => sum.add(i.lineTotal), new Prisma.Decimal(0));
+    const vatTotal = items.reduce(
+      (sum, i: any) => sum + Number(i.lineTotal) * (Number(i.__taxRate || 0) / 100),
+      0
+    );
+    const exciseTotal = items.reduce(
+      (sum, i: any) => sum + Number(i.__exciseUnit || 0) * Number(i.qty || 0),
+      0
+    );
     const discountTotal = body.discountTotal ? new Prisma.Decimal(body.discountTotal) : new Prisma.Decimal(0);
-    const total = Prisma.Decimal.max(subtotal.sub(discountTotal), new Prisma.Decimal(0));
+    const gross = subtotal.add(new Prisma.Decimal(vatTotal)).add(new Prisma.Decimal(exciseTotal));
+    const total = Prisma.Decimal.max(gross.sub(discountTotal), new Prisma.Decimal(0));
 
     const order = await prisma.order.create({
       data: {
@@ -316,7 +329,9 @@ export async function adminRoutes(app: FastifyInstance) {
         status: body.status ?? "SUBMITTED",
         total,
         discountTotal,
-        items: { create: items },
+        items: {
+          create: items.map(({ __taxRate, __exciseUnit, ...rest }: any) => rest),
+        },
       },
       include: { company: true, items: true },
     });
@@ -382,14 +397,27 @@ export async function adminRoutes(app: FastifyInstance) {
           unitPrice,
           lineTotal,
           supplierId: product.sourceSupplierId,
+          __taxRate: Number(product.taxRate || 0),
+          __exciseUnit: Number(
+            product.exciseTotal ?? (Number(product.exciseMl || 0) + Number(product.exciseProduct || 0))
+          ),
         };
       });
       const subtotal = itemsPayload.reduce(
         (sum, i) => sum.add(new Prisma.Decimal(i.lineTotal as any)),
         new Prisma.Decimal(0)
       );
+      const vatTotal = itemsPayload.reduce(
+        (sum: number, i: any) => sum + Number(i.lineTotal) * (Number(i.__taxRate || 0) / 100),
+        0
+      );
+      const exciseTotal = itemsPayload.reduce(
+        (sum: number, i: any) => sum + Number(i.__exciseUnit || 0) * Number(i.qty || 0),
+        0
+      );
       const discountValue = discountTotal || new Prisma.Decimal(0);
-      total = Prisma.Decimal.max(subtotal.sub(discountValue), new Prisma.Decimal(0));
+      const gross = subtotal.add(new Prisma.Decimal(vatTotal)).add(new Prisma.Decimal(exciseTotal));
+      total = Prisma.Decimal.max(gross.sub(discountValue), new Prisma.Decimal(0));
     }
 
     return prisma.$transaction(async (tx) => {
@@ -403,7 +431,9 @@ export async function adminRoutes(app: FastifyInstance) {
           items: itemsPayload
             ? {
                 deleteMany: {},
-                createMany: { data: itemsPayload },
+                createMany: {
+                  data: itemsPayload.map(({ __taxRate, __exciseUnit, ...rest }: any) => rest),
+                },
               }
             : undefined,
         },
@@ -953,13 +983,7 @@ export async function adminRoutes(app: FastifyInstance) {
         const product = item.product;
         const purchase = Number(product?.purchasePrice || 0);
         const rate = Number(product?.taxRate || product?.taxRateRef?.rate || 0);
-        const vatIncluded = product?.vatIncluded ?? true;
-        const vatAmount =
-          rate > 0
-            ? vatIncluded
-              ? lineTotal - lineTotal / (1 + rate / 100)
-              : lineTotal * (rate / 100)
-            : 0;
+        const vatAmount = rate > 0 ? lineTotal * (rate / 100) : 0;
         const exciseUnit = Number(
           product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
         );

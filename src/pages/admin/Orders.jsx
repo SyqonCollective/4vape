@@ -76,6 +76,10 @@ export default function AdminOrders() {
           name: i.name,
           unitPrice: Number(i.unitPrice || 0),
           qty: Number(i.qty || 1),
+          taxRate: Number(i.product?.taxRate || i.product?.taxRateRef?.rate || 0),
+          exciseTotal: i.product?.exciseTotal,
+          exciseMl: i.product?.exciseMl,
+          exciseProduct: i.product?.exciseProduct,
         }))
       );
       setEditSearchQuery("");
@@ -128,19 +132,45 @@ export default function AdminOrders() {
   }, [editSearchQuery]);
 
   const totals = useMemo(() => {
-    const subtotal = lineItems.reduce(
-      (sum, item) => sum + Number(item.unitPrice || 0) * Number(item.qty || 0),
-      0
+    const base = lineItems.reduce(
+      (sum, item) => {
+        const lineTotal = Number(item.unitPrice || 0) * Number(item.qty || 0);
+        const rate = Number(item.taxRate || 0);
+        const vat = rate > 0 ? lineTotal * (rate / 100) : 0;
+        const exciseUnit = Number(
+          item.exciseTotal ?? (Number(item.exciseMl || 0) + Number(item.exciseProduct || 0))
+        );
+        const excise = exciseUnit * Number(item.qty || 0);
+        return {
+          subtotal: sum.subtotal + lineTotal,
+          vat: sum.vat + vat,
+          excise: sum.excise + excise,
+        };
+      },
+      { subtotal: 0, vat: 0, excise: 0 }
     );
-    return { subtotal };
+    return { ...base, total: base.subtotal + base.vat + base.excise };
   }, [lineItems]);
 
   const editTotals = useMemo(() => {
-    const subtotal = editLineItems.reduce(
-      (sum, item) => sum + Number(item.unitPrice || 0) * Number(item.qty || 0),
-      0
+    const base = editLineItems.reduce(
+      (sum, item) => {
+        const lineTotal = Number(item.unitPrice || 0) * Number(item.qty || 0);
+        const rate = Number(item.taxRate || 0);
+        const vat = rate > 0 ? lineTotal * (rate / 100) : 0;
+        const exciseUnit = Number(
+          item.exciseTotal ?? (Number(item.exciseMl || 0) + Number(item.exciseProduct || 0))
+        );
+        const excise = exciseUnit * Number(item.qty || 0);
+        return {
+          subtotal: sum.subtotal + lineTotal,
+          vat: sum.vat + vat,
+          excise: sum.excise + excise,
+        };
+      },
+      { subtotal: 0, vat: 0, excise: 0 }
     );
-    return { subtotal };
+    return { ...base, total: base.subtotal + base.vat + base.excise };
   }, [editLineItems]);
 
   function addItem(product) {
@@ -159,6 +189,10 @@ export default function AdminOrders() {
           name: product.name,
           unitPrice: Number(product.price || 0),
           qty: 1,
+          taxRate: Number(product.taxRate || product.taxRateRef?.rate || 0),
+          exciseTotal: product.exciseTotal,
+          exciseMl: product.exciseMl,
+          exciseProduct: product.exciseProduct,
         },
       ];
     });
@@ -190,6 +224,10 @@ export default function AdminOrders() {
           name: product.name,
           unitPrice: Number(product.price || 0),
           qty: 1,
+          taxRate: Number(product.taxRate || product.taxRateRef?.rate || 0),
+          exciseTotal: product.exciseTotal,
+          exciseMl: product.exciseMl,
+          exciseProduct: product.exciseProduct,
         },
       ];
     });
@@ -481,8 +519,20 @@ export default function AdminOrders() {
                   <div className="order-card order-summary-card">
                     <div className="card-title">Riepilogo</div>
                     <div className="summary-row">
-                      <span>Totale ordine</span>
+                      <span>Subtotale</span>
                       <strong>{formatCurrency(totals.subtotal)}</strong>
+                    </div>
+                    <div className="summary-row">
+                      <span>IVA</span>
+                      <strong>{formatCurrency(totals.vat)}</strong>
+                    </div>
+                    <div className="summary-row">
+                      <span>Accise</span>
+                      <strong>{formatCurrency(totals.excise)}</strong>
+                    </div>
+                    <div className="summary-row total">
+                      <span>Totale ordine</span>
+                      <strong>{formatCurrency(totals.total)}</strong>
                     </div>
                     <div className="summary-actions">
                       <button className="btn ghost" onClick={() => setShowCreate(false)}>
@@ -570,8 +620,7 @@ export default function AdminOrders() {
                             const qty = Number(item.qty || 0);
                             const product = item.product;
                             const rate = Number(product?.taxRate || product?.taxRateRef?.rate || 0);
-                            const vatIncluded = product?.vatIncluded ?? true;
-                            const vat = rate > 0 ? (vatIncluded ? lineTotal - lineTotal / (1 + rate / 100) : lineTotal * (rate / 100)) : 0;
+                            const vat = rate > 0 ? lineTotal * (rate / 100) : 0;
                             const exciseUnit = Number(
                               product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
                             );
@@ -586,7 +635,7 @@ export default function AdminOrders() {
                         return (
                           <div className="summary-stack">
                             <div className="summary-row">
-                              <span>Totale ordine</span>
+                              <span>Subtotale</span>
                               <strong>{formatCurrency(totals.revenue)}</strong>
                             </div>
                             <div className="summary-row">
@@ -596,6 +645,10 @@ export default function AdminOrders() {
                             <div className="summary-row">
                               <span>Accise totali</span>
                               <strong>{formatCurrency(totals.excise)}</strong>
+                            </div>
+                            <div className="summary-row total">
+                              <span>Totale ordine</span>
+                              <strong>{formatCurrency(totals.revenue + totals.vat + totals.excise)}</strong>
                             </div>
                           </div>
                         );
@@ -746,8 +799,20 @@ export default function AdminOrders() {
                     <div className="order-card order-summary-card">
                       <div className="card-title">Riepilogo</div>
                       <div className="summary-row">
-                        <span>Totale ordine</span>
+                        <span>Subtotale</span>
                         <strong>{formatCurrency(editTotals.subtotal)}</strong>
+                      </div>
+                      <div className="summary-row">
+                        <span>IVA</span>
+                        <strong>{formatCurrency(editTotals.vat)}</strong>
+                      </div>
+                      <div className="summary-row">
+                        <span>Accise</span>
+                        <strong>{formatCurrency(editTotals.excise)}</strong>
+                      </div>
+                      <div className="summary-row total">
+                        <span>Totale ordine</span>
+                        <strong>{formatCurrency(editTotals.total)}</strong>
                       </div>
                       <div className="summary-actions">
                         <button className="btn ghost" onClick={() => setEditingOrder(null)}>
