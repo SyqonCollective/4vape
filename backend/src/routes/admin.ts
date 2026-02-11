@@ -1139,8 +1139,44 @@ export async function adminRoutes(app: FastifyInstance) {
     const user = requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
-    await prisma.product.delete({ where: { id } });
-    return reply.code(204).send();
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        children: { select: { id: true } },
+        orderItems: { select: { id: true }, take: 1 },
+      },
+    });
+    if (!product) return reply.notFound("Prodotto non trovato");
+
+    // Product is referenced by historical orders: do not hard-delete.
+    if (product.orderItems.length > 0) {
+      return reply.code(409).send({
+        message:
+          "Impossibile eliminare: prodotto presente in ordini esistenti. Impostalo come non disponibile o non pubblicato.",
+      });
+    }
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        if (product.children.length > 0) {
+          await tx.product.updateMany({
+            where: { parentId: id },
+            data: { parentId: null, parentSort: 0 },
+          });
+        }
+        await tx.productImage.deleteMany({ where: { productId: id } });
+        await tx.product.delete({ where: { id } });
+      });
+      return reply.code(204).send();
+    } catch (err: any) {
+      if (err?.code === "P2003") {
+        return reply.code(409).send({
+          message:
+            "Impossibile eliminare il prodotto perché è collegato ad altri record.",
+        });
+      }
+      throw err;
+    }
   });
 
   app.get("/suppliers", async (request, reply) => {
