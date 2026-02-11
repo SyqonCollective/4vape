@@ -58,6 +58,7 @@ export default function AdminProducts() {
   const [sortBy, setSortBy] = useState("name-asc");
   const [showCreateParent, setShowCreateParent] = useState(false);
   const [showCreateManual, setShowCreateManual] = useState(false);
+  const [importingCsv, setImportingCsv] = useState(false);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
   const [manualDraft, setManualDraft] = useState({
     name: "",
@@ -91,6 +92,7 @@ export default function AdminProducts() {
   const fileInputRef = useRef(null);
   const parentFileInputRef = useRef(null);
   const manualFileInputRef = useRef(null);
+  const csvInputRef = useRef(null);
   const categoryOptions = (() => {
     const byParent = new Map();
     for (const c of categories) {
@@ -153,6 +155,57 @@ export default function AdminProducts() {
     document.body.classList.toggle("modal-open", open);
     return () => document.body.classList.remove("modal-open");
   }, [selectedProduct, confirmDelete, showDeleteSuccess, showCreateParent, showBulkEditor]);
+
+  async function reloadProducts() {
+    try {
+      const res = await api("/admin/products");
+      setItems(res);
+    } catch {
+      setError("Impossibile caricare i prodotti");
+    }
+  }
+
+  async function exportCsv() {
+    try {
+      const res = await fetch("/api/admin/products/export", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "products_export.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Errore export CSV");
+    }
+  }
+
+  async function importCsv(file) {
+    if (!file) return;
+    setImportingCsv(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/admin/products/import", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (!res.ok) throw new Error();
+      await res.json();
+      await reloadProducts();
+    } catch {
+      setError("Errore import CSV");
+    } finally {
+      setImportingCsv(false);
+      if (csvInputRef.current) csvInputRef.current.value = "";
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -861,6 +914,19 @@ export default function AdminProducts() {
           <button className="btn ghost" onClick={openBulkEditor}>
             Modifica in bulk
           </button>
+          <button className="btn ghost" onClick={exportCsv}>
+            Export CSV
+          </button>
+          <button className="btn ghost" onClick={() => csvInputRef.current?.click()} disabled={importingCsv}>
+            {importingCsv ? "Importazione..." : "Import CSV"}
+          </button>
+          <input
+            ref={csvInputRef}
+            type="file"
+            accept=".csv"
+            style={{ display: "none" }}
+            onChange={(e) => importCsv(e.target.files?.[0])}
+          />
         </div>
         <div className="toolbar-right">
           <div className="toolbar-group">

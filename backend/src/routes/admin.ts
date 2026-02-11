@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Prisma, OrderStatus } from "@prisma/client";
 import { prisma } from "../lib/db.js";
 import { importFullFromSupplier, importStockFromSupplier } from "../jobs/importer.js";
+import { parse as parseCsv } from "csv-parse/sync";
 import jwt from "jsonwebtoken";
 import http from "node:http";
 import https from "node:https";
@@ -57,6 +58,21 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     return tax?.id || null;
   }
+
+  const toNumber = (value: any) => {
+    if (value === null || value === undefined || value === "") return undefined;
+    const cleaned = String(value).replace(/\s/g, "").replace(",", ".");
+    const num = Number(cleaned);
+    return Number.isFinite(num) ? num : undefined;
+  };
+
+  const toBool = (value: any) => {
+    if (value === null || value === undefined || value === "") return undefined;
+    const v = String(value).trim().toLowerCase();
+    if (["1", "true", "yes", "si", "sì"].includes(v)) return true;
+    if (["0", "false", "no"].includes(v)) return false;
+    return undefined;
+  };
 
   async function resolveExciseTotal(
     exciseRateId?: string | null,
@@ -509,6 +525,225 @@ export async function adminRoutes(app: FastifyInstance) {
         children: { select: { id: true, name: true, sku: true } },
       },
     });
+  });
+
+  app.get("/products/export", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const products = await prisma.product.findMany({
+      include: { taxRateRef: true, exciseRateRef: true, parent: true, sourceSupplier: true },
+      orderBy: { createdAt: "desc" },
+    });
+    const header = [
+      "sku",
+      "name",
+      "price",
+      "stockQty",
+      "brand",
+      "category",
+      "categoryId",
+      "parentSku",
+      "isParent",
+      "isUnavailable",
+      "shortDescription",
+      "description",
+      "productType",
+      "visibility",
+      "mlProduct",
+      "nicotine",
+      "taxRateId",
+      "taxRate",
+      "exciseRateId",
+      "exciseRate",
+      "exciseTotal",
+      "purchasePrice",
+      "listPrice",
+      "discountPrice",
+      "discountQty",
+      "barcode",
+      "supplier",
+    ];
+    const escape = (v: any) => {
+      const s = String(v ?? "");
+      if (s.includes(",") || s.includes("\"") || s.includes("\n")) {
+        return `"${s.replace(/\"/g, "\"\"")}"`;
+      }
+      return s;
+    };
+    const rows = products.map((p) => [
+      p.sku,
+      p.name,
+      p.price,
+      p.stockQty,
+      p.brand,
+      p.category,
+      p.categoryId,
+      p.parent?.sku || "",
+      p.isParent ? "1" : "0",
+      p.isUnavailable ? "1" : "0",
+      p.shortDescription || "",
+      p.description || "",
+      p.productType || "",
+      p.visibility || "",
+      p.mlProduct ?? "",
+      p.nicotine ?? "",
+      p.taxRateId || "",
+      p.taxRateRef?.rate ?? p.taxRate ?? "",
+      p.exciseRateId || "",
+      p.exciseRateRef?.name || "",
+      p.exciseTotal ?? "",
+      p.purchasePrice ?? "",
+      p.listPrice ?? "",
+      p.discountPrice ?? "",
+      p.discountQty ?? "",
+      p.barcode || "",
+      p.sourceSupplier?.name || "",
+    ]);
+    const csv = [header.join(","), ...rows.map((r) => r.map(escape).join(","))].join("\n");
+    reply.header("Content-Type", "text/csv; charset=utf-8");
+    reply.header("Content-Disposition", 'attachment; filename="products_export.csv"');
+    return reply.send(csv);
+  });
+
+  app.post("/products/import", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const file = await request.file();
+    if (!file) return reply.badRequest("File mancante");
+    const buf = await file.toBuffer();
+    const text = buf.toString("utf8");
+    const firstLine = text.split(/\r?\n/)[0] || "";
+    const delimiter = firstLine.includes(";") && !firstLine.includes(",") ? ";" : ",";
+    const records = parseCsv(text, {
+      columns: true,
+      skip_empty_lines: true,
+      relax_column_count: true,
+      delimiter,
+      trim: true,
+    });
+
+    const categories = await prisma.category.findMany();
+    const categoryByName = new Map(categories.map((c) => [c.name.toLowerCase(), c]));
+    const taxRates = await prisma.taxRate.findMany();
+    const taxByRate = new Map(taxRates.map((t) => [Number(t.rate), t]));
+    const exciseRates = await prisma.exciseRate.findMany();
+    const exciseByName = new Map(exciseRates.map((e) => [e.name.toLowerCase(), e]));
+
+    let updated = 0;
+    let skipped = 0;
+
+    for (const raw of records) {
+      const row: Record<string, any> = {};
+      for (const [k, v] of Object.entries(raw)) {
+        row[String(k).trim().toLowerCase()] = v;
+      }
+      const sku = row.sku || row.codice || row.codice_sku;
+      if (!sku) {
+        skipped += 1;
+        continue;
+      }
+      const product = await prisma.product.findUnique({ where: { sku: String(sku).trim() } });
+      if (!product) {
+        skipped += 1;
+        continue;
+      }
+
+      const data: any = {};
+      const name = row.name ?? row.nome;
+      if (name) data.name = String(name).trim();
+      const price = toNumber(row.price ?? row.prezzo);
+      if (price !== undefined) data.price = price;
+      const stockQty = toNumber(row.stockqty ?? row.giacenza);
+      if (stockQty !== undefined) data.stockQty = Math.max(0, Math.floor(stockQty));
+      const brand = row.brand ?? row.marca;
+      if (brand) data.brand = String(brand).trim();
+      const shortDescription = row.shortdescription ?? row.descrizionebreve;
+      if (shortDescription) data.shortDescription = String(shortDescription);
+      const description = row.description ?? row.descrizione;
+      if (description) data.description = String(description);
+      const productType = row.producttype ?? row.tipo;
+      if (productType) data.productType = String(productType).trim();
+      const visibility = row.visibility ?? row.visibilita;
+      if (visibility) data.visibility = String(visibility).trim();
+      const barcode = row.barcode ?? row.ean;
+      if (barcode) data.barcode = String(barcode).trim();
+
+      const isParent = toBool(row.isparent ?? row.padre);
+      if (isParent !== undefined) data.isParent = isParent;
+      const isUnavailable = toBool(row.isunavailable ?? row.non_disponibile);
+      if (isUnavailable !== undefined) data.isUnavailable = isUnavailable;
+
+      const mlProduct = toNumber(row.mlproduct ?? row.ml);
+      if (mlProduct !== undefined) data.mlProduct = mlProduct;
+      const nicotine = toNumber(row.nicotine ?? row.nicotina);
+      if (nicotine !== undefined) data.nicotine = nicotine;
+
+      const categoryId = row.categoryid;
+      const categoryName = row.category ?? row.categoria;
+      if (categoryId) {
+        const cat = categories.find((c) => c.id === String(categoryId));
+        if (cat) {
+          data.categoryId = cat.id;
+          data.category = cat.name;
+        }
+      } else if (categoryName) {
+        const cat = categoryByName.get(String(categoryName).toLowerCase());
+        if (cat) {
+          data.categoryId = cat.id;
+          data.category = cat.name;
+        } else {
+          data.category = String(categoryName);
+        }
+      }
+
+      const parentSku = row.parentsku ?? row.padresku;
+      if (parentSku) {
+        const parent = await prisma.product.findUnique({ where: { sku: String(parentSku).trim() } });
+        if (parent) data.parentId = parent.id;
+      }
+
+      const taxRateId = row.taxrateid;
+      const taxRate = toNumber(row.taxrate ?? row.iva);
+      if (taxRateId) {
+        data.taxRateId = String(taxRateId);
+      } else if (taxRate !== undefined) {
+        const t = taxByRate.get(taxRate);
+        if (t) data.taxRateId = t.id;
+      }
+
+      const exciseRateId = row.exciserateid;
+      const exciseRateName = row.exciserate ?? row.accisa;
+      if (exciseRateId) {
+        data.exciseRateId = String(exciseRateId);
+      } else if (exciseRateName) {
+        const e = exciseByName.get(String(exciseRateName).toLowerCase());
+        if (e) data.exciseRateId = e.id;
+      }
+
+      const exciseTotal = toNumber(row.excisetotal ?? row.accisa_calcolata);
+      if (exciseTotal !== undefined) data.exciseTotal = exciseTotal;
+
+      if (
+        data.exciseRateId !== undefined ||
+        data.mlProduct !== undefined ||
+        data.exciseTotal !== undefined
+      ) {
+        const exciseRateIdFinal =
+          data.exciseRateId !== undefined ? data.exciseRateId : product.exciseRateId;
+        const mlFinal = data.mlProduct !== undefined ? data.mlProduct : product.mlProduct;
+        const fallback = data.exciseTotal !== undefined ? data.exciseTotal : product.exciseTotal;
+        data.exciseTotal = await resolveExciseTotal(exciseRateIdFinal, mlFinal, fallback);
+      }
+
+      if (Object.keys(data).length === 0) {
+        skipped += 1;
+        continue;
+      }
+      await prisma.product.update({ where: { id: product.id }, data });
+      updated += 1;
+    }
+
+    return { updated, skipped };
   });
 
   app.get("/products/stock", async (request, reply) => {
