@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
@@ -25,10 +25,55 @@ const newRow = () => ({
 const money = (v) =>
   new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(Number(v || 0));
 
+const CSV_HEADERS = [
+  "sku",
+  "name",
+  "qty",
+  "unitCost",
+  "unitPrice",
+  "brand",
+  "category",
+  "subcategory",
+  "barcode",
+  "nicotine",
+  "mlProduct",
+  "taxRate",
+  "exciseRate",
+  "lineNote",
+];
+
+function splitCsvLine(line) {
+  const out = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (ch === ";" && !inQuotes) {
+      out.push(cur);
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  out.push(cur);
+  return out.map((v) => v.trim());
+}
+
 export default function AdminGoodsReceipts() {
+  const fileInputRef = useRef(null);
   const [rows, setRows] = useState([newRow(), newRow(), newRow()]);
   const [taxes, setTaxes] = useState([]);
   const [excises, setExcises] = useState([]);
+  const [inventorySkuSet, setInventorySkuSet] = useState(new Set());
   const [supplierName, setSupplierName] = useState("");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
@@ -38,6 +83,8 @@ export default function AdminGoodsReceipts() {
   const [success, setSuccess] = useState("");
   const [receipts, setReceipts] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [pendingImportRows, setPendingImportRows] = useState([]);
+  const [conflictSkus, setConflictSkus] = useState([]);
 
   async function loadReceipts() {
     try {
@@ -55,9 +102,14 @@ export default function AdminGoodsReceipts() {
   useEffect(() => {
     async function loadMeta() {
       try {
-        const [taxRes, exciseRes] = await Promise.all([api("/admin/taxes"), api("/admin/excises")]);
+        const [taxRes, exciseRes, invRes] = await Promise.all([
+          api("/admin/taxes"),
+          api("/admin/excises"),
+          api("/admin/inventory/items?limit=1000"),
+        ]);
         setTaxes(taxRes || []);
         setExcises(exciseRes || []);
+        setInventorySkuSet(new Set((invRes || []).map((x) => String(x.sku || "").trim()).filter(Boolean)));
       } catch {
         setError("Impossibile caricare IVA/Accise");
       }
@@ -140,6 +192,133 @@ export default function AdminGoodsReceipts() {
     });
     setRows(parsed);
     setPasteText("");
+  }
+
+  function downloadTemplateCsv() {
+    const sample = [
+      "SKU-001",
+      "Prodotto esempio",
+      "10",
+      "3.50",
+      "6.90",
+      "Brand Demo",
+      "Categoria Demo",
+      "Subcategoria Demo",
+      "1234567890123",
+      "10",
+      "10",
+      "22%",
+      "10ML CON",
+      "Nota riga",
+    ];
+    const content = `${CSV_HEADERS.join(";")}\n${sample.join(";")}\n`;
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "template_arrivo_merci.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function normalizeRateId(value, list) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    const byId = list.find((x) => x.id === raw);
+    if (byId) return byId.id;
+    const byName = list.find((x) => String(x.name || "").toLowerCase() === raw.toLowerCase());
+    if (byName) return byName.id;
+    const byRate = list.find(
+      (x) => String(x.rate || "").replace(",", ".") === raw.replace("%", "").replace(",", ".")
+    );
+    return byRate?.id || "";
+  }
+
+  async function onCsvImport(file) {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length < 2) {
+        setError("CSV vuoto o non valido");
+        return;
+      }
+      const headers = splitCsvLine(lines[0]).map((h) => h.toLowerCase());
+      const idx = (k) => headers.indexOf(k.toLowerCase());
+      const parsed = lines.slice(1).map((line) => {
+        const cols = splitCsvLine(line);
+        const taxRaw = cols[idx("taxRate")] || "";
+        const exciseRaw = cols[idx("exciseRate")] || "";
+        return {
+          sku: String(cols[idx("sku")] || "").trim(),
+          name: String(cols[idx("name")] || "").trim(),
+          qty: Number(String(cols[idx("qty")] || "1").replace(",", ".")) || 1,
+          unitCost: String(cols[idx("unitCost")] || "").trim(),
+          unitPrice: String(cols[idx("unitPrice")] || "").trim(),
+          brand: String(cols[idx("brand")] || "").trim(),
+          category: String(cols[idx("category")] || "").trim(),
+          subcategory: String(cols[idx("subcategory")] || "").trim(),
+          barcode: String(cols[idx("barcode")] || "").trim(),
+          nicotine: String(cols[idx("nicotine")] || "").trim(),
+          mlProduct: String(cols[idx("mlProduct")] || "").trim(),
+          taxRateId: normalizeRateId(taxRaw, taxes),
+          exciseRateId: normalizeRateId(exciseRaw, excises),
+          lineNote: String(cols[idx("lineNote")] || "").trim(),
+          description: "",
+          shortDescription: "",
+        };
+      }).filter((row) => row.sku && row.qty > 0);
+
+      if (!parsed.length) {
+        setError("Nessuna riga valida nel CSV");
+        return;
+      }
+
+      const conflicts = [...new Set(parsed.map((r) => r.sku).filter((sku) => inventorySkuSet.has(sku)))];
+      if (conflicts.length > 0) {
+        setPendingImportRows(parsed);
+        setConflictSkus(conflicts);
+        return;
+      }
+
+      setRows(parsed);
+      setSuccess(`CSV importato: ${parsed.length} righe caricate.`);
+    } catch {
+      setError("Errore durante import CSV");
+    }
+  }
+
+  function applyImportResolution(mode) {
+    const usedSkus = new Set([...inventorySkuSet]);
+    const rowsToApply = pendingImportRows.map((row) => {
+      if (!usedSkus.has(row.sku)) {
+        usedSkus.add(row.sku);
+        return row;
+      }
+      if (mode === "update") return row;
+      let nextSku = `${row.sku}-DUP`;
+      let counter = 1;
+      while (usedSkus.has(nextSku)) {
+        nextSku = `${row.sku}-DUP${counter}`;
+        counter += 1;
+      }
+      usedSkus.add(nextSku);
+      return {
+        ...row,
+        sku: nextSku,
+        lineNote: row.lineNote ? `${row.lineNote} | DUP da CSV` : "DUP da CSV",
+      };
+    });
+    setRows(rowsToApply);
+    setConflictSkus([]);
+    setPendingImportRows([]);
+    setSuccess(
+      mode === "update"
+        ? "CSV importato: SKU esistenti impostati in aggiornamento inventario."
+        : "CSV importato: SKU esistenti duplicati con nuovo codice."
+    );
   }
 
   async function saveReceipt() {
@@ -247,8 +426,25 @@ export default function AdminGoodsReceipts() {
               placeholder="SKU123\tProdotto A\t12\t3.50\t7.90"
             />
             <div className="actions">
+              <button className="btn ghost" onClick={downloadTemplateCsv}>
+                Scarica template CSV
+              </button>
+              <button className="btn ghost" onClick={() => fileInputRef.current?.click()}>
+                Importa CSV
+              </button>
               <button className="btn ghost" onClick={applyPaste}>Applica incolla</button>
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                onCsvImport(f);
+                e.target.value = "";
+              }}
+            />
           </div>
 
           <div className="order-card">
@@ -426,6 +622,46 @@ export default function AdminGoodsReceipts() {
                   </button>
                   <button className="btn danger" onClick={() => deleteReceipt(confirmDelete.id)}>
                     Elimina
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+      {conflictSkus.length ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => { setConflictSkus([]); setPendingImportRows([]); }}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div className="modal-title">
+                  <h3>SKU già esistenti</h3>
+                </div>
+                <button
+                  className="btn ghost"
+                  onClick={() => {
+                    setConflictSkus([]);
+                    setPendingImportRows([]);
+                  }}
+                >
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body">
+                <p>
+                  Trovati <strong>{conflictSkus.length}</strong> SKU già presenti in inventario.
+                  Vuoi aggiornare gli articoli esistenti o duplicare le voci importate?
+                </p>
+                <p className="field-hint">
+                  Esempi: {conflictSkus.slice(0, 8).join(", ")}
+                  {conflictSkus.length > 8 ? "..." : ""}
+                </p>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => applyImportResolution("update")}>
+                    Aggiorna inventario
+                  </button>
+                  <button className="btn primary" onClick={() => applyImportResolution("duplicate")}>
+                    Duplica voci
                   </button>
                 </div>
               </div>
