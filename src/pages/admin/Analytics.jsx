@@ -17,62 +17,55 @@ function formatMoney(v) {
   return `€ ${Number(v || 0).toFixed(2)}`;
 }
 
-function LineChart({ series = [], height = 200 }) {
+function calcTrend(series = []) {
+  if (!series.length) return [];
+  const n = series.length;
+  const xs = series.map((_, i) => i);
+  const ys = series.map((s) => Number(s.value || 0));
+  const sumX = xs.reduce((a, b) => a + b, 0);
+  const sumY = ys.reduce((a, b) => a + b, 0);
+  const sumXY = xs.reduce((acc, x, i) => acc + x * ys[i], 0);
+  const sumX2 = xs.reduce((acc, x) => acc + x * x, 0);
+  const denom = n * sumX2 - sumX * sumX || 1;
+  const m = (n * sumXY - sumX * sumY) / denom;
+  const b = (sumY - m * sumX) / n;
+  return xs.map((x) => ({ label: series[x].label, value: m * x + b }));
+}
+
+function TrendChart({ series = [], variant = "line" }) {
   if (!series.length) return null;
   const max = Math.max(...series.map((s) => s.value), 1);
   const min = Math.min(...series.map((s) => s.value), 0);
   const range = max - min || 1;
-  const points = series.map((s, i) => {
-    const x = (i / Math.max(series.length - 1, 1)) * 100;
-    const y = 100 - ((s.value - min) / range) * 100;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
+  const toPoint = (arr) =>
+    arr
+      .map((s, i) => {
+        const x = (i / Math.max(arr.length - 1, 1)) * 100;
+        const y = 100 - ((s.value - min) / range) * 100;
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      })
+      .join(" ");
+
+  const points = toPoint(series);
+  const trendPoints = toPoint(calcTrend(series));
+
   return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-line">
-      <polyline points={points.join(" ")} fill="none" stroke="currentColor" strokeWidth="3" />
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-trend">
+      <line x1="0" y1="25" x2="100" y2="25" className="chart-gridline" />
+      <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
+      <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
+      {variant === "area" ? <polygon points={`0,100 ${points} 100,100`} className="chart-area-fill" /> : null}
+      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="2.8" />
+      <polyline points={trendPoints} fill="none" className="chart-trendline" strokeWidth="2" />
     </svg>
   );
 }
 
-function AreaChart({ series = [] }) {
+function StackedChart({ series = [] }) {
   if (!series.length) return null;
-  const max = Math.max(...series.map((s) => s.value), 1);
-  const min = Math.min(...series.map((s) => s.value), 0);
-  const range = max - min || 1;
-  const points = series.map((s, i) => {
-    const x = (i / Math.max(series.length - 1, 1)) * 100;
-    const y = 100 - ((s.value - min) / range) * 100;
-    return { x, y };
-  });
-  const areaPoints = [
-    { x: 0, y: 100 },
-    ...points,
-    { x: 100, y: 100 },
-  ];
-  return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-area">
-      <polyline
-        points={areaPoints.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ")}
-        fill="currentColor"
-        opacity="0.18"
-      />
-      <polyline
-        points={points.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ")}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-      />
-    </svg>
-  );
-}
-
-function StackedChart({ series = [], height = 200 }) {
-  if (!series.length) return null;
-  const max = Math.max(
-    ...series.map((s) => s.revenue),
-    1
-  );
+  const max = Math.max(...series.map((s) => s.revenue), 1);
   const barWidth = 100 / Math.max(series.length, 1);
+
   return (
     <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-stacked">
       {series.map((s, i) => {
@@ -82,6 +75,9 @@ function StackedChart({ series = [], height = 200 }) {
         const vatH = (s.vat / total) * 100;
         const exciseH = (s.excise / total) * 100;
         const marginH = (s.margin / total) * 100;
+        const width = Math.max(barWidth - 2, 0.6);
+        const left = x + (barWidth - width) / 2;
+
         let y = 100;
         const rects = [];
         const pushRect = (h, cls) => {
@@ -90,13 +86,13 @@ function StackedChart({ series = [], height = 200 }) {
           rects.push(
             <rect
               key={`${s.date}-${cls}`}
-              x={x + 4}
+              x={left}
               y={y}
-              width={barWidth - 8}
+              width={width}
               height={h}
               className={cls}
-              rx={2}
-              ry={2}
+              rx={1.4}
+              ry={1.4}
             />
           );
         };
@@ -107,6 +103,134 @@ function StackedChart({ series = [], height = 200 }) {
         return rects;
       })}
     </svg>
+  );
+}
+
+const ITALY_REGIONS = [
+  { key: "Valle d'Aosta", x: 16, y: 10 },
+  { key: "Piemonte", x: 22, y: 15 },
+  { key: "Liguria", x: 20, y: 23 },
+  { key: "Lombardia", x: 30, y: 14 },
+  { key: "Trentino-Alto Adige", x: 37, y: 9 },
+  { key: "Veneto", x: 40, y: 16 },
+  { key: "Friuli-Venezia Giulia", x: 48, y: 14 },
+  { key: "Emilia-Romagna", x: 34, y: 24 },
+  { key: "Toscana", x: 30, y: 33 },
+  { key: "Umbria", x: 36, y: 35 },
+  { key: "Marche", x: 43, y: 33 },
+  { key: "Lazio", x: 34, y: 43 },
+  { key: "Abruzzo", x: 43, y: 41 },
+  { key: "Molise", x: 45, y: 48 },
+  { key: "Campania", x: 37, y: 52 },
+  { key: "Puglia", x: 50, y: 53 },
+  { key: "Basilicata", x: 44, y: 57 },
+  { key: "Calabria", x: 45, y: 66 },
+  { key: "Sicilia", x: 36, y: 86 },
+  { key: "Sardegna", x: 16, y: 66 },
+];
+
+const REGION_ALIASES = {
+  "VALLE D AOSTA": "Valle d'Aosta",
+  "VALLEDAOSTA": "Valle d'Aosta",
+  PIEMONTE: "Piemonte",
+  LIGURIA: "Liguria",
+  LOMBARDIA: "Lombardia",
+  "TRENTINO ALTO ADIGE": "Trentino-Alto Adige",
+  VENETO: "Veneto",
+  "FRIULI VENEZIA GIULIA": "Friuli-Venezia Giulia",
+  "EMILIA ROMAGNA": "Emilia-Romagna",
+  TOSCANA: "Toscana",
+  UMBRIA: "Umbria",
+  MARCHE: "Marche",
+  LAZIO: "Lazio",
+  ABRUZZO: "Abruzzo",
+  MOLISE: "Molise",
+  CAMPANIA: "Campania",
+  PUGLIA: "Puglia",
+  BASILICATA: "Basilicata",
+  CALABRIA: "Calabria",
+  SICILIA: "Sicilia",
+  SARDEGNA: "Sardegna",
+};
+
+function normalizeArea(value = "") {
+  return String(value)
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildRegionData(topGeo = []) {
+  const map = new Map(ITALY_REGIONS.map((r) => [r.key, { ...r, revenue: 0, orders: 0 }]));
+  for (const row of topGeo) {
+    const norm = normalizeArea(row.area);
+    const region =
+      REGION_ALIASES[norm] ||
+      ITALY_REGIONS.find((r) => norm.includes(normalizeArea(r.key)))?.key;
+    if (!region || !map.has(region)) continue;
+    const cur = map.get(region);
+    cur.revenue += Number(row.revenue || 0);
+    cur.orders += Number(row.orders || 0);
+  }
+  return Array.from(map.values());
+}
+
+function ItalyMap({ data = [] }) {
+  const max = Math.max(...data.map((d) => d.revenue), 1);
+  const [active, setActive] = useState(null);
+  return (
+    <div className="italy-map-wrap">
+      <svg viewBox="0 0 64 100" className="italy-map" aria-label="Cartina Italia">
+        {data.map((region) => {
+          const intensity = Math.max(region.revenue / max, 0);
+          const radius = 2.8 + intensity * 4.8;
+          const alpha = 0.2 + intensity * 0.75;
+          return (
+            <g
+              key={region.key}
+              onMouseEnter={() => setActive(region)}
+              onMouseLeave={() => setActive(null)}
+              onClick={() => setActive(region)}
+              style={{ cursor: "pointer" }}
+            >
+              <circle cx={region.x} cy={region.y} r={radius} fill={`rgba(14,165,233,${alpha})`} />
+              <circle cx={region.x} cy={region.y} r={1.4} fill="#0ea5e9" />
+            </g>
+          );
+        })}
+      </svg>
+      <div className="italy-map-side">
+        <div className="muted">Top aree nel periodo</div>
+        <div className="table compact">
+          <div className="row header">
+            <div>Area</div>
+            <div>Ordini</div>
+            <div>Fatturato</div>
+          </div>
+          {data
+            .filter((d) => d.revenue > 0)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 8)
+            .map((d) => (
+              <div className="row" key={d.key}>
+                <div>{d.key}</div>
+                <div>{d.orders}</div>
+                <div>{formatMoney(d.revenue)}</div>
+              </div>
+            ))}
+        </div>
+        {active ? (
+          <div className="italy-active">
+            <strong>{active.key}</strong>
+            <div>Ordini: {active.orders}</div>
+            <div>Fatturato: {formatMoney(active.revenue)}</div>
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -139,6 +263,7 @@ export default function AdminAnalytics() {
     topProducts: [],
     topSuppliers: [],
     topCategories: [],
+    topGeo: [],
   });
 
   async function load(range) {
@@ -149,7 +274,7 @@ export default function AdminAnalytics() {
         `/admin/analytics?start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}`
       );
       setData(res);
-    } catch (err) {
+    } catch {
       setError("Impossibile caricare analytics");
     } finally {
       setLoading(false);
@@ -162,6 +287,7 @@ export default function AdminAnalytics() {
 
   const revenueSeries = data.daily.map((d) => ({ label: d.date, value: d.revenue }));
   const costSeries = data.daily.map((d) => ({ label: d.date, value: d.cost }));
+  const regionData = buildRegionData(data.topGeo || []);
   const stackedSeries = data.daily.map((d) => ({
     date: d.date,
     revenue: d.revenue,
@@ -206,25 +332,13 @@ export default function AdminAnalytics() {
         <div className="analytics-filters">
           <label>
             Da
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </label>
           <label>
             A
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </label>
-          <button
-            className="btn primary"
-            onClick={() => load({ start: startDate, end: endDate })}
-            disabled={loading}
-          >
+          <button className="btn primary" onClick={() => load({ start: startDate, end: endDate })} disabled={loading}>
             {loading ? "Carico..." : "Aggiorna"}
           </button>
         </div>
@@ -255,92 +369,42 @@ export default function AdminAnalytics() {
       </div>
 
       <div className="cards analytics-cards">
-        <div className="card">
-          <div className="card-label">Fatturato</div>
-          <div className="card-value">{formatMoney(data.totals.revenue)}</div>
-          <div className="card-sub">Ordini nel periodo</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Costo prodotti</div>
-          <div className="card-value">{formatMoney(data.totals.cost)}</div>
-          <div className="card-sub">Costo fornitore stimato</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Margine lordo</div>
-          <div className="card-value">{formatMoney(data.totals.grossMargin)}</div>
-          <div className="card-sub">Senza tasse</div>
-        </div>
-        <div className="card">
-          <div className="card-label">IVA</div>
-          <div className="card-value">{formatMoney(data.totals.vat)}</div>
-          <div className="card-sub">Calcolata sul prezzo</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Accise</div>
-          <div className="card-value">{formatMoney(data.totals.excise)}</div>
-          <div className="card-sub">Totale accise</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Ordini / Pezzi</div>
-          <div className="card-value">{data.totals.orders}</div>
-          <div className="card-sub">{data.totals.items} articoli</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Margine netto</div>
-          <div className="card-value">{formatMoney(data.totals.margin)}</div>
-          <div className="card-sub">Dopo tasse</div>
-        </div>
-        <div className="card">
-          <div className="card-label">AOV</div>
-          <div className="card-value">{formatMoney(data.kpis.avgOrderValue)}</div>
-          <div className="card-sub">Media ordine</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Articoli / ordine</div>
-          <div className="card-value">{Number(data.kpis.avgItemsPerOrder || 0).toFixed(2)}</div>
-          <div className="card-sub">Media pezzi</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Margine %</div>
-          <div className="card-value">{Number(data.kpis.marginPct || 0).toFixed(1)}%</div>
-          <div className="card-sub">Sul fatturato</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Incidenza IVA</div>
-          <div className="card-value">{Number(data.kpis.vatPct || 0).toFixed(1)}%</div>
-          <div className="card-sub">Media periodo</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Incidenza accise</div>
-          <div className="card-value">{Number(data.kpis.excisePct || 0).toFixed(1)}%</div>
-          <div className="card-sub">Media periodo</div>
-        </div>
+        <div className="card"><div className="card-label">Fatturato</div><div className="card-value">{formatMoney(data.totals.revenue)}</div><div className="card-sub">Ordini nel periodo</div></div>
+        <div className="card"><div className="card-label">Costo prodotti</div><div className="card-value">{formatMoney(data.totals.cost)}</div><div className="card-sub">Costo fornitore stimato</div></div>
+        <div className="card"><div className="card-label">Margine lordo</div><div className="card-value">{formatMoney(data.totals.grossMargin)}</div><div className="card-sub">Senza tasse</div></div>
+        <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Calcolata sul prezzo</div></div>
+        <div className="card"><div className="card-label">Accise</div><div className="card-value">{formatMoney(data.totals.excise)}</div><div className="card-sub">Totale accise</div></div>
+        <div className="card"><div className="card-label">Ordini / Pezzi</div><div className="card-value">{data.totals.orders}</div><div className="card-sub">{data.totals.items} articoli</div></div>
       </div>
 
       <div className="panel analytics-grid">
         <div className="analytics-panel">
           <div className="panel-header">
             <div>
-              <h2>Fatturato vs Costi</h2>
-              <div className="muted">Andamento giornaliero</div>
+              <h2>Fatturato vs Costi (trend)</h2>
+              <div className="muted">Linee + trendline</div>
             </div>
           </div>
           <div className="chart-stack">
             <div className="chart-row">
               <span className="chart-label revenue">Fatturato</span>
-              <AreaChart series={revenueSeries} />
+              <div className="trend-revenue">
+                <TrendChart series={revenueSeries} variant="area" />
+              </div>
             </div>
             <div className="chart-row">
               <span className="chart-label cost">Costi</span>
-              <LineChart series={costSeries} />
+              <div className="trend-cost">
+                <TrendChart series={costSeries} variant="line" />
+              </div>
             </div>
           </div>
         </div>
         <div className="analytics-panel">
           <div className="panel-header">
             <div>
-              <h2>Stacked taxes</h2>
-              <div className="muted">Costi, IVA, accise, margine</div>
+              <h2>Composizione margine</h2>
+              <div className="muted">Costi, IVA, accise, margine netto</div>
             </div>
           </div>
           <StackedChart series={stackedSeries} />
@@ -351,68 +415,39 @@ export default function AdminAnalytics() {
         <div className="analytics-panel">
           <div className="panel-header">
             <div>
-              <h2>Prodotti top</h2>
-              <div className="muted">Per fatturato</div>
+              <h2>Cartina Italia interattiva</h2>
+              <div className="muted">Aree con più vendite nel periodo selezionato</div>
             </div>
           </div>
+          <ItalyMap data={regionData} />
+        </div>
+      </div>
+
+      <div className="panel analytics-grid">
+        <div className="analytics-panel">
+          <div className="panel-header"><div><h2>Prodotti top</h2><div className="muted">Per fatturato</div></div></div>
           <div className="table compact">
-            <div className="row header">
-              <div>Prodotto</div>
-              <div>SKU</div>
-              <div>Fatturato</div>
-              <div>Q.tà</div>
-            </div>
+            <div className="row header"><div>Prodotto</div><div>SKU</div><div>Fatturato</div><div>Q.tà</div></div>
             {data.topProducts.map((p) => (
-              <div className="row" key={p.id}>
-                <div>{p.name}</div>
-                <div className="mono">{p.sku}</div>
-                <div>{formatMoney(p.revenue)}</div>
-                <div>{p.qty}</div>
-              </div>
+              <div className="row" key={p.id}><div>{p.name}</div><div className="mono">{p.sku}</div><div>{formatMoney(p.revenue)}</div><div>{p.qty}</div></div>
             ))}
           </div>
         </div>
         <div className="analytics-panel">
-          <div className="panel-header">
-            <div>
-              <h2>Fornitori top</h2>
-              <div className="muted">Per fatturato</div>
-            </div>
-          </div>
+          <div className="panel-header"><div><h2>Fornitori top</h2><div className="muted">Per fatturato</div></div></div>
           <div className="table compact">
-            <div className="row header">
-              <div>Fornitore</div>
-              <div>Fatturato</div>
-              <div>Articoli</div>
-            </div>
+            <div className="row header"><div>Fornitore</div><div>Fatturato</div><div>Articoli</div></div>
             {data.topSuppliers.map((s) => (
-              <div className="row" key={s.id}>
-                <div>{s.name}</div>
-                <div>{formatMoney(s.revenue)}</div>
-                <div>{s.qty}</div>
-              </div>
+              <div className="row" key={s.id}><div>{s.name}</div><div>{formatMoney(s.revenue)}</div><div>{s.qty}</div></div>
             ))}
           </div>
         </div>
         <div className="analytics-panel">
-          <div className="panel-header">
-            <div>
-              <h2>Categorie top</h2>
-              <div className="muted">Fatturato per categoria</div>
-            </div>
-          </div>
+          <div className="panel-header"><div><h2>Categorie top</h2><div className="muted">Fatturato per categoria</div></div></div>
           <div className="table compact">
-            <div className="row header">
-              <div>Categoria</div>
-              <div>Fatturato</div>
-              <div>Articoli</div>
-            </div>
+            <div className="row header"><div>Categoria</div><div>Fatturato</div><div>Articoli</div></div>
             {data.topCategories.map((c) => (
-              <div className="row" key={c.name}>
-                <div>{c.name}</div>
-                <div>{formatMoney(c.revenue)}</div>
-                <div>{c.qty}</div>
-              </div>
+              <div className="row" key={c.name}><div>{c.name}</div><div>{formatMoney(c.revenue)}</div><div>{c.qty}</div></div>
             ))}
           </div>
         </div>

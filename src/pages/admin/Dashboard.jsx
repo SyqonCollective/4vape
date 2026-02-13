@@ -1,20 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
-function Sparkline({ points = [] }) {
-  if (!points.length) return null;
-  const max = Math.max(...points, 1);
-  const min = Math.min(...points, 0);
+function TrendSpark({ series = [] }) {
+  if (!series.length) return null;
+  const max = Math.max(...series.map((p) => Math.max(p.orders, p.revenue)), 1);
+  const min = 0;
   const range = max - min || 1;
-  const coords = points.map((v, i) => {
-    const x = (i / Math.max(points.length - 1, 1)) * 100;
-    const y = 100 - ((v - min) / range) * 100;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
+
+  const points = (key) =>
+    series
+      .map((p, i) => {
+        const x = (i / Math.max(series.length - 1, 1)) * 100;
+        const y = 100 - ((Number(p[key] || 0) - min) / range) * 100;
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      })
+      .join(" ");
+
   return (
     <svg viewBox="0 0 100 100" className="sparkline" preserveAspectRatio="none">
-      <polyline points={coords.join(" ")} fill="none" stroke="currentColor" strokeWidth="3" />
+      <line x1="0" y1="25" x2="100" y2="25" className="chart-gridline" />
+      <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
+      <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
+      <polyline points={points("orders")} fill="none" stroke="#0ea5e9" strokeWidth="2.4" />
+      <polyline points={points("revenue")} fill="none" stroke="#22c55e" strokeWidth="2.2" />
     </svg>
   );
 }
@@ -42,7 +51,7 @@ export default function AdminDashboard() {
         setStats(res.totals);
         setDaily(res.daily || []);
         setRecent(res.recentOrders || []);
-      } catch (err) {
+      } catch {
         setError("Impossibile caricare i dati");
       }
     }
@@ -51,6 +60,16 @@ export default function AdminDashboard() {
       active = false;
     };
   }, []);
+
+  const trendSeries = useMemo(
+    () =>
+      daily.map((d) => ({
+        date: d.date,
+        orders: Number(d.count || 0),
+        revenue: Number(d.total || 0),
+      })),
+    [daily]
+  );
 
   return (
     <section>
@@ -88,9 +107,9 @@ export default function AdminDashboard() {
 
       <div className="panel grid-2">
         <div>
-          <h2>Andamento ordini (14 giorni)</h2>
-          <Sparkline points={daily.map((d) => d.count)} />
-          <div className="muted">Ultimi 14 giorni — trend ordini</div>
+          <h2>Trend ordini/fatturato (14 giorni)</h2>
+          <TrendSpark series={trendSeries} />
+          <div className="muted">Azzurro = ordini, verde = fatturato</div>
         </div>
         <div>
           <h2>Ordini recenti</h2>

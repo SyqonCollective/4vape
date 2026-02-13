@@ -117,7 +117,7 @@ export default function AdminLayout() {
         const fresh = incoming.filter((x) => !prevIds.has(x.id));
 
         if (!firstNotifLoadRef.current && fresh.length > 0) {
-          const hasOrder = fresh.some((x) => x.type === "NEW_ORDER");
+          const hasOrder = fresh.some((x) => x.type === "ORDER_PAID_OR_COMPLETED");
           const hasOther = fresh.some((x) => x.type !== "NEW_ORDER");
           if (hasOrder && saleAudioRef.current) {
             saleAudioRef.current.currentTime = 0;

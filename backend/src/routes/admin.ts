@@ -1307,6 +1307,9 @@ export async function adminRoutes(app: FastifyInstance) {
         status: { in: revenueStatuses },
       },
       include: {
+        company: {
+          select: { name: true, province: true, city: true },
+        },
         items: {
           include: {
             product: {
@@ -1355,11 +1358,21 @@ export async function adminRoutes(app: FastifyInstance) {
     const productAgg = new Map<string, { id: string; name: string; sku: string; revenue: number; qty: number }>();
     const supplierAgg = new Map<string, { id: string; name: string; revenue: number; qty: number }>();
     const categoryAgg = new Map<string, { name: string; revenue: number; qty: number; cost: number }>();
+    const geoAgg = new Map<string, { area: string; revenue: number; orders: number }>();
 
     for (const order of orders) {
       const key = order.createdAt.toISOString().slice(0, 10);
       const idx = dayIndex.get(key);
       const orderRevenue = Number(order.total || 0);
+      const area =
+        order.company?.province?.trim() ||
+        order.company?.city?.trim() ||
+        order.company?.name?.trim() ||
+        "N/D";
+      const geo = geoAgg.get(area) || { area, revenue: 0, orders: 0 };
+      geo.revenue += orderRevenue;
+      geo.orders += 1;
+      geoAgg.set(area, geo);
       if (idx != null) {
         days[idx].orders += 1;
         days[idx].revenue += orderRevenue;
@@ -1448,6 +1461,9 @@ export async function adminRoutes(app: FastifyInstance) {
     const topCategories = Array.from(categoryAgg.values())
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 8);
+    const topGeo = Array.from(geoAgg.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 20);
 
     const grossMargin = revenue - cost;
     const netRevenue = revenue - vat - excise;
@@ -1481,6 +1497,7 @@ export async function adminRoutes(app: FastifyInstance) {
       topProducts,
       topSuppliers,
       topCategories,
+      topGeo,
     };
   });
 
@@ -2912,14 +2929,16 @@ export async function adminRoutes(app: FastifyInstance) {
         message: `${r.company?.name || r.user?.email || r.contactName || "Cliente"} · Ordine ${r.orderNumber}`,
         href: "/admin/returns",
       })),
-      ...orders.map((o) => ({
-        id: `order:${o.id}`,
-        type: "NEW_ORDER",
-        createdAt: o.createdAt,
-        title: "Nuovo ordine",
-        message: `${o.company?.name || "Azienda"} · Stato ${o.status}`,
-        href: "/admin/orders",
-      })),
+      ...orders
+        .filter((o) => o.status === "APPROVED" || o.status === "FULFILLED")
+        .map((o) => ({
+          id: `order:${o.id}`,
+          type: "ORDER_PAID_OR_COMPLETED",
+          createdAt: o.createdAt,
+          title: o.status === "FULFILLED" ? "Ordine completato" : "Ordine pagato",
+          message: `${o.company?.name || "Azienda"} · Stato ${o.status}`,
+          href: "/admin/orders",
+        })),
       ...companies.map((c) => ({
         id: `company:${c.id}`,
         type: "NEW_COMPANY_REQUEST",
