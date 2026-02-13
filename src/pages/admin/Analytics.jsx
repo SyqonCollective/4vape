@@ -195,6 +195,9 @@ function buildRegionData(topGeo = []) {
 function ItalyMap({ data = [] }) {
   const max = Math.max(...data.map((d) => d.revenue), 1);
   const [active, setActive] = useState(null);
+  // Global fine-tune for this specific SVG: points were slightly shifted to the east/south.
+  const MAP_X_SHIFT = -118;
+  const MAP_Y_SHIFT = -72;
   return (
     <div className="italy-map-wrap">
       <div className="italy-map-canvas">
@@ -202,8 +205,10 @@ function ItalyMap({ data = [] }) {
         <svg viewBox="0 0 1600 2000" className="italy-map-overlay" aria-hidden="true">
           {data.map((region) => {
             const intensity = Math.max(region.revenue / max, 0);
-            const radius = 10 + intensity * 24;
-            const alpha = 0.2 + intensity * 0.65;
+            const radius = 18 + intensity * 34;
+            const alpha = 0.28 + intensity * 0.62;
+            const cx = region.x + MAP_X_SHIFT;
+            const cy = region.y + MAP_Y_SHIFT;
             return (
               <g
                 key={region.key}
@@ -212,9 +217,9 @@ function ItalyMap({ data = [] }) {
                 onClick={() => setActive(region)}
                 style={{ cursor: "pointer" }}
               >
-                <circle cx={region.x} cy={region.y} r={radius + 3} fill={`rgba(14,165,233,${alpha * 0.35})`} />
-                <circle cx={region.x} cy={region.y} r={radius} fill={`rgba(14,165,233,${alpha})`} />
-                <circle cx={region.x} cy={region.y} r={5} fill="#0369a1" />
+                <circle cx={cx} cy={cy} r={radius + 7} fill={`rgba(14,165,233,${alpha * 0.24})`} />
+                <circle cx={cx} cy={cy} r={radius} fill={`rgba(14,165,233,${alpha})`} />
+                <circle cx={cx} cy={cy} r={7.5} fill="#0369a1" />
               </g>
             );
           })}
