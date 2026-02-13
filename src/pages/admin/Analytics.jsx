@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
+import italyMapAsset from "../../../map.svg";
 
 function toDateInput(date) {
   return date.toISOString().slice(0, 10);
@@ -34,6 +35,14 @@ function calcTrend(series = []) {
 
 function TrendChart({ series = [], variant = "line" }) {
   if (!series.length) return null;
+  if (series.length === 1) {
+    return (
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-trend">
+        <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
+        <circle cx="50" cy="50" r="3.2" fill="currentColor" />
+      </svg>
+    );
+  }
   const max = Math.max(...series.map((s) => s.value), 1);
   const min = Math.min(...series.map((s) => s.value), 0);
   const range = max - min || 1;
@@ -57,6 +66,11 @@ function TrendChart({ series = [], variant = "line" }) {
       {variant === "area" ? <polygon points={`0,100 ${points} 100,100`} className="chart-area-fill" /> : null}
       <polyline points={points} fill="none" stroke="currentColor" strokeWidth="2.8" />
       <polyline points={trendPoints} fill="none" className="chart-trendline" strokeWidth="2" />
+      {series.map((s, i) => {
+        const x = (i / Math.max(series.length - 1, 1)) * 100;
+        const y = 100 - ((s.value - min) / range) * 100;
+        return <circle key={`${s.label}-${i}`} cx={x} cy={y} r="1.7" fill="currentColor" opacity="0.75" />;
+      })}
     </svg>
   );
 }
@@ -107,26 +121,26 @@ function StackedChart({ series = [] }) {
 }
 
 const ITALY_REGIONS = [
-  { key: "Valle d'Aosta", x: 16, y: 10 },
-  { key: "Piemonte", x: 22, y: 15 },
-  { key: "Liguria", x: 20, y: 23 },
-  { key: "Lombardia", x: 30, y: 14 },
-  { key: "Trentino-Alto Adige", x: 37, y: 9 },
-  { key: "Veneto", x: 40, y: 16 },
-  { key: "Friuli-Venezia Giulia", x: 48, y: 14 },
-  { key: "Emilia-Romagna", x: 34, y: 24 },
-  { key: "Toscana", x: 30, y: 33 },
-  { key: "Umbria", x: 36, y: 35 },
-  { key: "Marche", x: 43, y: 33 },
-  { key: "Lazio", x: 34, y: 43 },
-  { key: "Abruzzo", x: 43, y: 41 },
-  { key: "Molise", x: 45, y: 48 },
-  { key: "Campania", x: 37, y: 52 },
-  { key: "Puglia", x: 50, y: 53 },
-  { key: "Basilicata", x: 44, y: 57 },
-  { key: "Calabria", x: 45, y: 66 },
-  { key: "Sicilia", x: 36, y: 86 },
-  { key: "Sardegna", x: 16, y: 66 },
+  { key: "Valle d'Aosta", x: 408, y: 192 },
+  { key: "Piemonte", x: 532, y: 286 },
+  { key: "Liguria", x: 500, y: 402 },
+  { key: "Lombardia", x: 728, y: 272 },
+  { key: "Trentino-Alto Adige", x: 882, y: 184 },
+  { key: "Veneto", x: 958, y: 288 },
+  { key: "Friuli-Venezia Giulia", x: 1108, y: 272 },
+  { key: "Emilia-Romagna", x: 820, y: 434 },
+  { key: "Toscana", x: 748, y: 604 },
+  { key: "Umbria", x: 872, y: 664 },
+  { key: "Marche", x: 986, y: 636 },
+  { key: "Lazio", x: 842, y: 824 },
+  { key: "Abruzzo", x: 996, y: 786 },
+  { key: "Molise", x: 1040, y: 898 },
+  { key: "Campania", x: 886, y: 1004 },
+  { key: "Puglia", x: 1158, y: 1018 },
+  { key: "Basilicata", x: 1024, y: 1126 },
+  { key: "Calabria", x: 1046, y: 1340 },
+  { key: "Sicilia", x: 810, y: 1732 },
+  { key: "Sardegna", x: 468, y: 1326 },
 ];
 
 const REGION_ALIASES = {
@@ -183,25 +197,29 @@ function ItalyMap({ data = [] }) {
   const [active, setActive] = useState(null);
   return (
     <div className="italy-map-wrap">
-      <svg viewBox="0 0 64 100" className="italy-map" aria-label="Cartina Italia">
-        {data.map((region) => {
-          const intensity = Math.max(region.revenue / max, 0);
-          const radius = 2.8 + intensity * 4.8;
-          const alpha = 0.2 + intensity * 0.75;
-          return (
-            <g
-              key={region.key}
-              onMouseEnter={() => setActive(region)}
-              onMouseLeave={() => setActive(null)}
-              onClick={() => setActive(region)}
-              style={{ cursor: "pointer" }}
-            >
-              <circle cx={region.x} cy={region.y} r={radius} fill={`rgba(14,165,233,${alpha})`} />
-              <circle cx={region.x} cy={region.y} r={1.4} fill="#0ea5e9" />
-            </g>
-          );
-        })}
-      </svg>
+      <div className="italy-map-canvas">
+        <img src={italyMapAsset} className="italy-map" alt="Cartina Italia" />
+        <svg viewBox="0 0 1600 2000" className="italy-map-overlay" aria-hidden="true">
+          {data.map((region) => {
+            const intensity = Math.max(region.revenue / max, 0);
+            const radius = 10 + intensity * 24;
+            const alpha = 0.2 + intensity * 0.65;
+            return (
+              <g
+                key={region.key}
+                onMouseEnter={() => setActive(region)}
+                onMouseLeave={() => setActive(null)}
+                onClick={() => setActive(region)}
+                style={{ cursor: "pointer" }}
+              >
+                <circle cx={region.x} cy={region.y} r={radius + 3} fill={`rgba(14,165,233,${alpha * 0.35})`} />
+                <circle cx={region.x} cy={region.y} r={radius} fill={`rgba(14,165,233,${alpha})`} />
+                <circle cx={region.x} cy={region.y} r={5} fill="#0369a1" />
+              </g>
+            );
+          })}
+        </svg>
+      </div>
       <div className="italy-map-side">
         <div className="muted">Top aree nel periodo</div>
         <div className="table compact">
@@ -213,7 +231,7 @@ function ItalyMap({ data = [] }) {
           {data
             .filter((d) => d.revenue > 0)
             .sort((a, b) => b.revenue - a.revenue)
-            .slice(0, 8)
+            .slice(0, 10)
             .map((d) => (
               <div className="row" key={d.key}>
                 <div>{d.key}</div>

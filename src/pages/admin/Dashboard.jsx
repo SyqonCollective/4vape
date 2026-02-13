@@ -2,28 +2,51 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
+function calcTrend(values = []) {
+  if (!values.length) return [];
+  const n = values.length;
+  const sumX = ((n - 1) * n) / 2;
+  const sumX2 = ((n - 1) * n * (2 * n - 1)) / 6;
+  const sumY = values.reduce((a, b) => a + b, 0);
+  const sumXY = values.reduce((acc, y, x) => acc + x * y, 0);
+  const denom = n * sumX2 - sumX * sumX || 1;
+  const m = (n * sumXY - sumX * sumY) / denom;
+  const b = (sumY - m * sumX) / n;
+  return values.map((_, x) => m * x + b);
+}
+
 function TrendSpark({ series = [] }) {
   if (!series.length) return null;
-  const max = Math.max(...series.map((p) => Math.max(p.orders, p.revenue)), 1);
-  const min = 0;
-  const range = max - min || 1;
+  const ordersValues = series.map((p) => Number(p.orders || 0));
+  const revenueValues = series.map((p) => Number(p.revenue || 0));
+  const ordersMin = Math.min(...ordersValues);
+  const ordersMax = Math.max(...ordersValues, 1);
+  const revenueMin = Math.min(...revenueValues);
+  const revenueMax = Math.max(...revenueValues, 1);
+  const ordersRange = ordersMax - ordersMin || 1;
+  const revenueRange = revenueMax - revenueMin || 1;
 
-  const points = (key) =>
+  const points = (values, min, range) =>
     series
-      .map((p, i) => {
+      .map((_, i) => {
         const x = (i / Math.max(series.length - 1, 1)) * 100;
-        const y = 100 - ((Number(p[key] || 0) - min) / range) * 100;
+        const y = 100 - ((Number(values[i] || 0) - min) / range) * 100;
         return `${x.toFixed(2)},${y.toFixed(2)}`;
       })
       .join(" ");
+
+  const ordersTrend = calcTrend(ordersValues);
+  const revenueTrend = calcTrend(revenueValues);
 
   return (
     <svg viewBox="0 0 100 100" className="sparkline" preserveAspectRatio="none">
       <line x1="0" y1="25" x2="100" y2="25" className="chart-gridline" />
       <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
       <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
-      <polyline points={points("orders")} fill="none" stroke="#0ea5e9" strokeWidth="2.4" />
-      <polyline points={points("revenue")} fill="none" stroke="#22c55e" strokeWidth="2.2" />
+      <polyline points={points(ordersValues, ordersMin, ordersRange)} fill="none" stroke="#0ea5e9" strokeWidth="2.4" />
+      <polyline points={points(revenueValues, revenueMin, revenueRange)} fill="none" stroke="#22c55e" strokeWidth="2.2" />
+      <polyline points={points(ordersTrend, ordersMin, ordersRange)} fill="none" className="chart-trendline chart-trendline-orders" strokeWidth="1.8" />
+      <polyline points={points(revenueTrend, revenueMin, revenueRange)} fill="none" className="chart-trendline chart-trendline-revenue" strokeWidth="1.8" />
     </svg>
   );
 }
@@ -109,7 +132,7 @@ export default function AdminDashboard() {
         <div>
           <h2>Trend ordini/fatturato (14 giorni)</h2>
           <TrendSpark series={trendSeries} />
-          <div className="muted">Azzurro = ordini, verde = fatturato</div>
+          <div className="muted">Azzurro = ordini (scala dedicata), verde = fatturato (scala dedicata)</div>
         </div>
         <div>
           <h2>Ordini recenti</h2>
