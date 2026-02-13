@@ -2355,6 +2355,36 @@ export async function adminRoutes(app: FastifyInstance) {
     return updated;
   });
 
+  app.patch("/inventory/quick-qty", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        changes: z
+          .array(
+            z.object({
+              id: z.string().min(1),
+              stockQty: z.number().int().min(0),
+            })
+          )
+          .min(1),
+      })
+      .parse(request.body);
+
+    const result = await prisma.$transaction(async (tx) => {
+      let updated = 0;
+      for (const change of body.changes) {
+        await tx.internalInventoryItem.update({
+          where: { id: change.id },
+          data: { stockQty: change.stockQty },
+        });
+        updated += 1;
+      }
+      return { updated };
+    });
+    return result;
+  });
+
   app.get("/goods-receipts", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -2537,6 +2567,55 @@ export async function adminRoutes(app: FastifyInstance) {
     });
 
     return reply.code(201).send(result);
+  });
+
+  app.delete("/goods-receipts/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+
+    const receipt = await prisma.goodsReceipt.findUnique({
+      where: { id },
+      include: { lines: true },
+    });
+    if (!receipt) return reply.notFound("Arrivo merci non trovato");
+
+    const result = await prisma.$transaction(async (tx) => {
+      const qtyByItem = new Map<string, number>();
+      for (const line of receipt.lines) {
+        qtyByItem.set(line.itemId, (qtyByItem.get(line.itemId) || 0) + Number(line.qty || 0));
+      }
+
+      let deletedItems = 0;
+      let updatedItems = 0;
+
+      for (const [itemId, qtyToRevert] of qtyByItem.entries()) {
+        const item = await tx.internalInventoryItem.findUnique({ where: { id: itemId } });
+        if (!item) continue;
+        const nextQty = Number(item.stockQty || 0) - qtyToRevert;
+        if (nextQty <= 0) {
+          await tx.internalInventoryItem.delete({ where: { id: itemId } });
+          deletedItems += 1;
+        } else {
+          await tx.internalInventoryItem.update({
+            where: { id: itemId },
+            data: { stockQty: nextQty },
+          });
+          updatedItems += 1;
+        }
+      }
+
+      await tx.goodsReceipt.delete({ where: { id } });
+
+      return {
+        deletedReceipt: id,
+        revertedLines: receipt.lines.length,
+        updatedItems,
+        deletedItems,
+      };
+    });
+
+    return result;
   });
 
   app.get("/suppliers/:id/image", async (request, reply) => {

@@ -2796,6 +2796,61 @@ button {
   width: min(980px, 94vw);
 }
 
+.inventory-edit-modal {
+  width: min(1100px, 96vw);
+  max-height: calc(100vh - 48px);
+}
+
+.inventory-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.inventory-edit-grid .full {
+  grid-column: 1 / -1;
+}
+
+.inventory-edit-grid label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.inventory-qty-modal {
+  width: min(900px, 94vw);
+  max-height: calc(100vh - 48px);
+}
+
+.inventory-qty-list {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  overflow: hidden;
+  max-height: 56vh;
+  overflow-y: auto;
+}
+
+.inventory-qty-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.inventory-qty-row.header {
+  background: #f8fafc;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 700;
+}
+
 .success-banner {
   margin: 10px 0 12px;
   background: rgba(16, 185, 129, 0.12);
@@ -2845,12 +2900,12 @@ button {
 
 .goods-row {
   display: grid;
-  grid-template-columns: 120px minmax(220px, 1.6fr) 80px 110px 110px 120px 120px 90px 90px 140px 160px 100px;
+  grid-template-columns: 120px minmax(220px, 1.6fr) 80px 110px 110px 120px 120px 90px 90px 140px 160px 180px 100px;
   gap: 8px;
   padding: 8px;
   align-items: center;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1550px;
+  min-width: 1720px;
 }
 
 .goods-row.header {
@@ -2886,6 +2941,12 @@ button {
   padding: 10px 12px;
 }
 
+.goods-receipt-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 @media (max-width: 1200px) {
   .goods-layout {
     grid-template-columns: 1fr;
@@ -2899,5 +2960,13 @@ button {
 
   .goods-row.header {
     display: none;
+  }
+
+  .inventory-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventory-qty-row {
+    grid-template-columns: 90px 1fr;
   }
 }

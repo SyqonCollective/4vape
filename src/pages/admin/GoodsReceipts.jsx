@@ -18,6 +18,7 @@ const newRow = () => ({
   mlProduct: "",
   taxRateId: "",
   exciseRateId: "",
+  lineNote: "",
 });
 
 const money = (v) =>
@@ -130,6 +131,7 @@ export default function AdminGoodsReceipts() {
         mlProduct: String(cols[10] || "").trim(),
         taxRateId: "",
         exciseRateId: "",
+        lineNote: "",
         description: "",
         shortDescription: "",
       };
@@ -169,6 +171,7 @@ export default function AdminGoodsReceipts() {
             mlProduct: r.mlProduct === "" ? null : Number(r.mlProduct),
             taxRateId: r.taxRateId || null,
             exciseRateId: r.exciseRateId || null,
+            lineNote: r.lineNote || null,
           })),
         }),
       });
@@ -184,6 +187,20 @@ export default function AdminGoodsReceipts() {
       setError("Impossibile salvare arrivo merci");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function deleteReceipt(id) {
+    const ok = window.confirm(
+      "Eliminare questo arrivo merci? Le giacenze inventario verranno stornate automaticamente."
+    );
+    if (!ok) return;
+    try {
+      await api(`/admin/goods-receipts/${id}`, { method: "DELETE" });
+      setSuccess("Arrivo merci eliminato correttamente.");
+      await loadReceipts();
+    } catch {
+      setError("Impossibile eliminare arrivo merci");
     }
   }
 
@@ -213,7 +230,7 @@ export default function AdminGoodsReceipts() {
                 <input value={reference} onChange={(e) => setReference(e.target.value)} />
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
-                <label>Note</label>
+                <label>Note arrivo merci</label>
                 <input value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
             </div>
@@ -253,6 +270,7 @@ export default function AdminGoodsReceipts() {
                 <div>ML</div>
                 <div>IVA</div>
                 <div>Accisa</div>
+                <div>Nota riga</div>
                 <div></div>
               </div>
               {rows.map((row, idx) => (
@@ -312,6 +330,11 @@ export default function AdminGoodsReceipts() {
                       </option>
                     ))}
                   </select>
+                  <input
+                    value={row.lineNote}
+                    onChange={(e) => updateRow(idx, { lineNote: e.target.value })}
+                    placeholder="Nota"
+                  />
                   <button className="btn ghost small" onClick={() => removeRow(idx)}>Rimuovi</button>
                 </div>
               ))}
@@ -369,7 +392,12 @@ export default function AdminGoodsReceipts() {
                     <strong>{r.receiptNo}</strong>
                     <div className="field-hint">{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
                   </div>
-                  <div className="field-hint">{r.linesCount} righe · {r.totalQty} pz</div>
+                  <div className="goods-receipt-right">
+                    <div className="field-hint">{r.linesCount} righe · {r.totalQty} pz</div>
+                    <button className="btn ghost small" onClick={() => deleteReceipt(r.id)}>
+                      Elimina
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

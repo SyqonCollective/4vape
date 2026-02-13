@@ -37,9 +37,11 @@ export default function AdminInventory() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showQtyModal, setShowQtyModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(initialForm);
+  const [qtyDraft, setQtyDraft] = useState({});
 
   async function loadInventory() {
     setLoading(true);
@@ -65,18 +67,13 @@ export default function AdminInventory() {
 
   useEffect(() => {
     loadInventory();
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      loadInventory();
-    }, 250);
-    return () => clearTimeout(t);
-  }, [q]);
-
-  useEffect(() => {
     loadMeta();
   }, []);
+
+  useEffect(() => {
+    const t = setTimeout(loadInventory, 250);
+    return () => clearTimeout(t);
+  }, [q]);
 
   const stats = useMemo(() => {
     const totalItems = items.length;
@@ -111,7 +108,7 @@ export default function AdminInventory() {
 
   function openCreate() {
     setForm(initialForm);
-    setShowModal(true);
+    setShowEditModal(true);
   }
 
   function openEdit(item) {
@@ -134,7 +131,14 @@ export default function AdminInventory() {
       taxRateId: item.taxRateId || "",
       exciseRateId: item.exciseRateId || "",
     });
-    setShowModal(true);
+    setShowEditModal(true);
+  }
+
+  function openQuickQty() {
+    const draft = {};
+    for (const item of items) draft[item.id] = String(Number(item.stockQty || 0));
+    setQtyDraft(draft);
+    setShowQtyModal(true);
   }
 
   async function saveItem() {
@@ -173,10 +177,31 @@ export default function AdminInventory() {
           body: JSON.stringify(payload),
         });
       }
-      setShowModal(false);
+      setShowEditModal(false);
       await loadInventory();
     } catch {
       setError("Impossibile salvare articolo inventario");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveQuickQty() {
+    const changes = items
+      .map((item) => ({ id: item.id, stockQty: Number(qtyDraft[item.id]) }))
+      .filter((row) => Number.isFinite(row.stockQty) && row.stockQty >= 0);
+
+    if (!changes.length) return;
+    setSaving(true);
+    try {
+      await api("/admin/inventory/quick-qty", {
+        method: "PATCH",
+        body: JSON.stringify({ changes }),
+      });
+      setShowQtyModal(false);
+      await loadInventory();
+    } catch {
+      setError("Impossibile salvare quantità rapide");
     } finally {
       setSaving(false);
     }
@@ -191,6 +216,7 @@ export default function AdminInventory() {
         </div>
         <div className="page-actions inventory-actions">
           <button className="btn ghost" onClick={() => navigate("/admin/goods-receipts")}>Arrivo merci</button>
+          <button className="btn ghost" onClick={openQuickQty}>Modifica quantità rapida</button>
           <button className="btn primary" onClick={openCreate}>Nuovo articolo</button>
         </div>
       </div>
@@ -198,30 +224,12 @@ export default function AdminInventory() {
       <InlineError message={error} onClose={() => setError("")} />
 
       <div className="cards inventory-cards">
-        <div className="card">
-          <div className="card-label">Articoli</div>
-          <div className="card-value">{stats.totalItems}</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Giacenza totale</div>
-          <div className="card-value">{stats.totalStock}</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Valore a costo</div>
-          <div className="card-value">{money(stats.totalValue)}</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Imponibile</div>
-          <div className="card-value">{money(stats.subtotal)}</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Accise stimate</div>
-          <div className="card-value">{money(stats.totalExcise)}</div>
-        </div>
-        <div className="card">
-          <div className="card-label">IVA stimata</div>
-          <div className="card-value">{money(stats.totalVat)}</div>
-        </div>
+        <div className="card"><div className="card-label">Articoli</div><div className="card-value">{stats.totalItems}</div></div>
+        <div className="card"><div className="card-label">Giacenza totale</div><div className="card-value">{stats.totalStock}</div></div>
+        <div className="card"><div className="card-label">Valore a costo</div><div className="card-value">{money(stats.totalValue)}</div></div>
+        <div className="card"><div className="card-label">Imponibile</div><div className="card-value">{money(stats.subtotal)}</div></div>
+        <div className="card"><div className="card-label">Accise stimate</div><div className="card-value">{money(stats.totalExcise)}</div></div>
+        <div className="card"><div className="card-label">IVA stimata</div><div className="card-value">{money(stats.totalVat)}</div></div>
       </div>
 
       <div className="filters-row">
@@ -237,16 +245,7 @@ export default function AdminInventory() {
 
       <div className="inventory-table">
         <div className="inventory-row header">
-          <div>SKU</div>
-          <div>Nome</div>
-          <div>Brand</div>
-          <div>Categoria</div>
-          <div>Giacenza</div>
-          <div>Costo</div>
-          <div>Prezzo</div>
-          <div>Accisa</div>
-          <div>IVA</div>
-          <div></div>
+          <div>SKU</div><div>Nome</div><div>Brand</div><div>Categoria</div><div>Giacenza</div><div>Costo</div><div>Prezzo</div><div>Accisa</div><div>IVA</div><div></div>
         </div>
         {loading ? <div className="inventory-empty">Caricamento...</div> : null}
         {!loading && !items.length ? <div className="inventory-empty">Nessun articolo</div> : null}
@@ -262,168 +261,82 @@ export default function AdminInventory() {
                 <div>{item.price != null ? money(item.price) : "-"}</div>
                 <div>{item.exciseRateRef?.name || "-"}</div>
                 <div>{item.taxRateRef?.name || "-"}</div>
-                <div>
-                  <button className="btn ghost small" onClick={() => openEdit(item)}>Modifica</button>
-                </div>
+                <div><button className="btn ghost small" onClick={() => openEdit(item)}>Modifica</button></div>
               </div>
             ))
           : null}
       </div>
 
-      {showModal ? (
+      {showEditModal ? (
         <Portal>
-          <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-            <div className="modal inventory-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-backdrop" onClick={() => setShowEditModal(false)}>
+            <div className="modal inventory-edit-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-title">
-                  <h3>{form.id ? "Modifica articolo" : "Nuovo articolo inventario"}</h3>
+                  <h3>{form.id ? "Modifica articolo inventario" : "Nuovo articolo inventario"}</h3>
                 </div>
-                <button className="btn ghost" onClick={() => setShowModal(false)}>Chiudi</button>
+                <button className="btn ghost" onClick={() => setShowEditModal(false)}>Chiudi</button>
               </div>
               <div className="modal-body">
-                <div className="order-form">
-                  <div>
-                    <label>SKU</label>
-                    <input
-                      value={form.sku}
-                      onChange={(e) => setForm((prev) => ({ ...prev, sku: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Nome</label>
-                    <input
-                      value={form.name}
-                      onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Brand</label>
-                    <input
-                      value={form.brand}
-                      onChange={(e) => setForm((prev) => ({ ...prev, brand: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Categoria</label>
-                    <input
-                      value={form.category}
-                      onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Sottocategoria</label>
-                    <input
-                      value={form.subcategory}
-                      onChange={(e) => setForm((prev) => ({ ...prev, subcategory: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Barcode</label>
-                    <input
-                      value={form.barcode}
-                      onChange={(e) => setForm((prev) => ({ ...prev, barcode: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Nicotina</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.nicotine}
-                      onChange={(e) => setForm((prev) => ({ ...prev, nicotine: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>ML</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.mlProduct}
-                      onChange={(e) => setForm((prev) => ({ ...prev, mlProduct: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Giacenza</label>
-                    <input
-                      type="number"
-                      value={form.stockQty}
-                      onChange={(e) => setForm((prev) => ({ ...prev, stockQty: Number(e.target.value || 0) }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Prezzo acquisto</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.purchasePrice}
-                      onChange={(e) => setForm((prev) => ({ ...prev, purchasePrice: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Prezzo listino</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.listPrice}
-                      onChange={(e) => setForm((prev) => ({ ...prev, listPrice: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>Prezzo vendita</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.price}
-                      onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label>IVA</label>
-                    <select
-                      value={form.taxRateId}
-                      onChange={(e) => setForm((prev) => ({ ...prev, taxRateId: e.target.value }))}
-                    >
-                      <option value="">Nessuna</option>
-                      {taxes.map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label>Accisa</label>
-                    <select
-                      value={form.exciseRateId}
-                      onChange={(e) => setForm((prev) => ({ ...prev, exciseRateId: e.target.value }))}
-                    >
-                      <option value="">Nessuna</option>
-                      {excises.map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div style={{ gridColumn: "1 / -1" }}>
-                    <label>Descrizione breve</label>
-                    <input
-                      value={form.shortDescription}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, shortDescription: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div style={{ gridColumn: "1 / -1" }}>
-                    <label>Descrizione</label>
-                    <textarea
-                      className="goods-paste"
-                      value={form.description}
-                      onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                    />
-                  </div>
+                <div className="inventory-edit-grid">
+                  <div><label>SKU</label><input value={form.sku} onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))} /></div>
+                  <div><label>Nome</label><input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} /></div>
+                  <div><label>Brand</label><input value={form.brand} onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value }))} /></div>
+                  <div><label>Categoria</label><input value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} /></div>
+                  <div><label>Sottocategoria</label><input value={form.subcategory} onChange={(e) => setForm((p) => ({ ...p, subcategory: e.target.value }))} /></div>
+                  <div><label>Barcode</label><input value={form.barcode} onChange={(e) => setForm((p) => ({ ...p, barcode: e.target.value }))} /></div>
+                  <div><label>Nicotina</label><input type="number" step="0.01" value={form.nicotine} onChange={(e) => setForm((p) => ({ ...p, nicotine: e.target.value }))} /></div>
+                  <div><label>ML</label><input type="number" step="0.01" value={form.mlProduct} onChange={(e) => setForm((p) => ({ ...p, mlProduct: e.target.value }))} /></div>
+                  <div><label>Giacenza</label><input type="number" value={form.stockQty} onChange={(e) => setForm((p) => ({ ...p, stockQty: Number(e.target.value || 0) }))} /></div>
+                  <div><label>Prezzo acquisto</label><input type="number" step="0.01" value={form.purchasePrice} onChange={(e) => setForm((p) => ({ ...p, purchasePrice: e.target.value }))} /></div>
+                  <div><label>Prezzo listino</label><input type="number" step="0.01" value={form.listPrice} onChange={(e) => setForm((p) => ({ ...p, listPrice: e.target.value }))} /></div>
+                  <div><label>Prezzo vendita</label><input type="number" step="0.01" value={form.price} onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))} /></div>
+                  <div><label>IVA</label><select value={form.taxRateId} onChange={(e) => setForm((p) => ({ ...p, taxRateId: e.target.value }))}><option value="">Nessuna</option>{taxes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
+                  <div><label>Accisa</label><select value={form.exciseRateId} onChange={(e) => setForm((p) => ({ ...p, exciseRateId: e.target.value }))}><option value="">Nessuna</option>{excises.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></div>
+                  <div className="full"><label>Descrizione breve</label><input value={form.shortDescription} onChange={(e) => setForm((p) => ({ ...p, shortDescription: e.target.value }))} /></div>
+                  <div className="full"><label>Descrizione</label><textarea className="goods-paste" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} /></div>
                 </div>
                 <div className="actions">
-                  <button className="btn ghost" onClick={() => setShowModal(false)}>Annulla</button>
-                  <button className="btn primary" onClick={saveItem} disabled={saving}>
-                    {saving ? "Salvataggio..." : "Salva"}
-                  </button>
+                  <button className="btn ghost" onClick={() => setShowEditModal(false)}>Annulla</button>
+                  <button className="btn primary" onClick={saveItem} disabled={saving}>{saving ? "Salvataggio..." : "Salva"}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+
+      {showQtyModal ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowQtyModal(false)}>
+            <div className="modal inventory-qty-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div className="modal-title"><h3>Modifica quantità rapida</h3></div>
+                <button className="btn ghost" onClick={() => setShowQtyModal(false)}>Chiudi</button>
+              </div>
+              <div className="modal-body">
+                <div className="inventory-qty-list">
+                  <div className="inventory-qty-row header"><div>SKU</div><div>Prodotto</div><div>Qta</div></div>
+                  {items.map((item) => (
+                    <div key={item.id} className="inventory-qty-row">
+                      <div className="mono">{item.sku}</div>
+                      <div>{item.name}</div>
+                      <div>
+                        <input
+                          type="number"
+                          min="0"
+                          value={qtyDraft[item.id] ?? item.stockQty}
+                          onChange={(e) =>
+                            setQtyDraft((prev) => ({ ...prev, [item.id]: e.target.value }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setShowQtyModal(false)}>Annulla</button>
+                  <button className="btn primary" onClick={saveQuickQty} disabled={saving}>{saving ? "Salvataggio..." : "Salva quantità"}</button>
                 </div>
               </div>
             </div>
