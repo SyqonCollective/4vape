@@ -261,6 +261,8 @@ export default function AdminAnalytics() {
   const defaultRange = useMemo(() => rangeDays(30), []);
   const [startDate, setStartDate] = useState(toDateInput(defaultRange.start));
   const [endDate, setEndDate] = useState(toDateInput(defaultRange.end));
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [productOptions, setProductOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [data, setData] = useState({
@@ -287,14 +289,21 @@ export default function AdminAnalytics() {
     topSuppliers: [],
     topCategories: [],
     topGeo: [],
+    topClients: [],
+    productInsights: null,
   });
 
-  async function load(range) {
+  async function load(range, productId = selectedProductId) {
     setLoading(true);
     setError("");
     try {
+      const params = new URLSearchParams({
+        start: range.start,
+        end: range.end,
+      });
+      if (productId) params.set("productId", productId);
       const res = await api(
-        `/admin/analytics?start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}`
+        `/admin/analytics?${params.toString()}`
       );
       setData(res);
     } catch {
@@ -308,9 +317,36 @@ export default function AdminAnalytics() {
     load({ start: startDate, end: endDate });
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const products = await api("/admin/products");
+        if (!active) return;
+        setProductOptions(
+          (products || [])
+            .map((p) => ({
+              id: p.id,
+              label: `${p.sku} · ${p.name}`,
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label, "it"))
+        );
+      } catch {
+        if (active) setProductOptions([]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const revenueSeries = data.daily.map((d) => ({ label: d.date, value: d.revenue }));
   const costSeries = data.daily.map((d) => ({ label: d.date, value: d.cost }));
   const regionData = buildRegionData(data.topGeo || []);
+  const selectedSeries = (data.productInsights?.daily || []).map((d) => ({
+    label: d.date,
+    value: d.revenue,
+  }));
   const stackedSeries = data.daily.map((d) => ({
     date: d.date,
     revenue: d.revenue,
@@ -360,6 +396,15 @@ export default function AdminAnalytics() {
           <label>
             A
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          </label>
+          <label>
+            Analisi prodotto
+            <select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)}>
+              <option value="">Tutti i prodotti</option>
+              {productOptions.map((p) => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
+            </select>
           </label>
           <button className="btn primary" onClick={() => load({ start: startDate, end: endDate })} disabled={loading}>
             {loading ? "Carico..." : "Aggiorna"}
@@ -473,6 +518,45 @@ export default function AdminAnalytics() {
               <div className="row" key={c.name}><div>{c.name}</div><div>{formatMoney(c.revenue)}</div><div>{c.qty}</div></div>
             ))}
           </div>
+        </div>
+      </div>
+
+      <div className="panel analytics-grid">
+        <div className="analytics-panel">
+          <div className="panel-header"><div><h2>Top clienti</h2><div className="muted">Per fatturato nel periodo</div></div></div>
+          <div className="table compact">
+            <div className="row header"><div>Cliente</div><div>Ordini</div><div>Fatturato</div></div>
+            {(data.topClients || []).map((c) => (
+              <div className="row" key={c.id}><div>{c.name}</div><div>{c.orders}</div><div>{formatMoney(c.revenue)}</div></div>
+            ))}
+          </div>
+        </div>
+
+        <div className="analytics-panel">
+          <div className="panel-header">
+            <div>
+              <h2>Analisi singolo prodotto</h2>
+              <div className="muted">Seleziona un prodotto nel filtro per vedere dettaglio</div>
+            </div>
+          </div>
+          {selectedProductId ? (
+            data.productInsights?.product ? (
+              <>
+                <div className="cards" style={{ marginBottom: "12px" }}>
+                  <div className="card"><div className="card-label">Prodotto</div><div className="card-sub">{data.productInsights.product.sku}</div><div className="card-value" style={{ fontSize: "1.05rem" }}>{data.productInsights.product.name}</div></div>
+                  <div className="card"><div className="card-label">Fatturato</div><div className="card-value">{formatMoney(data.productInsights.totals.revenue)}</div><div className="card-sub">Nel periodo</div></div>
+                  <div className="card"><div className="card-label">Ordini / Pezzi</div><div className="card-value">{data.productInsights.totals.orders}</div><div className="card-sub">{data.productInsights.totals.items} pezzi</div></div>
+                </div>
+                <div className="trend-revenue">
+                  <TrendChart series={selectedSeries} variant="area" />
+                </div>
+              </>
+            ) : (
+              <div className="muted">Nessuna vendita per il prodotto selezionato nel periodo.</div>
+            )
+          ) : (
+            <div className="muted">Seleziona un prodotto dal filtro in alto.</div>
+          )}
         </div>
       </div>
     </section>

@@ -1291,11 +1291,12 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/analytics", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
-    const query = request.query as { start?: string; end?: string };
+    const query = request.query as { start?: string; end?: string; productId?: string };
     const now = new Date();
     const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : now;
     const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : new Date(end);
     if (!query.start) start.setDate(end.getDate() - 29);
+    const selectedProductId = String(query.productId || "").trim();
     const revenueStatuses: OrderStatus[] = ["APPROVED", "FULFILLED"];
 
     const orders = await prisma.order.findMany({
@@ -1359,11 +1360,30 @@ export async function adminRoutes(app: FastifyInstance) {
     const supplierAgg = new Map<string, { id: string; name: string; revenue: number; qty: number }>();
     const categoryAgg = new Map<string, { name: string; revenue: number; qty: number; cost: number }>();
     const geoAgg = new Map<string, { area: string; revenue: number; orders: number }>();
+    const clientAgg = new Map<string, { id: string; name: string; revenue: number; orders: number; items: number }>();
+    const selectedDaily = days.map((d) => ({
+      date: d.date,
+      revenue: 0,
+      cost: 0,
+      vat: 0,
+      excise: 0,
+      orders: 0,
+      items: 0,
+      margin: 0,
+    }));
+    let selectedInfo: { id: string; sku: string; name: string } | null = null;
+    let selectedRevenue = 0;
+    let selectedCost = 0;
+    let selectedVat = 0;
+    let selectedExcise = 0;
+    let selectedItems = 0;
+    let selectedOrders = 0;
 
     for (const order of orders) {
       const key = order.createdAt.toISOString().slice(0, 10);
       const idx = dayIndex.get(key);
       const orderRevenue = Number(order.total || 0);
+      const orderItems = order.items.reduce((sum, i) => sum + i.qty, 0);
       const area =
         order.company?.province?.trim() ||
         order.company?.city?.trim() ||
@@ -1377,8 +1397,22 @@ export async function adminRoutes(app: FastifyInstance) {
         days[idx].orders += 1;
         days[idx].revenue += orderRevenue;
       }
+      const clientId = order.companyId || order.company?.name || "N/D";
+      const clientName = order.company?.name || "N/D";
+      const clientRow = clientAgg.get(clientId) || {
+        id: clientId,
+        name: clientName,
+        revenue: 0,
+        orders: 0,
+        items: 0,
+      };
+      clientRow.revenue += orderRevenue;
+      clientRow.orders += 1;
+      clientRow.items += orderItems;
+      clientAgg.set(clientId, clientRow);
       orderCount += 1;
       revenue += orderRevenue;
+      let orderHasSelected = false;
       for (const item of order.items) {
         const lineTotal = Number(item.lineTotal);
         const qty = item.qty;
@@ -1445,10 +1479,38 @@ export async function adminRoutes(app: FastifyInstance) {
           existing.cost += purchase * qty;
           categoryAgg.set(categoryName, existing);
         }
+
+        if (selectedProductId && product?.id === selectedProductId) {
+          orderHasSelected = true;
+          selectedInfo = {
+            id: product.id,
+            sku: product.sku,
+            name: product.name,
+          };
+          selectedRevenue += lineTotal;
+          selectedCost += purchase * qty;
+          selectedVat += vatAmount;
+          selectedExcise += exciseAmount;
+          selectedItems += qty;
+          if (idx != null) {
+            selectedDaily[idx].revenue += lineTotal;
+            selectedDaily[idx].cost += purchase * qty;
+            selectedDaily[idx].vat += vatAmount;
+            selectedDaily[idx].excise += exciseAmount;
+            selectedDaily[idx].items += qty;
+          }
+        }
+      }
+      if (selectedProductId && orderHasSelected) {
+        selectedOrders += 1;
+        if (idx != null) selectedDaily[idx].orders += 1;
       }
     }
 
     for (const d of days) {
+      d.margin = d.revenue - d.cost - d.vat - d.excise;
+    }
+    for (const d of selectedDaily) {
       d.margin = d.revenue - d.cost - d.vat - d.excise;
     }
 
@@ -1464,6 +1526,13 @@ export async function adminRoutes(app: FastifyInstance) {
     const topGeo = Array.from(geoAgg.values())
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 20);
+    const topClients = Array.from(clientAgg.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10)
+      .map((c) => ({
+        ...c,
+        avgOrderValue: c.orders ? c.revenue / c.orders : 0,
+      }));
 
     const grossMargin = revenue - cost;
     const netRevenue = revenue - vat - excise;
@@ -1498,6 +1567,22 @@ export async function adminRoutes(app: FastifyInstance) {
       topSuppliers,
       topCategories,
       topGeo,
+      topClients,
+      productInsights: selectedProductId
+        ? {
+            product: selectedInfo,
+            totals: {
+              revenue: selectedRevenue,
+              cost: selectedCost,
+              vat: selectedVat,
+              excise: selectedExcise,
+              margin: selectedRevenue - selectedCost - selectedVat - selectedExcise,
+              items: selectedItems,
+              orders: selectedOrders,
+            },
+            daily: selectedDaily,
+          }
+        : null,
     };
   });
 
