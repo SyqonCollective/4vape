@@ -2861,6 +2861,16 @@ button {
   font-weight: 600;
 }
 
+.error-banner {
+  margin: 10px 0 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #991b1b;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 600;
+}
+
 .goods-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 330px;

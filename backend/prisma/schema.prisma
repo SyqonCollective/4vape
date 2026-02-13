@@ -50,6 +50,11 @@ enum RuleScope {
   PARENT
 }
 
+enum ReturnStatus {
+  PENDING
+  HANDLED
+}
+
 model Company {
   id        String   @id @default(cuid())
   name      String
@@ -75,6 +80,7 @@ model Company {
 
   users  User[]
   orders Order[]
+  returnRequests ReturnRequest[]
 }
 
 model User {
@@ -90,6 +96,8 @@ model User {
 
   ordersCreated Order[] @relation("OrderCreatedBy")
   goodsReceiptsCreated GoodsReceipt[] @relation("GoodsReceiptCreatedBy")
+  returnRequests ReturnRequest[] @relation("ReturnRequestedBy")
+  handledReturns ReturnRequest[] @relation("ReturnHandledBy")
 }
 
 model Supplier {
@@ -340,6 +348,40 @@ model ProductPrice {
   price     Decimal @db.Decimal(12, 2)
 
   @@unique([companyId, productId])
+}
+
+model ReturnRequest {
+  id                 String       @id @default(cuid())
+  orderNumber        String
+  productName        String
+  problemDescription String
+  contactName        String?
+  contactEmail       String?
+  status             ReturnStatus @default(PENDING)
+  createdAt          DateTime     @default(now())
+  handledAt          DateTime?
+
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
+
+  userId     String?
+  user       User?    @relation("ReturnRequestedBy", fields: [userId], references: [id])
+
+  handledById String?
+  handledBy   User?    @relation("ReturnHandledBy", fields: [handledById], references: [id])
+
+  images ReturnRequestImage[]
+}
+
+model ReturnRequestImage {
+  id        String   @id @default(cuid())
+  requestId String
+  url       String
+  createdAt DateTime @default(now())
+
+  request ReturnRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
 }
 
 model InternalInventoryItem {

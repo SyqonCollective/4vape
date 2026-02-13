@@ -2622,6 +2622,69 @@ export async function adminRoutes(app: FastifyInstance) {
     return result;
   });
 
+  app.get("/returns", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const status = String((request.query as any)?.status || "ALL");
+    const rows = await prisma.returnRequest.findMany({
+      where: status === "ALL" ? undefined : { status: status as any },
+      include: {
+        company: { select: { id: true, name: true } },
+        user: { select: { id: true, email: true } },
+        images: true,
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 500,
+    });
+    return rows.map((r) => ({
+      ...r,
+      customerName:
+        r.company?.name ||
+        r.contactName ||
+        r.user?.email ||
+        "Cliente demo area privata",
+    }));
+  });
+
+  app.get("/returns/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const row = await prisma.returnRequest.findUnique({
+      where: { id },
+      include: {
+        company: true,
+        user: true,
+        handledBy: { select: { id: true, email: true } },
+        images: true,
+      },
+    });
+    if (!row) return reply.notFound("Reso non trovato");
+    return {
+      ...row,
+      customerName:
+        row.company?.name ||
+        row.contactName ||
+        row.user?.email ||
+        "Cliente demo area privata",
+    };
+  });
+
+  app.patch("/returns/:id/handle", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const updated = await prisma.returnRequest.update({
+      where: { id },
+      data: {
+        status: "HANDLED",
+        handledAt: new Date(),
+        handledById: user.id || null,
+      },
+    });
+    return updated;
+  });
+
   app.get("/suppliers/:id/image", async (request, reply) => {
     const auth = request.headers?.authorization || "";
     const token =
