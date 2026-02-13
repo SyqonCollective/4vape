@@ -26,6 +26,7 @@ const links = [
 
 const ORDER_KEY = "admin_sidebar_order";
 const NOTIF_SEEN_KEY = "admin_notifications_seen_at";
+const NOTIF_DISMISSED_KEY = "admin_notifications_dismissed";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -39,6 +40,14 @@ export default function AdminLayout() {
   const [notifError, setNotifError] = useState("");
   const notifPanelRef = useRef(null);
   const [seenAt, setSeenAt] = useState(() => Number(localStorage.getItem(NOTIF_SEEN_KEY) || 0));
+  const [dismissedIds, setDismissedIds] = useState(() => {
+    try {
+      const raw = localStorage.getItem(NOTIF_DISMISSED_KEY);
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set();
+    }
+  });
   const firstNotifLoadRef = useRef(true);
   const saleAudioRef = useRef(null);
   const generalAudioRef = useRef(null);
@@ -62,14 +71,31 @@ export default function AdminLayout() {
   const [order, setOrder] = useState(orderedLinks);
 
   const unreadCount = useMemo(
-    () => notifications.filter((n) => new Date(n.createdAt).getTime() > seenAt).length,
-    [notifications, seenAt]
+    () =>
+      notifications.filter(
+        (n) => !dismissedIds.has(n.id) && new Date(n.createdAt).getTime() > seenAt
+      ).length,
+    [notifications, seenAt, dismissedIds]
+  );
+
+  const visibleNotifications = useMemo(
+    () => notifications.filter((n) => !dismissedIds.has(n.id)),
+    [notifications, dismissedIds]
   );
 
   function markNotificationsSeen() {
     const now = Date.now();
     setSeenAt(now);
     localStorage.setItem(NOTIF_SEEN_KEY, String(now));
+  }
+
+  function dismissNotification(id) {
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      localStorage.setItem(NOTIF_DISMISSED_KEY, JSON.stringify(Array.from(next)));
+      return next;
+    });
   }
 
   async function fetchNotifications() {
@@ -259,26 +285,39 @@ export default function AdminLayout() {
                     <span>{unreadCount > 0 ? `${unreadCount} nuove` : "Aggiornate"}</span>
                   </div>
                   <div className="notif-list">
-                    {notifLoading && notifications.length === 0 ? (
+                    {notifLoading && visibleNotifications.length === 0 ? (
                       <div className="notif-empty">Caricamento...</div>
                     ) : null}
                     {notifError ? <div className="notif-empty">{notifError}</div> : null}
-                    {!notifications.length && !notifLoading ? (
+                    {!visibleNotifications.length && !notifLoading ? (
                       <div className="notif-empty">Nessuna notifica</div>
                     ) : null}
-                    {notifications.map((n) => (
-                      <button
+                    {visibleNotifications.map((n) => (
+                      <div
                         key={n.id}
                         className={`notif-item ${new Date(n.createdAt).getTime() > seenAt ? "is-new" : ""}`}
-                        onClick={() => openNotification(n)}
                       >
-                        <div className="notif-item-title">{n.title}</div>
-                        <div className="notif-item-body">{n.message}</div>
-                        <div className="notif-item-date">
-                          {new Date(n.createdAt).toLocaleString("it-IT")}
-                        </div>
-                      </button>
+                        <button className="notif-main" onClick={() => openNotification(n)}>
+                          <div className="notif-item-title">{n.title}</div>
+                          <div className="notif-item-body">{n.message}</div>
+                          <div className="notif-item-date">
+                            {new Date(n.createdAt).toLocaleString("it-IT")}
+                          </div>
+                        </button>
+                        <button
+                          className="notif-dismiss"
+                          title="Elimina notifica"
+                          onClick={() => dismissNotification(n.id)}
+                        >
+                          ✓
+                        </button>
+                      </div>
                     ))}
+                  </div>
+                  <div className="notif-footer">
+                    <button className="btn ghost small" onClick={markNotificationsSeen}>
+                      Segna tutto come letto
+                    </button>
                   </div>
                 </div>
               ) : null}
