@@ -2767,7 +2767,7 @@ button {
 
 .inventory-row {
   display: grid;
-  grid-template-columns: 110px 1.6fr 1fr 1fr 90px 120px 120px 100px;
+  grid-template-columns: 110px 1.5fr 0.9fr 0.9fr 90px 120px 120px 120px 120px 100px;
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
@@ -2840,15 +2840,17 @@ button {
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 14px;
   overflow: hidden;
+  overflow-x: auto;
 }
 
 .goods-row {
   display: grid;
-  grid-template-columns: 120px 1.8fr 80px 110px 110px 1fr 1fr 100px;
+  grid-template-columns: 120px minmax(220px, 1.6fr) 80px 110px 110px 120px 120px 90px 90px 140px 160px 100px;
   gap: 8px;
   padding: 8px;
   align-items: center;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  min-width: 1550px;
 }
 
 .goods-row.header {
@@ -2893,10 +2895,6 @@ button {
 @media (max-width: 980px) {
   .inventory-row {
     grid-template-columns: 110px 1fr;
-  }
-
-  .goods-row {
-    grid-template-columns: 1fr 1fr;
   }
 
   .goods-row.header {

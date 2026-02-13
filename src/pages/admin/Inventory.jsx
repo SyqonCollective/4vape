@@ -13,9 +13,14 @@ const initialForm = {
   id: "",
   sku: "",
   name: "",
+  description: "",
+  shortDescription: "",
   brand: "",
   category: "",
   subcategory: "",
+  barcode: "",
+  nicotine: "",
+  mlProduct: "",
   stockQty: 0,
   purchasePrice: "",
   listPrice: "",
@@ -80,7 +85,28 @@ export default function AdminInventory() {
       (sum, i) => sum + Number(i.purchasePrice || 0) * Number(i.stockQty || 0),
       0
     );
-    return { totalItems, totalStock, totalValue };
+    const subtotal = items.reduce((sum, i) => sum + Number(i.price || 0) * Number(i.stockQty || 0), 0);
+    const totalExcise = items.reduce((sum, i) => {
+      const excise = i.exciseRateRef;
+      if (!excise) return sum;
+      const unit =
+        excise.type === "ML"
+          ? Number(excise.amount || 0) * Number(i.mlProduct || 0)
+          : Number(excise.amount || 0);
+      return sum + unit * Number(i.stockQty || 0);
+    }, 0);
+    const totalVat = items.reduce((sum, i) => {
+      const rate = Number(i.taxRateRef?.rate || 0);
+      if (!rate) return sum;
+      const excise = i.exciseRateRef;
+      const exciseUnit =
+        excise?.type === "ML"
+          ? Number(excise.amount || 0) * Number(i.mlProduct || 0)
+          : Number(excise?.amount || 0);
+      const taxable = Number(i.price || 0) + exciseUnit;
+      return sum + taxable * Number(i.stockQty || 0) * (rate / 100);
+    }, 0);
+    return { totalItems, totalStock, totalValue, subtotal, totalExcise, totalVat };
   }, [items]);
 
   function openCreate() {
@@ -93,9 +119,14 @@ export default function AdminInventory() {
       id: item.id,
       sku: item.sku || "",
       name: item.name || "",
+      description: item.description || "",
+      shortDescription: item.shortDescription || "",
       brand: item.brand || "",
       category: item.category || "",
       subcategory: item.subcategory || "",
+      barcode: item.barcode || "",
+      nicotine: item.nicotine ?? "",
+      mlProduct: item.mlProduct ?? "",
       stockQty: Number(item.stockQty || 0),
       purchasePrice: item.purchasePrice ?? "",
       listPrice: item.listPrice ?? "",
@@ -115,9 +146,14 @@ export default function AdminInventory() {
     const payload = {
       sku: form.sku.trim(),
       name: form.name.trim(),
+      description: form.description || null,
+      shortDescription: form.shortDescription || null,
       brand: form.brand || null,
       category: form.category || null,
       subcategory: form.subcategory || null,
+      barcode: form.barcode || null,
+      nicotine: form.nicotine === "" ? null : Number(form.nicotine),
+      mlProduct: form.mlProduct === "" ? null : Number(form.mlProduct),
       stockQty: Number(form.stockQty || 0),
       purchasePrice: form.purchasePrice === "" ? null : Number(form.purchasePrice),
       listPrice: form.listPrice === "" ? null : Number(form.listPrice),
@@ -174,6 +210,18 @@ export default function AdminInventory() {
           <div className="card-label">Valore a costo</div>
           <div className="card-value">{money(stats.totalValue)}</div>
         </div>
+        <div className="card">
+          <div className="card-label">Imponibile</div>
+          <div className="card-value">{money(stats.subtotal)}</div>
+        </div>
+        <div className="card">
+          <div className="card-label">Accise stimate</div>
+          <div className="card-value">{money(stats.totalExcise)}</div>
+        </div>
+        <div className="card">
+          <div className="card-label">IVA stimata</div>
+          <div className="card-value">{money(stats.totalVat)}</div>
+        </div>
       </div>
 
       <div className="filters-row">
@@ -196,6 +244,8 @@ export default function AdminInventory() {
           <div>Giacenza</div>
           <div>Costo</div>
           <div>Prezzo</div>
+          <div>Accisa</div>
+          <div>IVA</div>
           <div></div>
         </div>
         {loading ? <div className="inventory-empty">Caricamento...</div> : null}
@@ -210,6 +260,8 @@ export default function AdminInventory() {
                 <div>{item.stockQty}</div>
                 <div>{item.purchasePrice != null ? money(item.purchasePrice) : "-"}</div>
                 <div>{item.price != null ? money(item.price) : "-"}</div>
+                <div>{item.exciseRateRef?.name || "-"}</div>
+                <div>{item.taxRateRef?.name || "-"}</div>
                 <div>
                   <button className="btn ghost small" onClick={() => openEdit(item)}>Modifica</button>
                 </div>
@@ -263,6 +315,31 @@ export default function AdminInventory() {
                     <input
                       value={form.subcategory}
                       onChange={(e) => setForm((prev) => ({ ...prev, subcategory: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label>Barcode</label>
+                    <input
+                      value={form.barcode}
+                      onChange={(e) => setForm((prev) => ({ ...prev, barcode: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label>Nicotina</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.nicotine}
+                      onChange={(e) => setForm((prev) => ({ ...prev, nicotine: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label>ML</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.mlProduct}
+                      onChange={(e) => setForm((prev) => ({ ...prev, mlProduct: e.target.value }))}
                     />
                   </div>
                   <div>
@@ -323,6 +400,23 @@ export default function AdminInventory() {
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
                     </select>
+                  </div>
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label>Descrizione breve</label>
+                    <input
+                      value={form.shortDescription}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, shortDescription: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label>Descrizione</label>
+                    <textarea
+                      className="goods-paste"
+                      value={form.description}
+                      onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                    />
                   </div>
                 </div>
                 <div className="actions">

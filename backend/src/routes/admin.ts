@@ -2416,6 +2416,8 @@ export async function adminRoutes(app: FastifyInstance) {
               qty: z.number().int().positive(),
               unitCost: z.number().optional().nullable(),
               unitPrice: z.number().optional().nullable(),
+              description: z.string().optional().nullable(),
+              shortDescription: z.string().optional().nullable(),
               brand: z.string().optional().nullable(),
               category: z.string().optional().nullable(),
               subcategory: z.string().optional().nullable(),
@@ -2462,6 +2464,12 @@ export async function adminRoutes(app: FastifyInstance) {
         const nextData: Prisma.InternalInventoryItemUncheckedUpdateInput = {
           stockQty: { increment: qty },
           ...(rawLine.name ? { name } : {}),
+          ...(rawLine.description !== undefined
+            ? { description: rawLine.description || null }
+            : {}),
+          ...(rawLine.shortDescription !== undefined
+            ? { shortDescription: rawLine.shortDescription || null }
+            : {}),
           ...(rawLine.brand !== undefined ? { brand: rawLine.brand || null } : {}),
           ...(rawLine.category !== undefined ? { category: rawLine.category || null } : {}),
           ...(rawLine.subcategory !== undefined ? { subcategory: rawLine.subcategory || null } : {}),
@@ -2485,6 +2493,8 @@ export async function adminRoutes(app: FastifyInstance) {
               data: {
                 sku,
                 name,
+                description: rawLine.description || null,
+                shortDescription: rawLine.shortDescription || null,
                 brand: rawLine.brand || null,
                 category: rawLine.category || null,
                 subcategory: rawLine.subcategory || null,

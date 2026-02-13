@@ -8,9 +8,16 @@ const newRow = () => ({
   qty: 1,
   unitCost: "",
   unitPrice: "",
+  description: "",
+  shortDescription: "",
   brand: "",
   category: "",
   subcategory: "",
+  barcode: "",
+  nicotine: "",
+  mlProduct: "",
+  taxRateId: "",
+  exciseRateId: "",
 });
 
 const money = (v) =>
@@ -18,6 +25,8 @@ const money = (v) =>
 
 export default function AdminGoodsReceipts() {
   const [rows, setRows] = useState([newRow(), newRow(), newRow()]);
+  const [taxes, setTaxes] = useState([]);
+  const [excises, setExcises] = useState([]);
   const [supplierName, setSupplierName] = useState("");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
@@ -40,6 +49,19 @@ export default function AdminGoodsReceipts() {
     loadReceipts();
   }, []);
 
+  useEffect(() => {
+    async function loadMeta() {
+      try {
+        const [taxRes, exciseRes] = await Promise.all([api("/admin/taxes"), api("/admin/excises")]);
+        setTaxes(taxRes || []);
+        setExcises(exciseRes || []);
+      } catch {
+        setError("Impossibile caricare IVA/Accise");
+      }
+    }
+    loadMeta();
+  }, []);
+
   const parsedRows = useMemo(
     () => rows.filter((r) => r.sku.trim() && Number(r.qty || 0) > 0),
     [rows]
@@ -50,14 +72,28 @@ export default function AdminGoodsReceipts() {
       (acc, row) => {
         const qty = Number(row.qty || 0);
         const unitCost = Number(row.unitCost || 0);
+        const unitPrice = Number(row.unitPrice || 0);
+        const ml = Number(row.mlProduct || 0);
+        const tax = taxes.find((t) => t.id === row.taxRateId);
+        const excise = excises.find((e) => e.id === row.exciseRateId);
+        const exciseUnit = excise
+          ? excise.type === "ML"
+            ? Number(excise.amount || 0) * ml
+            : Number(excise.amount || 0)
+          : 0;
+        const taxRate = Number(tax?.rate || 0);
+        const vatUnit = taxRate > 0 ? (unitPrice + exciseUnit) * (taxRate / 100) : 0;
         acc.lines += 1;
         acc.qty += qty;
         acc.cost += qty * unitCost;
+        acc.subtotal += qty * unitPrice;
+        acc.excise += qty * exciseUnit;
+        acc.vat += qty * vatUnit;
         return acc;
       },
-      { lines: 0, qty: 0, cost: 0 }
+      { lines: 0, qty: 0, cost: 0, subtotal: 0, excise: 0, vat: 0 }
     );
-  }, [parsedRows]);
+  }, [parsedRows, taxes, excises]);
 
   function updateRow(index, patch) {
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
@@ -89,6 +125,13 @@ export default function AdminGoodsReceipts() {
         brand: (cols[5] || "").trim(),
         category: (cols[6] || "").trim(),
         subcategory: (cols[7] || "").trim(),
+        barcode: (cols[8] || "").trim(),
+        nicotine: String(cols[9] || "").trim(),
+        mlProduct: String(cols[10] || "").trim(),
+        taxRateId: "",
+        exciseRateId: "",
+        description: "",
+        shortDescription: "",
       };
     });
     setRows(parsed);
@@ -116,9 +159,16 @@ export default function AdminGoodsReceipts() {
             qty: Number(r.qty || 0),
             unitCost: r.unitCost === "" ? null : Number(r.unitCost),
             unitPrice: r.unitPrice === "" ? null : Number(r.unitPrice),
+            description: r.description || null,
+            shortDescription: r.shortDescription || null,
             brand: r.brand || null,
             category: r.category || null,
             subcategory: r.subcategory || null,
+            barcode: r.barcode || null,
+            nicotine: r.nicotine === "" ? null : Number(r.nicotine),
+            mlProduct: r.mlProduct === "" ? null : Number(r.mlProduct),
+            taxRateId: r.taxRateId || null,
+            exciseRateId: r.exciseRateId || null,
           })),
         }),
       });
@@ -172,7 +222,7 @@ export default function AdminGoodsReceipts() {
           <div className="order-card">
             <div className="card-title">Incolla da Excel/CSV</div>
             <p className="field-hint">
-              Ordine colonne: SKU, Nome, Qta, Costo, Prezzo, Brand, Categoria, Sottocategoria
+              Ordine colonne: SKU, Nome, Qta, Costo, Prezzo, Brand, Categoria, Sottocategoria, Barcode, Nicotina, ML
             </p>
             <textarea
               className="goods-paste"
@@ -199,6 +249,10 @@ export default function AdminGoodsReceipts() {
                 <div>Prezzo</div>
                 <div>Brand</div>
                 <div>Categoria</div>
+                <div>Nicotina</div>
+                <div>ML</div>
+                <div>IVA</div>
+                <div>Accisa</div>
                 <div></div>
               </div>
               {rows.map((row, idx) => (
@@ -224,6 +278,40 @@ export default function AdminGoodsReceipts() {
                   />
                   <input value={row.brand} onChange={(e) => updateRow(idx, { brand: e.target.value })} />
                   <input value={row.category} onChange={(e) => updateRow(idx, { category: e.target.value })} />
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={row.nicotine}
+                    onChange={(e) => updateRow(idx, { nicotine: e.target.value })}
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={row.mlProduct}
+                    onChange={(e) => updateRow(idx, { mlProduct: e.target.value })}
+                  />
+                  <select
+                    value={row.taxRateId}
+                    onChange={(e) => updateRow(idx, { taxRateId: e.target.value })}
+                  >
+                    <option value="">IVA</option>
+                    {taxes.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={row.exciseRateId}
+                    onChange={(e) => updateRow(idx, { exciseRateId: e.target.value })}
+                  >
+                    <option value="">Accisa</option>
+                    {excises.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {x.name}
+                      </option>
+                    ))}
+                  </select>
                   <button className="btn ghost small" onClick={() => removeRow(idx)}>Rimuovi</button>
                 </div>
               ))}
@@ -246,6 +334,22 @@ export default function AdminGoodsReceipts() {
               <div>
                 <strong>Valore a costo</strong>
                 <div>{money(stats.cost)}</div>
+              </div>
+              <div>
+                <strong>Subtotale (imponibile)</strong>
+                <div>{money(stats.subtotal)}</div>
+              </div>
+              <div>
+                <strong>Accise stimate</strong>
+                <div>{money(stats.excise)}</div>
+              </div>
+              <div>
+                <strong>IVA stimata</strong>
+                <div>{money(stats.vat)}</div>
+              </div>
+              <div>
+                <strong>Totale stimato</strong>
+                <div>{money(stats.subtotal + stats.excise + stats.vat)}</div>
               </div>
             </div>
             <div className="summary-actions" style={{ marginTop: 16 }}>
