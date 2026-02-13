@@ -87,6 +87,12 @@ export default function AdminLayout() {
     const now = Date.now();
     setSeenAt(now);
     localStorage.setItem(NOTIF_SEEN_KEY, String(now));
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      for (const n of visibleNotifications) next.add(n.id);
+      localStorage.setItem(NOTIF_DISMISSED_KEY, JSON.stringify(Array.from(next)));
+      return next;
+    });
   }
 
   function dismissNotification(id) {
