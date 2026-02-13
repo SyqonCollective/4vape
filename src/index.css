@@ -558,6 +558,15 @@ button {
   background: #fff;
   color: var(--text);
 }
+.analytics-filters input[type="text"],
+.analytics-filters select {
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 0.55rem 0.8rem;
+  background: #fff;
+  color: var(--text);
+  min-width: 220px;
+}
 .analytics-quick {
   display: flex;
   gap: 0.6rem;

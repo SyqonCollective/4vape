@@ -262,6 +262,7 @@ export default function AdminAnalytics() {
   const [startDate, setStartDate] = useState(toDateInput(defaultRange.start));
   const [endDate, setEndDate] = useState(toDateInput(defaultRange.end));
   const [selectedProductId, setSelectedProductId] = useState("");
+  const [productSkuSearch, setProductSkuSearch] = useState("");
   const [productOptions, setProductOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -355,6 +356,11 @@ export default function AdminAnalytics() {
     excise: d.excise,
     margin: d.margin,
   }));
+  const skuMatches = useMemo(() => {
+    const q = productSkuSearch.trim().toLowerCase();
+    if (!q) return [];
+    return productOptions.filter((p) => p.label.toLowerCase().includes(q)).slice(0, 50);
+  }, [productOptions, productSkuSearch]);
 
   async function exportData(format) {
     const token = getToken();
@@ -398,10 +404,19 @@ export default function AdminAnalytics() {
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </label>
           <label>
-            Analisi prodotto
+            Cerca SKU prodotto
+            <input
+              type="text"
+              value={productSkuSearch}
+              onChange={(e) => setProductSkuSearch(e.target.value)}
+              placeholder="Es. 33840"
+            />
+          </label>
+          <label>
+            Prodotto trovato
             <select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)}>
               <option value="">Tutti i prodotti</option>
-              {productOptions.map((p) => (
+              {(productSkuSearch.trim() ? skuMatches : productOptions).map((p) => (
                 <option key={p.id} value={p.id}>{p.label}</option>
               ))}
             </select>
@@ -555,7 +570,7 @@ export default function AdminAnalytics() {
               <div className="muted">Nessuna vendita per il prodotto selezionato nel periodo.</div>
             )
           ) : (
-            <div className="muted">Seleziona un prodotto dal filtro in alto.</div>
+            <div className="muted">Cerca SKU in alto e seleziona il prodotto.</div>
           )}
         </div>
       </div>
