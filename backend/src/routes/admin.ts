@@ -2586,6 +2586,10 @@ export async function adminRoutes(app: FastifyInstance) {
         qtyByItem.set(line.itemId, (qtyByItem.get(line.itemId) || 0) + Number(line.qty || 0));
       }
 
+      // Delete receipt first so its lines are removed (ON DELETE CASCADE),
+      // then we can safely evaluate if inventory items can be removed.
+      await tx.goodsReceipt.delete({ where: { id } });
+
       let deletedItems = 0;
       let updatedItems = 0;
 
@@ -2593,19 +2597,19 @@ export async function adminRoutes(app: FastifyInstance) {
         const item = await tx.internalInventoryItem.findUnique({ where: { id: itemId } });
         if (!item) continue;
         const nextQty = Number(item.stockQty || 0) - qtyToRevert;
-        if (nextQty <= 0) {
+        const remainingLines = await tx.goodsReceiptLine.count({ where: { itemId } });
+
+        if (nextQty <= 0 && remainingLines === 0) {
           await tx.internalInventoryItem.delete({ where: { id: itemId } });
           deletedItems += 1;
         } else {
           await tx.internalInventoryItem.update({
             where: { id: itemId },
-            data: { stockQty: nextQty },
+            data: { stockQty: Math.max(0, nextQty) },
           });
           updatedItems += 1;
         }
       }
-
-      await tx.goodsReceipt.delete({ where: { id } });
 
       return {
         deletedReceipt: id,

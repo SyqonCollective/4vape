@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
+import Portal from "../../components/Portal.jsx";
 
 const newRow = () => ({
   sku: "",
@@ -36,6 +37,7 @@ export default function AdminGoodsReceipts() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [receipts, setReceipts] = useState([]);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   async function loadReceipts() {
     try {
@@ -191,13 +193,10 @@ export default function AdminGoodsReceipts() {
   }
 
   async function deleteReceipt(id) {
-    const ok = window.confirm(
-      "Eliminare questo arrivo merci? Le giacenze inventario verranno stornate automaticamente."
-    );
-    if (!ok) return;
     try {
       await api(`/admin/goods-receipts/${id}`, { method: "DELETE" });
       setSuccess("Arrivo merci eliminato correttamente.");
+      setConfirmDelete(null);
       await loadReceipts();
     } catch {
       setError("Impossibile eliminare arrivo merci");
@@ -392,9 +391,9 @@ export default function AdminGoodsReceipts() {
                     <strong>{r.receiptNo}</strong>
                     <div className="field-hint">{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
                   </div>
-                  <div className="goods-receipt-right">
-                    <div className="field-hint">{r.linesCount} righe · {r.totalQty} pz</div>
-                    <button className="btn ghost small" onClick={() => deleteReceipt(r.id)}>
+                    <div className="goods-receipt-right">
+                      <div className="field-hint">{r.linesCount} righe · {r.totalQty} pz</div>
+                    <button className="btn ghost small" onClick={() => setConfirmDelete(r)}>
                       Elimina
                     </button>
                   </div>
@@ -404,6 +403,36 @@ export default function AdminGoodsReceipts() {
           </div>
         </aside>
       </div>
+      {confirmDelete ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setConfirmDelete(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div className="modal-title">
+                  <h3>Conferma eliminazione</h3>
+                </div>
+                <button className="btn ghost" onClick={() => setConfirmDelete(null)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body">
+                <p>
+                  Eliminare il carico <strong>{confirmDelete.receiptNo}</strong>?<br />
+                  Le giacenze inventario verranno aggiornate automaticamente.
+                </p>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setConfirmDelete(null)}>
+                    Annulla
+                  </button>
+                  <button className="btn danger" onClick={() => deleteReceipt(confirmDelete.id)}>
+                    Elimina
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
     </section>
   );
 }
