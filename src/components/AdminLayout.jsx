@@ -13,6 +13,8 @@ const links = [
   { to: "/admin/discounts", label: "Sconti e Regole" },
   { to: "/admin/settings", label: "Impostazioni" },
   { to: "/admin/orders", label: "Ordini" },
+  { to: "/admin/inventory", label: "Inventario" },
+  { to: "/admin/goods-receipts", label: "Arrivo merci" },
   { to: "/admin/companies", label: "Clienti/Aziende" },
   { to: "/admin/users", label: "Utenti admin" },
 ];

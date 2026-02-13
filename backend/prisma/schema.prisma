@@ -89,6 +89,7 @@ model User {
   company   Company? @relation(fields: [companyId], references: [id])
 
   ordersCreated Order[] @relation("OrderCreatedBy")
+  goodsReceiptsCreated GoodsReceipt[] @relation("GoodsReceiptCreatedBy")
 }
 
 model Supplier {
@@ -213,6 +214,7 @@ model TaxRate {
   rate      Decimal  @db.Decimal(6, 2)
   createdAt DateTime @default(now())
   products  Product[]
+  internalInventoryItems InternalInventoryItem[]
 }
 
 model ExciseRate {
@@ -222,6 +224,7 @@ model ExciseRate {
   amount    Decimal   @db.Decimal(12, 6)
   createdAt DateTime  @default(now())
   products  Product[]
+  internalInventoryItems InternalInventoryItem[]
 }
 
 model AppSetting {
@@ -337,4 +340,63 @@ model ProductPrice {
   price     Decimal @db.Decimal(12, 2)
 
   @@unique([companyId, productId])
+}
+
+model InternalInventoryItem {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  name        String
+  description String?
+  shortDescription String?
+  brand       String?
+  category    String?
+  subcategory String?
+  barcode     String?
+  nicotine    Decimal? @db.Decimal(12, 3)
+  mlProduct   Decimal? @db.Decimal(12, 3)
+  purchasePrice Decimal? @db.Decimal(12, 2)
+  listPrice     Decimal? @db.Decimal(12, 2)
+  price         Decimal? @db.Decimal(12, 2)
+  stockQty    Int      @default(0)
+  taxRateId   String?
+  exciseRateId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  taxRateRef    TaxRate?    @relation(fields: [taxRateId], references: [id])
+  exciseRateRef ExciseRate? @relation(fields: [exciseRateId], references: [id])
+  receiptLines  GoodsReceiptLine[]
+}
+
+model GoodsReceipt {
+  id           String   @id @default(cuid())
+  receiptNo    String   @unique
+  supplierName String?
+  reference    String?
+  notes        String?
+  receivedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  createdById  String?
+
+  createdBy User? @relation("GoodsReceiptCreatedBy", fields: [createdById], references: [id])
+  lines     GoodsReceiptLine[]
+}
+
+model GoodsReceiptLine {
+  id         String   @id @default(cuid())
+  receiptId  String
+  itemId     String
+  sku        String
+  name       String
+  qty        Int
+  unitCost   Decimal? @db.Decimal(12, 2)
+  unitPrice  Decimal? @db.Decimal(12, 2)
+  lineNote   String?
+  createdAt  DateTime @default(now())
+
+  receipt GoodsReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  item    InternalInventoryItem @relation(fields: [itemId], references: [id])
+
+  @@index([receiptId])
+  @@index([itemId])
 }

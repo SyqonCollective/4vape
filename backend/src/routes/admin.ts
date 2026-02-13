@@ -2223,6 +2223,312 @@ export async function adminRoutes(app: FastifyInstance) {
     return { created, updated, missing, already };
   });
 
+  app.get("/inventory/items", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const q = String((request.query as any)?.q || "").trim();
+    const limitRaw = Number((request.query as any)?.limit || 400);
+    const limit = Math.max(1, Math.min(1000, Number.isFinite(limitRaw) ? limitRaw : 400));
+    return prisma.internalInventoryItem.findMany({
+      where: q
+        ? {
+            OR: [
+              { sku: { contains: q, mode: "insensitive" } },
+              { name: { contains: q, mode: "insensitive" } },
+              { brand: { contains: q, mode: "insensitive" } },
+              { category: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : undefined,
+      include: {
+        taxRateRef: true,
+        exciseRateRef: true,
+      },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      take: limit,
+    });
+  });
+
+  app.post("/inventory/items", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        sku: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().optional().nullable(),
+        shortDescription: z.string().optional().nullable(),
+        brand: z.string().optional().nullable(),
+        category: z.string().optional().nullable(),
+        subcategory: z.string().optional().nullable(),
+        barcode: z.string().optional().nullable(),
+        nicotine: z.number().optional().nullable(),
+        mlProduct: z.number().optional().nullable(),
+        purchasePrice: z.number().optional().nullable(),
+        listPrice: z.number().optional().nullable(),
+        price: z.number().optional().nullable(),
+        stockQty: z.number().int().optional(),
+        taxRateId: z.string().optional().nullable(),
+        exciseRateId: z.string().optional().nullable(),
+      })
+      .parse(request.body);
+
+    const created = await prisma.internalInventoryItem.create({
+      data: {
+        sku: body.sku.trim(),
+        name: body.name.trim(),
+        description: body.description || null,
+        shortDescription: body.shortDescription || null,
+        brand: body.brand || null,
+        category: body.category || null,
+        subcategory: body.subcategory || null,
+        barcode: body.barcode || null,
+        nicotine: body.nicotine ?? null,
+        mlProduct: body.mlProduct ?? null,
+        purchasePrice: body.purchasePrice ?? null,
+        listPrice: body.listPrice ?? null,
+        price: body.price ?? null,
+        stockQty: body.stockQty ?? 0,
+        taxRateId: body.taxRateId || null,
+        exciseRateId: body.exciseRateId || null,
+      },
+      include: {
+        taxRateRef: true,
+        exciseRateRef: true,
+      },
+    });
+    return reply.code(201).send(created);
+  });
+
+  app.patch("/inventory/items/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        sku: z.string().min(1).optional(),
+        name: z.string().min(1).optional(),
+        description: z.string().nullable().optional(),
+        shortDescription: z.string().nullable().optional(),
+        brand: z.string().nullable().optional(),
+        category: z.string().nullable().optional(),
+        subcategory: z.string().nullable().optional(),
+        barcode: z.string().nullable().optional(),
+        nicotine: z.number().nullable().optional(),
+        mlProduct: z.number().nullable().optional(),
+        purchasePrice: z.number().nullable().optional(),
+        listPrice: z.number().nullable().optional(),
+        price: z.number().nullable().optional(),
+        stockQty: z.number().int().optional(),
+        taxRateId: z.string().nullable().optional(),
+        exciseRateId: z.string().nullable().optional(),
+      })
+      .parse(request.body);
+
+    const updated = await prisma.internalInventoryItem.update({
+      where: { id },
+      data: {
+        ...(body.sku !== undefined ? { sku: body.sku.trim() } : {}),
+        ...(body.name !== undefined ? { name: body.name.trim() } : {}),
+        ...(body.description !== undefined ? { description: body.description || null } : {}),
+        ...(body.shortDescription !== undefined
+          ? { shortDescription: body.shortDescription || null }
+          : {}),
+        ...(body.brand !== undefined ? { brand: body.brand || null } : {}),
+        ...(body.category !== undefined ? { category: body.category || null } : {}),
+        ...(body.subcategory !== undefined ? { subcategory: body.subcategory || null } : {}),
+        ...(body.barcode !== undefined ? { barcode: body.barcode || null } : {}),
+        ...(body.nicotine !== undefined ? { nicotine: body.nicotine } : {}),
+        ...(body.mlProduct !== undefined ? { mlProduct: body.mlProduct } : {}),
+        ...(body.purchasePrice !== undefined ? { purchasePrice: body.purchasePrice } : {}),
+        ...(body.listPrice !== undefined ? { listPrice: body.listPrice } : {}),
+        ...(body.price !== undefined ? { price: body.price } : {}),
+        ...(body.stockQty !== undefined ? { stockQty: body.stockQty } : {}),
+        ...(body.taxRateId !== undefined ? { taxRateId: body.taxRateId || null } : {}),
+        ...(body.exciseRateId !== undefined ? { exciseRateId: body.exciseRateId || null } : {}),
+      },
+      include: {
+        taxRateRef: true,
+        exciseRateRef: true,
+      },
+    });
+    return updated;
+  });
+
+  app.get("/goods-receipts", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const rows = await prisma.goodsReceipt.findMany({
+      include: {
+        lines: {
+          select: { qty: true },
+        },
+        createdBy: {
+          select: { id: true, email: true },
+        },
+      },
+      orderBy: [{ receivedAt: "desc" }, { createdAt: "desc" }],
+      take: 300,
+    });
+    return rows.map((r) => ({
+      ...r,
+      linesCount: r.lines.length,
+      totalQty: r.lines.reduce((sum, line) => sum + Number(line.qty || 0), 0),
+    }));
+  });
+
+  app.get("/goods-receipts/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const row = await prisma.goodsReceipt.findUnique({
+      where: { id },
+      include: {
+        lines: {
+          include: {
+            item: true,
+          },
+          orderBy: { createdAt: "asc" },
+        },
+        createdBy: {
+          select: { id: true, email: true },
+        },
+      },
+    });
+    if (!row) return reply.notFound("Carico non trovato");
+    return row;
+  });
+
+  app.post("/goods-receipts", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        supplierName: z.string().optional().nullable(),
+        reference: z.string().optional().nullable(),
+        notes: z.string().optional().nullable(),
+        receivedAt: z.string().optional().nullable(),
+        lines: z
+          .array(
+            z.object({
+              sku: z.string().min(1),
+              name: z.string().optional().nullable(),
+              qty: z.number().int().positive(),
+              unitCost: z.number().optional().nullable(),
+              unitPrice: z.number().optional().nullable(),
+              brand: z.string().optional().nullable(),
+              category: z.string().optional().nullable(),
+              subcategory: z.string().optional().nullable(),
+              barcode: z.string().optional().nullable(),
+              nicotine: z.number().optional().nullable(),
+              mlProduct: z.number().optional().nullable(),
+              taxRateId: z.string().optional().nullable(),
+              exciseRateId: z.string().optional().nullable(),
+              lineNote: z.string().optional().nullable(),
+            })
+          )
+          .min(1),
+      })
+      .parse(request.body);
+
+    const receiptNo = `AR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${randomUUID()
+      .slice(0, 8)
+      .toUpperCase()}`;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const receipt = await tx.goodsReceipt.create({
+        data: {
+          receiptNo,
+          supplierName: body.supplierName || null,
+          reference: body.reference || null,
+          notes: body.notes || null,
+          receivedAt: body.receivedAt ? new Date(body.receivedAt) : new Date(),
+          createdById: user.id || null,
+        },
+      });
+
+      let createdItems = 0;
+      let updatedItems = 0;
+      let totalQty = 0;
+
+      for (const rawLine of body.lines) {
+        const sku = rawLine.sku.trim();
+        const name = (rawLine.name || sku).trim();
+        const qty = Number(rawLine.qty || 0);
+        totalQty += qty;
+
+        const existing = await tx.internalInventoryItem.findUnique({ where: { sku } });
+
+        const nextData: Prisma.InternalInventoryItemUncheckedUpdateInput = {
+          stockQty: { increment: qty },
+          ...(rawLine.name ? { name } : {}),
+          ...(rawLine.brand !== undefined ? { brand: rawLine.brand || null } : {}),
+          ...(rawLine.category !== undefined ? { category: rawLine.category || null } : {}),
+          ...(rawLine.subcategory !== undefined ? { subcategory: rawLine.subcategory || null } : {}),
+          ...(rawLine.barcode !== undefined ? { barcode: rawLine.barcode || null } : {}),
+          ...(rawLine.nicotine !== undefined ? { nicotine: rawLine.nicotine } : {}),
+          ...(rawLine.mlProduct !== undefined ? { mlProduct: rawLine.mlProduct } : {}),
+          ...(rawLine.unitCost !== undefined ? { purchasePrice: rawLine.unitCost } : {}),
+          ...(rawLine.unitPrice !== undefined ? { price: rawLine.unitPrice } : {}),
+          ...(rawLine.taxRateId !== undefined ? { taxRateId: rawLine.taxRateId || null } : {}),
+          ...(rawLine.exciseRateId !== undefined
+            ? { exciseRateId: rawLine.exciseRateId || null }
+            : {}),
+        };
+
+        const item = existing
+          ? await tx.internalInventoryItem.update({
+              where: { id: existing.id },
+              data: nextData,
+            })
+          : await tx.internalInventoryItem.create({
+              data: {
+                sku,
+                name,
+                brand: rawLine.brand || null,
+                category: rawLine.category || null,
+                subcategory: rawLine.subcategory || null,
+                barcode: rawLine.barcode || null,
+                nicotine: rawLine.nicotine ?? null,
+                mlProduct: rawLine.mlProduct ?? null,
+                purchasePrice: rawLine.unitCost ?? null,
+                price: rawLine.unitPrice ?? null,
+                stockQty: qty,
+                taxRateId: rawLine.taxRateId || null,
+                exciseRateId: rawLine.exciseRateId || null,
+              },
+            });
+
+        if (existing) updatedItems += 1;
+        else createdItems += 1;
+
+        await tx.goodsReceiptLine.create({
+          data: {
+            receiptId: receipt.id,
+            itemId: item.id,
+            sku,
+            name,
+            qty,
+            unitCost: rawLine.unitCost ?? null,
+            unitPrice: rawLine.unitPrice ?? null,
+            lineNote: rawLine.lineNote || null,
+          },
+        });
+      }
+
+      return {
+        receiptId: receipt.id,
+        receiptNo: receipt.receiptNo,
+        createdItems,
+        updatedItems,
+        totalLines: body.lines.length,
+        totalQty,
+      };
+    });
+
+    return reply.code(201).send(result);
+  });
+
   app.get("/suppliers/:id/image", async (request, reply) => {
     const auth = request.headers?.authorization || "";
     const token =
