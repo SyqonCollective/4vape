@@ -102,6 +102,7 @@ export default function AdminProducts() {
     categoryId: "",
     parentId: "",
     isParent: false,
+    sellAsSingle: false,
     isUnavailable: false,
   });
   const [categories, setCategories] = useState([]);
@@ -435,6 +436,8 @@ export default function AdminProducts() {
       categoryId: p.categoryId || "",
       parentId: p.parentId || "",
       isParent: Boolean(p.isParent),
+      sellAsSingle:
+        p.sellAsSingle !== undefined ? Boolean(p.sellAsSingle) : Boolean((p.parentId || p.parent?.id) && p.price != null),
       isUnavailable: Boolean(p.isUnavailable),
     });
     setImages(p.images || []);
@@ -471,6 +474,7 @@ export default function AdminProducts() {
           categoryId: edit.categoryId || undefined,
           parentId: edit.parentId || undefined,
           isParent: edit.isParent,
+          sellAsSingle: edit.sellAsSingle,
           isUnavailable: edit.isUnavailable,
         }),
       });
@@ -744,6 +748,9 @@ export default function AdminProducts() {
     if (productFilter === "children") return Boolean(p.parentId || p.parent?.id);
     if (productFilter === "single") {
       if (p.isParent) return false;
+      if (p.parentId || p.parent?.id) {
+        return Boolean(p.sellAsSingle) && p.price != null;
+      }
       return p.price != null;
     }
     if (productFilter === "draft") return p.published === false;
@@ -883,6 +890,8 @@ export default function AdminProducts() {
       published: p.published !== false,
       isUnavailable: Boolean(p.isUnavailable),
       isParent: Boolean(p.isParent),
+      sellAsSingle:
+        p.sellAsSingle !== undefined ? Boolean(p.sellAsSingle) : Boolean((p.parentId || p.parent?.id) && p.price != null),
       parentId: p.parentId || p.parent?.id || "",
       isDraftRow: p.published === false,
       parentSort: p.parentSort ?? 0,
@@ -941,6 +950,7 @@ export default function AdminProducts() {
             published: productFilter === "draft" ? (forcePublish ? true : false) : Boolean(row.published),
             isUnavailable: Boolean(row.isUnavailable),
             isParent: Boolean(row.isParent),
+            sellAsSingle: Boolean(row.sellAsSingle),
             parentId: row.parentId || null,
             parentSort: orderMap.has(row.id) ? orderMap.get(row.id) : row.parentSort ?? 0,
           })),
@@ -1072,7 +1082,10 @@ export default function AdminProducts() {
           const p = row.item;
           const isChild = row.type === "child";
           const isParentRow = row.type === "parent";
-          const isChildSingle = Boolean(p.parentId || p.parent?.id) && p.price != null;
+          const isChildSingle =
+            Boolean(p.parentId || p.parent?.id) &&
+            Boolean(p.sellAsSingle) &&
+            p.price != null;
           return (
           <div
             className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
@@ -1466,6 +1479,7 @@ export default function AdminProducts() {
                           setEdit({
                             ...edit,
                             isParent: checked,
+                            sellAsSingle: checked ? false : edit.sellAsSingle,
                             parentId: edit.parentId,
                           });
                           if (!checked) {
@@ -1476,6 +1490,19 @@ export default function AdminProducts() {
                       <span>Raggruppa varianti</span>
                     </div>
                     <div className="muted">Può essere vendibile e apparire anche come singolo.</div>
+                  </label>
+                  <label>
+                    Venduto anche singolarmente
+                    <div className="toggle">
+                      <input
+                        type="checkbox"
+                        checked={edit.sellAsSingle}
+                        onChange={(e) => setEdit({ ...edit, sellAsSingle: e.target.checked })}
+                        disabled={!edit.parentId}
+                      />
+                      <span>Mostra come Figlio+singolo</span>
+                    </div>
+                    <div className="muted">Attivo solo per i prodotti figli.</div>
                   </label>
                   <label>
                     Non disponibile
@@ -2105,6 +2132,7 @@ export default function AdminProducts() {
                   <div>Pubblicato</div>
                   <div>Non disp.</div>
                   <div>Padre?</div>
+                  <div>Figlio+singolo?</div>
                   <div>Padre</div>
                 </div>
                 {(() => {
@@ -2368,11 +2396,25 @@ export default function AdminProducts() {
                               next[idx] = {
                                 ...row,
                                 isParent: e.target.checked,
+                                sellAsSingle: e.target.checked ? false : row.sellAsSingle,
                                 parentId: e.target.checked ? "" : row.parentId,
                               };
                               setBulkRows(next);
                             }}
                             disabled={false}
+                          />
+                          <span />
+                        </label>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(row.sellAsSingle)}
+                            onChange={(e) => {
+                              const next = [...bulkRows];
+                              next[idx] = { ...row, sellAsSingle: e.target.checked };
+                              setBulkRows(next);
+                            }}
+                            disabled={row.isParent}
                           />
                           <span />
                         </label>

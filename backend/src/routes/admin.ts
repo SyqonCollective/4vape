@@ -569,6 +569,7 @@ export async function adminRoutes(app: FastifyInstance) {
       "categoryId",
       "parentSku",
       "isParent",
+      "sellAsSingle",
       "isUnavailable",
       "shortDescription",
       "description",
@@ -605,6 +606,7 @@ export async function adminRoutes(app: FastifyInstance) {
       p.categoryId,
       p.parent?.sku || "",
       p.isParent ? "1" : "0",
+      p.sellAsSingle ? "1" : "0",
       p.isUnavailable ? "1" : "0",
       p.shortDescription || "",
       p.description || "",
@@ -696,6 +698,10 @@ export async function adminRoutes(app: FastifyInstance) {
       const kind = String(pick(row, ["prodotto", "tipo_prodotto"]) || "").toLowerCase();
       const isParent = kind.includes("padre") ? true : toBool(pick(row, ["isparent", "padre"]));
       if (isParent !== undefined) data.isParent = isParent;
+      const sellAsSingle = toBool(
+        pick(row, ["sellassingle", "venduto_anche_singolarmente", "figlio_singolo", "figliosingolo"])
+      );
+      if (sellAsSingle !== undefined) data.sellAsSingle = sellAsSingle;
       const isUnavailable = toBool(pick(row, ["isunavailable", "non_disponibile"]));
       if (isUnavailable !== undefined) data.isUnavailable = isUnavailable;
 
@@ -833,6 +839,7 @@ export async function adminRoutes(app: FastifyInstance) {
         categoryId: z.string().optional(),
         parentId: z.string().optional(),
         isParent: z.boolean().optional(),
+        sellAsSingle: z.boolean().optional(),
         isUnavailable: z.boolean().optional(),
         shortDescription: z.string().optional(),
         subcategory: z.string().optional(),
@@ -868,6 +875,9 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.badRequest("Price is required");
     }
 
+    const sellAsSingle =
+      body.sellAsSingle !== undefined ? body.sellAsSingle : body.isParent ? false : true;
+
     let categoryName = body.category;
     if (body.categoryId) {
       const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
@@ -887,6 +897,7 @@ export async function adminRoutes(app: FastifyInstance) {
           category: categoryName,
           parentId: body.parentId || null,
           isParent: body.isParent ?? false,
+          sellAsSingle,
           isUnavailable: body.isUnavailable ?? false,
           shortDescription: body.shortDescription,
           subcategory: body.subcategory,
@@ -937,6 +948,7 @@ export async function adminRoutes(app: FastifyInstance) {
         categoryId: z.string().nullable().optional(),
         parentId: z.string().nullable().optional(),
         isParent: z.boolean().optional(),
+        sellAsSingle: z.boolean().optional(),
         isUnavailable: z.boolean().optional(),
         shortDescription: z.string().optional(),
         subcategory: z.string().optional(),
@@ -983,6 +995,7 @@ export async function adminRoutes(app: FastifyInstance) {
     }
     if (body.parentId !== undefined) data.parentId = body.parentId;
     if (body.isParent !== undefined) data.isParent = body.isParent;
+    if (body.sellAsSingle !== undefined) data.sellAsSingle = body.sellAsSingle;
     if (body.isUnavailable !== undefined) data.isUnavailable = body.isUnavailable;
     data.vatIncluded = true;
     if (body.taxRateId !== undefined) data.taxRateId = body.taxRateId;
@@ -1041,6 +1054,7 @@ export async function adminRoutes(app: FastifyInstance) {
             published: z.boolean().optional(),
             isUnavailable: z.boolean().optional(),
             isParent: z.boolean().optional(),
+            sellAsSingle: z.boolean().optional(),
             parentId: z.string().nullable().optional(),
             parentSort: z.number().nullable().optional(),
           })
@@ -1077,6 +1091,7 @@ export async function adminRoutes(app: FastifyInstance) {
           ...(row.isParent !== undefined
             ? { isParent: row.isParent, parentId: row.isParent ? null : undefined }
             : {}),
+          ...(row.sellAsSingle !== undefined ? { sellAsSingle: row.sellAsSingle } : {}),
           ...(row.parentId !== undefined ? { parentId: row.parentId } : {}),
           ...(row.parentSort !== undefined ? { parentSort: row.parentSort ?? undefined } : {}),
           ...(row.isUnavailable !== undefined

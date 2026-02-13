@@ -164,6 +164,7 @@ model Product {
   categoryId  String?
   parentId    String?
   isParent    Boolean       @default(false)
+  sellAsSingle Boolean      @default(true)
   isUnavailable Boolean     @default(false)
   published   Boolean?      @default(true)
   visibility  String?
