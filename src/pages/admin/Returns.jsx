@@ -1,7 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
+
+const STATUS_META = {
+  PENDING: { label: "Da gestire", cls: "warning" },
+  HANDLED: { label: "Gestito", cls: "success" },
+};
 
 export default function AdminReturns() {
   const [items, setItems] = useState([]);
@@ -12,7 +17,7 @@ export default function AdminReturns() {
 
   async function loadReturns() {
     try {
-      const res = await api(`/admin/returns?status=${status}`);
+      const res = await api("/admin/returns?status=ALL");
       setItems(res || []);
     } catch {
       setError("Impossibile caricare resi");
@@ -21,7 +26,18 @@ export default function AdminReturns() {
 
   useEffect(() => {
     loadReturns();
-  }, [status]);
+  }, []);
+
+  const filteredItems = useMemo(
+    () => items.filter((x) => (status === "ALL" ? true : x.status === status)),
+    [items, status]
+  );
+
+  const stats = useMemo(() => {
+    const pending = items.filter((x) => x.status === "PENDING").length;
+    const handled = items.filter((x) => x.status === "HANDLED").length;
+    return { total: items.length, pending, handled };
+  }, [items]);
 
   async function openDetail(id) {
     try {
@@ -46,6 +62,8 @@ export default function AdminReturns() {
     }
   }
 
+  const formatDate = (value) => new Date(value).toLocaleString("it-IT");
+
   return (
     <section>
       <div className="page-header">
@@ -56,6 +74,21 @@ export default function AdminReturns() {
       </div>
 
       <InlineError message={error} onClose={() => setError("")} />
+
+      <div className="cards inventory-cards">
+        <div className="card">
+          <div className="card-label">Totale richieste</div>
+          <div className="card-value">{stats.total}</div>
+        </div>
+        <div className="card">
+          <div className="card-label">Da gestire</div>
+          <div className="card-value">{stats.pending}</div>
+        </div>
+        <div className="card">
+          <div className="card-label">Gestiti</div>
+          <div className="card-value">{stats.handled}</div>
+        </div>
+      </div>
 
       <div className="filters-row">
         <div className="filter-group">
@@ -68,8 +101,8 @@ export default function AdminReturns() {
         </div>
       </div>
 
-      <div className="orders-table">
-        <div className="row header" style={{ gridTemplateColumns: "170px 150px 1.2fr 1.1fr 120px 100px" }}>
+      <div className="orders-table returns-table">
+        <div className="row header">
           <div>Data</div>
           <div>Ordine</div>
           <div>Cliente</div>
@@ -77,45 +110,53 @@ export default function AdminReturns() {
           <div>Stato</div>
           <div></div>
         </div>
-        {items.map((r) => (
-          <div key={r.id} className="row" style={{ gridTemplateColumns: "170px 150px 1.2fr 1.1fr 120px 100px" }}>
-            <div>{new Date(r.createdAt).toLocaleString("it-IT")}</div>
+        {filteredItems.map((r) => (
+          <div key={r.id} className="row">
+            <div>{formatDate(r.createdAt)}</div>
             <div>{r.orderNumber}</div>
             <div>{r.customerName || "Cliente demo area privata"}</div>
             <div>{r.productName}</div>
-            <div>{r.status === "HANDLED" ? "Gestito" : "Da gestire"}</div>
             <div>
-              <button className="btn ghost small" onClick={() => openDetail(r.id)}>Dettagli</button>
+              <span className={`tag ${STATUS_META[r.status]?.cls || "info"}`}>
+                {STATUS_META[r.status]?.label || r.status}
+              </span>
+            </div>
+            <div>
+              <button className="btn ghost small" onClick={() => openDetail(r.id)}>
+                Dettagli
+              </button>
             </div>
           </div>
         ))}
-        {!items.length ? <div className="inventory-empty">Nessun reso</div> : null}
+        {!filteredItems.length ? <div className="inventory-empty">Nessun reso</div> : null}
       </div>
 
       {detail ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setDetail(null)}>
-            <div className="modal inventory-edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal returns-detail-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-title">
                   <h3>Dettaglio reso</h3>
                 </div>
                 <button className="btn ghost" onClick={() => setDetail(null)}>Chiudi</button>
               </div>
-              <div className="modal-body">
-                <div className="summary-grid">
+              <div className="modal-body modal-body-single returns-modal-body">
+                <div className="summary-grid returns-summary-grid">
                   <div><strong>Cliente</strong><div>{detail.customerName || "Cliente demo area privata"}</div></div>
                   <div><strong>Ordine</strong><div>{detail.orderNumber}</div></div>
                   <div><strong>Prodotto</strong><div>{detail.productName}</div></div>
-                  <div><strong>Stato</strong><div>{detail.status === "HANDLED" ? "Gestito" : "Da gestire"}</div></div>
+                  <div><strong>Stato</strong><div>{STATUS_META[detail.status]?.label || detail.status}</div></div>
+                  <div><strong>Data richiesta</strong><div>{formatDate(detail.createdAt)}</div></div>
+                  <div><strong>Gestito il</strong><div>{detail.handledAt ? formatDate(detail.handledAt) : "-"}</div></div>
                 </div>
-                <div style={{ marginTop: 14 }}>
+                <div className="returns-problem-box">
                   <strong>Descrizione problema</strong>
                   <p>{detail.problemDescription}</p>
                 </div>
-                <div style={{ marginTop: 14 }}>
+                <div className="returns-images-wrap">
                   <strong>Immagini</strong>
-                  <div className="goods-receipts-list" style={{ marginTop: 8 }}>
+                  <div className="returns-images-grid">
                     {detail.images?.length
                       ? detail.images.map((img) => (
                           <a
@@ -123,9 +164,10 @@ export default function AdminReturns() {
                             href={img.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="result-item"
+                            className="returns-image-card"
                           >
-                            {img.url}
+                            <img src={img.url} alt="Allegato reso" />
+                            <span>{img.url.split("/").pop()}</span>
                           </a>
                         ))
                       : <div className="field-hint">Nessuna immagine allegata</div>}
@@ -152,7 +194,7 @@ export default function AdminReturns() {
                 <div className="modal-title"><h3>Conferma gestione</h3></div>
                 <button className="btn ghost" onClick={() => setConfirmHandle(null)}>Chiudi</button>
               </div>
-              <div className="modal-body">
+              <div className="modal-body modal-body-single returns-modal-body">
                 <p>Sei sicuro di voler segnare questo reso come gestito?</p>
                 <div className="actions">
                   <button className="btn ghost" onClick={() => setConfirmHandle(null)}>Annulla</button>

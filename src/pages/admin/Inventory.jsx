@@ -277,7 +277,7 @@ export default function AdminInventory() {
                 </div>
                 <button className="btn ghost" onClick={() => setShowEditModal(false)}>Chiudi</button>
               </div>
-              <div className="modal-body">
+              <div className="modal-body modal-body-single inventory-modal-body">
                 <div className="inventory-edit-grid">
                   <div><label>SKU</label><input value={form.sku} onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))} /></div>
                   <div><label>Nome</label><input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} /></div>
@@ -314,7 +314,7 @@ export default function AdminInventory() {
                 <div className="modal-title"><h3>Modifica quantità rapida</h3></div>
                 <button className="btn ghost" onClick={() => setShowQtyModal(false)}>Chiudi</button>
               </div>
-              <div className="modal-body">
+              <div className="modal-body modal-body-single inventory-modal-body">
                 <div className="inventory-qty-list">
                   <div className="inventory-qty-row header"><div>SKU</div><div>Prodotto</div><div>Qta</div></div>
                   {items.map((item) => (

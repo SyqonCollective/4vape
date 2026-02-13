@@ -2851,6 +2851,80 @@ button {
   font-weight: 700;
 }
 
+.inventory-modal-body .actions {
+  margin-top: 14px;
+  justify-content: flex-end;
+}
+
+.returns-table .row {
+  grid-template-columns: 170px 150px 1.2fr 1.1fr 130px 100px;
+}
+
+.returns-detail-modal {
+  width: min(1120px, 96vw);
+  max-height: calc(100vh - 48px);
+}
+
+.returns-modal-body {
+  max-height: 72vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.returns-summary-grid {
+  margin-bottom: 14px;
+}
+
+.returns-problem-box {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #f8fafc;
+}
+
+.returns-problem-box p {
+  margin: 8px 0 0;
+  color: #334155;
+}
+
+.returns-images-wrap {
+  margin-top: 14px;
+}
+
+.returns-images-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.returns-image-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 12px;
+  padding: 8px;
+  color: inherit;
+  text-decoration: none;
+  background: #fff;
+}
+
+.returns-image-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #f1f5f9;
+}
+
+.returns-image-card span {
+  font-size: 12px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .success-banner {
   margin: 10px 0 12px;
   background: rgba(16, 185, 129, 0.12);
@@ -2978,5 +3052,9 @@ button {
 
   .inventory-qty-row {
     grid-template-columns: 90px 1fr;
+  }
+
+  .returns-table .row {
+    grid-template-columns: 130px 120px 1fr;
   }
 }
