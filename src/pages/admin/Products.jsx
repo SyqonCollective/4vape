@@ -5,6 +5,74 @@ import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
+function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione..." }) {
+  const editorRef = useRef(null);
+
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    if ((value || "") !== el.innerHTML) {
+      el.innerHTML = value || "";
+    }
+  }, [value]);
+
+  function run(command, arg) {
+    const el = editorRef.current;
+    if (!el) return;
+    el.focus();
+    document.execCommand(command, false, arg);
+    onChange(el.innerHTML);
+  }
+
+  function onInput() {
+    const el = editorRef.current;
+    if (!el) return;
+    onChange(el.innerHTML);
+  }
+
+  function onAddLink() {
+    const url = window.prompt("Inserisci URL (https://...)");
+    if (!url) return;
+    run("createLink", url.trim());
+  }
+
+  return (
+    <div className="rte">
+      <div className="rte-toolbar">
+        <button type="button" className="rte-btn" onClick={() => run("bold")} title="Grassetto">
+          B
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("italic")} title="Corsivo">
+          I
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("underline")} title="Sottolineato">
+          U
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("insertUnorderedList")} title="Elenco puntato">
+          • List
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("insertOrderedList")} title="Elenco numerato">
+          1. List
+        </button>
+        <button type="button" className="rte-btn" onClick={onAddLink} title="Aggiungi link">
+          Link
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("removeFormat")} title="Rimuovi formattazione">
+          Clear
+        </button>
+      </div>
+      <div
+        ref={editorRef}
+        className="rte-editor"
+        contentEditable
+        suppressContentEditableWarning
+        data-placeholder={placeholder}
+        onInput={onInput}
+      />
+    </div>
+  );
+}
+
 export default function AdminProducts() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
@@ -1470,10 +1538,9 @@ export default function AdminProducts() {
                 </div>
                 <label>
                   Descrizione
-                  <textarea
+                  <RichTextEditor
                     value={edit.description}
-                    onChange={(e) => setEdit({ ...edit, description: e.target.value })}
-                    rows={5}
+                    onChange={(next) => setEdit({ ...edit, description: next })}
                   />
                 </label>
                 <div className="actions">
@@ -1926,10 +1993,9 @@ export default function AdminProducts() {
                     </label>
                     <label className="full">
                       Descrizione
-                      <textarea
-                        rows={4}
+                      <RichTextEditor
                         value={manualDraft.description}
-                        onChange={(e) => setManualDraft({ ...manualDraft, description: e.target.value })}
+                        onChange={(next) => setManualDraft({ ...manualDraft, description: next })}
                       />
                     </label>
                   </div>
