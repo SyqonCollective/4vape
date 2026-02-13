@@ -220,6 +220,124 @@ button {
   color: var(--muted);
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.notif-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.notif-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: #334155;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 6px;
+  border: 2px solid #fff;
+  z-index: 2;
+}
+
+.notif-anim {
+  position: absolute;
+  inset: -10px;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 54px;
+  width: min(460px, 88vw);
+  max-height: 70vh;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  z-index: 30;
+}
+
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  font-size: 13px;
+  color: #64748b;
+}
+
+.notif-list {
+  max-height: 58vh;
+  overflow-y: auto;
+}
+
+.notif-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 12px 14px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.notif-item:hover {
+  background: #f8fafc;
+}
+
+.notif-item.is-new {
+  background: rgba(239, 246, 255, 0.9);
+}
+
+.notif-item-title {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.notif-item-body {
+  margin-top: 2px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.notif-item-date {
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.notif-empty {
+  padding: 14px;
+  color: #64748b;
+  font-size: 13px;
+}
+
 .brand {
   display: flex;
   gap: 0.9rem;

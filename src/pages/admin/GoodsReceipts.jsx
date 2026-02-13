@@ -83,6 +83,11 @@ export default function AdminGoodsReceipts() {
   const [success, setSuccess] = useState("");
   const [receipts, setReceipts] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [editingReceipt, setEditingReceipt] = useState(null);
+  const [editSupplierName, setEditSupplierName] = useState("");
+  const [editReference, setEditReference] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editRows, setEditRows] = useState([]);
   const [pendingImportRows, setPendingImportRows] = useState([]);
   const [conflictSkus, setConflictSkus] = useState([]);
 
@@ -382,6 +387,95 @@ export default function AdminGoodsReceipts() {
     }
   }
 
+  function updateEditRow(index, patch) {
+    setEditRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  }
+
+  function addEditRow() {
+    setEditRows((prev) => [...prev, newRow()]);
+  }
+
+  function removeEditRow(index) {
+    setEditRows((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function openEditReceipt(id) {
+    try {
+      const res = await api(`/admin/goods-receipts/${id}`);
+      setEditingReceipt(res);
+      setEditSupplierName(res.supplierName || "");
+      setEditReference(res.reference || "");
+      setEditNotes(res.notes || "");
+      setEditRows(
+        (res.lines || []).map((line) => ({
+          sku: line.sku || "",
+          name: line.name || "",
+          qty: Number(line.qty || 1),
+          unitCost: line.unitCost ?? "",
+          unitPrice: line.unitPrice ?? "",
+          description: line.item?.description || "",
+          shortDescription: line.item?.shortDescription || "",
+          brand: line.item?.brand || "",
+          category: line.item?.category || "",
+          subcategory: line.item?.subcategory || "",
+          barcode: line.item?.barcode || "",
+          nicotine: line.item?.nicotine ?? "",
+          mlProduct: line.item?.mlProduct ?? "",
+          taxRateId: line.item?.taxRateId || "",
+          exciseRateId: line.item?.exciseRateId || "",
+          lineNote: line.lineNote || "",
+        }))
+      );
+    } catch {
+      setError("Impossibile aprire modifica carico");
+    }
+  }
+
+  async function saveEditedReceipt() {
+    if (!editingReceipt) return;
+    const validRows = editRows.filter((r) => r.sku.trim() && Number(r.qty || 0) > 0);
+    if (!validRows.length) {
+      setError("Inserisci almeno una riga valida");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api(`/admin/goods-receipts/${editingReceipt.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          supplierName: editSupplierName || null,
+          reference: editReference || null,
+          notes: editNotes || null,
+          lines: validRows.map((r) => ({
+            sku: r.sku.trim(),
+            name: r.name.trim() || null,
+            qty: Number(r.qty || 0),
+            unitCost: r.unitCost === "" ? null : Number(r.unitCost),
+            unitPrice: r.unitPrice === "" ? null : Number(r.unitPrice),
+            description: r.description || null,
+            shortDescription: r.shortDescription || null,
+            brand: r.brand || null,
+            category: r.category || null,
+            subcategory: r.subcategory || null,
+            barcode: r.barcode || null,
+            nicotine: r.nicotine === "" ? null : Number(r.nicotine),
+            mlProduct: r.mlProduct === "" ? null : Number(r.mlProduct),
+            taxRateId: r.taxRateId || null,
+            exciseRateId: r.exciseRateId || null,
+            lineNote: r.lineNote || null,
+          })),
+        }),
+      });
+      setEditingReceipt(null);
+      setSuccess("Carico aggiornato e inventario riallineato.");
+      await loadReceipts();
+    } catch {
+      setError("Impossibile salvare modifica carico");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -589,6 +683,9 @@ export default function AdminGoodsReceipts() {
                   </div>
                     <div className="goods-receipt-right">
                       <div className="field-hint">{r.linesCount} righe · {r.totalQty} pz</div>
+                    <button className="btn ghost small" onClick={() => openEditReceipt(r.id)}>
+                      Modifica
+                    </button>
                     <button className="btn ghost small" onClick={() => setConfirmDelete(r)}>
                       Elimina
                     </button>
@@ -611,7 +708,7 @@ export default function AdminGoodsReceipts() {
                   Chiudi
                 </button>
               </div>
-              <div className="modal-body">
+              <div className="modal-body modal-body-single returns-modal-body">
                 <p>
                   Eliminare il carico <strong>{confirmDelete.receiptNo}</strong>?<br />
                   Le giacenze inventario verranno aggiornate automaticamente.
@@ -622,6 +719,91 @@ export default function AdminGoodsReceipts() {
                   </button>
                   <button className="btn danger" onClick={() => deleteReceipt(confirmDelete.id)}>
                     Elimina
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+      {editingReceipt ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setEditingReceipt(null)}>
+            <div className="modal returns-detail-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div className="modal-title">
+                  <h3>Modifica carico {editingReceipt.receiptNo}</h3>
+                </div>
+                <button className="btn ghost" onClick={() => setEditingReceipt(null)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body modal-body-single returns-modal-body">
+                <div className="order-form">
+                  <div>
+                    <label>Fornitore interno</label>
+                    <input
+                      value={editSupplierName}
+                      onChange={(e) => setEditSupplierName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label>Riferimento</label>
+                    <input value={editReference} onChange={(e) => setEditReference(e.target.value)} />
+                  </div>
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label>Note</label>
+                    <input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+                  </div>
+                </div>
+                <div className="goods-toolbar">
+                  <div className="card-title" style={{ marginBottom: 0 }}>Righe carico</div>
+                  <button className="btn ghost" onClick={addEditRow}>Aggiungi riga</button>
+                </div>
+                <div className="goods-grid">
+                  <div className="goods-row header">
+                    <div>SKU</div>
+                    <div>Nome</div>
+                    <div>Qta</div>
+                    <div>Costo</div>
+                    <div>Prezzo</div>
+                    <div>Brand</div>
+                    <div>Categoria</div>
+                    <div>Nicotina</div>
+                    <div>ML</div>
+                    <div>IVA</div>
+                    <div>Accisa</div>
+                    <div>Nota riga</div>
+                    <div></div>
+                  </div>
+                  {editRows.map((row, idx) => (
+                    <div key={idx} className="goods-row">
+                      <input value={row.sku} onChange={(e) => updateEditRow(idx, { sku: e.target.value })} />
+                      <input value={row.name} onChange={(e) => updateEditRow(idx, { name: e.target.value })} />
+                      <input type="number" value={row.qty} onChange={(e) => updateEditRow(idx, { qty: Number(e.target.value || 0) })} />
+                      <input type="number" step="0.01" value={row.unitCost} onChange={(e) => updateEditRow(idx, { unitCost: e.target.value })} />
+                      <input type="number" step="0.01" value={row.unitPrice} onChange={(e) => updateEditRow(idx, { unitPrice: e.target.value })} />
+                      <input value={row.brand} onChange={(e) => updateEditRow(idx, { brand: e.target.value })} />
+                      <input value={row.category} onChange={(e) => updateEditRow(idx, { category: e.target.value })} />
+                      <input type="number" step="0.01" value={row.nicotine} onChange={(e) => updateEditRow(idx, { nicotine: e.target.value })} />
+                      <input type="number" step="0.01" value={row.mlProduct} onChange={(e) => updateEditRow(idx, { mlProduct: e.target.value })} />
+                      <select value={row.taxRateId} onChange={(e) => updateEditRow(idx, { taxRateId: e.target.value })}>
+                        <option value="">IVA</option>
+                        {taxes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                      <select value={row.exciseRateId} onChange={(e) => updateEditRow(idx, { exciseRateId: e.target.value })}>
+                        <option value="">Accisa</option>
+                        {excises.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                      </select>
+                      <input value={row.lineNote} onChange={(e) => updateEditRow(idx, { lineNote: e.target.value })} placeholder="Nota" />
+                      <button className="btn ghost small" onClick={() => removeEditRow(idx)}>Rimuovi</button>
+                    </div>
+                  ))}
+                </div>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setEditingReceipt(null)}>Annulla</button>
+                  <button className="btn primary" onClick={saveEditedReceipt} disabled={saving}>
+                    {saving ? "Salvataggio..." : "Salva modifiche"}
                   </button>
                 </div>
               </div>
@@ -647,7 +829,7 @@ export default function AdminGoodsReceipts() {
                   Chiudi
                 </button>
               </div>
-              <div className="modal-body">
+              <div className="modal-body modal-body-single returns-modal-body">
                 <p>
                   Trovati <strong>{conflictSkus.length}</strong> SKU già presenti in inventario.
                   Vuoi aggiornare gli articoli esistenti o duplicare le voci importate?

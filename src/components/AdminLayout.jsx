@@ -1,8 +1,12 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useMemo, useRef, useState } from "react";
-import { clearToken } from "../lib/api.js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Lottie from "lottie-react";
+import { api, clearToken } from "../lib/api.js";
 import Portal from "./Portal.jsx";
 import logo from "../assets/logo.png";
+import notificationOn from "../assets/NotificationOn.json";
+import saleMp3 from "../assets/sale.mp3";
+import generalMp3 from "../assets/general.mp3";
 
 const links = [
   { to: "/admin/dashboard", label: "Dashboard" },
@@ -21,6 +25,7 @@ const links = [
 ];
 
 const ORDER_KEY = "admin_sidebar_order";
+const NOTIF_SEEN_KEY = "admin_notifications_seen_at";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -28,6 +33,15 @@ export default function AdminLayout() {
   const [dragging, setDragging] = useState(null);
   const [dragOver, setDragOver] = useState(null);
   const baseOrderRef = useRef(null);
+  const [notifications, setNotifications] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifError, setNotifError] = useState("");
+  const notifPanelRef = useRef(null);
+  const [seenAt, setSeenAt] = useState(() => Number(localStorage.getItem(NOTIF_SEEN_KEY) || 0));
+  const firstNotifLoadRef = useRef(true);
+  const saleAudioRef = useRef(null);
+  const generalAudioRef = useRef(null);
 
   const orderedLinks = useMemo(() => {
     const saved = localStorage.getItem(ORDER_KEY);
@@ -46,6 +60,96 @@ export default function AdminLayout() {
   }, []);
 
   const [order, setOrder] = useState(orderedLinks);
+
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => new Date(n.createdAt).getTime() > seenAt).length,
+    [notifications, seenAt]
+  );
+
+  function markNotificationsSeen() {
+    const now = Date.now();
+    setSeenAt(now);
+    localStorage.setItem(NOTIF_SEEN_KEY, String(now));
+  }
+
+  async function fetchNotifications() {
+    setNotifLoading(true);
+    try {
+      const res = await api("/admin/notifications");
+      const incoming = (res?.items || []).map((n) => ({
+        ...n,
+        createdAt: new Date(n.createdAt).toISOString(),
+      }));
+      setNotifications((prev) => {
+        const prevIds = new Set(prev.map((x) => x.id));
+        const fresh = incoming.filter((x) => !prevIds.has(x.id));
+
+        if (!firstNotifLoadRef.current && fresh.length > 0) {
+          const hasOrder = fresh.some((x) => x.type === "NEW_ORDER");
+          const hasOther = fresh.some((x) => x.type !== "NEW_ORDER");
+          if (hasOrder && saleAudioRef.current) {
+            saleAudioRef.current.currentTime = 0;
+            saleAudioRef.current.play().catch(() => {});
+          }
+          if (hasOther && generalAudioRef.current) {
+            generalAudioRef.current.currentTime = 0;
+            generalAudioRef.current.play().catch(() => {});
+          }
+        }
+
+        const map = new Map(prev.map((x) => [x.id, x]));
+        for (const item of incoming) {
+          map.set(item.id, { ...(map.get(item.id) || {}), ...item });
+        }
+        return Array.from(map.values())
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 60);
+      });
+      setNotifError("");
+    } catch {
+      setNotifError("Impossibile aggiornare notifiche");
+    } finally {
+      firstNotifLoadRef.current = false;
+      setNotifLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    saleAudioRef.current = new Audio(saleMp3);
+    generalAudioRef.current = new Audio(generalMp3);
+    saleAudioRef.current.preload = "auto";
+    generalAudioRef.current.preload = "auto";
+    fetchNotifications();
+    const id = setInterval(fetchNotifications, 5000);
+    return () => {
+      clearInterval(id);
+      saleAudioRef.current = null;
+      generalAudioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!notifOpen) return;
+      if (notifPanelRef.current && !notifPanelRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [notifOpen]);
+
+  function toggleNotifications() {
+    const next = !notifOpen;
+    setNotifOpen(next);
+    if (next) markNotificationsSeen();
+  }
+
+  function openNotification(item) {
+    markNotificationsSeen();
+    setNotifOpen(false);
+    navigate(item.href || "/admin/dashboard");
+  }
 
   function onLogout() {
     setConfirmLogout(true);
@@ -133,7 +237,53 @@ export default function AdminLayout() {
               <div className="top-title">Admin Panel</div>
               <div className="top-sub">4Vape B2B Console</div>
             </div>
-            <button className="btn ghost" onClick={onLogout}>Logout</button>
+            <div className="topbar-actions" ref={notifPanelRef}>
+              <button className="notif-btn" onClick={toggleNotifications} aria-label="Notifiche">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3a5 5 0 0 0-5 5v2.6c0 .7-.2 1.4-.6 2L5 15h14l-1.4-2.4c-.4-.6-.6-1.3-.6-2V8a5 5 0 0 0-5-5Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z" />
+                </svg>
+                {unreadCount > 0 ? (
+                  <span className="notif-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                ) : null}
+                {unreadCount > 0 ? (
+                  <span className="notif-anim">
+                    <Lottie animationData={notificationOn} loop />
+                  </span>
+                ) : null}
+              </button>
+
+              {notifOpen ? (
+                <div className="notif-panel">
+                  <div className="notif-header">
+                    <strong>Notifiche</strong>
+                    <span>{unreadCount > 0 ? `${unreadCount} nuove` : "Aggiornate"}</span>
+                  </div>
+                  <div className="notif-list">
+                    {notifLoading && notifications.length === 0 ? (
+                      <div className="notif-empty">Caricamento...</div>
+                    ) : null}
+                    {notifError ? <div className="notif-empty">{notifError}</div> : null}
+                    {!notifications.length && !notifLoading ? (
+                      <div className="notif-empty">Nessuna notifica</div>
+                    ) : null}
+                    {notifications.map((n) => (
+                      <button
+                        key={n.id}
+                        className={`notif-item ${new Date(n.createdAt).getTime() > seenAt ? "is-new" : ""}`}
+                        onClick={() => openNotification(n)}
+                      >
+                        <div className="notif-item-title">{n.title}</div>
+                        <div className="notif-item-body">{n.message}</div>
+                        <div className="notif-item-date">
+                          {new Date(n.createdAt).toLocaleString("it-IT")}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              <button className="btn ghost" onClick={onLogout}>Logout</button>
+            </div>
           </div>
           <Outlet />
         </div>

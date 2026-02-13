@@ -14,6 +14,7 @@ export default function AdminReturns() {
   const [error, setError] = useState("");
   const [detail, setDetail] = useState(null);
   const [confirmHandle, setConfirmHandle] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   async function loadReturns() {
     try {
@@ -59,6 +60,17 @@ export default function AdminReturns() {
       await loadReturns();
     } catch {
       setError("Impossibile segnare il reso come gestito");
+    }
+  }
+
+  async function deleteReturn(id) {
+    try {
+      await api(`/admin/returns/${id}`, { method: "DELETE" });
+      setConfirmDelete(null);
+      setDetail(null);
+      await loadReturns();
+    } catch {
+      setError("Impossibile eliminare reso");
     }
   }
 
@@ -175,11 +187,20 @@ export default function AdminReturns() {
                 </div>
                 {detail.status !== "HANDLED" ? (
                   <div className="actions">
+                    <button className="btn danger" onClick={() => setConfirmDelete(detail)}>
+                      Elimina reso
+                    </button>
                     <button className="btn primary" onClick={() => setConfirmHandle(detail)}>
                       Gestito
                     </button>
                   </div>
-                ) : null}
+                ) : (
+                  <div className="actions">
+                    <button className="btn danger" onClick={() => setConfirmDelete(detail)}>
+                      Elimina reso
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -199,6 +220,26 @@ export default function AdminReturns() {
                 <div className="actions">
                   <button className="btn ghost" onClick={() => setConfirmHandle(null)}>Annulla</button>
                   <button className="btn primary" onClick={() => markHandled(confirmHandle.id)}>Conferma</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+
+      {confirmDelete ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setConfirmDelete(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div className="modal-title"><h3>Conferma eliminazione</h3></div>
+                <button className="btn ghost" onClick={() => setConfirmDelete(null)}>Chiudi</button>
+              </div>
+              <div className="modal-body modal-body-single returns-modal-body">
+                <p>Sei sicuro di voler eliminare questo reso?</p>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setConfirmDelete(null)}>Annulla</button>
+                  <button className="btn danger" onClick={() => deleteReturn(confirmDelete.id)}>Elimina</button>
                 </div>
               </div>
             </div>

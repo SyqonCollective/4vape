@@ -2569,6 +2569,184 @@ export async function adminRoutes(app: FastifyInstance) {
     return reply.code(201).send(result);
   });
 
+  app.patch("/goods-receipts/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        supplierName: z.string().optional().nullable(),
+        reference: z.string().optional().nullable(),
+        notes: z.string().optional().nullable(),
+        receivedAt: z.string().optional().nullable(),
+        lines: z
+          .array(
+            z.object({
+              sku: z.string().min(1),
+              name: z.string().optional().nullable(),
+              qty: z.number().int().positive(),
+              unitCost: z.number().optional().nullable(),
+              unitPrice: z.number().optional().nullable(),
+              description: z.string().optional().nullable(),
+              shortDescription: z.string().optional().nullable(),
+              brand: z.string().optional().nullable(),
+              category: z.string().optional().nullable(),
+              subcategory: z.string().optional().nullable(),
+              barcode: z.string().optional().nullable(),
+              nicotine: z.number().optional().nullable(),
+              mlProduct: z.number().optional().nullable(),
+              taxRateId: z.string().optional().nullable(),
+              exciseRateId: z.string().optional().nullable(),
+              lineNote: z.string().optional().nullable(),
+            })
+          )
+          .min(1),
+      })
+      .parse(request.body);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const existing = await tx.goodsReceipt.findUnique({
+        where: { id },
+        include: { lines: true },
+      });
+      if (!existing) throw app.httpErrors.notFound("Carico non trovato");
+
+      const oldQtyByItem = new Map<string, number>();
+      for (const line of existing.lines) {
+        oldQtyByItem.set(line.itemId, (oldQtyByItem.get(line.itemId) || 0) + Number(line.qty || 0));
+      }
+
+      const resolvedLines: Array<{
+        itemId: string;
+        sku: string;
+        name: string;
+        qty: number;
+        unitCost: number | null;
+        unitPrice: number | null;
+        lineNote: string | null;
+      }> = [];
+
+      for (const rawLine of body.lines) {
+        const sku = rawLine.sku.trim();
+        const name = (rawLine.name || sku).trim();
+        let item = await tx.internalInventoryItem.findUnique({ where: { sku } });
+        if (!item) {
+          item = await tx.internalInventoryItem.create({
+            data: {
+              sku,
+              name,
+              description: rawLine.description || null,
+              shortDescription: rawLine.shortDescription || null,
+              brand: rawLine.brand || null,
+              category: rawLine.category || null,
+              subcategory: rawLine.subcategory || null,
+              barcode: rawLine.barcode || null,
+              nicotine: rawLine.nicotine ?? null,
+              mlProduct: rawLine.mlProduct ?? null,
+              purchasePrice: rawLine.unitCost ?? null,
+              price: rawLine.unitPrice ?? null,
+              stockQty: 0,
+              taxRateId: rawLine.taxRateId || null,
+              exciseRateId: rawLine.exciseRateId || null,
+            },
+          });
+        } else {
+          await tx.internalInventoryItem.update({
+            where: { id: item.id },
+            data: {
+              ...(rawLine.name ? { name } : {}),
+              ...(rawLine.description !== undefined
+                ? { description: rawLine.description || null }
+                : {}),
+              ...(rawLine.shortDescription !== undefined
+                ? { shortDescription: rawLine.shortDescription || null }
+                : {}),
+              ...(rawLine.brand !== undefined ? { brand: rawLine.brand || null } : {}),
+              ...(rawLine.category !== undefined ? { category: rawLine.category || null } : {}),
+              ...(rawLine.subcategory !== undefined
+                ? { subcategory: rawLine.subcategory || null }
+                : {}),
+              ...(rawLine.barcode !== undefined ? { barcode: rawLine.barcode || null } : {}),
+              ...(rawLine.nicotine !== undefined ? { nicotine: rawLine.nicotine } : {}),
+              ...(rawLine.mlProduct !== undefined ? { mlProduct: rawLine.mlProduct } : {}),
+              ...(rawLine.unitCost !== undefined ? { purchasePrice: rawLine.unitCost } : {}),
+              ...(rawLine.unitPrice !== undefined ? { price: rawLine.unitPrice } : {}),
+              ...(rawLine.taxRateId !== undefined ? { taxRateId: rawLine.taxRateId || null } : {}),
+              ...(rawLine.exciseRateId !== undefined
+                ? { exciseRateId: rawLine.exciseRateId || null }
+                : {}),
+            },
+          });
+        }
+
+        resolvedLines.push({
+          itemId: item.id,
+          sku,
+          name,
+          qty: Number(rawLine.qty || 0),
+          unitCost: rawLine.unitCost ?? null,
+          unitPrice: rawLine.unitPrice ?? null,
+          lineNote: rawLine.lineNote || null,
+        });
+      }
+
+      const newQtyByItem = new Map<string, number>();
+      for (const line of resolvedLines) {
+        newQtyByItem.set(line.itemId, (newQtyByItem.get(line.itemId) || 0) + line.qty);
+      }
+
+      const allItemIds = new Set<string>([
+        ...Array.from(oldQtyByItem.keys()),
+        ...Array.from(newQtyByItem.keys()),
+      ]);
+
+      for (const itemId of allItemIds) {
+        const oldQty = oldQtyByItem.get(itemId) || 0;
+        const newQty = newQtyByItem.get(itemId) || 0;
+        const delta = newQty - oldQty;
+        if (delta === 0) continue;
+        const item = await tx.internalInventoryItem.findUnique({ where: { id: itemId } });
+        if (!item) continue;
+        const nextQty = Math.max(0, Number(item.stockQty || 0) + delta);
+        await tx.internalInventoryItem.update({
+          where: { id: itemId },
+          data: { stockQty: nextQty },
+        });
+      }
+
+      await tx.goodsReceiptLine.deleteMany({ where: { receiptId: id } });
+      await tx.goodsReceiptLine.createMany({
+        data: resolvedLines.map((line) => ({
+          receiptId: id,
+          itemId: line.itemId,
+          sku: line.sku,
+          name: line.name,
+          qty: line.qty,
+          unitCost: line.unitCost,
+          unitPrice: line.unitPrice,
+          lineNote: line.lineNote,
+        })),
+      });
+
+      await tx.goodsReceipt.update({
+        where: { id },
+        data: {
+          supplierName: body.supplierName || null,
+          reference: body.reference || null,
+          notes: body.notes || null,
+          receivedAt: body.receivedAt ? new Date(body.receivedAt) : undefined,
+        },
+      });
+
+      return {
+        receiptId: id,
+        updatedLines: resolvedLines.length,
+      };
+    });
+
+    return result;
+  });
+
   app.delete("/goods-receipts/:id", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -2683,6 +2861,86 @@ export async function adminRoutes(app: FastifyInstance) {
       },
     });
     return updated;
+  });
+
+  app.delete("/returns/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.returnRequest.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
+  app.get("/notifications", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+
+    const [returns, orders, companies, pendingUsers] = await Promise.all([
+      prisma.returnRequest.findMany({
+        where: { status: "PENDING" },
+        include: {
+          company: { select: { name: true } },
+          user: { select: { email: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      prisma.order.findMany({
+        include: { company: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      prisma.company.findMany({
+        where: { status: "PENDING" },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      prisma.user.findMany({
+        where: { approved: false },
+        include: { company: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+    ]);
+
+    const items = [
+      ...returns.map((r) => ({
+        id: `return:${r.id}`,
+        type: "RETURN_REQUEST",
+        createdAt: r.createdAt,
+        title: "Nuova richiesta reso",
+        message: `${r.company?.name || r.user?.email || r.contactName || "Cliente"} · Ordine ${r.orderNumber}`,
+        href: "/admin/returns",
+      })),
+      ...orders.map((o) => ({
+        id: `order:${o.id}`,
+        type: "NEW_ORDER",
+        createdAt: o.createdAt,
+        title: "Nuovo ordine",
+        message: `${o.company?.name || "Azienda"} · Stato ${o.status}`,
+        href: "/admin/orders",
+      })),
+      ...companies.map((c) => ({
+        id: `company:${c.id}`,
+        type: "NEW_COMPANY_REQUEST",
+        createdAt: c.createdAt,
+        title: "Nuova richiesta azienda",
+        message: `${c.name}`,
+        href: "/admin/companies",
+      })),
+      ...pendingUsers.map((u) => ({
+        id: `user:${u.id}`,
+        type: "NEW_USER_PENDING",
+        createdAt: u.createdAt,
+        title: "Nuovo utente in attesa",
+        message: `${u.email}${u.company?.name ? ` · ${u.company.name}` : ""}`,
+        href: "/admin/companies",
+      })),
+    ]
+      .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)))
+      .slice(0, 60);
+
+    return { items };
   });
 
   app.get("/suppliers/:id/image", async (request, reply) => {
