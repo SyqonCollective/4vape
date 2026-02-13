@@ -743,8 +743,8 @@ export default function AdminProducts() {
     if (productFilter === "parents") return Boolean(p.isParent);
     if (productFilter === "children") return Boolean(p.parentId || p.parent?.id);
     if (productFilter === "single") {
-      if (p.parentId || p.parent?.id) return false;
-      return !p.isParent || p.price != null;
+      if (p.isParent) return false;
+      return p.price != null;
     }
     if (productFilter === "draft") return p.published === false;
     return true;
@@ -805,15 +805,6 @@ export default function AdminProducts() {
   };
 
   const groupedRows = (() => {
-    if (productFilter === "single") {
-      const singles = items.filter((p) => !p.isParent && !(p.parentId || p.parent?.id));
-      const parentSingles = items.filter((p) => p.isParent && p.price != null);
-      const combined = [...singles, ...parentSingles];
-      return sortItems(combined).map((p) => ({
-        type: p.isParent ? "single-parent" : "single",
-        item: p,
-      }));
-    }
     if (productFilter !== "all") {
       return sortItems(filteredItems).map((p) => ({ type: "single", item: p }));
     }
@@ -836,9 +827,6 @@ export default function AdminProducts() {
     const rows = [];
     for (const parent of parentsOnly) {
       rows.push({ type: "parent", item: parent });
-      if (parent.price != null) {
-        rows.push({ type: "single-parent", item: parent, parent });
-      }
       if (!collapsedParents.has(parent.id)) {
         const children = (byParent.get(parent.id) || []).sort((a, b) => {
           const orderDiff = (a.parentSort ?? 0) - (b.parentSort ?? 0);
@@ -1084,8 +1072,7 @@ export default function AdminProducts() {
           const p = row.item;
           const isChild = row.type === "child";
           const isParentRow = row.type === "parent";
-          const isParentSingle = row.type === "single-parent";
-          const hasParentSingle = isParentRow && p.price != null;
+          const isChildSingle = Boolean(p.parentId || p.parent?.id) && p.price != null;
           return (
           <div
             className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
@@ -1159,15 +1146,14 @@ export default function AdminProducts() {
             </div>
             <div className="name-cell">
               <span>{p.name}</span>
-              {hasParentSingle ? <span className="tag info">Padre + singolo</span> : null}
-              {isParentSingle ? <span className="tag info">Singolo (da padre)</span> : null}
+              {isChildSingle ? <span className="tag info">Figlio+singolo</span> : null}
               {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
               {p.published === false ? <span className="tag warn">Draft</span> : null}
             </div>
             <div>{isParentRow && p.price == null ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
             <div>{isParentRow && p.price == null ? dash : p.stockQty}</div>
             <div>
-              {isParentRow ? (hasParentSingle ? "Padre + singolo" : "Padre") : isParentSingle ? "Singolo" : p.parentId ? "Figlio" : "Singolo"}
+              {isParentRow ? "Padre" : isChildSingle ? "Figlio+singolo" : p.parentId ? "Figlio" : "Singolo"}
             </div>
             <div>{row.parent?.sku || p.parent?.sku || dash}</div>
             <div>{p.category || dash}</div>
