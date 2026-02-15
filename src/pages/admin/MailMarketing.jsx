@@ -69,6 +69,7 @@ export default function AdminMailMarketing() {
   const [campaignForm, setCampaignForm] = useState(DEFAULT_CAMPAIGN_FORM);
   const [companySearch, setCompanySearch] = useState("");
   const [previewCampaign, setPreviewCampaign] = useState(null);
+  const [fieldsOpen, setFieldsOpen] = useState(false);
 
   const filteredCompanies = useMemo(() => {
     const active = companies.filter((c) => c.status === "ACTIVE" && c.email);
@@ -491,16 +492,27 @@ export default function AdminMailMarketing() {
             </div>
           ) : null}
 
-          <h2 style={{ marginTop: 16 }}>Campi anagrafica</h2>
-          <div className="table compact">
-            <div className="row header"><div>ID campo</div><div>Nome</div></div>
-            {fields.map((f) => (
-              <div className="row" key={f.id || f.Id}>
-                <div className="mono">{f.id || f.Id}</div>
-                <div>{f.name || f.Name}</div>
-              </div>
-            ))}
+          <div className="actions" style={{ marginTop: 16, justifyContent: "space-between" }}>
+            <h2 style={{ margin: 0 }}>Campi anagrafica</h2>
+            <button type="button" className="btn ghost" onClick={() => setFieldsOpen((v) => !v)}>
+              {fieldsOpen ? "Chiudi campi" : "Apri campi"}
+            </button>
           </div>
+          {fieldsOpen ? (
+            <div className="table compact" style={{ marginTop: 10 }}>
+              <div className="row header"><div>ID campo</div><div>Nome</div></div>
+              {fields.map((f) => (
+                <div className="row" key={f.id || f.Id}>
+                  <div className="mono">{f.id || f.Id}</div>
+                  <div>{f.name || f.Name}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="muted" style={{ marginTop: 8 }}>
+              Clicca su "Apri campi" per vedere tutti i campi anagrafica.
+            </div>
+          )}
         </div>
       </div>
 
