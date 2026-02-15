@@ -1232,6 +1232,23 @@ button {
   height: 160px;
 }
 
+.related-picker {
+  margin-top: 8px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  background: #fff;
+  max-height: 200px;
+  overflow: auto;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.related-item {
+  font-size: 0.92rem;
+  align-items: center;
+}
+
 .modal-backdrop {
   position: fixed !important;
   inset: 0;

@@ -180,6 +180,7 @@ model Product {
   productType String?
   parentSku   String?
   childSkus   Json?
+  relatedProductIds Json?
   parentSort Int      @default(0)
   codicePl    String?
   mlProduct   Decimal? @db.Decimal(12, 3)

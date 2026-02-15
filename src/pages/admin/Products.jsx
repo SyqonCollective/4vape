@@ -104,6 +104,7 @@ export default function AdminProducts() {
     isParent: false,
     sellAsSingle: false,
     isUnavailable: false,
+    relatedProductIds: [],
   });
   const [categories, setCategories] = useState([]);
   const [parents, setParents] = useState([]);
@@ -160,6 +161,7 @@ export default function AdminProducts() {
   const [manualImageFile, setManualImageFile] = useState(null);
   const [manualImagePreview, setManualImagePreview] = useState("");
   const [childLinks, setChildLinks] = useState(new Set());
+  const [relatedSearch, setRelatedSearch] = useState("");
   const token = getToken();
   const fileInputRef = useRef(null);
   const parentFileInputRef = useRef(null);
@@ -185,6 +187,19 @@ export default function AdminProducts() {
     return result;
   })();
   const parentOptions = parents.map((p) => ({ id: p.id, name: p.name, sku: p.sku }));
+  const relatedCandidates = items
+    .filter((p) => {
+      if (!selectedProduct) return false;
+      if (p.id === selectedProduct.id) return false;
+      if (p.isParent) return true;
+      return Boolean(p.sellAsSingle);
+    })
+    .filter((p) => {
+      const q = relatedSearch.trim().toLowerCase();
+      if (!q) return true;
+      return `${p.sku || ""} ${p.name || ""} ${p.brand || ""}`.toLowerCase().includes(q);
+    })
+    .slice(0, 100);
   const selectedTax = taxes.find((t) => t.id === edit.taxRateId);
   const selectedExcise = excises.find((e) => e.id === edit.exciseRateId);
   const basePrice = edit.price ? Number(edit.price) : 0;
@@ -439,9 +454,11 @@ export default function AdminProducts() {
       sellAsSingle:
         p.sellAsSingle !== undefined ? Boolean(p.sellAsSingle) : Boolean((p.parentId || p.parent?.id) && p.price != null),
       isUnavailable: Boolean(p.isUnavailable),
+      relatedProductIds: Array.isArray(p.relatedProductIds) ? p.relatedProductIds : [],
     });
     setImages(p.images || []);
     setChildLinks(new Set((p.children || []).map((c) => c.id)));
+    setRelatedSearch("");
   }
 
   async function saveEdit(forcePublish = false) {
@@ -476,6 +493,10 @@ export default function AdminProducts() {
           isParent: edit.isParent,
           sellAsSingle: edit.sellAsSingle,
           isUnavailable: edit.isUnavailable,
+          relatedProductIds:
+            edit.isParent || edit.sellAsSingle
+              ? (edit.relatedProductIds || []).filter((id) => id !== selectedProduct.id)
+              : [],
         }),
       });
       if (edit.isParent) {
@@ -1529,6 +1550,46 @@ export default function AdminProducts() {
                         </option>
                       ))}
                     </select>
+                  </label>
+                  <label className="full">
+                    Prodotti correlati
+                    {edit.isParent || edit.sellAsSingle ? (
+                      <>
+                        <input
+                          placeholder="Cerca SKU o nome prodotto..."
+                          value={relatedSearch}
+                          onChange={(e) => setRelatedSearch(e.target.value)}
+                        />
+                        <div className="related-picker">
+                          {relatedCandidates.length === 0 ? (
+                            <div className="muted">Nessun prodotto disponibile</div>
+                          ) : (
+                            relatedCandidates.map((p) => (
+                              <label key={p.id} className="check related-item">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean((edit.relatedProductIds || []).includes(p.id))}
+                                  onChange={(e) => {
+                                    const next = new Set(edit.relatedProductIds || []);
+                                    if (e.target.checked) next.add(p.id);
+                                    else next.delete(p.id);
+                                    setEdit({ ...edit, relatedProductIds: Array.from(next) });
+                                  }}
+                                />
+                                <span>{p.sku} · {p.name}</span>
+                              </label>
+                            ))
+                          )}
+                        </div>
+                        <div className="muted">
+                          Disponibile per prodotti padre e per figli venduti anche singolarmente.
+                        </div>
+                      </>
+                    ) : (
+                      <div className="muted">
+                        Abilita "Venduto anche singolarmente" per impostare correlati su un figlio.
+                      </div>
+                    )}
                   </label>
                   <label>
                     Giacenza

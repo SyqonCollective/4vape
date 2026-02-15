@@ -587,6 +587,7 @@ export async function adminRoutes(app: FastifyInstance) {
       "discountPrice",
       "discountQty",
       "barcode",
+      "relatedSkus",
       "supplier",
     ];
     const escape = (v: any) => {
@@ -624,6 +625,12 @@ export async function adminRoutes(app: FastifyInstance) {
       p.discountPrice ?? "",
       p.discountQty ?? "",
       p.barcode || "",
+      Array.isArray(p.relatedProductIds)
+        ? p.relatedProductIds
+            .map((id: any) => products.find((x) => x.id === id)?.sku)
+            .filter(Boolean)
+            .join("|")
+        : "",
       p.sourceSupplier?.name || "",
     ]);
     const csv = [header.join(","), ...rows.map((r) => r.map(escape).join(","))].join("\n");
@@ -694,6 +701,22 @@ export async function adminRoutes(app: FastifyInstance) {
       if (visibility) data.visibility = String(visibility).trim();
       const barcode = pick(row, ["barcode", "ean", "codice_a_barre"]);
       if (barcode) data.barcode = String(barcode).trim();
+      const relatedSkusRaw = pick(row, ["relatedskus", "prodotticorrelati", "related_products"]);
+      if (relatedSkusRaw) {
+        const skuList = String(relatedSkusRaw)
+          .split("|")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (skuList.length) {
+          const related = await prisma.product.findMany({
+            where: { sku: { in: skuList } },
+            select: { id: true },
+          });
+          data.relatedProductIds = related.map((r) => r.id);
+        } else {
+          data.relatedProductIds = [];
+        }
+      }
 
       const kind = String(pick(row, ["prodotto", "tipo_prodotto"]) || "").toLowerCase();
       const isParent = kind.includes("padre") ? true : toBool(pick(row, ["isparent", "padre"]));
@@ -865,6 +888,7 @@ export async function adminRoutes(app: FastifyInstance) {
         discountQty: z.number().optional(),
         imageUrls: z.any().optional(),
         barcode: z.string().optional(),
+        relatedProductIds: z.array(z.string()).optional(),
         price: z.number().nonnegative().optional(),
         stockQty: z.number().int().nonnegative().default(0),
         imageUrl: z.string().optional(),
@@ -923,6 +947,7 @@ export async function adminRoutes(app: FastifyInstance) {
           discountQty: body.discountQty,
           imageUrls: body.imageUrls,
           barcode: body.barcode,
+          relatedProductIds: body.relatedProductIds,
           price: body.price ?? 0,
           source: "MANUAL",
         },
@@ -974,6 +999,7 @@ export async function adminRoutes(app: FastifyInstance) {
         discountQty: z.number().optional(),
         imageUrls: z.any().optional(),
         barcode: z.string().optional(),
+        relatedProductIds: z.array(z.string()).optional(),
         price: z.number().nonnegative().optional(),
         stockQty: z.number().int().nonnegative().optional(),
         imageUrl: z.string().optional(),
@@ -1000,6 +1026,7 @@ export async function adminRoutes(app: FastifyInstance) {
     data.vatIncluded = true;
     if (body.taxRateId !== undefined) data.taxRateId = body.taxRateId;
     if (body.exciseRateId !== undefined) data.exciseRateId = body.exciseRateId;
+    if (body.relatedProductIds !== undefined) data.relatedProductIds = body.relatedProductIds;
 
     if (
       body.exciseRateId !== undefined ||
@@ -1057,6 +1084,7 @@ export async function adminRoutes(app: FastifyInstance) {
             sellAsSingle: z.boolean().optional(),
             parentId: z.string().nullable().optional(),
             parentSort: z.number().nullable().optional(),
+            relatedProductIds: z.array(z.string()).nullable().optional(),
           })
         ),
       })
@@ -1094,6 +1122,9 @@ export async function adminRoutes(app: FastifyInstance) {
           ...(row.sellAsSingle !== undefined ? { sellAsSingle: row.sellAsSingle } : {}),
           ...(row.parentId !== undefined ? { parentId: row.parentId } : {}),
           ...(row.parentSort !== undefined ? { parentSort: row.parentSort ?? undefined } : {}),
+          ...(row.relatedProductIds !== undefined
+            ? { relatedProductIds: row.relatedProductIds ?? undefined }
+            : {}),
           ...(row.isUnavailable !== undefined
             ? { isUnavailable: row.isUnavailable, stockQty: row.isUnavailable ? 0 : undefined }
             : {}),
