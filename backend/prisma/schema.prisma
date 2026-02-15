@@ -55,6 +55,13 @@ enum ReturnStatus {
   HANDLED
 }
 
+enum MarketingCampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+}
+
 model Company {
   id        String   @id @default(cuid())
   name      String
@@ -98,6 +105,8 @@ model User {
   goodsReceiptsCreated GoodsReceipt[] @relation("GoodsReceiptCreatedBy")
   returnRequests ReturnRequest[] @relation("ReturnRequestedBy")
   handledReturns ReturnRequest[] @relation("ReturnHandledBy")
+  mailTemplates MailMarketingTemplate[]
+  mailCampaigns MailMarketingCampaign[]
 }
 
 model Supplier {
@@ -383,6 +392,49 @@ model ReturnRequestImage {
   request ReturnRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@index([requestId])
+}
+
+model MailMarketingTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String
+  html      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  createdBy   User? @relation(fields: [createdById], references: [id])
+
+  campaigns MailMarketingCampaign[]
+}
+
+model MailMarketingCampaign {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String
+  html      String
+  listId    Int
+  groupId   Int?
+  status    MarketingCampaignStatus @default(DRAFT)
+  audienceType String @default("ALL_ACTIVE")
+  audienceCompanyIds Json?
+  recipientCount Int @default(0)
+  sentCount Int @default(0)
+  failedCount Int @default(0)
+  mailupEmailId Int?
+  mailupSendId  String?
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  lastError   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  templateId String?
+  template   MailMarketingTemplate? @relation(fields: [templateId], references: [id])
+
+  createdById String?
+  createdBy   User? @relation(fields: [createdById], references: [id])
 }
 
 model InternalInventoryItem {

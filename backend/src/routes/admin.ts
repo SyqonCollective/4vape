@@ -217,6 +217,46 @@ export async function adminRoutes(app: FastifyInstance) {
     }
   }
 
+  async function createMailupEmail(params: {
+    listId: number;
+    subject: string;
+    name: string;
+    html: string;
+  }): Promise<number> {
+    const payload = {
+      Subject: params.subject,
+      Name: params.name,
+      Content: params.html,
+      ContentType: "html",
+      Embed: false,
+      IsConfirmation: false,
+    };
+    const data = await mailupRequest(`/List/${params.listId}/Email`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    const id = Number(data?.id || data?.Id || data?.IdMessage || data?.Items?.[0]?.Id || 0);
+    if (!id) throw new Error("MailUp: impossibile creare email campagna");
+    return id;
+  }
+
+  async function sendMailupEmail(params: {
+    listId: number;
+    emailId: number;
+    groupId?: number | null;
+  }) {
+    const payload = {
+      ConfirmationEmail: false,
+      TrackableLinks: true,
+      SaveAsDraft: false,
+      ...(params.groupId ? { Groups: [params.groupId] } : {}),
+    };
+    return mailupRequest(`/List/${params.listId}/Email/${params.emailId}/Send`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
   async function resolveDefaultTaxRateId() {
     const settings = await prisma.appSetting.findFirst();
     if (!settings?.vatRateDefault) return null;
@@ -416,6 +456,245 @@ export async function adminRoutes(app: FastifyInstance) {
     const ok = results.filter((r) => r.ok).length;
     const failed = results.length - ok;
     return { total: results.length, ok, failed, results };
+  });
+
+  app.get("/mail-marketing/templates", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.mailMarketingTemplate.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+  });
+
+  app.post("/mail-marketing/templates", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        name: z.string().min(2),
+        subject: z.string().min(2),
+        html: z.string().min(1),
+        active: z.boolean().optional(),
+      })
+      .parse(request.body);
+    return prisma.mailMarketingTemplate.create({
+      data: {
+        name: body.name,
+        subject: body.subject,
+        html: body.html,
+        active: body.active ?? true,
+        createdById: user.id,
+      },
+    });
+  });
+
+  app.patch("/mail-marketing/templates/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        subject: z.string().min(2).optional(),
+        html: z.string().min(1).optional(),
+        active: z.boolean().optional(),
+      })
+      .parse(request.body);
+    return prisma.mailMarketingTemplate.update({
+      where: { id },
+      data: body,
+    });
+  });
+
+  app.delete("/mail-marketing/templates/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.mailMarketingTemplate.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
+  app.get("/mail-marketing/campaigns", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.mailMarketingCampaign.findMany({
+      include: { template: true },
+      orderBy: { createdAt: "desc" },
+    });
+  });
+
+  app.post("/mail-marketing/campaigns", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        name: z.string().min(2),
+        subject: z.string().min(2),
+        html: z.string().min(1),
+        templateId: z.string().optional(),
+        listId: z.number().int().positive(),
+        groupId: z.number().int().positive().optional(),
+        audienceType: z.enum(["ALL_ACTIVE", "SELECTED_COMPANIES"]).default("ALL_ACTIVE"),
+        audienceCompanyIds: z.array(z.string()).optional(),
+        scheduledAt: z.string().optional(),
+      })
+      .parse(request.body);
+    return prisma.mailMarketingCampaign.create({
+      data: {
+        name: body.name,
+        subject: body.subject,
+        html: body.html,
+        templateId: body.templateId || null,
+        listId: body.listId,
+        groupId: body.groupId || null,
+        audienceType: body.audienceType,
+        audienceCompanyIds: body.audienceCompanyIds || [],
+        scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null,
+        status: body.scheduledAt ? "SCHEDULED" : "DRAFT",
+        createdById: user.id,
+      },
+    });
+  });
+
+  app.patch("/mail-marketing/campaigns/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        subject: z.string().min(2).optional(),
+        html: z.string().min(1).optional(),
+        listId: z.number().int().positive().optional(),
+        groupId: z.number().int().positive().nullable().optional(),
+        audienceType: z.enum(["ALL_ACTIVE", "SELECTED_COMPANIES"]).optional(),
+        audienceCompanyIds: z.array(z.string()).optional(),
+        scheduledAt: z.string().nullable().optional(),
+        status: z.enum(["DRAFT", "SCHEDULED"]).optional(),
+      })
+      .parse(request.body);
+    return prisma.mailMarketingCampaign.update({
+      where: { id },
+      data: {
+        ...body,
+        ...(body.scheduledAt !== undefined
+          ? { scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null }
+          : {}),
+      },
+    });
+  });
+
+  app.delete("/mail-marketing/campaigns/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.mailMarketingCampaign.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
+  app.post("/mail-marketing/campaigns/:id/send", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const campaign = await prisma.mailMarketingCampaign.findUnique({ where: { id } });
+    if (!campaign) return reply.notFound("Campagna non trovata");
+
+    const companyWhere: any = { status: "ACTIVE", email: { not: null } };
+    if (campaign.audienceType === "SELECTED_COMPANIES") {
+      const ids = Array.isArray(campaign.audienceCompanyIds) ? campaign.audienceCompanyIds : [];
+      if (!ids.length) return reply.badRequest("Pubblico vuoto");
+      companyWhere.id = { in: ids as string[] };
+    }
+    const recipients = await prisma.company.findMany({
+      where: companyWhere,
+      orderBy: { createdAt: "desc" },
+    });
+    if (!recipients.length) return reply.badRequest("Nessun destinatario valido");
+
+    let ok = 0;
+    let failed = 0;
+    for (const company of recipients) {
+      const email = (company.email || "").trim();
+      if (!email) {
+        failed += 1;
+        continue;
+      }
+      const fields = [
+        { Id: "campo1", Value: company.contactFirstName || "" },
+        { Id: "campo2", Value: company.contactLastName || "" },
+        { Id: "campo3", Value: company.legalName || company.name || "" },
+        { Id: "campo4", Value: company.city || "" },
+        { Id: "campo5", Value: company.province || "" },
+        { Id: "campo6", Value: company.cap || "" },
+        { Id: "campo8", Value: "IT" },
+        { Id: "campo9", Value: company.address || "" },
+        { Id: "campo11", Value: company.phone || "" },
+        { Id: "campo12", Value: company.customerCode || company.id },
+      ];
+      try {
+        await upsertMailupRecipient({
+          listId: campaign.listId,
+          groupId: campaign.groupId,
+          email,
+          name:
+            [company.contactFirstName, company.contactLastName].filter(Boolean).join(" ").trim() ||
+            company.name,
+          fields,
+        });
+        ok += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+
+    if (!ok) {
+      await prisma.mailMarketingCampaign.update({
+        where: { id: campaign.id },
+        data: { status: "FAILED", failedCount: failed, lastError: "Nessun destinatario sincronizzato su MailUp" },
+      });
+      return reply.code(400).send({ ok: false, error: "Nessun destinatario valido" });
+    }
+
+    try {
+      const emailId = await createMailupEmail({
+        listId: campaign.listId,
+        subject: campaign.subject,
+        name: campaign.name,
+        html: campaign.html,
+      });
+      const sendRes = await sendMailupEmail({
+        listId: campaign.listId,
+        emailId,
+        groupId: campaign.groupId,
+      });
+      const sendId = sendRes?.id || sendRes?.Id || sendRes?.Message || null;
+      await prisma.mailMarketingCampaign.update({
+        where: { id: campaign.id },
+        data: {
+          status: "SENT",
+          sentAt: new Date(),
+          recipientCount: recipients.length,
+          sentCount: ok,
+          failedCount: failed,
+          mailupEmailId: emailId,
+          mailupSendId: sendId ? String(sendId) : null,
+          lastError: null,
+        },
+      });
+      return { ok: true, emailId, sendId, recipients: recipients.length, synced: ok, failed };
+    } catch (err: any) {
+      await prisma.mailMarketingCampaign.update({
+        where: { id: campaign.id },
+        data: {
+          status: "FAILED",
+          recipientCount: recipients.length,
+          sentCount: ok,
+          failedCount: failed,
+          lastError: err?.message || "Invio MailUp fallito",
+        },
+      });
+      return reply.code(400).send({ ok: false, error: err?.message || "Invio fallito" });
+    }
   });
 
   app.get("/users/pending", async (request, reply) => {
