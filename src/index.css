@@ -3492,12 +3492,12 @@ button {
 
 .goods-row {
   display: grid;
-  grid-template-columns: 120px minmax(220px, 1.6fr) 80px 110px 110px 120px 120px 90px 90px 140px 160px 180px 100px;
+  grid-template-columns: 120px minmax(220px, 1.8fr) 120px 80px 120px 90px 140px 130px 190px 100px;
   gap: 8px;
   padding: 8px;
   align-items: center;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1720px;
+  min-width: 1340px;
 }
 
 .goods-row.header {

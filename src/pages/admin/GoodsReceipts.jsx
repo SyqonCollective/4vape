@@ -6,9 +6,12 @@ import Portal from "../../components/Portal.jsx";
 const newRow = () => ({
   sku: "",
   name: "",
+  codicePl: "",
   qty: 1,
   unitCost: "",
   unitPrice: "",
+  discount: "",
+  rowTotal: 0,
   description: "",
   shortDescription: "",
   brand: "",
@@ -20,6 +23,7 @@ const newRow = () => ({
   taxRateId: "",
   exciseRateId: "",
   lineNote: "",
+  imageUrl: "",
 });
 
 const money = (v) =>
@@ -28,9 +32,10 @@ const money = (v) =>
 const CSV_HEADERS = [
   "sku",
   "name",
+  "codicePl",
   "qty",
   "unitCost",
-  "unitPrice",
+  "discount",
   "brand",
   "category",
   "subcategory",
@@ -90,6 +95,7 @@ export default function AdminGoodsReceipts() {
   const [editRows, setEditRows] = useState([]);
   const [pendingImportRows, setPendingImportRows] = useState([]);
   const [conflictSkus, setConflictSkus] = useState([]);
+  const [skuInfoCache, setSkuInfoCache] = useState({});
 
   async function loadReceipts() {
     try {
@@ -122,6 +128,72 @@ export default function AdminGoodsReceipts() {
     loadMeta();
   }, []);
 
+  async function fetchSkuInfo(sku) {
+    const key = String(sku || "").trim();
+    if (!key) return null;
+    if (skuInfoCache[key]) return skuInfoCache[key];
+    try {
+      const info = await api(`/admin/goods-receipts/sku-info?sku=${encodeURIComponent(key)}`);
+      setSkuInfoCache((prev) => ({ ...prev, [key]: info }));
+      return info;
+    } catch {
+      return null;
+    }
+  }
+
+  function mergeRowWithSkuInfo(row, info) {
+    if (!info?.found) return row;
+    const source = info.inventory || info.product || {};
+    return {
+      ...row,
+      name: source.name || row.name || "",
+      codicePl: info.product?.codicePl || row.codicePl || "",
+      description: source.description ?? row.description ?? "",
+      shortDescription: source.shortDescription ?? row.shortDescription ?? "",
+      brand: source.brand ?? row.brand ?? "",
+      category: source.category ?? row.category ?? "",
+      subcategory: source.subcategory ?? row.subcategory ?? "",
+      barcode: source.barcode ?? row.barcode ?? "",
+      nicotine:
+        source.nicotine !== undefined && source.nicotine !== null ? String(source.nicotine) : row.nicotine,
+      mlProduct:
+        source.mlProduct !== undefined && source.mlProduct !== null ? String(source.mlProduct) : row.mlProduct,
+      taxRateId: source.taxRateId || row.taxRateId || "",
+      exciseRateId: source.exciseRateId || row.exciseRateId || "",
+      unitCost:
+        info.last?.unitCost !== null && info.last?.unitCost !== undefined
+          ? String(info.last.unitCost)
+          : row.unitCost !== ""
+            ? row.unitCost
+            : source.purchasePrice !== undefined && source.purchasePrice !== null
+              ? String(source.purchasePrice)
+              : "",
+      unitPrice:
+        row.unitPrice !== ""
+          ? row.unitPrice
+          : source.price !== undefined && source.price !== null
+            ? String(source.price)
+            : "",
+      imageUrl:
+        source.imageUrl ||
+        (Array.isArray(source.imageUrls) && source.imageUrls.length ? source.imageUrls[0] : row.imageUrl) ||
+        row.imageUrl ||
+        "",
+    };
+  }
+
+  async function enrichRowsFromSku(inputRows) {
+    const enriched = await Promise.all(
+      inputRows.map(async (row) => {
+        const sku = String(row.sku || "").trim();
+        if (!sku) return row;
+        const info = await fetchSkuInfo(sku);
+        return mergeRowWithSkuInfo(row, info);
+      })
+    );
+    return enriched;
+  }
+
   const parsedRows = useMemo(
     () => rows.filter((r) => r.sku.trim() && Number(r.qty || 0) > 0),
     [rows]
@@ -132,7 +204,7 @@ export default function AdminGoodsReceipts() {
       (acc, row) => {
         const qty = Number(row.qty || 0);
         const unitCost = Number(row.unitCost || 0);
-        const unitPrice = Number(row.unitPrice || 0);
+        const rowNet = qty * unitCost;
         const ml = Number(row.mlProduct || 0);
         const tax = taxes.find((t) => t.id === row.taxRateId);
         const excise = excises.find((e) => e.id === row.exciseRateId);
@@ -142,11 +214,11 @@ export default function AdminGoodsReceipts() {
             : Number(excise.amount || 0)
           : 0;
         const taxRate = Number(tax?.rate || 0);
-        const vatUnit = taxRate > 0 ? (unitPrice + exciseUnit) * (taxRate / 100) : 0;
+        const vatUnit = taxRate > 0 ? (unitCost + exciseUnit) * (taxRate / 100) : 0;
         acc.lines += 1;
         acc.qty += qty;
-        acc.cost += qty * unitCost;
-        acc.subtotal += qty * unitPrice;
+        acc.cost += rowNet;
+        acc.subtotal += rowNet;
         acc.excise += qty * exciseUnit;
         acc.vat += qty * vatUnit;
         return acc;
@@ -159,6 +231,16 @@ export default function AdminGoodsReceipts() {
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   }
 
+  async function handleSkuBlur(index) {
+    const sku = String(rows[index]?.sku || "").trim();
+    if (!sku) return;
+    const info = await fetchSkuInfo(sku);
+    if (!info?.found) return;
+    setRows((prev) =>
+      prev.map((row, i) => (i === index ? mergeRowWithSkuInfo(row, info) : row))
+    );
+  }
+
   function addRow() {
     setRows((prev) => [...prev, newRow()]);
   }
@@ -167,7 +249,7 @@ export default function AdminGoodsReceipts() {
     setRows((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function applyPaste() {
+  async function applyPaste() {
     const lines = pasteText
       .split(/\r?\n/)
       .map((l) => l.trim())
@@ -179,23 +261,27 @@ export default function AdminGoodsReceipts() {
       return {
         sku: (cols[0] || "").trim(),
         name: (cols[1] || "").trim(),
-        qty: Number(String(cols[2] || "1").replace(",", ".")) || 1,
-        unitCost: String(cols[3] || "").trim(),
-        unitPrice: String(cols[4] || "").trim(),
-        brand: (cols[5] || "").trim(),
-        category: (cols[6] || "").trim(),
-        subcategory: (cols[7] || "").trim(),
-        barcode: (cols[8] || "").trim(),
-        nicotine: String(cols[9] || "").trim(),
-        mlProduct: String(cols[10] || "").trim(),
+        codicePl: (cols[2] || "").trim(),
+        qty: Number(String(cols[3] || "1").replace(",", ".")) || 1,
+        unitCost: String(cols[4] || "").trim(),
+        discount: String(cols[5] || "").trim(),
+        brand: (cols[6] || "").trim(),
+        category: (cols[7] || "").trim(),
+        subcategory: (cols[8] || "").trim(),
+        barcode: (cols[9] || "").trim(),
+        nicotine: String(cols[10] || "").trim(),
+        mlProduct: String(cols[11] || "").trim(),
         taxRateId: "",
         exciseRateId: "",
         lineNote: "",
         description: "",
         shortDescription: "",
+        imageUrl: "",
+        unitPrice: "",
       };
     });
-    setRows(parsed);
+    const enriched = await enrichRowsFromSku(parsed);
+    setRows(enriched);
     setPasteText("");
   }
 
@@ -203,9 +289,10 @@ export default function AdminGoodsReceipts() {
     const sample = [
       "SKU-001",
       "Prodotto esempio",
+      "PL-0001",
       "10",
       "3.50",
-      "6.90",
+      "0",
       "Brand Demo",
       "Categoria Demo",
       "Subcategoria Demo",
@@ -256,12 +343,17 @@ export default function AdminGoodsReceipts() {
         const cols = splitCsvLine(line);
         const taxRaw = cols[idx("taxRate")] || "";
         const exciseRaw = cols[idx("exciseRate")] || "";
+        const qtyIdx = idx("qty");
+        const unitCostIdx = idx("unitCost");
+        const discountIdx = idx("discount");
         return {
           sku: String(cols[idx("sku")] || "").trim(),
           name: String(cols[idx("name")] || "").trim(),
-          qty: Number(String(cols[idx("qty")] || "1").replace(",", ".")) || 1,
-          unitCost: String(cols[idx("unitCost")] || "").trim(),
-          unitPrice: String(cols[idx("unitPrice")] || "").trim(),
+          codicePl: String(cols[idx("codicePl")] || "").trim(),
+          qty: Number(String(cols[qtyIdx] || "1").replace(",", ".")) || 1,
+          unitCost: String(cols[unitCostIdx] || "").trim(),
+          discount: String(cols[discountIdx] || "").trim(),
+          unitPrice: "",
           brand: String(cols[idx("brand")] || "").trim(),
           category: String(cols[idx("category")] || "").trim(),
           subcategory: String(cols[idx("subcategory")] || "").trim(),
@@ -273,6 +365,7 @@ export default function AdminGoodsReceipts() {
           lineNote: String(cols[idx("lineNote")] || "").trim(),
           description: "",
           shortDescription: "",
+          imageUrl: "",
         };
       }).filter((row) => row.sku && row.qty > 0);
 
@@ -288,14 +381,15 @@ export default function AdminGoodsReceipts() {
         return;
       }
 
-      setRows(parsed);
+      const enriched = await enrichRowsFromSku(parsed);
+      setRows(enriched);
       setSuccess(`CSV importato: ${parsed.length} righe caricate.`);
     } catch {
       setError("Errore durante import CSV");
     }
   }
 
-  function applyImportResolution(mode) {
+  async function applyImportResolution(mode) {
     const usedSkus = new Set([...inventorySkuSet]);
     const rowsToApply = pendingImportRows.map((row) => {
       if (!usedSkus.has(row.sku)) {
@@ -316,7 +410,8 @@ export default function AdminGoodsReceipts() {
         lineNote: row.lineNote ? `${row.lineNote} | DUP da CSV` : "DUP da CSV",
       };
     });
-    setRows(rowsToApply);
+    const enriched = await enrichRowsFromSku(rowsToApply);
+    setRows(enriched);
     setConflictSkus([]);
     setPendingImportRows([]);
     setSuccess(
@@ -346,7 +441,12 @@ export default function AdminGoodsReceipts() {
             name: r.name.trim() || null,
             qty: Number(r.qty || 0),
             unitCost: r.unitCost === "" ? null : Number(r.unitCost),
-            unitPrice: r.unitPrice === "" ? null : Number(r.unitPrice),
+            unitPrice:
+              r.unitPrice === ""
+                ? r.unitCost === ""
+                  ? null
+                  : Number(r.unitCost)
+                : Number(r.unitPrice),
             description: r.description || null,
             shortDescription: r.shortDescription || null,
             brand: r.brand || null,
@@ -357,7 +457,9 @@ export default function AdminGoodsReceipts() {
             mlProduct: r.mlProduct === "" ? null : Number(r.mlProduct),
             taxRateId: r.taxRateId || null,
             exciseRateId: r.exciseRateId || null,
-            lineNote: r.lineNote || null,
+            lineNote: [r.lineNote || null, r.discount ? `SCONTO:${r.discount}%` : null]
+              .filter(Boolean)
+              .join(" | ") || null,
           })),
         }),
       });
@@ -391,6 +493,16 @@ export default function AdminGoodsReceipts() {
     setEditRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   }
 
+  async function handleEditSkuBlur(index) {
+    const sku = String(editRows[index]?.sku || "").trim();
+    if (!sku) return;
+    const info = await fetchSkuInfo(sku);
+    if (!info?.found) return;
+    setEditRows((prev) =>
+      prev.map((row, i) => (i === index ? mergeRowWithSkuInfo(row, info) : row))
+    );
+  }
+
   function addEditRow() {
     setEditRows((prev) => [...prev, newRow()]);
   }
@@ -408,8 +520,14 @@ export default function AdminGoodsReceipts() {
       setEditNotes(res.notes || "");
       setEditRows(
         (res.lines || []).map((line) => ({
+          ...(function parseDiscount() {
+            const raw = String(line.lineNote || "");
+            const match = raw.match(/SCONTO:([0-9]+(?:[.,][0-9]+)?)%/i);
+            return { discount: match ? match[1].replace(",", ".") : "" };
+          })(),
           sku: line.sku || "",
           name: line.name || "",
+          codicePl: line.item?.codicePl || "",
           qty: Number(line.qty || 1),
           unitCost: line.unitCost ?? "",
           unitPrice: line.unitPrice ?? "",
@@ -451,7 +569,12 @@ export default function AdminGoodsReceipts() {
             name: r.name.trim() || null,
             qty: Number(r.qty || 0),
             unitCost: r.unitCost === "" ? null : Number(r.unitCost),
-            unitPrice: r.unitPrice === "" ? null : Number(r.unitPrice),
+            unitPrice:
+              r.unitPrice === ""
+                ? r.unitCost === ""
+                  ? null
+                  : Number(r.unitCost)
+                : Number(r.unitPrice),
             description: r.description || null,
             shortDescription: r.shortDescription || null,
             brand: r.brand || null,
@@ -462,7 +585,9 @@ export default function AdminGoodsReceipts() {
             mlProduct: r.mlProduct === "" ? null : Number(r.mlProduct),
             taxRateId: r.taxRateId || null,
             exciseRateId: r.exciseRateId || null,
-            lineNote: r.lineNote || null,
+            lineNote: [r.lineNote || null, r.discount ? `SCONTO:${r.discount}%` : null]
+              .filter(Boolean)
+              .join(" | ") || null,
           })),
         }),
       });
@@ -511,13 +636,13 @@ export default function AdminGoodsReceipts() {
           <div className="order-card">
             <div className="card-title">Incolla da Excel/CSV</div>
             <p className="field-hint">
-              Ordine colonne: SKU, Nome, Qta, Costo, Prezzo, Brand, Categoria, Sottocategoria, Barcode, Nicotina, ML
+              Ordine colonne: SKU, Nome, CodicePL, Qta, PrezzoNetto, Sconto, Brand, Categoria, Sottocategoria, Barcode, Nicotina, ML
             </p>
             <textarea
               className="goods-paste"
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
-              placeholder="SKU123\tProdotto A\t12\t3.50\t7.90"
+              placeholder="SKU123\tProdotto A\tPL123\t12\t3.50\t0"
             />
             <div className="actions">
               <button className="btn ghost" onClick={downloadTemplateCsv}>
@@ -550,22 +675,24 @@ export default function AdminGoodsReceipts() {
               <div className="goods-row header">
                 <div>SKU</div>
                 <div>Nome</div>
+                <div>Codice PL</div>
                 <div>Qta</div>
-                <div>Costo</div>
-                <div>Prezzo</div>
-                <div>Brand</div>
-                <div>Categoria</div>
-                <div>Nicotina</div>
-                <div>ML</div>
+                <div>Prezzo netto</div>
+                <div>Sconto</div>
                 <div>IVA</div>
-                <div>Accisa</div>
+                <div>Totale riga</div>
                 <div>Nota riga</div>
                 <div></div>
               </div>
               {rows.map((row, idx) => (
                 <div key={idx} className="goods-row">
-                  <input value={row.sku} onChange={(e) => updateRow(idx, { sku: e.target.value })} />
+                  <input
+                    value={row.sku}
+                    onChange={(e) => updateRow(idx, { sku: e.target.value })}
+                    onBlur={() => handleSkuBlur(idx)}
+                  />
                   <input value={row.name} onChange={(e) => updateRow(idx, { name: e.target.value })} />
+                  <input value={row.codicePl || ""} onChange={(e) => updateRow(idx, { codicePl: e.target.value })} />
                   <input
                     type="number"
                     value={row.qty}
@@ -580,22 +707,9 @@ export default function AdminGoodsReceipts() {
                   <input
                     type="number"
                     step="0.01"
-                    value={row.unitPrice}
-                    onChange={(e) => updateRow(idx, { unitPrice: e.target.value })}
-                  />
-                  <input value={row.brand} onChange={(e) => updateRow(idx, { brand: e.target.value })} />
-                  <input value={row.category} onChange={(e) => updateRow(idx, { category: e.target.value })} />
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={row.nicotine}
-                    onChange={(e) => updateRow(idx, { nicotine: e.target.value })}
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={row.mlProduct}
-                    onChange={(e) => updateRow(idx, { mlProduct: e.target.value })}
+                    value={row.discount || ""}
+                    onChange={(e) => updateRow(idx, { discount: e.target.value })}
+                    placeholder="%"
                   />
                   <select
                     value={row.taxRateId}
@@ -608,17 +722,7 @@ export default function AdminGoodsReceipts() {
                       </option>
                     ))}
                   </select>
-                  <select
-                    value={row.exciseRateId}
-                    onChange={(e) => updateRow(idx, { exciseRateId: e.target.value })}
-                  >
-                    <option value="">Accisa</option>
-                    {excises.map((x) => (
-                      <option key={x.id} value={x.id}>
-                        {x.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0))}</div>
                   <input
                     value={row.lineNote}
                     onChange={(e) => updateRow(idx, { lineNote: e.target.value })}
@@ -764,37 +868,32 @@ export default function AdminGoodsReceipts() {
                   <div className="goods-row header">
                     <div>SKU</div>
                     <div>Nome</div>
+                    <div>Codice PL</div>
                     <div>Qta</div>
-                    <div>Costo</div>
-                    <div>Prezzo</div>
-                    <div>Brand</div>
-                    <div>Categoria</div>
-                    <div>Nicotina</div>
-                    <div>ML</div>
+                    <div>Prezzo netto</div>
+                    <div>Sconto</div>
                     <div>IVA</div>
-                    <div>Accisa</div>
+                    <div>Totale riga</div>
                     <div>Nota riga</div>
                     <div></div>
                   </div>
                   {editRows.map((row, idx) => (
                     <div key={idx} className="goods-row">
-                      <input value={row.sku} onChange={(e) => updateEditRow(idx, { sku: e.target.value })} />
+                      <input
+                        value={row.sku}
+                        onChange={(e) => updateEditRow(idx, { sku: e.target.value })}
+                        onBlur={() => handleEditSkuBlur(idx)}
+                      />
                       <input value={row.name} onChange={(e) => updateEditRow(idx, { name: e.target.value })} />
+                      <input value={row.codicePl || ""} onChange={(e) => updateEditRow(idx, { codicePl: e.target.value })} />
                       <input type="number" value={row.qty} onChange={(e) => updateEditRow(idx, { qty: Number(e.target.value || 0) })} />
                       <input type="number" step="0.01" value={row.unitCost} onChange={(e) => updateEditRow(idx, { unitCost: e.target.value })} />
-                      <input type="number" step="0.01" value={row.unitPrice} onChange={(e) => updateEditRow(idx, { unitPrice: e.target.value })} />
-                      <input value={row.brand} onChange={(e) => updateEditRow(idx, { brand: e.target.value })} />
-                      <input value={row.category} onChange={(e) => updateEditRow(idx, { category: e.target.value })} />
-                      <input type="number" step="0.01" value={row.nicotine} onChange={(e) => updateEditRow(idx, { nicotine: e.target.value })} />
-                      <input type="number" step="0.01" value={row.mlProduct} onChange={(e) => updateEditRow(idx, { mlProduct: e.target.value })} />
+                      <input type="number" step="0.01" value={row.discount || ""} onChange={(e) => updateEditRow(idx, { discount: e.target.value })} placeholder="%" />
                       <select value={row.taxRateId} onChange={(e) => updateEditRow(idx, { taxRateId: e.target.value })}>
                         <option value="">IVA</option>
                         {taxes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                       </select>
-                      <select value={row.exciseRateId} onChange={(e) => updateEditRow(idx, { exciseRateId: e.target.value })}>
-                        <option value="">Accisa</option>
-                        {excises.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-                      </select>
+                      <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0))}</div>
                       <input value={row.lineNote} onChange={(e) => updateEditRow(idx, { lineNote: e.target.value })} placeholder="Nota" />
                       <button className="btn ghost small" onClick={() => removeEditRow(idx)}>Rimuovi</button>
                     </div>

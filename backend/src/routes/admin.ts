@@ -3497,6 +3497,84 @@ export async function adminRoutes(app: FastifyInstance) {
     }));
   });
 
+  app.get("/goods-receipts/sku-info", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const sku = String((request.query as any)?.sku || "").trim();
+    if (!sku) return reply.badRequest("SKU obbligatorio");
+
+    const [product, item, lastLine] = await Promise.all([
+      prisma.product.findUnique({
+        where: { sku },
+        select: {
+          id: true,
+          sku: true,
+          name: true,
+          shortDescription: true,
+          description: true,
+          brand: true,
+          category: true,
+          subcategory: true,
+          barcode: true,
+          nicotine: true,
+          mlProduct: true,
+          codicePl: true,
+          imageUrl: true,
+          imageUrls: true,
+          taxRateId: true,
+          exciseRateId: true,
+          purchasePrice: true,
+          listPrice: true,
+          price: true,
+        },
+      }),
+      prisma.internalInventoryItem.findUnique({
+        where: { sku },
+        select: {
+          id: true,
+          sku: true,
+          name: true,
+          shortDescription: true,
+          description: true,
+          brand: true,
+          category: true,
+          subcategory: true,
+          barcode: true,
+          nicotine: true,
+          mlProduct: true,
+          taxRateId: true,
+          exciseRateId: true,
+          purchasePrice: true,
+          listPrice: true,
+          price: true,
+        },
+      }),
+      prisma.goodsReceiptLine.findFirst({
+        where: { sku },
+        select: {
+          unitCost: true,
+          unitPrice: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+    if (!product && !item && !lastLine) return { found: false };
+
+    return {
+      found: true,
+      sku,
+      product: product || null,
+      inventory: item || null,
+      last: {
+        unitCost: lastLine?.unitCost ?? null,
+        unitPrice: lastLine?.unitPrice ?? null,
+        at: lastLine?.createdAt ?? null,
+      },
+    };
+  });
+
   app.get("/goods-receipts/:id", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
