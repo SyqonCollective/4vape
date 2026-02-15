@@ -75,6 +75,8 @@ function splitCsvLine(line) {
 
 export default function AdminGoodsReceipts() {
   const fileInputRef = useRef(null);
+  const skuLookupTimersRef = useRef({});
+  const editSkuLookupTimersRef = useRef({});
   const [rows, setRows] = useState([newRow(), newRow(), newRow()]);
   const [taxes, setTaxes] = useState([]);
   const [excises, setExcises] = useState([]);
@@ -143,43 +145,82 @@ export default function AdminGoodsReceipts() {
 
   function mergeRowWithSkuInfo(row, info) {
     if (!info?.found) return row;
-    const source = info.inventory || info.product || {};
+    const inv = info.inventory || {};
+    const prod = info.product || {};
+    const pick = (...values) => {
+      for (const v of values) {
+        if (v !== undefined && v !== null && v !== "") return v;
+      }
+      return "";
+    };
     return {
       ...row,
-      name: source.name || row.name || "",
-      codicePl: info.product?.codicePl || row.codicePl || "",
-      description: source.description ?? row.description ?? "",
-      shortDescription: source.shortDescription ?? row.shortDescription ?? "",
-      brand: source.brand ?? row.brand ?? "",
-      category: source.category ?? row.category ?? "",
-      subcategory: source.subcategory ?? row.subcategory ?? "",
-      barcode: source.barcode ?? row.barcode ?? "",
-      nicotine:
-        source.nicotine !== undefined && source.nicotine !== null ? String(source.nicotine) : row.nicotine,
-      mlProduct:
-        source.mlProduct !== undefined && source.mlProduct !== null ? String(source.mlProduct) : row.mlProduct,
-      taxRateId: source.taxRateId || row.taxRateId || "",
-      exciseRateId: source.exciseRateId || row.exciseRateId || "",
+      name: pick(inv.name, prod.name, row.name),
+      codicePl: pick(prod.codicePl, row.codicePl),
+      description: pick(inv.description, prod.description, row.description),
+      shortDescription: pick(inv.shortDescription, prod.shortDescription, row.shortDescription),
+      brand: pick(inv.brand, prod.brand, row.brand),
+      category: pick(inv.category, prod.category, row.category),
+      subcategory: pick(inv.subcategory, prod.subcategory, row.subcategory),
+      barcode: pick(inv.barcode, prod.barcode, row.barcode),
+      nicotine: String(pick(inv.nicotine, prod.nicotine, row.nicotine)),
+      mlProduct: String(pick(inv.mlProduct, prod.mlProduct, row.mlProduct)),
+      taxRateId: pick(inv.taxRateId, prod.taxRateId, row.taxRateId),
+      exciseRateId: pick(inv.exciseRateId, prod.exciseRateId, row.exciseRateId),
       unitCost:
         info.last?.unitCost !== null && info.last?.unitCost !== undefined
           ? String(info.last.unitCost)
           : row.unitCost !== ""
             ? row.unitCost
-            : source.purchasePrice !== undefined && source.purchasePrice !== null
-              ? String(source.purchasePrice)
-              : "",
+            : inv.purchasePrice !== undefined && inv.purchasePrice !== null
+              ? String(inv.purchasePrice)
+              : prod.purchasePrice !== undefined && prod.purchasePrice !== null
+                ? String(prod.purchasePrice)
+                : prod.price !== undefined && prod.price !== null
+                  ? String(prod.price)
+                  : "",
       unitPrice:
         row.unitPrice !== ""
           ? row.unitPrice
-          : source.price !== undefined && source.price !== null
-            ? String(source.price)
-            : "",
+          : inv.price !== undefined && inv.price !== null
+            ? String(inv.price)
+            : prod.price !== undefined && prod.price !== null
+              ? String(prod.price)
+              : "",
       imageUrl:
-        source.imageUrl ||
-        (Array.isArray(source.imageUrls) && source.imageUrls.length ? source.imageUrls[0] : row.imageUrl) ||
+        pick(
+          prod.imageUrl,
+          Array.isArray(prod.imageUrls) && prod.imageUrls.length ? prod.imageUrls[0] : "",
+          row.imageUrl
+        ) ||
         row.imageUrl ||
         "",
     };
+  }
+
+  function scheduleSkuLookup(index, sku, edit = false) {
+    const timers = edit ? editSkuLookupTimersRef.current : skuLookupTimersRef.current;
+    const key = String(index);
+    if (timers[key]) clearTimeout(timers[key]);
+    const cleanSku = String(sku || "").trim();
+    if (!cleanSku || cleanSku.length < 2) return;
+    timers[key] = setTimeout(async () => {
+      const info = await fetchSkuInfo(cleanSku);
+      if (!info?.found) return;
+      if (edit) {
+        setEditRows((prev) =>
+          prev.map((row, i) =>
+            i === index && String(row.sku || "").trim() === cleanSku ? mergeRowWithSkuInfo(row, info) : row
+          )
+        );
+      } else {
+        setRows((prev) =>
+          prev.map((row, i) =>
+            i === index && String(row.sku || "").trim() === cleanSku ? mergeRowWithSkuInfo(row, info) : row
+          )
+        );
+      }
+    }, 240);
   }
 
   async function enrichRowsFromSku(inputRows) {
@@ -229,6 +270,9 @@ export default function AdminGoodsReceipts() {
 
   function updateRow(index, patch) {
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+    if (Object.prototype.hasOwnProperty.call(patch, "sku")) {
+      scheduleSkuLookup(index, patch.sku, false);
+    }
   }
 
   async function handleSkuBlur(index) {
@@ -491,6 +535,9 @@ export default function AdminGoodsReceipts() {
 
   function updateEditRow(index, patch) {
     setEditRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+    if (Object.prototype.hasOwnProperty.call(patch, "sku")) {
+      scheduleSkuLookup(index, patch.sku, true);
+    }
   }
 
   async function handleEditSkuBlur(index) {
