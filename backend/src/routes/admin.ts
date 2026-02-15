@@ -339,9 +339,14 @@ export async function adminRoutes(app: FastifyInstance) {
       } catch {
         data = await mailupRequest(`/Group?ListId=${listId}`);
       }
-      return { items: data?.Items || data || [] };
+      return { items: data?.Items || data || [], source: "mailup" };
     } catch (err: any) {
-      return reply.code(400).send({ items: [], error: err?.message || "Errore caricamento gruppi" });
+      const fallback = defaultMailupMeta.groups.filter((g) => Number(g.listId) === Number(listId));
+      return {
+        items: fallback,
+        source: "fallback",
+        warning: err?.message || "Errore caricamento gruppi da MailUp",
+      };
     }
   });
 
