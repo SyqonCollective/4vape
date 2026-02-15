@@ -1450,6 +1450,11 @@ button {
   grid-template-columns: 100px 1.2fr 1.6fr 180px 180px;
 }
 
+.companies-table .row {
+  grid-template-columns: 1.4fr 0.9fr 1fr 1.2fr 1fr 1fr 90px 120px 120px 160px;
+  min-width: 1560px;
+}
+
 @media (max-width: 1080px) {
   .mail-marketing-layout {
     grid-template-columns: 1fr;

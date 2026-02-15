@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
@@ -30,6 +30,8 @@ export default function AdminCompanies() {
   const [cmnr, setCmnr] = useState("");
   const [signNumber, setSignNumber] = useState("");
   const [adminVatNumber, setAdminVatNumber] = useState("");
+  const [companySearch, setCompanySearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   async function load() {
     try {
@@ -47,6 +49,45 @@ export default function AdminCompanies() {
   useEffect(() => {
     load();
   }, []);
+
+  const visibleCompanies = useMemo(() => {
+    let list = [...companies];
+    if (statusFilter !== "all") {
+      list = list.filter((c) => String(c.status || "").toUpperCase() === statusFilter);
+    }
+    const q = companySearch.trim().toLowerCase();
+    if (q) {
+      list = list.filter((c) =>
+        [
+          c.name,
+          c.legalName,
+          c.vatNumber,
+          c.email,
+          c.customerCode,
+          c.contactFirstName,
+          c.contactLastName,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      );
+    }
+    return list;
+  }, [companies, companySearch, statusFilter]);
+
+  function formatMoney(value) {
+    return new Intl.NumberFormat("it-IT", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 2,
+    }).format(Number(value || 0));
+  }
+
+  function formatDate(value) {
+    if (!value) return "—";
+    return new Date(value).toLocaleString("it-IT");
+  }
 
   async function approveUser(id) {
     try {
@@ -259,25 +300,55 @@ export default function AdminCompanies() {
       </div>
 
       <div className="panel">
-        <h3>Aziende</h3>
-        <div className="table">
+        <div className="actions" style={{ justifyContent: "space-between", marginBottom: 10 }}>
+          <h3 style={{ margin: 0 }}>Aziende</h3>
+          <div className="actions">
+            <input
+              placeholder="Cerca cliente (nome, P.IVA, email...)"
+              value={companySearch}
+              onChange={(e) => setCompanySearch(e.target.value)}
+              style={{ minWidth: 280 }}
+            />
+            <select
+              className="select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">Tutti</option>
+              <option value="ACTIVE">Attivi</option>
+              <option value="PENDING">In attesa</option>
+              <option value="SUSPENDED">Revocati</option>
+            </select>
+          </div>
+        </div>
+        <div className="table companies-table">
           <div className="row header">
             <div>Ragione sociale</div>
             <div>P.IVA</div>
             <div>Referente</div>
             <div>Email</div>
+            <div>Ultimo accesso</div>
+            <div>Registrazione</div>
+            <div>Ordini</div>
+            <div>Fatturato</div>
+            <div>Media ordini</div>
             <div>Stato</div>
           </div>
-          {companies.length === 0 ? (
+          {visibleCompanies.length === 0 ? (
             <div className="row">
               <div className="muted">Nessuna azienda presente</div>
               <div />
               <div />
               <div />
               <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
             </div>
           ) : (
-            companies.map((c) => (
+            visibleCompanies.map((c) => (
               <div className="row" key={c.id}>
                 <div>{c.legalName || c.name}</div>
                 <div>{c.vatNumber || "—"}</div>
@@ -285,6 +356,11 @@ export default function AdminCompanies() {
                   {(c.contactFirstName || "") + " " + (c.contactLastName || "")}
                 </div>
                 <div>{c.email || "—"}</div>
+                <div>{formatDate(c?.stats?.lastAccessAt)}</div>
+                <div>{formatDate(c?.stats?.registeredAt || c.createdAt)}</div>
+                <div>{c?.stats?.orders ?? 0}</div>
+                <div>{formatMoney(c?.stats?.revenue ?? 0)}</div>
+                <div>{formatMoney(c?.stats?.averageOrderValue ?? 0)}</div>
                 <div className="actions">
                   <span
                     className={`tag ${

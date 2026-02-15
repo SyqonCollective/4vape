@@ -75,6 +75,13 @@ export async function authRoutes(app: FastifyInstance) {
       }
     }
 
+    await prisma.user
+      .update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      })
+      .catch(() => null);
+
     const token = jwt.sign(
       {
         id: user.id,

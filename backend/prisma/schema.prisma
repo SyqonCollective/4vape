@@ -96,6 +96,7 @@ model User {
   passwordHash String
   role         UserRole @default(BUYER)
   approved     Boolean  @default(false)
+  lastLoginAt  DateTime?
   createdAt    DateTime @default(now())
 
   companyId String?

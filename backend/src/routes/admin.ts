@@ -909,7 +909,74 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/companies", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
-    return prisma.company.findMany({ orderBy: { name: "asc" } });
+    const companies = await prisma.company.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        users: {
+          select: {
+            id: true,
+            lastLoginAt: true,
+          },
+        },
+      },
+    });
+
+    const revenueStatuses = ["APPROVED", "FULFILLED"] as const;
+    const countableStatuses = ["SUBMITTED", "APPROVED", "FULFILLED"] as const;
+    const companyIds = companies.map((c) => c.id);
+
+    const [countAgg, revenueAgg] = await Promise.all([
+      prisma.order.groupBy({
+        by: ["companyId"],
+        where: {
+          companyId: { in: companyIds },
+          status: { in: countableStatuses as any },
+        },
+        _count: { _all: true },
+      }),
+      prisma.order.groupBy({
+        by: ["companyId"],
+        where: {
+          companyId: { in: companyIds },
+          status: { in: revenueStatuses as any },
+        },
+        _sum: { total: true },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const countMap = new Map(countAgg.map((r) => [r.companyId, r._count?._all || 0]));
+    const revenueMap = new Map(
+      revenueAgg.map((r) => [
+        r.companyId,
+        {
+          revenue: Number(r._sum?.total || 0),
+          paidOrders: r._count?._all || 0,
+        },
+      ])
+    );
+
+    return companies.map((c) => {
+      const accessDates = c.users
+        .map((u) => u.lastLoginAt)
+        .filter((v): v is Date => Boolean(v))
+        .sort((a, b) => b.getTime() - a.getTime());
+      const lastAccessAt = accessDates[0] || null;
+      const orders = countMap.get(c.id) || 0;
+      const revenueRow = revenueMap.get(c.id) || { revenue: 0, paidOrders: 0 };
+      const averageOrderValue = revenueRow.paidOrders ? revenueRow.revenue / revenueRow.paidOrders : 0;
+      return {
+        ...c,
+        users: undefined,
+        stats: {
+          lastAccessAt,
+          registeredAt: c.createdAt,
+          orders,
+          revenue: revenueRow.revenue,
+          averageOrderValue,
+        },
+      };
+    });
   });
 
   app.get("/orders", async (request, reply) => {
