@@ -727,6 +727,7 @@ export default function AdminGoodsReceipts() {
                 <div>Prezzo netto</div>
                 <div>Sconto</div>
                 <div>IVA</div>
+                <div>Accisa</div>
                 <div>Totale riga</div>
                 <div>Nota riga</div>
                 <div></div>
@@ -766,6 +767,17 @@ export default function AdminGoodsReceipts() {
                     {taxes.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={row.exciseRateId}
+                    onChange={(e) => updateRow(idx, { exciseRateId: e.target.value })}
+                  >
+                    <option value="">Accisa</option>
+                    {excises.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {x.name}
                       </option>
                     ))}
                   </select>
@@ -920,6 +932,7 @@ export default function AdminGoodsReceipts() {
                     <div>Prezzo netto</div>
                     <div>Sconto</div>
                     <div>IVA</div>
+                    <div>Accisa</div>
                     <div>Totale riga</div>
                     <div>Nota riga</div>
                     <div></div>
@@ -939,6 +952,10 @@ export default function AdminGoodsReceipts() {
                       <select value={row.taxRateId} onChange={(e) => updateEditRow(idx, { taxRateId: e.target.value })}>
                         <option value="">IVA</option>
                         {taxes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                      <select value={row.exciseRateId} onChange={(e) => updateEditRow(idx, { exciseRateId: e.target.value })}>
+                        <option value="">Accisa</option>
+                        {excises.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                       </select>
                       <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0))}</div>
                       <input value={row.lineNote} onChange={(e) => updateEditRow(idx, { lineNote: e.target.value })} placeholder="Nota" />
