@@ -200,6 +200,9 @@ export default function AdminProducts() {
       return `${p.sku || ""} ${p.name || ""} ${p.brand || ""}`.toLowerCase().includes(q);
     })
     .slice(0, 100);
+  const relatedSelected = (edit.relatedProductIds || [])
+    .map((id) => items.find((p) => p.id === id))
+    .filter(Boolean);
   const selectedTax = taxes.find((t) => t.id === edit.taxRateId);
   const selectedExcise = excises.find((e) => e.id === edit.exciseRateId);
   const basePrice = edit.price ? Number(edit.price) : 0;
@@ -1554,12 +1557,39 @@ export default function AdminProducts() {
                   <label className="full">
                     Prodotti correlati
                     {edit.isParent || edit.sellAsSingle ? (
-                      <>
+                      <div className="related-box">
+                        <div className="related-toolbar">
+                          <div className="muted">
+                            Selezionati: <strong>{relatedSelected.length}</strong>
+                          </div>
+                          {relatedSelected.length > 0 ? (
+                            <button
+                              type="button"
+                              className="btn ghost small"
+                              onClick={() => setEdit({ ...edit, relatedProductIds: [] })}
+                            >
+                              Svuota
+                            </button>
+                          ) : null}
+                        </div>
                         <input
+                          className="related-search"
                           placeholder="Cerca SKU o nome prodotto..."
                           value={relatedSearch}
                           onChange={(e) => setRelatedSearch(e.target.value)}
                         />
+                        {relatedSelected.length > 0 ? (
+                          <div className="related-chips">
+                            {relatedSelected.slice(0, 8).map((p) => (
+                              <span key={p.id} className="related-chip">
+                                {p.sku}
+                              </span>
+                            ))}
+                            {relatedSelected.length > 8 ? (
+                              <span className="related-chip more">+{relatedSelected.length - 8}</span>
+                            ) : null}
+                          </div>
+                        ) : null}
                         <div className="related-picker">
                           {relatedCandidates.length === 0 ? (
                             <div className="muted">Nessun prodotto disponibile</div>
@@ -1576,7 +1606,9 @@ export default function AdminProducts() {
                                     setEdit({ ...edit, relatedProductIds: Array.from(next) });
                                   }}
                                 />
-                                <span>{p.sku} · {p.name}</span>
+                                <span>
+                                  <strong>{p.sku}</strong> · {p.name}
+                                </span>
                               </label>
                             ))
                           )}
@@ -1584,7 +1616,7 @@ export default function AdminProducts() {
                         <div className="muted">
                           Disponibile per prodotti padre e per figli venduti anche singolarmente.
                         </div>
-                      </>
+                      </div>
                     ) : (
                       <div className="muted">
                         Abilita "Venduto anche singolarmente" per impostare correlati su un figlio.

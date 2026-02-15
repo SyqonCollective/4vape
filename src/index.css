@@ -1247,6 +1247,52 @@ button {
 .related-item {
   font-size: 0.92rem;
   align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.6), #fff);
+}
+
+.related-box {
+  margin-top: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  padding: 10px;
+  background: linear-gradient(180deg, rgba(240, 249, 255, 0.45), rgba(255, 255, 255, 0.95));
+}
+
+.related-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.related-search {
+  margin-bottom: 8px;
+}
+
+.related-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.related-chip {
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  background: rgba(14, 165, 233, 0.1);
+  color: #0c4a6e;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  font-weight: 600;
+}
+
+.related-chip.more {
+  background: rgba(30, 64, 175, 0.1);
+  border-color: rgba(30, 64, 175, 0.22);
+  color: #1e3a8a;
 }
 
 .modal-backdrop {
