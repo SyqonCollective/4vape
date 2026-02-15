@@ -1595,9 +1595,10 @@ export default function AdminProducts() {
                             <div className="muted">Nessun prodotto disponibile</div>
                           ) : (
                             relatedCandidates.map((p) => (
-                              <label key={p.id} className="check related-item">
+                              <label key={p.id} className="related-item">
                                 <input
                                   type="checkbox"
+                                  className="related-check"
                                   checked={Boolean((edit.relatedProductIds || []).includes(p.id))}
                                   onChange={(e) => {
                                     const next = new Set(edit.relatedProductIds || []);
@@ -1606,7 +1607,12 @@ export default function AdminProducts() {
                                     setEdit({ ...edit, relatedProductIds: Array.from(next) });
                                   }}
                                 />
-                                <span>
+                                {p.imageUrl ? (
+                                  <img className="related-thumb" src={withToken(p.imageUrl)} alt={p.name || p.sku} />
+                                ) : (
+                                  <div className="related-thumb placeholder" />
+                                )}
+                                <span className="related-text">
                                   <strong>{p.sku}</strong> · {p.name}
                                 </span>
                               </label>

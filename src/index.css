@@ -1245,12 +1245,40 @@ button {
 }
 
 .related-item {
+  display: grid;
+  grid-template-columns: 22px 48px minmax(0, 1fr);
+  gap: 10px;
   font-size: 0.92rem;
   align-items: center;
   padding: 8px 10px;
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 10px;
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.6), #fff);
+}
+
+.related-check {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.related-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--stroke);
+  background: #fff;
+}
+
+.related-thumb.placeholder {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+}
+
+.related-text {
+  min-width: 0;
+  color: var(--text);
+  line-height: 1.25;
 }
 
 .related-box {
