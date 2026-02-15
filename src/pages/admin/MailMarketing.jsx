@@ -443,9 +443,22 @@ export default function AdminMailMarketing() {
   }
 
   async function openHistoryMail(item) {
-    const emailId = Number(item?.Id || item?.id);
-    if (!emailId) return;
+    const rawId = item?.Id || item?.id || item?.EmailID || item?.MessageID || item?.MessageId || null;
+    const emailId = Number(rawId);
+    const fallbackHtml = item?.ContentHTML || item?.HtmlBody || item?.Body || item?.Content || "";
+    const fallbackSubject = item?.Subject || item?.subject || "-";
+    const fallbackName = item?.Name || item?.name || (rawId ? `Mail ${rawId}` : "Mail storica");
     try {
+      if (!emailId) {
+        setPreviewHistoryMail({
+          id: rawId || "-",
+          subject: fallbackSubject,
+          name: fallbackName,
+          html: fallbackHtml,
+          raw: item,
+        });
+        return;
+      }
       const res = await api(`/admin/mail-marketing/history/${emailId}?listId=${selectedListId}`);
       const detail = res?.item || null;
       const html =
@@ -453,37 +466,43 @@ export default function AdminMailMarketing() {
         detail?.HtmlBody ||
         detail?.Body ||
         detail?.Content ||
-        item?.ContentHTML ||
-        item?.HtmlBody ||
-        item?.Body ||
-        item?.Content ||
+        fallbackHtml ||
         "";
-      const subject = detail?.Subject || detail?.subject || item?.Subject || item?.subject || "-";
-      const name = detail?.Name || detail?.name || item?.Name || item?.name || `Mail ${emailId}`;
+      const subject = detail?.Subject || detail?.subject || fallbackSubject;
+      const name = detail?.Name || detail?.name || fallbackName;
       setPreviewHistoryMail({ id: emailId, subject, name, html, raw: detail || item });
     } catch (err) {
-      setError(parseApiError(err, "Impossibile aprire mail"));
+      setPreviewHistoryMail({
+        id: rawId || "-",
+        subject: fallbackSubject,
+        name: fallbackName,
+        html: fallbackHtml,
+        raw: item,
+      });
     }
   }
 
   async function duplicateFromHistory(item) {
-    const emailId = Number(item?.Id || item?.id);
-    if (!emailId) return;
+    const rawId = item?.Id || item?.id || item?.EmailID || item?.MessageID || item?.MessageId || null;
+    const emailId = Number(rawId);
+    const fallbackHtml = item?.ContentHTML || item?.HtmlBody || item?.Body || item?.Content || "";
+    const fallbackSubject = item?.Subject || item?.subject || "";
+    const fallbackName = item?.Name || item?.name || (rawId ? `Mail ${rawId}` : "Mail storica");
     try {
-      const res = await api(`/admin/mail-marketing/history/${emailId}?listId=${selectedListId}`);
-      const detail = res?.item || {};
+      let detail = {};
+      if (emailId) {
+        const res = await api(`/admin/mail-marketing/history/${emailId}?listId=${selectedListId}`);
+        detail = res?.item || {};
+      }
       const html =
         detail?.ContentHTML ||
         detail?.HtmlBody ||
         detail?.Body ||
         detail?.Content ||
-        item?.ContentHTML ||
-        item?.HtmlBody ||
-        item?.Body ||
-        item?.Content ||
+        fallbackHtml ||
         "";
-      const subject = detail?.Subject || detail?.subject || item?.Subject || item?.subject || "";
-      const name = detail?.Name || detail?.name || item?.Name || item?.name || `Mail ${emailId}`;
+      const subject = detail?.Subject || detail?.subject || fallbackSubject;
+      const name = detail?.Name || detail?.name || fallbackName;
       setCampaignForm((prev) => ({
         ...prev,
         id: "",
@@ -494,7 +513,15 @@ export default function AdminMailMarketing() {
       }));
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      setError(parseApiError(err, "Duplicazione da storico fallita"));
+      setCampaignForm((prev) => ({
+        ...prev,
+        id: "",
+        name: `${fallbackName} (copia)`,
+        subject: fallbackSubject || prev.subject,
+        html: fallbackHtml || prev.html,
+        listId: String(selectedListId || prev.listId || 1),
+      }));
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
 
