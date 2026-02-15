@@ -179,6 +179,7 @@ export default function AdminMailMarketing() {
   const [campaignForm, setCampaignForm] = useState(DEFAULT_CAMPAIGN_FORM);
   const [companySearch, setCompanySearch] = useState("");
   const [previewCampaign, setPreviewCampaign] = useState(null);
+  const [previewHistoryMail, setPreviewHistoryMail] = useState(null);
   const [fieldsOpen, setFieldsOpen] = useState(false);
   const [mailupHistory, setMailupHistory] = useState([]);
 
@@ -403,6 +404,100 @@ export default function AdminMailMarketing() {
     }
   }
 
+  async function duplicateTemplate(template) {
+    try {
+      await api("/admin/mail-marketing/templates", {
+        method: "POST",
+        body: JSON.stringify({
+          name: `${template.name} (copia)`,
+          subject: template.subject,
+          html: template.html,
+          active: Boolean(template.active),
+        }),
+      });
+      await loadAll();
+    } catch (err) {
+      setError(parseApiError(err, "Duplicazione template fallita"));
+    }
+  }
+
+  async function duplicateCampaign(campaign) {
+    try {
+      await api("/admin/mail-marketing/campaigns", {
+        method: "POST",
+        body: JSON.stringify({
+          name: `${campaign.name} (copia)`,
+          subject: campaign.subject,
+          html: campaign.html,
+          templateId: campaign.templateId || undefined,
+          listId: Number(campaign.listId),
+          groupId: campaign.groupId || undefined,
+          audienceType: campaign.audienceType || "ALL_ACTIVE",
+          audienceCompanyIds: Array.isArray(campaign.audienceCompanyIds) ? campaign.audienceCompanyIds : [],
+        }),
+      });
+      await loadAll();
+    } catch (err) {
+      setError(parseApiError(err, "Duplicazione campagna fallita"));
+    }
+  }
+
+  async function openHistoryMail(item) {
+    const emailId = Number(item?.Id || item?.id);
+    if (!emailId) return;
+    try {
+      const res = await api(`/admin/mail-marketing/history/${emailId}?listId=${selectedListId}`);
+      const detail = res?.item || null;
+      const html =
+        detail?.ContentHTML ||
+        detail?.HtmlBody ||
+        detail?.Body ||
+        detail?.Content ||
+        item?.ContentHTML ||
+        item?.HtmlBody ||
+        item?.Body ||
+        item?.Content ||
+        "";
+      const subject = detail?.Subject || detail?.subject || item?.Subject || item?.subject || "-";
+      const name = detail?.Name || detail?.name || item?.Name || item?.name || `Mail ${emailId}`;
+      setPreviewHistoryMail({ id: emailId, subject, name, html, raw: detail || item });
+    } catch (err) {
+      setError(parseApiError(err, "Impossibile aprire mail"));
+    }
+  }
+
+  async function duplicateFromHistory(item) {
+    const emailId = Number(item?.Id || item?.id);
+    if (!emailId) return;
+    try {
+      const res = await api(`/admin/mail-marketing/history/${emailId}?listId=${selectedListId}`);
+      const detail = res?.item || {};
+      const html =
+        detail?.ContentHTML ||
+        detail?.HtmlBody ||
+        detail?.Body ||
+        detail?.Content ||
+        item?.ContentHTML ||
+        item?.HtmlBody ||
+        item?.Body ||
+        item?.Content ||
+        "";
+      const subject = detail?.Subject || detail?.subject || item?.Subject || item?.subject || "";
+      const name = detail?.Name || detail?.name || item?.Name || item?.name || `Mail ${emailId}`;
+      setCampaignForm((prev) => ({
+        ...prev,
+        id: "",
+        name: `${name} (copia)`,
+        subject: subject || prev.subject,
+        html: html || prev.html,
+        listId: String(selectedListId || prev.listId || 1),
+      }));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      setError(parseApiError(err, "Duplicazione da storico fallita"));
+    }
+  }
+
   function loadTemplateIntoForm(template) {
     setTemplateForm({
       id: template.id,
@@ -543,7 +638,7 @@ export default function AdminMailMarketing() {
             </div>
           </form>
 
-          <div className="table compact" style={{ marginTop: 12 }}>
+          <div className="table compact mail-template-table" style={{ marginTop: 12 }}>
             <div className="row header"><div>Nome</div><div>Oggetto</div><div>Azioni</div></div>
             {templates.map((t) => (
               <div className="row" key={t.id}>
@@ -551,6 +646,7 @@ export default function AdminMailMarketing() {
                 <div>{t.subject}</div>
                 <div className="actions">
                   <button type="button" className="btn ghost" onClick={() => loadTemplateIntoForm(t)}>Modifica</button>
+                  <button type="button" className="btn ghost" onClick={() => duplicateTemplate(t)}>Duplica</button>
                   <button type="button" className="btn ghost danger" onClick={() => deleteTemplate(t.id)}>Elimina</button>
                 </div>
               </div>
@@ -788,7 +884,7 @@ export default function AdminMailMarketing() {
           </div>
         </form>
 
-        <div className="table compact" style={{ marginTop: 12 }}>
+        <div className="table compact mail-campaign-table" style={{ marginTop: 12 }}>
           <div className="row header">
             <div>Campagna</div>
             <div>Stato</div>
@@ -817,6 +913,7 @@ export default function AdminMailMarketing() {
               </div>
               <div className="actions">
                 <button className="btn ghost" type="button" onClick={() => loadCampaignIntoForm(c)}>Modifica</button>
+                <button className="btn ghost" type="button" onClick={() => duplicateCampaign(c)}>Duplica</button>
                 <button className="btn ghost" type="button" onClick={() => setPreviewCampaign(c)}>Anteprima</button>
                 <button
                   className="btn primary"
@@ -849,12 +946,13 @@ export default function AdminMailMarketing() {
             Aggiorna storico
           </button>
         </div>
-        <div className="table compact" style={{ marginTop: 10 }}>
+        <div className="table compact mail-history-table" style={{ marginTop: 10 }}>
           <div className="row header">
             <div>ID</div>
             <div>Nome</div>
             <div>Oggetto</div>
             <div>Data</div>
+            <div>Azioni</div>
           </div>
           {mailupHistory.map((m, i) => (
             <div className="row" key={String(m.Id || m.id || i)}>
@@ -865,6 +963,10 @@ export default function AdminMailMarketing() {
                 {m.CreationDate || m.createdAt || m.CreateDate
                   ? new Date(m.CreationDate || m.createdAt || m.CreateDate).toLocaleString("it-IT")
                   : "-"}
+              </div>
+              <div className="actions">
+                <button type="button" className="btn ghost" onClick={() => openHistoryMail(m)}>Apri</button>
+                <button type="button" className="btn ghost" onClick={() => duplicateFromHistory(m)}>Duplica</button>
               </div>
             </div>
           ))}
@@ -889,6 +991,28 @@ export default function AdminMailMarketing() {
               <div className="muted">Oggetto</div>
               <div style={{ fontWeight: 700, marginBottom: 12 }}>{previewCampaign.subject}</div>
               <div className="mail-preview" dangerouslySetInnerHTML={{ __html: previewCampaign.html || "" }} />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {previewHistoryMail ? (
+        <div className="modal-backdrop" onClick={() => setPreviewHistoryMail(null)}>
+          <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Mail inviata</h3>
+              <button className="btn ghost" onClick={() => setPreviewHistoryMail(null)}>Chiudi</button>
+            </div>
+            <div className="panel" style={{ marginTop: 12 }}>
+              <div className="muted">Nome</div>
+              <div style={{ fontWeight: 700 }}>{previewHistoryMail.name}</div>
+              <div className="muted" style={{ marginTop: 8 }}>Oggetto</div>
+              <div style={{ fontWeight: 700, marginBottom: 12 }}>{previewHistoryMail.subject}</div>
+              {previewHistoryMail.html ? (
+                <div className="mail-preview" dangerouslySetInnerHTML={{ __html: previewHistoryMail.html }} />
+              ) : (
+                <div className="muted">Contenuto HTML non disponibile da API MailUp per questa mail.</div>
+              )}
             </div>
           </div>
         </div>

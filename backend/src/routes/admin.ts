@@ -549,6 +549,25 @@ export async function adminRoutes(app: FastifyInstance) {
     }
   });
 
+  app.get("/mail-marketing/history/:emailId", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const emailId = Number((request.params as any)?.emailId);
+    const listId = Number((request.query as any)?.listId || process.env.MAILUP_DEFAULT_LIST_ID || 1);
+    if (!emailId || !listId) return reply.badRequest("Parametri non validi");
+    try {
+      let data: any = null;
+      try {
+        data = await mailupRequest(`/List/${listId}/Email/${emailId}`);
+      } catch {
+        data = await mailupRequest(`/Email/${emailId}?ListId=${listId}`);
+      }
+      return { item: data || null };
+    } catch (err: any) {
+      return reply.code(400).send({ item: null, error: err?.message || "Errore recupero dettaglio email" });
+    }
+  });
+
   app.post("/mail-marketing/campaigns", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
