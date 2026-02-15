@@ -1674,6 +1674,274 @@ export async function adminRoutes(app: FastifyInstance) {
     return reply.send(csv);
   });
 
+  app.get("/reports", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+
+    const query = request.query as {
+      start?: string;
+      end?: string;
+      companyId?: string;
+      productId?: string;
+      page?: string;
+      perPage?: string;
+    };
+
+    const now = new Date();
+    const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : now;
+    const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : new Date(end);
+    if (!query.start) start.setDate(end.getDate() - 29);
+    const companyId = String(query.companyId || "").trim();
+    const productId = String(query.productId || "").trim();
+    const page = Math.max(1, Number(query.page || 1));
+    const perPage = Math.min(500, Math.max(1, Number(query.perPage || 150)));
+    const revenueStatuses: OrderStatus[] = ["APPROVED", "FULFILLED"];
+
+    const orders = await prisma.order.findMany({
+      where: {
+        createdAt: { gte: start, lte: end },
+        status: { in: revenueStatuses },
+        ...(companyId ? { companyId } : {}),
+      },
+      include: {
+        company: {
+          select: { id: true, name: true },
+        },
+        items: {
+          include: {
+            product: {
+              include: { taxRateRef: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const lines: Array<{
+      id: string;
+      createdAt: Date;
+      orderId: string;
+      companyId: string | null;
+      companyName: string;
+      productId: string;
+      sku: string;
+      productName: string;
+      qty: number;
+      unitPrice: number;
+      lineNet: number;
+      vat: number;
+      excise: number;
+      lineGross: number;
+      cost: number;
+      margin: number;
+    }> = [];
+    const ordersSet = new Set<string>();
+
+    for (const order of orders) {
+      for (const item of order.items) {
+        if (productId && item.productId !== productId) continue;
+        const lineNet = Number(item.lineTotal || 0);
+        const qty = Number(item.qty || 0);
+        const purchase = Number(item.product?.purchasePrice || 0);
+        const rate = Number(item.product?.taxRate || item.product?.taxRateRef?.rate || 0);
+        const exciseUnit = Number(
+          item.product?.exciseTotal ??
+          (Number(item.product?.exciseMl || 0) + Number(item.product?.exciseProduct || 0))
+        );
+        const excise = exciseUnit * qty;
+        const vat = rate > 0 ? (lineNet + excise) * (rate / 100) : 0;
+        const lineGross = lineNet + vat + excise;
+        const cost = purchase * qty;
+        const margin = lineGross - cost;
+
+        lines.push({
+          id: item.id,
+          createdAt: order.createdAt,
+          orderId: order.id,
+          companyId: order.company?.id || null,
+          companyName: order.company?.name || "N/D",
+          productId: item.productId,
+          sku: item.sku,
+          productName: item.name,
+          qty,
+          unitPrice: Number(item.unitPrice || 0),
+          lineNet,
+          vat,
+          excise,
+          lineGross,
+          cost,
+          margin,
+        });
+        ordersSet.add(order.id);
+      }
+    }
+
+    const totals = lines.reduce(
+      (acc, l) => {
+        acc.rows += 1;
+        acc.qty += l.qty;
+        acc.revenueNet += l.lineNet;
+        acc.vat += l.vat;
+        acc.excise += l.excise;
+        acc.revenueGross += l.lineGross;
+        acc.cost += l.cost;
+        acc.margin += l.margin;
+        return acc;
+      },
+      {
+        rows: 0,
+        orders: ordersSet.size,
+        qty: 0,
+        revenueNet: 0,
+        revenueGross: 0,
+        vat: 0,
+        excise: 0,
+        cost: 0,
+        margin: 0,
+      }
+    );
+
+    const topProductMap = new Map<string, { id: string; sku: string; name: string; qty: number; revenueGross: number }>();
+    const topClientMap = new Map<string, { id: string; name: string; orders: number; revenueGross: number }>();
+    const clientOrderMap = new Map<string, Set<string>>();
+
+    for (const l of lines) {
+      const p = topProductMap.get(l.productId) || {
+        id: l.productId,
+        sku: l.sku,
+        name: l.productName,
+        qty: 0,
+        revenueGross: 0,
+      };
+      p.qty += l.qty;
+      p.revenueGross += l.lineGross;
+      topProductMap.set(l.productId, p);
+
+      const key = l.companyId || l.companyName;
+      const c = topClientMap.get(key) || {
+        id: key,
+        name: l.companyName,
+        orders: 0,
+        revenueGross: 0,
+      };
+      c.revenueGross += l.lineGross;
+      topClientMap.set(key, c);
+      const orderSet = clientOrderMap.get(key) || new Set<string>();
+      orderSet.add(l.orderId);
+      clientOrderMap.set(key, orderSet);
+    }
+
+    for (const [k, orderSet] of clientOrderMap.entries()) {
+      const c = topClientMap.get(k);
+      if (c) c.orders = orderSet.size;
+    }
+
+    const topProducts = Array.from(topProductMap.values())
+      .sort((a, b) => b.revenueGross - a.revenueGross)
+      .slice(0, 15);
+    const topClients = Array.from(topClientMap.values())
+      .sort((a, b) => b.revenueGross - a.revenueGross)
+      .slice(0, 15);
+
+    const total = lines.length;
+    const totalPages = Math.max(1, Math.ceil(total / perPage));
+    const safePage = Math.min(page, totalPages);
+    const startIndex = (safePage - 1) * perPage;
+    const paged = lines.slice(startIndex, startIndex + perPage);
+
+    return {
+      filters: {
+        start: start.toISOString().slice(0, 10),
+        end: end.toISOString().slice(0, 10),
+        companyId: companyId || null,
+        productId: productId || null,
+      },
+      totals,
+      topProducts,
+      topClients,
+      lines: paged,
+      pagination: {
+        page: safePage,
+        perPage,
+        total,
+        totalPages,
+      },
+    };
+  });
+
+  app.get("/reports/export", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const query = request.query as { start?: string; end?: string; companyId?: string; productId?: string };
+
+    const params = new URLSearchParams({
+      start: query.start || "",
+      end: query.end || "",
+      page: "1",
+      perPage: "500",
+    });
+    if (query.companyId) params.set("companyId", query.companyId);
+    if (query.productId) params.set("productId", query.productId);
+
+    const report = await (async () => {
+      const res = await (app as any).inject({
+        method: "GET",
+        url: `/admin/reports?${params.toString()}`,
+        headers: { authorization: request.headers.authorization || "" },
+      });
+      return JSON.parse(res.payload);
+    })();
+
+    const rows = report.lines || [];
+    const header = [
+      "Data",
+      "Ordine",
+      "Cliente",
+      "SKU",
+      "Prodotto",
+      "Quantita",
+      "PrezzoUnitario",
+      "Imponibile",
+      "IVA",
+      "Accisa",
+      "TotaleLordo",
+    ];
+    const csvEscape = (v: any) => {
+      const s = String(v ?? "");
+      if (s.includes(",") || s.includes("\"") || s.includes("\n")) {
+        return `"${s.replace(/\"/g, "\"\"")}"`;
+      }
+      return s;
+    };
+    const csv = [
+      header.join(","),
+      ...rows.map((r: any) =>
+        [
+          new Date(r.createdAt).toISOString().slice(0, 10),
+          r.orderId,
+          r.companyName,
+          r.sku,
+          r.productName,
+          r.qty,
+          Number(r.unitPrice || 0).toFixed(2),
+          Number(r.lineNet || 0).toFixed(2),
+          Number(r.vat || 0).toFixed(2),
+          Number(r.excise || 0).toFixed(2),
+          Number(r.lineGross || 0).toFixed(2),
+        ]
+          .map(csvEscape)
+          .join(",")
+      ),
+    ].join("\n");
+    reply.header("Content-Type", "text/csv; charset=utf-8");
+    reply.header(
+      "Content-Disposition",
+      `attachment; filename="report_vendite_${query.start || "from"}_${query.end || "to"}.csv"`
+    );
+    return reply.send(csv);
+  });
+
   app.get("/settings", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
