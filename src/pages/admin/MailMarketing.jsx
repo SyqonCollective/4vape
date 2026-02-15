@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
@@ -47,6 +47,116 @@ function campaignStatusLabel(status) {
   }
 }
 
+function RichTextEditor({ value, onChange, placeholder = "Scrivi contenuto email..." }) {
+  const editorRef = useRef(null);
+  const imageInputRef = useRef(null);
+
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    if ((value || "") !== el.innerHTML) {
+      el.innerHTML = value || "";
+    }
+  }, [value]);
+
+  function run(command, arg) {
+    const el = editorRef.current;
+    if (!el) return;
+    el.focus();
+    document.execCommand(command, false, arg);
+    onChange(el.innerHTML);
+  }
+
+  function onInput() {
+    const el = editorRef.current;
+    if (!el) return;
+    onChange(el.innerHTML);
+  }
+
+  function addLink() {
+    const url = window.prompt("Inserisci URL (https://...)");
+    if (!url) return;
+    run("createLink", url.trim());
+  }
+
+  function addImageByUrl() {
+    const url = window.prompt("Inserisci URL immagine");
+    if (!url) return;
+    run("insertImage", url.trim());
+  }
+
+  function addImageFromFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      if (!dataUrl) return;
+      run("insertImage", dataUrl);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
+  return (
+    <div className="rte">
+      <div className="rte-toolbar">
+        <button type="button" className="rte-btn" onClick={() => run("bold")} title="Grassetto">
+          B
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("italic")} title="Corsivo">
+          I
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("underline")} title="Sottolineato">
+          U
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("formatBlock", "<h2>")} title="Titolo">
+          H2
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("insertUnorderedList")} title="Elenco puntato">
+          • List
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("insertOrderedList")} title="Elenco numerato">
+          1. List
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("justifyLeft")} title="Allinea a sinistra">
+          Left
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("justifyCenter")} title="Centra">
+          Center
+        </button>
+        <button type="button" className="rte-btn" onClick={addLink} title="Aggiungi link">
+          Link
+        </button>
+        <button type="button" className="rte-btn" onClick={addImageByUrl} title="Immagine da URL">
+          Img URL
+        </button>
+        <button type="button" className="rte-btn" onClick={() => imageInputRef.current?.click()} title="Carica immagine">
+          Upload Img
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("removeFormat")} title="Rimuovi formattazione">
+          Clear
+        </button>
+      </div>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={addImageFromFile}
+      />
+      <div
+        ref={editorRef}
+        className="rte-editor"
+        contentEditable
+        suppressContentEditableWarning
+        data-placeholder={placeholder}
+        onInput={onInput}
+      />
+    </div>
+  );
+}
+
 export default function AdminMailMarketing() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState({ configured: false, wsUsername: null });
@@ -70,6 +180,7 @@ export default function AdminMailMarketing() {
   const [companySearch, setCompanySearch] = useState("");
   const [previewCampaign, setPreviewCampaign] = useState(null);
   const [fieldsOpen, setFieldsOpen] = useState(false);
+  const [mailupHistory, setMailupHistory] = useState([]);
 
   const filteredCompanies = useMemo(() => {
     const active = companies.filter((c) => c.status === "ACTIVE" && c.email);
@@ -126,6 +237,12 @@ export default function AdminMailMarketing() {
         setCampaignForm((prev) => ({ ...prev, listId: String(nextListId) }));
       }
       await loadGroups(nextListId);
+      try {
+        const historyRes = await api(`/admin/mail-marketing/history?listId=${nextListId}`);
+        setMailupHistory(historyRes?.items || []);
+      } catch {
+        setMailupHistory([]);
+      }
     } catch {
       setError("Impossibile caricare Mail Marketing");
     }
@@ -395,12 +512,11 @@ export default function AdminMailMarketing() {
               </label>
             </div>
             <label>
-              HTML email
-              <textarea
-                rows={8}
+              Contenuto email (editor visuale)
+              <RichTextEditor
                 value={templateForm.html}
-                onChange={(e) => setTemplateForm((prev) => ({ ...prev, html: e.target.value }))}
-                placeholder="<h1>Ciao {{nome}}</h1>"
+                onChange={(next) => setTemplateForm((prev) => ({ ...prev, html: next }))}
+                placeholder="Scrivi il contenuto della newsletter..."
               />
             </label>
             <label className="checkbox-row">
@@ -455,6 +571,9 @@ export default function AdminMailMarketing() {
                   const next = Number(e.target.value);
                   setSelectedListId(next);
                   loadGroups(next);
+                  api(`/admin/mail-marketing/history?listId=${next}`)
+                    .then((r) => setMailupHistory(r?.items || []))
+                    .catch(() => setMailupHistory([]));
                 }}
               >
                 {lists.map((l) => (
@@ -596,11 +715,11 @@ export default function AdminMailMarketing() {
           </div>
 
           <label>
-            HTML email
-            <textarea
-              rows={8}
+            Contenuto email (editor visuale)
+            <RichTextEditor
               value={campaignForm.html}
-              onChange={(e) => setCampaignForm((prev) => ({ ...prev, html: e.target.value }))}
+              onChange={(next) => setCampaignForm((prev) => ({ ...prev, html: next }))}
+              placeholder="Scrivi la campagna..."
             />
           </label>
 
@@ -712,6 +831,50 @@ export default function AdminMailMarketing() {
             </div>
           ))}
           {!campaigns.length ? <div className="row"><div className="muted">Nessuna campagna</div></div> : null}
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="actions" style={{ justifyContent: "space-between" }}>
+          <h2 style={{ margin: 0 }}>Mail passate (MailUp)</h2>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() =>
+              api(`/admin/mail-marketing/history?listId=${selectedListId}`)
+                .then((r) => setMailupHistory(r?.items || []))
+                .catch(() => setMailupHistory([]))
+            }
+          >
+            Aggiorna storico
+          </button>
+        </div>
+        <div className="table compact" style={{ marginTop: 10 }}>
+          <div className="row header">
+            <div>ID</div>
+            <div>Nome</div>
+            <div>Oggetto</div>
+            <div>Data</div>
+          </div>
+          {mailupHistory.map((m, i) => (
+            <div className="row" key={String(m.Id || m.id || i)}>
+              <div className="mono">{m.Id || m.id || "-"}</div>
+              <div>{m.Name || m.name || "-"}</div>
+              <div>{m.Subject || m.subject || "-"}</div>
+              <div>
+                {m.CreationDate || m.createdAt || m.CreateDate
+                  ? new Date(m.CreationDate || m.createdAt || m.CreateDate).toLocaleString("it-IT")
+                  : "-"}
+              </div>
+            </div>
+          ))}
+          {!mailupHistory.length ? (
+            <div className="row">
+              <div className="muted">
+                Nessuna mail trovata in MailUp per la lista selezionata.
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 

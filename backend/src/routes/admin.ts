@@ -523,6 +523,32 @@ export async function adminRoutes(app: FastifyInstance) {
     });
   });
 
+  app.get("/mail-marketing/history", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const listId = Number((request.query as any)?.listId || process.env.MAILUP_DEFAULT_LIST_ID || 1);
+    try {
+      let data: any = null;
+      try {
+        data = await mailupRequest(`/List/${listId}/Email`);
+      } catch {
+        try {
+          data = await mailupRequest(`/List/${listId}/Emails`);
+        } catch {
+          data = await mailupRequest(`/Email?ListId=${listId}`);
+        }
+      }
+      const items = data?.Items || data || [];
+      return { items, source: "mailup" };
+    } catch (err: any) {
+      return reply.code(400).send({
+        items: [],
+        source: "mailup",
+        error: err?.message || "Errore recupero storico MailUp",
+      });
+    }
+  });
+
   app.post("/mail-marketing/campaigns", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
