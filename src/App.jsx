@@ -15,6 +15,7 @@ import AdminInventory from "./pages/admin/Inventory.jsx";
 import AdminGoodsReceipts from "./pages/admin/GoodsReceipts.jsx";
 import AdminReturns from "./pages/admin/Returns.jsx";
 import AdminReports from "./pages/admin/Reports.jsx";
+import AdminMailMarketing from "./pages/admin/MailMarketing.jsx";
 import RegisterCompany from "./pages/RegisterCompany.jsx";
 import ReturnsTest from "./pages/ReturnsTest.jsx";
 import { getToken } from "./lib/api.js";
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="goods-receipts" element={<AdminGoodsReceipts />} />
         <Route path="returns" element={<AdminReturns />} />
         <Route path="reports" element={<AdminReports />} />
+        <Route path="mail-marketing" element={<AdminMailMarketing />} />
         <Route path="companies" element={<AdminCompanies />} />
         <Route path="users" element={<AdminUsers />} />
         <Route index element={<Navigate to="/admin/dashboard" replace />} />

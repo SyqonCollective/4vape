@@ -48,6 +48,175 @@ function slugify(value: string) {
 }
 
 export async function adminRoutes(app: FastifyInstance) {
+  const defaultMailupMeta = {
+    lists: [
+      {
+        id: 1,
+        name: "Newsletter",
+        description: "Iscritti alla newsletter.",
+        guid: "AAFA5375-BCF1-4E06-965A-E3A98B626156",
+      },
+    ],
+    groups: [
+      { listId: 1, groupId: 6, name: "TEST" },
+      { listId: 1, groupId: 7, name: "NEGOZIANTI" },
+      { listId: 1, groupId: 8, name: "CLIENTI PRIVATI" },
+      { listId: 1, groupId: 18, name: "nuove email sisal" },
+      { listId: 1, groupId: 20, name: "NUOVI" },
+      { listId: 1, groupId: 21, name: "4vape.it" },
+      { listId: 1, groupId: 22, name: "4vape.it TC 1" },
+      { listId: 1, groupId: 23, name: "4vape.it TC 2" },
+      { listId: 1, groupId: 24, name: "4vape.it TC 3" },
+    ],
+    fields: [
+      { id: "campo1", name: "nome" },
+      { id: "campo2", name: "cognome" },
+      { id: "campo3", name: "azienda" },
+      { id: "campo4", name: "città" },
+      { id: "campo5", name: "provincia" },
+      { id: "campo6", name: "cap" },
+      { id: "campo7", name: "regione" },
+      { id: "campo8", name: "paese" },
+      { id: "campo9", name: "indirizzo" },
+      { id: "campo10", name: "fax" },
+      { id: "campo11", name: "telefono" },
+      { id: "campo12", name: "IDCliente" },
+      { id: "campo13", name: "IDUltimoOrdine" },
+      { id: "campo14", name: "DataUltimoOrdine" },
+      { id: "campo15", name: "TotaleUltimoOrdine" },
+      { id: "campo16", name: "IDProdottiUltimoOrdine" },
+      { id: "campo17", name: "IDCategorieUltimoOrdine" },
+      { id: "campo18", name: "DataUltimoOrdineSpedito" },
+      { id: "campo19", name: "IDUltimoOrdineSpedito" },
+      { id: "campo20", name: "DataCarrelloAbbandonato" },
+      { id: "campo21", name: "TotaleCarrelloAbbandonato" },
+      { id: "campo22", name: "IDCarrelloAbbandonato" },
+      { id: "campo23", name: "TotaleFatturato" },
+      { id: "campo24", name: "TotaleFatturatoUltimi12Mesi" },
+      { id: "campo25", name: "TotaleFatturatoUltimi30gg" },
+      { id: "campo26", name: "IDTuttiProdottiAcquistati" },
+      { id: "campo27", name: "Compleanno" },
+    ],
+  };
+  let mailupTokenCache: { token: string; expiresAt: number } | null = null;
+
+  function getMailupConfig() {
+    return {
+      clientId: process.env.MAILUP_CLIENT_ID || "",
+      clientSecret: process.env.MAILUP_CLIENT_SECRET || "",
+      username: process.env.MAILUP_USERNAME || "",
+      password: process.env.MAILUP_PASSWORD || "",
+      tokenUrl:
+        process.env.MAILUP_TOKEN_URL ||
+        "https://services.mailup.com/Authorization/OAuth/Token",
+      consoleBase:
+        process.env.MAILUP_CONSOLE_BASE ||
+        "https://services.mailup.com/API/v1.1/Rest/ConsoleService.svc/Console",
+    };
+  }
+
+  async function getMailupAccessToken() {
+    const now = Date.now();
+    if (mailupTokenCache && mailupTokenCache.expiresAt > now + 15000) {
+      return mailupTokenCache.token;
+    }
+    const cfg = getMailupConfig();
+    if (!cfg.clientId || !cfg.clientSecret || !cfg.username || !cfg.password) {
+      throw new Error("Config MailUp incompleta in .env");
+    }
+    const body = new URLSearchParams({
+      grant_type: "password",
+      client_id: cfg.clientId,
+      client_secret: cfg.clientSecret,
+      username: cfg.username,
+      password: cfg.password,
+    });
+    const res = await fetch(cfg.tokenUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    const text = await res.text();
+    let json: any = {};
+    try {
+      json = text ? JSON.parse(text) : {};
+    } catch {
+      json = {};
+    }
+    if (!res.ok || !json.access_token) {
+      throw new Error(json.error_description || json.error || text || `Token error ${res.status}`);
+    }
+    const expiresIn = Number(json.expires_in || 3600);
+    mailupTokenCache = {
+      token: json.access_token,
+      expiresAt: now + expiresIn * 1000,
+    };
+    return json.access_token as string;
+  }
+
+  async function mailupRequest(pathOrUrl: string, init?: RequestInit) {
+    const cfg = getMailupConfig();
+    const token = await getMailupAccessToken();
+    const url = pathOrUrl.startsWith("http")
+      ? pathOrUrl
+      : `${cfg.consoleBase.replace(/\/+$/, "")}/${pathOrUrl.replace(/^\/+/, "")}`;
+    const res = await fetch(url, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...(init?.headers || {}),
+      },
+    });
+    const text = await res.text();
+    let data: any = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = text;
+    }
+    if (!res.ok) {
+      const msg =
+        (data && (data.Message || data.message || data.error_description || data.error)) ||
+        text ||
+        `MailUp error ${res.status}`;
+      throw new Error(String(msg));
+    }
+    return data;
+  }
+
+  async function upsertMailupRecipient(params: {
+    listId: number;
+    groupId?: number | null;
+    email: string;
+    name?: string;
+    fields?: Array<{ Id: string; Value: string }>;
+  }) {
+    const payload = {
+      Confirmed: true,
+      Force: true,
+      Recipients: [
+        {
+          Email: params.email,
+          Name: params.name || "",
+          Fields: params.fields || [],
+        },
+      ],
+      ...(params.groupId ? { Groups: [params.groupId] } : {}),
+    };
+    try {
+      return await mailupRequest(`/List/${params.listId}/Recipients`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      return await mailupRequest(`/List/${params.listId}/Recipient`, {
+        method: "POST",
+        body: JSON.stringify(payload.Recipients[0]),
+      });
+    }
+  }
+
   async function resolveDefaultTaxRateId() {
     const settings = await prisma.appSetting.findFirst();
     if (!settings?.vatRateDefault) return null;
@@ -118,6 +287,130 @@ export async function adminRoutes(app: FastifyInstance) {
     const user = requireAdmin(request, reply);
     if (!user) return;
     return { ok: true };
+  });
+
+  app.get("/mail-marketing/meta", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return defaultMailupMeta;
+  });
+
+  app.get("/mail-marketing/status", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const cfg = getMailupConfig();
+    return {
+      configured: Boolean(cfg.clientId && cfg.clientSecret && cfg.username && cfg.password),
+      wsUsername: cfg.username || null,
+    };
+  });
+
+  app.post("/mail-marketing/test", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    try {
+      await getMailupAccessToken();
+      const lists = await mailupRequest("/List");
+      return { ok: true, lists };
+    } catch (err: any) {
+      return reply.code(400).send({ ok: false, error: err?.message || "Connessione MailUp fallita" });
+    }
+  });
+
+  app.get("/mail-marketing/lists", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    try {
+      const data = await mailupRequest("/List");
+      return { items: data?.Items || data || [] };
+    } catch (err: any) {
+      return reply.code(400).send({ items: [], error: err?.message || "Errore caricamento liste" });
+    }
+  });
+
+  app.get("/mail-marketing/groups", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const listId = Number((request.query as any)?.listId || process.env.MAILUP_DEFAULT_LIST_ID || 1);
+    try {
+      let data: any = null;
+      try {
+        data = await mailupRequest(`/List/${listId}/Group`);
+      } catch {
+        data = await mailupRequest(`/Group?ListId=${listId}`);
+      }
+      return { items: data?.Items || data || [] };
+    } catch (err: any) {
+      return reply.code(400).send({ items: [], error: err?.message || "Errore caricamento gruppi" });
+    }
+  });
+
+  app.get("/mail-marketing/fields", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    return { items: defaultMailupMeta.fields };
+  });
+
+  app.post("/mail-marketing/sync/companies", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        listId: z.number().int().positive(),
+        groupId: z.number().int().positive().optional(),
+        companyIds: z.array(z.string()).optional(),
+      })
+      .parse(request.body);
+
+    const where: any = { status: "ACTIVE", email: { not: null } };
+    if (body.companyIds?.length) where.id = { in: body.companyIds };
+    const companies = await prisma.company.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    });
+
+    const results: Array<{ companyId: string; name: string; email: string | null; ok: boolean; error?: string }> = [];
+    for (const company of companies) {
+      const email = (company.email || "").trim();
+      if (!email) {
+        results.push({ companyId: company.id, name: company.name, email: null, ok: false, error: "Email mancante" });
+        continue;
+      }
+      const fullName = [company.contactFirstName, company.contactLastName].filter(Boolean).join(" ").trim();
+      const fields = [
+        { Id: "campo1", Value: company.contactFirstName || "" },
+        { Id: "campo2", Value: company.contactLastName || "" },
+        { Id: "campo3", Value: company.legalName || company.name || "" },
+        { Id: "campo4", Value: company.city || "" },
+        { Id: "campo5", Value: company.province || "" },
+        { Id: "campo6", Value: company.cap || "" },
+        { Id: "campo8", Value: "IT" },
+        { Id: "campo9", Value: company.address || "" },
+        { Id: "campo11", Value: company.phone || "" },
+        { Id: "campo12", Value: company.customerCode || company.id },
+      ];
+      try {
+        await upsertMailupRecipient({
+          listId: body.listId,
+          groupId: body.groupId,
+          email,
+          name: fullName || company.name,
+          fields,
+        });
+        results.push({ companyId: company.id, name: company.name, email, ok: true });
+      } catch (err: any) {
+        results.push({
+          companyId: company.id,
+          name: company.name,
+          email,
+          ok: false,
+          error: err?.message || "Errore import contatto",
+        });
+      }
+    }
+    const ok = results.filter((r) => r.ok).length;
+    const failed = results.length - ok;
+    return { total: results.length, ok, failed, results };
   });
 
   app.get("/users/pending", async (request, reply) => {
