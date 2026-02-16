@@ -43,7 +43,6 @@ const CSV_HEADERS = [
   "nicotine",
   "mlProduct",
   "taxRate",
-  "exciseRate",
   "lineNote",
 ];
 
@@ -75,9 +74,10 @@ function splitCsvLine(line) {
 
 export default function AdminGoodsReceipts() {
   const fileInputRef = useRef(null);
+  const skuInputsRef = useRef([]);
   const skuLookupTimersRef = useRef({});
   const editSkuLookupTimersRef = useRef({});
-  const [rows, setRows] = useState([newRow(), newRow(), newRow()]);
+  const [rows, setRows] = useState([newRow()]);
   const [taxes, setTaxes] = useState([]);
   const [excises, setExcises] = useState([]);
   const [inventorySkuSet, setInventorySkuSet] = useState(new Set());
@@ -248,23 +248,22 @@ export default function AdminGoodsReceipts() {
         const rowNet = qty * unitCost;
         const ml = Number(row.mlProduct || 0);
         const tax = taxes.find((t) => t.id === row.taxRateId);
+        const taxRate = Number(tax?.rate || 0);
         const excise = excises.find((e) => e.id === row.exciseRateId);
         const exciseUnit = excise
           ? excise.type === "ML"
             ? Number(excise.amount || 0) * ml
             : Number(excise.amount || 0)
           : 0;
-        const taxRate = Number(tax?.rate || 0);
         const vatUnit = taxRate > 0 ? (unitCost + exciseUnit) * (taxRate / 100) : 0;
         acc.lines += 1;
         acc.qty += qty;
         acc.cost += rowNet;
         acc.subtotal += rowNet;
-        acc.excise += qty * exciseUnit;
         acc.vat += qty * vatUnit;
         return acc;
       },
-      { lines: 0, qty: 0, cost: 0, subtotal: 0, excise: 0, vat: 0 }
+      { lines: 0, qty: 0, cost: 0, subtotal: 0, vat: 0 }
     );
   }, [parsedRows, taxes, excises]);
 
@@ -291,6 +290,21 @@ export default function AdminGoodsReceipts() {
 
   function removeRow(index) {
     setRows((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function handleRowEnter(index, e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (index === rows.length - 1) {
+      setRows((prev) => [...prev, newRow()]);
+      setTimeout(() => {
+        const target = skuInputsRef.current[index + 1];
+        if (target) target.focus();
+      }, 0);
+      return;
+    }
+    const target = skuInputsRef.current[index + 1];
+    if (target) target.focus();
   }
 
   async function applyPaste() {
@@ -344,7 +358,6 @@ export default function AdminGoodsReceipts() {
       "10",
       "10",
       "22%",
-      "10ML CON",
       "Nota riga",
     ];
     const content = `${CSV_HEADERS.join(";")}\n${sample.join(";")}\n`;
@@ -386,7 +399,6 @@ export default function AdminGoodsReceipts() {
       const parsed = lines.slice(1).map((line) => {
         const cols = splitCsvLine(line);
         const taxRaw = cols[idx("taxRate")] || "";
-        const exciseRaw = cols[idx("exciseRate")] || "";
         const qtyIdx = idx("qty");
         const unitCostIdx = idx("unitCost");
         const discountIdx = idx("discount");
@@ -405,7 +417,7 @@ export default function AdminGoodsReceipts() {
           nicotine: String(cols[idx("nicotine")] || "").trim(),
           mlProduct: String(cols[idx("mlProduct")] || "").trim(),
           taxRateId: normalizeRateId(taxRaw, taxes),
-          exciseRateId: normalizeRateId(exciseRaw, excises),
+          exciseRateId: "",
           lineNote: String(cols[idx("lineNote")] || "").trim(),
           description: "",
           shortDescription: "",
@@ -510,7 +522,7 @@ export default function AdminGoodsReceipts() {
       setSuccess(
         `Carico ${res.receiptNo} salvato. ${res.createdItems} creati, ${res.updatedItems} aggiornati.`
       );
-      setRows([newRow(), newRow(), newRow()]);
+      setRows([newRow()]);
       setSupplierName("");
       setReference("");
       setNotes("");
@@ -716,7 +728,6 @@ export default function AdminGoodsReceipts() {
           <div className="order-card">
             <div className="goods-toolbar">
               <div className="card-title" style={{ marginBottom: 0 }}>Righe arrivo merci</div>
-              <button className="btn ghost" onClick={addRow}>Aggiungi riga</button>
             </div>
             <div className="goods-grid">
               <div className="goods-row header">
@@ -727,7 +738,6 @@ export default function AdminGoodsReceipts() {
                 <div>Prezzo netto</div>
                 <div>Sconto</div>
                 <div>IVA</div>
-                <div>Accisa</div>
                 <div>Totale riga</div>
                 <div>Nota riga</div>
                 <div></div>
@@ -735,9 +745,13 @@ export default function AdminGoodsReceipts() {
               {rows.map((row, idx) => (
                 <div key={idx} className="goods-row">
                   <input
+                    ref={(el) => {
+                      skuInputsRef.current[idx] = el;
+                    }}
                     value={row.sku}
                     onChange={(e) => updateRow(idx, { sku: e.target.value })}
                     onBlur={() => handleSkuBlur(idx)}
+                    onKeyDown={(e) => handleRowEnter(idx, e)}
                   />
                   <input value={row.name} onChange={(e) => updateRow(idx, { name: e.target.value })} />
                   <input value={row.codicePl || ""} onChange={(e) => updateRow(idx, { codicePl: e.target.value })} />
@@ -745,12 +759,14 @@ export default function AdminGoodsReceipts() {
                     type="number"
                     value={row.qty}
                     onChange={(e) => updateRow(idx, { qty: Number(e.target.value || 0) })}
+                    onKeyDown={(e) => handleRowEnter(idx, e)}
                   />
                   <input
                     type="number"
                     step="0.01"
                     value={row.unitCost}
                     onChange={(e) => updateRow(idx, { unitCost: e.target.value })}
+                    onKeyDown={(e) => handleRowEnter(idx, e)}
                   />
                   <input
                     type="number"
@@ -758,6 +774,7 @@ export default function AdminGoodsReceipts() {
                     value={row.discount || ""}
                     onChange={(e) => updateRow(idx, { discount: e.target.value })}
                     placeholder="%"
+                    onKeyDown={(e) => handleRowEnter(idx, e)}
                   />
                   <select
                     value={row.taxRateId}
@@ -767,17 +784,6 @@ export default function AdminGoodsReceipts() {
                     {taxes.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={row.exciseRateId}
-                    onChange={(e) => updateRow(idx, { exciseRateId: e.target.value })}
-                  >
-                    <option value="">Accisa</option>
-                    {excises.map((x) => (
-                      <option key={x.id} value={x.id}>
-                        {x.name}
                       </option>
                     ))}
                   </select>
@@ -815,16 +821,12 @@ export default function AdminGoodsReceipts() {
                 <div>{money(stats.subtotal)}</div>
               </div>
               <div>
-                <strong>Accise stimate</strong>
-                <div>{money(stats.excise)}</div>
-              </div>
-              <div>
                 <strong>IVA stimata</strong>
                 <div>{money(stats.vat)}</div>
               </div>
               <div>
                 <strong>Totale stimato</strong>
-                <div>{money(stats.subtotal + stats.excise + stats.vat)}</div>
+                <div>{money(stats.subtotal + stats.vat)}</div>
               </div>
             </div>
             <div className="summary-actions" style={{ marginTop: 16 }}>
@@ -932,7 +934,6 @@ export default function AdminGoodsReceipts() {
                     <div>Prezzo netto</div>
                     <div>Sconto</div>
                     <div>IVA</div>
-                    <div>Accisa</div>
                     <div>Totale riga</div>
                     <div>Nota riga</div>
                     <div></div>
@@ -952,10 +953,6 @@ export default function AdminGoodsReceipts() {
                       <select value={row.taxRateId} onChange={(e) => updateEditRow(idx, { taxRateId: e.target.value })}>
                         <option value="">IVA</option>
                         {taxes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                      </select>
-                      <select value={row.exciseRateId} onChange={(e) => updateEditRow(idx, { exciseRateId: e.target.value })}>
-                        <option value="">Accisa</option>
-                        {excises.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                       </select>
                       <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0))}</div>
                       <input value={row.lineNote} onChange={(e) => updateEditRow(idx, { lineNote: e.target.value })} placeholder="Nota" />

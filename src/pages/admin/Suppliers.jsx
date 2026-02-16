@@ -23,6 +23,7 @@ export default function AdminSuppliers() {
   const perPage = 20;
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [search, setSearch] = useState("");
+  const [importFilter, setImportFilter] = useState("all");
   const [actionMsg, setActionMsg] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [successTitle, setSuccessTitle] = useState("");
@@ -245,13 +246,13 @@ export default function AdminSuppliers() {
     setSelectedSkus(next);
   }
 
-  async function viewProducts(supplier, nextPage = page) {
+  async function viewProducts(supplier, nextPage = page, filterOverride = importFilter) {
     setSelected(supplier);
     setCategoryId("");
     setPriceOverride("");
     try {
       const res = await api(
-        `/admin/suppliers/${supplier.id}/products?page=${nextPage}&perPage=${perPage}&q=${encodeURIComponent(search)}`
+        `/admin/suppliers/${supplier.id}/products?page=${nextPage}&perPage=${perPage}&q=${encodeURIComponent(search)}&importFilter=${encodeURIComponent(filterOverride)}`
       );
       const sorted = [...(res.items || [])].sort((a, b) => {
         const aDate = new Date(a.createdAt || a.lastSeenAt || 0).getTime();
@@ -421,6 +422,20 @@ export default function AdminSuppliers() {
               >
                 Cerca
               </button>
+              <select
+                className="select"
+                value={importFilter}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setImportFilter(next);
+                  setPage(1);
+                  viewProducts(selected, 1, next);
+                }}
+              >
+                <option value="all">Tutti</option>
+                <option value="imported">Importato</option>
+                <option value="to-import">Da importare</option>
+              </select>
               <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
                 {bulkMode ? "Selezione attiva" : "Import multiplo"}
               </button>

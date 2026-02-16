@@ -789,6 +789,22 @@ button {
   letter-spacing: 0.18em;
   color: var(--muted);
 }
+.brands-panel {
+  margin-top: 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+.brands-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) auto minmax(220px, 420px);
+  gap: 0.7rem;
+  align-items: center;
+}
+@media (max-width: 980px) {
+  .brands-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
 .rules-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
@@ -979,6 +995,19 @@ button {
 .table.wide-11 .row.header {
   grid-template-columns: 0.7fr 1fr 2.6fr 0.9fr 0.8fr 1fr 1.2fr 1.4fr 1.1fr 1fr 1.4fr;
   min-width: 1260px;
+}
+.table.wide-10 .row {
+  grid-template-columns: 0.7fr 1fr 2.7fr 0.9fr 0.8fr 1fr 1.2fr 1.6fr 1.2fr 1fr;
+  min-width: 1180px;
+}
+.table.wide-10 .row.header {
+  grid-template-columns: 0.7fr 1fr 2.7fr 0.9fr 0.8fr 1fr 1.2fr 1.6fr 1.2fr 1fr;
+  min-width: 1180px;
+}
+.excise-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .table.wide-report .row {
   grid-template-columns: 0.9fr 0.9fr 1.5fr 0.9fr 2fr 0.7fr 0.9fr 0.8fr 0.8fr 1fr;
@@ -3497,7 +3526,7 @@ button {
   padding: 8px;
   align-items: center;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1340px;
+  min-width: 1310px;
 }
 
 .goods-row.header {

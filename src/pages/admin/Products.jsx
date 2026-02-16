@@ -93,8 +93,7 @@ export default function AdminProducts() {
     nicotine: "",
     codicePl: "",
     barcode: "",
-    productType: "",
-    visibility: "",
+    brand: "",
     published: true,
     subcategory: "",
     stockQty: "",
@@ -107,12 +106,14 @@ export default function AdminProducts() {
     relatedProductIds: [],
   });
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [parents, setParents] = useState([]);
   const [taxes, setTaxes] = useState([]);
   const [excises, setExcises] = useState([]);
   const [vatRateDefault, setVatRateDefault] = useState("");
   const [defaultTaxRateId, setDefaultTaxRateId] = useState("");
   const [images, setImages] = useState([]);
+  const [editValidation, setEditValidation] = useState({});
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
@@ -140,6 +141,7 @@ export default function AdminProducts() {
     stockQty: "",
     brand: "",
     categoryId: "",
+    subcategory: "",
     shortDescription: "",
     description: "",
     purchasePrice: "",
@@ -186,6 +188,22 @@ export default function AdminProducts() {
     walk("root");
     return result;
   })();
+  const topCategoryOptions = categories
+    .filter((c) => !c.parentId)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const categoryChildrenMap = categories.reduce((acc, c) => {
+    if (!c.parentId) return acc;
+    const list = acc.get(c.parentId) || [];
+    list.push(c);
+    acc.set(c.parentId, list);
+    return acc;
+  }, new Map());
+  const editSubcategoryOptions = (categoryChildrenMap.get(edit.categoryId) || [])
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const manualSubcategoryOptions = (categoryChildrenMap.get(manualDraft.categoryId) || [])
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
   const parentOptions = parents.map((p) => ({ id: p.id, name: p.name, sku: p.sku }));
   const relatedCandidates = items
     .filter((p) => {
@@ -319,6 +337,23 @@ export default function AdminProducts() {
 
   useEffect(() => {
     let active = true;
+    async function loadBrands() {
+      try {
+        const res = await api("/admin/brands");
+        if (!active) return;
+        setBrands((res || []).map((x) => x.name).filter(Boolean));
+      } catch {
+        // ignore
+      }
+    }
+    loadBrands();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     async function loadSettings() {
       try {
         const res = await api("/admin/settings");
@@ -429,6 +464,7 @@ export default function AdminProducts() {
 
   function openEdit(p) {
     setSelectedProduct(p);
+    setEditValidation({});
     setEdit({
       name: p.name || "",
       shortDescription: p.shortDescription || "",
@@ -445,8 +481,7 @@ export default function AdminProducts() {
       nicotine: p.nicotine ? Number(p.nicotine).toFixed(3) : "",
       codicePl: p.codicePl || "",
       barcode: p.barcode || "",
-      productType: p.productType || "",
-      visibility: p.visibility || "",
+      brand: p.brand || "",
       published: p.published !== false,
       subcategory: p.subcategory || "",
       stockQty: p.stockQty ?? "",
@@ -466,7 +501,17 @@ export default function AdminProducts() {
 
   async function saveEdit(forcePublish = false) {
     if (!selectedProduct) return;
+    const nextValidation = {
+      categoryId: !edit.categoryId,
+      subcategory: !String(edit.subcategory || "").trim(),
+    };
+    if (nextValidation.categoryId || nextValidation.subcategory) {
+      setEditValidation(nextValidation);
+      setError("Compila i campi obbligatori: Categoria e Sottocategoria.");
+      return;
+    }
     try {
+      setEditValidation({});
       await api(`/admin/products/${selectedProduct.id}`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -485,8 +530,7 @@ export default function AdminProducts() {
           nicotine: edit.nicotine ? Number(edit.nicotine) : undefined,
           codicePl: edit.codicePl || undefined,
           barcode: edit.barcode || undefined,
-          productType: edit.productType || undefined,
-          visibility: edit.visibility || undefined,
+          brand: edit.brand || undefined,
           published: forcePublish ? true : edit.published,
           subcategory: edit.subcategory || undefined,
           stockQty: edit.stockQty !== "" ? Number(edit.stockQty) : undefined,
@@ -680,6 +724,10 @@ export default function AdminProducts() {
       setError("Prezzo obbligatorio");
       return;
     }
+    if (!manualDraft.categoryId || !manualDraft.subcategory) {
+      setError("Categoria e sottocategoria sono obbligatorie");
+      return;
+    }
     try {
       const product = await api("/admin/products", {
         method: "POST",
@@ -690,6 +738,7 @@ export default function AdminProducts() {
           stockQty: manualDraft.stockQty ? Number(manualDraft.stockQty) : 0,
           brand: manualDraft.brand || undefined,
           categoryId: manualDraft.categoryId || undefined,
+          subcategory: manualDraft.subcategory || undefined,
           shortDescription: manualDraft.shortDescription || undefined,
           description: manualDraft.description || undefined,
           purchasePrice: manualDraft.purchasePrice ? Number(manualDraft.purchasePrice) : undefined,
@@ -730,6 +779,7 @@ export default function AdminProducts() {
         stockQty: "",
         brand: "",
         categoryId: "",
+        subcategory: "",
         shortDescription: "",
         description: "",
         purchasePrice: "",
@@ -1049,8 +1099,6 @@ export default function AdminProducts() {
               <option value="stock-desc">Giacenza (decrescente)</option>
               <option value="brand-asc">Brand (A-Z)</option>
               <option value="brand-desc">Brand (Z-A)</option>
-              <option value="supplier-asc">Fornitore (A-Z)</option>
-              <option value="supplier-desc">Fornitore (Z-A)</option>
             </select>
           </div>
           <div className="toolbar-group">
@@ -1088,7 +1136,7 @@ export default function AdminProducts() {
       <InlineError message={error} onClose={() => setError("")} />
 
       <div className="panel products-panel">
-      <div className="table wide-11">
+      <div className="table wide-10">
         <div className="row header">
           <div>Immagine</div>
           <div>SKU</div>
@@ -1100,7 +1148,6 @@ export default function AdminProducts() {
           <div>Categoria</div>
           <div>Accisa</div>
           <div>Brand</div>
-          <div>Fornitore</div>
         </div>
         {groupedRows.map((row) => {
           const p = row.item;
@@ -1194,11 +1241,10 @@ export default function AdminProducts() {
             </div>
             <div>{row.parent?.sku || p.parent?.sku || dash}</div>
             <div>{p.category || dash}</div>
-            <div>
+            <div className="excise-cell">
               {p.exciseRateRef?.name || (p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : dash)}
             </div>
             <div>{p.brand || dash}</div>
-            <div>{p.sourceSupplier?.name || (p.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
           </div>
         );
         })}
@@ -1374,24 +1420,76 @@ export default function AdminProducts() {
                   <label>
                     Categoria
                     <select
-                      className="select"
+                      className={`select ${editValidation.categoryId ? "input-error" : ""}`}
                       value={edit.categoryId || ""}
-                      onChange={(e) => setEdit({ ...edit, categoryId: e.target.value })}
+                      onChange={(e) => {
+                        setEdit({ ...edit, categoryId: e.target.value, subcategory: "" });
+                        if (editValidation.categoryId) {
+                          setEditValidation((prev) => ({ ...prev, categoryId: false }));
+                        }
+                      }}
                     >
                       <option value="">Seleziona categoria</option>
-                      {categoryOptions.map((c) => (
+                      {topCategoryOptions.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.label}
+                          {c.name}
                         </option>
                       ))}
+                      {edit.categoryId &&
+                      !topCategoryOptions.some((c) => c.id === edit.categoryId) ? (
+                        <option value={edit.categoryId}>
+                          {categories.find((c) => c.id === edit.categoryId)?.name || "Categoria attuale"}
+                        </option>
+                      ) : null}
                     </select>
+                    {editValidation.categoryId ? (
+                      <div className="field-error">Campo obbligatorio</div>
+                    ) : null}
                   </label>
                   <label>
                     Sottocategoria
-                    <input
+                    <select
+                      className={`select ${editValidation.subcategory ? "input-error" : ""}`}
                       value={edit.subcategory}
-                      onChange={(e) => setEdit({ ...edit, subcategory: e.target.value })}
-                    />
+                      onChange={(e) => {
+                        setEdit({ ...edit, subcategory: e.target.value });
+                        if (editValidation.subcategory) {
+                          setEditValidation((prev) => ({ ...prev, subcategory: false }));
+                        }
+                      }}
+                      disabled={!edit.categoryId}
+                    >
+                      <option value="">
+                        {edit.categoryId ? "Seleziona sottocategoria" : "Seleziona prima una categoria"}
+                      </option>
+                      {editSubcategoryOptions.map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                      {edit.subcategory &&
+                      !editSubcategoryOptions.some((c) => c.name === edit.subcategory) ? (
+                        <option value={edit.subcategory}>{edit.subcategory}</option>
+                      ) : null}
+                    </select>
+                    {editValidation.subcategory ? (
+                      <div className="field-error">Campo obbligatorio</div>
+                    ) : null}
+                  </label>
+                  <label>
+                    Brand
+                    <select
+                      className="select"
+                      value={edit.brand}
+                      onChange={(e) => setEdit({ ...edit, brand: e.target.value })}
+                    >
+                      <option value="">Seleziona brand</option>
+                      {brands.map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label>
                     Codice PL
@@ -1449,8 +1547,8 @@ export default function AdminProducts() {
                     Accisa calcolata
                     <input
                       type="number"
-                      step="0.000001"
-                      value={exciseComputed ? exciseComputed.toFixed(6) : ""}
+                      step="0.01"
+                      value={exciseComputed ? (Math.ceil(exciseComputed * 100) / 100).toFixed(2) : ""}
                       disabled
                     />
                   </label>
@@ -1461,20 +1559,6 @@ export default function AdminProducts() {
                       step="0.000001"
                       value={vatComputed ? vatComputed.toFixed(6) : ""}
                       disabled
-                    />
-                  </label>
-                  <label>
-                    Tipo prodotto
-                    <input
-                      value={edit.productType}
-                      onChange={(e) => setEdit({ ...edit, productType: e.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Visibilità
-                    <input
-                      value={edit.visibility}
-                      onChange={(e) => setEdit({ ...edit, visibility: e.target.value })}
                     />
                   </label>
                   <label>
@@ -1989,22 +2073,50 @@ export default function AdminProducts() {
                       <select
                         className="select"
                         value={manualDraft.categoryId}
-                        onChange={(e) => setManualDraft({ ...manualDraft, categoryId: e.target.value })}
+                        onChange={(e) => setManualDraft({ ...manualDraft, categoryId: e.target.value, subcategory: "" })}
                       >
                         <option value="">Seleziona categoria</option>
-                        {categoryOptions.map((c) => (
+                        {topCategoryOptions.map((c) => (
                           <option key={c.id} value={c.id}>
-                            {c.label}
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Sottocategoria
+                      <select
+                        className="select"
+                        value={manualDraft.subcategory}
+                        onChange={(e) => setManualDraft({ ...manualDraft, subcategory: e.target.value })}
+                        disabled={!manualDraft.categoryId}
+                      >
+                        <option value="">
+                          {manualDraft.categoryId
+                            ? "Seleziona sottocategoria"
+                            : "Seleziona prima una categoria"}
+                        </option>
+                        {manualSubcategoryOptions.map((c) => (
+                          <option key={c.id} value={c.name}>
+                            {c.name}
                           </option>
                         ))}
                       </select>
                     </label>
                     <label>
                       Brand
-                      <input
+                      <select
+                        className="select"
                         value={manualDraft.brand}
                         onChange={(e) => setManualDraft({ ...manualDraft, brand: e.target.value })}
-                      />
+                      >
+                        <option value="">Seleziona brand</option>
+                        {brands.map((b) => (
+                          <option key={b} value={b}>
+                            {b}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                     <label>
                       Prezzo acquisto

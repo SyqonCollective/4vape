@@ -4,6 +4,7 @@ import AdminLogin from "./pages/admin/Login.jsx";
 import AdminDashboard from "./pages/admin/Dashboard.jsx";
 import AdminAnalytics from "./pages/admin/Analytics.jsx";
 import AdminProducts from "./pages/admin/Products.jsx";
+import AdminBrands from "./pages/admin/Brands.jsx";
 import AdminSuppliers from "./pages/admin/Suppliers.jsx";
 import AdminDiscounts from "./pages/admin/DiscountRules.jsx";
 import AdminCategories from "./pages/admin/Categories.jsx";
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="products" element={<AdminProducts />} />
+        <Route path="brands" element={<AdminBrands />} />
         <Route path="categories" element={<AdminCategories />} />
         <Route path="suppliers" element={<AdminSuppliers />} />
         <Route path="discounts" element={<AdminDiscounts />} />

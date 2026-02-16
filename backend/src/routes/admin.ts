@@ -2672,6 +2672,103 @@ export async function adminRoutes(app: FastifyInstance) {
     return settings;
   });
 
+  app.get("/brands", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+
+    const [saved, products, supplierProducts, inventoryItems] = await Promise.all([
+      prisma.brand.findMany({ orderBy: { name: "asc" } }),
+      prisma.product.findMany({
+        where: { brand: { not: null } },
+        distinct: ["brand"],
+        select: { brand: true },
+      }),
+      prisma.supplierProduct.findMany({
+        where: { brand: { not: null } },
+        distinct: ["brand"],
+        select: { brand: true },
+      }),
+      prisma.internalInventoryItem.findMany({
+        where: { brand: { not: null } },
+        distinct: ["brand"],
+        select: { brand: true },
+      }),
+    ]);
+
+    const names = new Set<string>();
+    for (const item of saved) names.add(String(item.name || "").trim());
+    for (const item of products) if (item.brand) names.add(String(item.brand).trim());
+    for (const item of supplierProducts) if (item.brand) names.add(String(item.brand).trim());
+    for (const item of inventoryItems) if (item.brand) names.add(String(item.brand).trim());
+
+    return Array.from(names)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }))
+      .map((name) => ({ name }));
+  });
+
+  app.post("/brands", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z.object({ name: z.string().min(1) }).parse(request.body);
+    const name = body.name.trim();
+    if (!name) return reply.badRequest("Nome brand obbligatorio");
+    try {
+      await prisma.brand.create({ data: { name } });
+      return { ok: true };
+    } catch (err: any) {
+      if (err?.code === "P2002") return { ok: true };
+      throw err;
+    }
+  });
+
+  app.patch("/brands/:name", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const oldName = decodeURIComponent((request.params as any).name || "").trim();
+    const body = z.object({ name: z.string().min(1) }).parse(request.body);
+    const nextName = body.name.trim();
+    if (!oldName || !nextName) return reply.badRequest("Nome brand non valido");
+
+    await prisma.$transaction(async (tx) => {
+      await tx.product.updateMany({ where: { brand: oldName }, data: { brand: nextName } });
+      await tx.supplierProduct.updateMany({ where: { brand: oldName }, data: { brand: nextName } });
+      await tx.internalInventoryItem.updateMany({ where: { brand: oldName }, data: { brand: nextName } });
+      await tx.brand.upsert({
+        where: { name: nextName },
+        update: {},
+        create: { name: nextName },
+      });
+      try {
+        await tx.brand.delete({ where: { name: oldName } });
+      } catch {
+        // ignored when old name does not exist in registry table
+      }
+    });
+
+    return { ok: true };
+  });
+
+  app.delete("/brands/:name", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const name = decodeURIComponent((request.params as any).name || "").trim();
+    if (!name) return reply.badRequest("Nome brand non valido");
+
+    await prisma.$transaction(async (tx) => {
+      await tx.product.updateMany({ where: { brand: name }, data: { brand: null } });
+      await tx.supplierProduct.updateMany({ where: { brand: name }, data: { brand: null } });
+      await tx.internalInventoryItem.updateMany({ where: { brand: name }, data: { brand: null } });
+      try {
+        await tx.brand.delete({ where: { name } });
+      } catch {
+        // ignored when row is missing from registry table
+      }
+    });
+
+    return { ok: true };
+  });
+
   app.get("/taxes", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -3067,10 +3164,17 @@ export async function adminRoutes(app: FastifyInstance) {
     const pageParam = (request.query as any)?.page as string | undefined;
     const perPageParam = (request.query as any)?.perPage as string | undefined;
     const q = ((request.query as any)?.q as string | undefined)?.trim();
+    const importFilter = ((request.query as any)?.importFilter as string | undefined) || "all";
     const limit = Math.min(Number(limitParam || 200), 500);
     const perPage = Math.min(Number(perPageParam || 20), 200);
     const page = Math.max(Number(pageParam || 1), 1);
     const skip = (page - 1) * perPage;
+
+    const importedBySupplier = await prisma.product.findMany({
+      where: { sourceSupplierId: supplierId, source: "SUPPLIER" },
+      select: { sku: true },
+    });
+    const importedSkus = importedBySupplier.map((p) => p.sku);
 
     const where = {
       supplierId,
@@ -3082,6 +3186,16 @@ export async function adminRoutes(app: FastifyInstance) {
               { brand: { contains: q, mode: "insensitive" } },
             ],
           }
+        : {}),
+      ...(importFilter === "imported"
+        ? importedSkus.length
+          ? { supplierSku: { in: importedSkus } }
+          : { supplierSku: { in: ["__none__"] } }
+        : {}),
+      ...(importFilter === "to-import"
+        ? importedSkus.length
+          ? { supplierSku: { notIn: importedSkus } }
+          : {}
         : {}),
     } as any;
 

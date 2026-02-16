@@ -14,6 +14,7 @@ const links = [
   { to: "/admin/reports", label: "Report" },
   { to: "/admin/mail-marketing", label: "Mail marketing" },
   { to: "/admin/products", label: "Prodotti" },
+  { to: "/admin/brands", label: "Brand" },
   { to: "/admin/categories", label: "Categorie" },
   { to: "/admin/suppliers", label: "Fornitori" },
   { to: "/admin/discounts", label: "Sconti e Regole" },
