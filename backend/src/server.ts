@@ -13,6 +13,7 @@ import { adminRoutes } from "./routes/admin.js";
 import { catalogRoutes } from "./routes/catalog.js";
 import { orderRoutes } from "./routes/orders.js";
 import { returnRoutes } from "./routes/returns.js";
+import { paymentRoutes } from "./routes/payments.js";
 import { prisma } from "./lib/db.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -75,6 +76,7 @@ await app.register(adminRoutes, { prefix: "/admin" });
 await app.register(catalogRoutes, { prefix: "/catalog" });
 await app.register(orderRoutes, { prefix: "/orders" });
 await app.register(returnRoutes, { prefix: "/returns" });
+await app.register(paymentRoutes, { prefix: "/payments" });
 
 const port = Number(process.env.PORT || 4000);
 app.get("/health", async () => ({ ok: true }));

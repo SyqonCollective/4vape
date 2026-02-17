@@ -15,6 +15,18 @@ export default function AdminSuppliers() {
     code: "",
     csvFullUrl: "",
     csvStockUrl: "",
+    legalName: "",
+    vatNumber: "",
+    taxCode: "",
+    sdiCode: "",
+    pec: "",
+    address: "",
+    cap: "",
+    city: "",
+    province: "",
+    country: "IT",
+    phone: "",
+    email: "",
   });
   const [selected, setSelected] = useState(null);
   const [supplierProducts, setSupplierProducts] = useState([]);
@@ -119,9 +131,38 @@ export default function AdminSuppliers() {
           code: form.code,
           csvFullUrl: form.csvFullUrl || undefined,
           csvStockUrl: form.csvStockUrl || undefined,
+          legalName: form.legalName || undefined,
+          vatNumber: form.vatNumber || undefined,
+          taxCode: form.taxCode || undefined,
+          sdiCode: form.sdiCode || undefined,
+          pec: form.pec || undefined,
+          address: form.address || undefined,
+          cap: form.cap || undefined,
+          city: form.city || undefined,
+          province: form.province || undefined,
+          country: form.country || undefined,
+          phone: form.phone || undefined,
+          email: form.email || undefined,
         }),
       });
-      setForm({ name: "", code: "", csvFullUrl: "", csvStockUrl: "" });
+      setForm({
+        name: "",
+        code: "",
+        csvFullUrl: "",
+        csvStockUrl: "",
+        legalName: "",
+        vatNumber: "",
+        taxCode: "",
+        sdiCode: "",
+        pec: "",
+        address: "",
+        cap: "",
+        city: "",
+        province: "",
+        country: "IT",
+        phone: "",
+        email: "",
+      });
       load();
     } catch (err) {
       setError("Errore creazione fornitore");
@@ -344,7 +385,48 @@ export default function AdminSuppliers() {
         </Portal>
       ) : null}
 
-      <div className="table">
+      <form className="panel supplier-create-form" onSubmit={createSupplier}>
+        <div className="card-title">Nuovo fornitore</div>
+        <div className="order-form">
+          <div>
+            <label>Nome</label>
+            <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required />
+          </div>
+          <div>
+            <label>Codice</label>
+            <input value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))} required />
+          </div>
+          <div>
+            <label>CSV completo</label>
+            <input value={form.csvFullUrl} onChange={(e) => setForm((p) => ({ ...p, csvFullUrl: e.target.value }))} />
+          </div>
+          <div>
+            <label>CSV stock</label>
+            <input value={form.csvStockUrl} onChange={(e) => setForm((p) => ({ ...p, csvStockUrl: e.target.value }))} />
+          </div>
+          <div>
+            <label>Ragione sociale</label>
+            <input value={form.legalName} onChange={(e) => setForm((p) => ({ ...p, legalName: e.target.value }))} />
+          </div>
+          <div>
+            <label>P.IVA</label>
+            <input value={form.vatNumber} onChange={(e) => setForm((p) => ({ ...p, vatNumber: e.target.value }))} />
+          </div>
+          <div>
+            <label>SDI</label>
+            <input value={form.sdiCode} onChange={(e) => setForm((p) => ({ ...p, sdiCode: e.target.value }))} />
+          </div>
+          <div>
+            <label>PEC</label>
+            <input value={form.pec} onChange={(e) => setForm((p) => ({ ...p, pec: e.target.value }))} />
+          </div>
+        </div>
+        <div className="actions">
+          <button className="btn primary" type="submit">Crea fornitore</button>
+        </div>
+      </form>
+
+      <div className="table suppliers-table">
         <div className="row header">
           <div>Nome</div>
           <div>Codice</div>

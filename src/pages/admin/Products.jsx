@@ -110,6 +110,9 @@ export default function AdminProducts() {
   });
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [customerPrices, setCustomerPrices] = useState([]);
+  const [companyPriceDraft, setCompanyPriceDraft] = useState({ companyId: "", price: "" });
   const [parents, setParents] = useState([]);
   const [taxes, setTaxes] = useState([]);
   const [excises, setExcises] = useState([]);
@@ -129,7 +132,12 @@ export default function AdminProducts() {
   const [bulkCollapsedParents, setBulkCollapsedParents] = useState(new Set());
   const [bulkDragOver, setBulkDragOver] = useState("");
   const [productFilter, setProductFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("name-asc");
+  const [sortBy, setSortBy] = useState("created-desc");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [brandFilter, setBrandFilter] = useState("");
+  const [pageSize, setPageSize] = useState("50");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showCreateParent, setShowCreateParent] = useState(false);
   const [showCreateManual, setShowCreateManual] = useState(false);
   const [importingCsv, setImportingCsv] = useState(false);
@@ -213,6 +221,9 @@ export default function AdminProducts() {
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name));
   const parentOptions = parents.map((p) => ({ id: p.id, name: p.name, sku: p.sku }));
+  const brandOptions = Array.from(
+    new Set([...brands, ...items.map((p) => p.brand).filter(Boolean)])
+  ).sort((a, b) => a.localeCompare(b));
   const relatedCandidates = items
     .filter((p) => {
       if (!selectedProduct) return false;
@@ -345,6 +356,27 @@ export default function AdminProducts() {
 
   useEffect(() => {
     let active = true;
+    async function loadCompanies() {
+      try {
+        const res = await api("/admin/companies");
+        if (!active) return;
+        setCompanies((res || []).filter((c) => c.status === "ACTIVE"));
+      } catch {
+        // ignore
+      }
+    }
+    loadCompanies();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [productFilter, sortBy, searchTerm, categoryFilter, brandFilter, pageSize]);
+
+  useEffect(() => {
+    let active = true;
     async function loadBrands() {
       try {
         const res = await api("/admin/brands");
@@ -400,7 +432,7 @@ export default function AdminProducts() {
       } catch {
         // ignore stock refresh errors
       }
-    }, 60000);
+    }, 10000);
     return () => {
       active = false;
       clearInterval(interval);
@@ -452,6 +484,15 @@ export default function AdminProducts() {
       setManualDraft((prev) => (prev.taxRateId ? prev : { ...prev, taxRateId: match.id }));
     }
   }, [vatRateDefault, taxes, defaultTaxRateId]);
+
+  async function loadCustomerPrices(productId) {
+    try {
+      const res = await api(`/admin/products/${productId}/customer-prices`);
+      setCustomerPrices(res || []);
+    } catch {
+      setCustomerPrices([]);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -518,6 +559,33 @@ export default function AdminProducts() {
     setImages(p.images || []);
     setChildLinks(new Set((p.children || []).map((c) => c.id)));
     setRelatedSearch("");
+    setCompanyPriceDraft({ companyId: "", price: "" });
+    loadCustomerPrices(p.id);
+  }
+
+  async function saveCompanyPrice() {
+    if (!selectedProduct) return;
+    if (!companyPriceDraft.companyId || !companyPriceDraft.price) return;
+    try {
+      await api(`/admin/products/${selectedProduct.id}/customer-prices/${companyPriceDraft.companyId}`, {
+        method: "PUT",
+        body: JSON.stringify({ price: Number(companyPriceDraft.price) }),
+      });
+      setCompanyPriceDraft({ companyId: "", price: "" });
+      await loadCustomerPrices(selectedProduct.id);
+    } catch {
+      setError("Errore salvataggio prezzo cliente");
+    }
+  }
+
+  async function removeCompanyPrice(companyId) {
+    if (!selectedProduct) return;
+    try {
+      await api(`/admin/products/${selectedProduct.id}/customer-prices/${companyId}`, { method: "DELETE" });
+      await loadCustomerPrices(selectedProduct.id);
+    } catch {
+      setError("Errore rimozione prezzo cliente");
+    }
   }
 
   async function saveEdit(forcePublish = false) {
@@ -843,6 +911,16 @@ export default function AdminProducts() {
   });
 
   const filteredItems = items.filter((p) => {
+    const q = searchTerm.trim().toLowerCase();
+    if (q) {
+      const blob = `${p.sku || ""} ${p.name || ""} ${p.brand || ""} ${p.category || ""} ${p.subcategory || ""}`.toLowerCase();
+      if (!blob.includes(q)) return false;
+    }
+    if (brandFilter && (p.brand || "") !== brandFilter) return false;
+    if (categoryFilter) {
+      const ids = Array.isArray(p.categoryIds) ? p.categoryIds : p.categoryId ? [p.categoryId] : [];
+      if (!ids.includes(categoryFilter)) return false;
+    }
     if (productFilter === "parents") return Boolean(p.isParent);
     if (productFilter === "children") return Boolean(p.parentId || p.parent?.id);
     if (productFilter === "single") {
@@ -952,10 +1030,17 @@ export default function AdminProducts() {
     return rows;
   })();
 
+  const totalRows = groupedRows.length;
+  const effectivePageSize = pageSize === "all" ? totalRows || 1 : Number(pageSize || 50);
+  const totalPages = Math.max(1, Math.ceil(totalRows / effectivePageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const pageStart = (safePage - 1) * effectivePageSize;
+  const pagedRows = groupedRows.slice(pageStart, pageStart + effectivePageSize);
+
   const dash = <span className="cell-muted">—</span>;
 
   function toggleSelectAllPage() {
-    const ids = Array.from(new Set(groupedRows.map((row) => row.item.id)));
+    const ids = Array.from(new Set(pagedRows.map((row) => row.item.id)));
     const allSelected = ids.every((id) => selectedIds.has(id));
     const next = new Set(selectedIds);
     if (allSelected) {
@@ -1105,6 +1190,14 @@ export default function AdminProducts() {
           />
         </div>
         <div className="toolbar-right">
+          <div className="toolbar-group" style={{ minWidth: 260 }}>
+            <div className="toolbar-label">Cerca</div>
+            <input
+              placeholder="SKU, nome, brand..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <div className="toolbar-group">
             <div className="toolbar-label">Ordina per</div>
             <select
@@ -1138,6 +1231,38 @@ export default function AdminProducts() {
               <option value="children">Solo figli</option>
               <option value="single">Solo singoli</option>
               <option value="draft">Solo draft</option>
+            </select>
+          </div>
+          <div className="toolbar-group">
+            <div className="toolbar-label">Categoria</div>
+            <select className="select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+              <option value="">Tutte</option>
+              {topCategoryOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="toolbar-group">
+            <div className="toolbar-label">Marchio</div>
+            <select className="select" value={brandFilter} onChange={(e) => setBrandFilter(e.target.value)}>
+              <option value="">Tutti</option>
+              {brandOptions.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="toolbar-group">
+            <div className="toolbar-label">Vista</div>
+            <select className="select" value={pageSize} onChange={(e) => setPageSize(e.target.value)}>
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="all">Tutti</option>
             </select>
           </div>
           <div className="toolbar-group compact">
@@ -1174,7 +1299,7 @@ export default function AdminProducts() {
           <div>Accisa</div>
           <div>Brand</div>
         </div>
-        {groupedRows.map((row) => {
+        {pagedRows.map((row) => {
           const p = row.item;
           const isChild = row.type === "child";
           const isParentRow = row.type === "parent";
@@ -1274,6 +1399,25 @@ export default function AdminProducts() {
         );
         })}
       </div>
+      </div>
+      <div className="pagination">
+        <button
+          className="page-btn ghost"
+          disabled={safePage <= 1}
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+        >
+          Prev
+        </button>
+        <span className="page-dots">
+          Pagina {safePage} / {totalPages} · {totalRows} risultati
+        </span>
+        <button
+          className="page-btn ghost"
+          disabled={safePage >= totalPages}
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+        >
+          Next
+        </button>
       </div>
 
       {showDeleteSuccess ? (
@@ -1385,6 +1529,58 @@ export default function AdminProducts() {
                 {selectedProduct.isParent ? (
                   <div><strong>Figli:</strong> {selectedProduct.children?.length || 0}</div>
                 ) : null}
+                <div className="order-card" style={{ padding: 12 }}>
+                  <div className="card-title" style={{ marginBottom: 8 }}>Prezzo dedicato per cliente</div>
+                  <div className="input-row" style={{ marginBottom: 8 }}>
+                    <select
+                      className="select"
+                      value={companyPriceDraft.companyId}
+                      onChange={(e) => setCompanyPriceDraft((p) => ({ ...p, companyId: e.target.value }))}
+                    >
+                      <option value="">Seleziona cliente</option>
+                      {companies.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Prezzo"
+                      value={companyPriceDraft.price}
+                      onChange={(e) => setCompanyPriceDraft((p) => ({ ...p, price: e.target.value }))}
+                    />
+                    <button type="button" className="btn ghost" onClick={saveCompanyPrice}>
+                      Salva prezzo
+                    </button>
+                  </div>
+                  <div className="table compact">
+                    <div className="row header">
+                      <div>Cliente</div>
+                      <div>Prezzo</div>
+                      <div>Azioni</div>
+                    </div>
+                    {customerPrices.map((r) => (
+                      <div className="row" key={r.companyId}>
+                        <div>{r.companyName}</div>
+                        <div>€ {Number(r.price || 0).toFixed(2)}</div>
+                        <div>
+                          <button type="button" className="btn ghost small" onClick={() => removeCompanyPrice(r.companyId)}>
+                            Rimuovi
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {!customerPrices.length ? (
+                      <div className="row">
+                        <div>Nessun prezzo dedicato</div>
+                        <div>—</div>
+                        <div>—</div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
                 <div className="form-grid">
                   <label>
                     Nome

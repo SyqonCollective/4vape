@@ -5,10 +5,17 @@ import Portal from "../../components/Portal.jsx";
 
 const STATUS_OPTIONS = [
   { value: "DRAFT", label: "Bozza" },
-  { value: "SUBMITTED", label: "In attesa" },
-  { value: "APPROVED", label: "Pagato" },
-  { value: "FULFILLED", label: "Evaso" },
-  { value: "CANCELLED", label: "Annullato" },
+  { value: "SUBMITTED", label: "In attesa pagamento" },
+  { value: "APPROVED", label: "Elaborazione" },
+  { value: "FULFILLED", label: "Completato" },
+  { value: "CANCELLED", label: "Fallito" },
+];
+
+const PAYMENT_OPTIONS = [
+  { value: "BANK_TRANSFER", label: "Bonifico" },
+  { value: "CARD", label: "Carta" },
+  { value: "COD", label: "Contrassegno" },
+  { value: "OTHER", label: "Altro" },
 ];
 
 const formatCurrency = (value) =>
@@ -21,6 +28,11 @@ export default function AdminOrders() {
   const [companies, setCompanies] = useState([]);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [paymentFilter, setPaymentFilter] = useState("ALL");
+  const [companyFilter, setCompanyFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState("ALL");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
   const [summaryOrder, setSummaryOrder] = useState(null);
@@ -29,20 +41,41 @@ export default function AdminOrders() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [lineItems, setLineItems] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [batchStatus, setBatchStatus] = useState("APPROVED");
+  const [orderStats, setOrderStats] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
   const [editCompanyId, setEditCompanyId] = useState("");
   const [editStatus, setEditStatus] = useState("SUBMITTED");
+  const [editPaymentMethod, setEditPaymentMethod] = useState("BANK_TRANSFER");
   const [editLineItems, setEditLineItems] = useState([]);
   const [editSearchQuery, setEditSearchQuery] = useState("");
   const [editSearchResults, setEditSearchResults] = useState([]);
 
   async function loadOrders() {
     try {
-      const query = statusFilter === "ALL" ? "" : `?status=${statusFilter}`;
-      const res = await api(`/admin/orders${query}`);
+      const params = new URLSearchParams();
+      if (statusFilter !== "ALL") params.set("status", statusFilter);
+      if (paymentFilter !== "ALL") params.set("paymentMethod", paymentFilter);
+      if (companyFilter) params.set("companyId", companyFilter);
+      if (groupFilter !== "ALL") params.set("groupName", groupFilter);
+      if (startDate) params.set("start", startDate);
+      if (endDate) params.set("end", endDate);
+      const res = await api(`/admin/orders${params.toString() ? `?${params.toString()}` : ""}`);
       setItems(res);
+      setSelectedIds([]);
     } catch (err) {
       setError("Impossibile caricare ordini");
+    }
+  }
+
+  async function loadOrderStats() {
+    try {
+      const res = await api("/admin/orders/stats");
+      setOrderStats(res || []);
+    } catch {
+      setOrderStats([]);
     }
   }
 
@@ -58,17 +91,19 @@ export default function AdminOrders() {
 
   useEffect(() => {
     loadOrders();
-  }, [statusFilter]);
+    loadOrderStats();
+  }, [statusFilter, paymentFilter, companyFilter, groupFilter, startDate, endDate]);
 
   useEffect(() => {
-    if (showCreate) loadCompanies();
-  }, [showCreate]);
+    loadCompanies();
+  }, []);
 
   useEffect(() => {
     if (editingOrder) {
       loadCompanies();
       setEditCompanyId(editingOrder.companyId || "");
       setEditStatus(editingOrder.status || "SUBMITTED");
+      setEditPaymentMethod(editingOrder.paymentMethod || "BANK_TRANSFER");
       setEditLineItems(
         (editingOrder.items || []).map((i) => ({
           productId: i.productId,
@@ -255,6 +290,7 @@ export default function AdminOrders() {
         body: JSON.stringify({
           companyId,
           status: orderStatus,
+          paymentMethod,
           items: lineItems.map((i) => ({
             productId: i.productId,
             qty: Number(i.qty || 1),
@@ -266,6 +302,7 @@ export default function AdminOrders() {
       setLineItems([]);
       setSearchQuery("");
       await loadOrders();
+      await loadOrderStats();
     } catch (err) {
       setError("Impossibile creare ordine");
     } finally {
@@ -280,8 +317,23 @@ export default function AdminOrders() {
         body: JSON.stringify({ status }),
       });
       await loadOrders();
+      await loadOrderStats();
     } catch (err) {
       setError("Impossibile aggiornare lo stato");
+    }
+  }
+
+  async function updateBatchStatus() {
+    if (!selectedIds.length) return;
+    try {
+      await api("/admin/orders/bulk-status", {
+        method: "PATCH",
+        body: JSON.stringify({ ids: selectedIds, status: batchStatus }),
+      });
+      await loadOrders();
+      await loadOrderStats();
+    } catch {
+      setError("Impossibile aggiornare ordini selezionati");
     }
   }
 
@@ -294,6 +346,7 @@ export default function AdminOrders() {
         body: JSON.stringify({
           companyId: editCompanyId,
           status: editStatus,
+          paymentMethod: editPaymentMethod,
           items: editLineItems.map((i) => ({
             productId: i.productId,
             qty: Number(i.qty || 1),
@@ -319,12 +372,33 @@ export default function AdminOrders() {
       await api(`/admin/orders/${editingOrder.id}`, { method: "DELETE" });
       setEditingOrder(null);
       await loadOrders();
+      await loadOrderStats();
     } catch (err) {
       setError("Impossibile eliminare ordine");
     } finally {
       setSaving(false);
     }
   }
+
+  function statusMeta(status) {
+    if (status === "SUBMITTED") return { label: "In attesa pagamento", cls: "status pending" };
+    if (status === "APPROVED") return { label: "Elaborazione", cls: "status processing" };
+    if (status === "FULFILLED") return { label: "Completato", cls: "status completed" };
+    if (status === "CANCELLED") return { label: "Fallito", cls: "status failed" };
+    return { label: "Bozza", cls: "status draft" };
+  }
+
+  function paymentLabel(value) {
+    return PAYMENT_OPTIONS.find((p) => p.value === value)?.label || value || "-";
+  }
+
+  const companyGroups = useMemo(
+    () =>
+      Array.from(new Set((companies || []).map((c) => c.groupName).filter(Boolean))).sort((a, b) =>
+        String(a).localeCompare(String(b), "it")
+      ),
+    [companies]
+  );
 
   return (
     <section>
@@ -354,25 +428,134 @@ export default function AdminOrders() {
             ))}
           </select>
         </div>
+        <div className="filter-group">
+          <label>Pagamento</label>
+          <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
+            <option value="ALL">Tutti</option>
+            {PAYMENT_OPTIONS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>Cliente</label>
+          <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
+            <option value="">Tutti</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>Gruppo cliente</label>
+          <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)}>
+            <option value="ALL">Tutti</option>
+            {companyGroups.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>Da</label>
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        </div>
+        <div className="filter-group">
+          <label>A</label>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        </div>
+      </div>
+
+      <div className="orders-stats">
+        {orderStats.map((s) => {
+          const meta = statusMeta(s.status);
+          return (
+            <div key={s.status} className={`orders-stat-card ${meta.cls}`}>
+              <span>{meta.label}</span>
+              <strong>{s.count}</strong>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="orders-bulk-row">
+        <select value={batchStatus} onChange={(e) => setBatchStatus(e.target.value)}>
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+        <button className="btn ghost" onClick={updateBatchStatus} disabled={!selectedIds.length}>
+          Modifica selezionati ({selectedIds.length})
+        </button>
       </div>
 
       <div className="orders-table">
         <div className="row header">
-          <div>ID</div>
+          <div>
+            <input
+              type="checkbox"
+              checked={items.length > 0 && selectedIds.length === items.length}
+              onChange={(e) =>
+                setSelectedIds(e.target.checked ? items.map((o) => o.id) : [])
+              }
+            />
+          </div>
+          <div>Ordine #</div>
           <div>Azienda</div>
           <div>Stato</div>
+          <div>Pagamento</div>
           <div>Totale</div>
           <div>Creato</div>
           <div></div>
         </div>
         {items.map((o) => (
           <div className="row" key={o.id} onClick={() => setSummaryOrder(o)}>
-            <div className="mono">{o.id.slice(0, 8)}</div>
+            <div>
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(o.id)}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) =>
+                  setSelectedIds((prev) =>
+                    e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id)
+                  )
+                }
+              />
+            </div>
+            <div className="mono">{o.orderNumber || "-"}</div>
             <div>{o.company?.name || "-"}</div>
-            <div>{STATUS_OPTIONS.find((s) => s.value === o.status)?.label || o.status}</div>
+            <div>
+              <span className={statusMeta(o.status).cls}>{statusMeta(o.status).label}</span>
+            </div>
+            <div>{paymentLabel(o.paymentMethod)}</div>
             <div>{formatCurrency(o.total)}</div>
             <div>{new Date(o.createdAt).toLocaleString()}</div>
             <div>
+              <button
+                className="btn ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateStatus(o.id, "APPROVED");
+                }}
+              >
+                In elaborazione
+              </button>
+              <button
+                className="btn ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateStatus(o.id, "FULFILLED");
+                }}
+              >
+                Completato
+              </button>
               <button
                 className="btn ghost"
                 onClick={(e) => {
@@ -424,10 +607,20 @@ export default function AdminOrders() {
                               {s.label}
                             </option>
                           ))}
-                        </select>
-                      </div>
-                    </div>
+                      </select>
                   </div>
+                  <div className="field">
+                    <label>Metodo pagamento</label>
+                    <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                      {PAYMENT_OPTIONS.map((p) => (
+                        <option key={p.value} value={p.value}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
 
                   <div className="order-card">
                     <div className="card-title">Righe ordine</div>
@@ -559,7 +752,7 @@ export default function AdminOrders() {
                 <div>
                   <div className="modal-title">Riepilogo ordine</div>
                   <div className="modal-subtitle">
-                    {summaryOrder.id.slice(0, 8)} • {summaryOrder.company?.name || "-"}
+                    #{summaryOrder.orderNumber || "-"} • {summaryOrder.company?.name || "-"}
                   </div>
                 </div>
                 <button className="btn ghost" onClick={() => setSummaryOrder(null)}>
@@ -574,7 +767,11 @@ export default function AdminOrders() {
                       <div className="summary-grid">
                         <div>
                           <strong>Stato</strong>
-                          <div>{STATUS_OPTIONS.find((s) => s.value === summaryOrder.status)?.label || summaryOrder.status}</div>
+                          <div>{statusMeta(summaryOrder.status).label}</div>
+                        </div>
+                        <div>
+                          <strong>Pagamento</strong>
+                          <div>{paymentLabel(summaryOrder.paymentMethod)}</div>
                         </div>
                         <div>
                           <strong>Creato</strong>
@@ -696,6 +893,19 @@ export default function AdminOrders() {
                             {STATUS_OPTIONS.map((s) => (
                               <option key={s.value} value={s.value}>
                                 {s.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="field">
+                          <label>Metodo pagamento</label>
+                          <select
+                            value={editPaymentMethod}
+                            onChange={(e) => setEditPaymentMethod(e.target.value)}
+                          >
+                            {PAYMENT_OPTIONS.map((p) => (
+                              <option key={p.value} value={p.value}>
+                                {p.label}
                               </option>
                             ))}
                           </select>

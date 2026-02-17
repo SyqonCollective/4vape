@@ -78,6 +78,7 @@ export async function orderRoutes(app: FastifyInstance) {
   app.post("/", async (request, reply) => {
     const body = z
       .object({
+        discountCode: z.string().optional(),
         items: z.array(
           z.object({
             productId: z.string(),
@@ -121,16 +122,22 @@ export async function orderRoutes(app: FastifyInstance) {
     const subtotal = items.reduce((sum, i) => sum.add(i.lineTotal), new Prisma.Decimal(0));
 
     const now = new Date();
+    const normalizedCode = body.discountCode ? body.discountCode.trim().toUpperCase() : "";
     const [discounts, rules] = await Promise.all([
       prisma.discount.findMany({ where: { active: true } }),
       prisma.discountRule.findMany({ where: { active: true } }),
     ]);
 
-    const activeDiscounts = discounts.filter((d) => isRuleActive(d, now));
+    const activeDiscounts = discounts.filter((d) => {
+      if (!isRuleActive(d, now)) return false;
+      if (normalizedCode) return (d.code || "").toUpperCase() === normalizedCode;
+      return !d.code;
+    });
     const bestDiscount = activeDiscounts.reduce<Prisma.Decimal>((best, d) => {
       const applicable = items.filter((i) => matchRuleScope(d, i._product));
       if (!applicable.length) return best;
       const base = applicable.reduce((sum, i) => sum.add(i.lineTotal), new Prisma.Decimal(0));
+      if (d.minSpend && base.lessThan(new Prisma.Decimal(d.minSpend))) return best;
       const value =
         d.type === "PERCENT"
           ? base.mul(new Prisma.Decimal(d.value).div(100))

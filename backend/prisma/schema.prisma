@@ -21,6 +21,13 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PaymentMethod {
+  BANK_TRANSFER
+  CARD
+  COD
+  OTHER
+}
+
 enum ProductSource {
   MANUAL
   SUPPLIER
@@ -63,10 +70,11 @@ enum MarketingCampaignStatus {
 }
 
 model Company {
-  id        String   @id @default(cuid())
-  name      String
-  vatNumber String?  @unique
-  status    String   @default("PENDING")
+  id               String   @id @default(cuid())
+  name             String
+  vatNumber        String?  @unique
+  status           String   @default("PENDING")
+  groupName        String?
   contactFirstName String?
   contactLastName  String?
   legalName        String?
@@ -83,38 +91,51 @@ model Company {
   cmnr             String?
   signNumber       String?
   adminVatNumber   String?
-  createdAt DateTime @default(now())
+  createdAt        DateTime @default(now())
 
-  users  User[]
-  orders Order[]
+  users          User[]
+  orders         Order[]
   returnRequests ReturnRequest[]
+  productPrices  ProductPrice[]
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
-  role         UserRole @default(BUYER)
-  approved     Boolean  @default(false)
+  role         UserRole  @default(BUYER)
+  approved     Boolean   @default(false)
   lastLoginAt  DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
 
-  ordersCreated Order[] @relation("OrderCreatedBy")
-  goodsReceiptsCreated GoodsReceipt[] @relation("GoodsReceiptCreatedBy")
-  returnRequests ReturnRequest[] @relation("ReturnRequestedBy")
-  handledReturns ReturnRequest[] @relation("ReturnHandledBy")
-  mailTemplates MailMarketingTemplate[]
-  mailCampaigns MailMarketingCampaign[]
+  ordersCreated        Order[]                 @relation("OrderCreatedBy")
+  goodsReceiptsCreated GoodsReceipt[]          @relation("GoodsReceiptCreatedBy")
+  returnRequests       ReturnRequest[]         @relation("ReturnRequestedBy")
+  handledReturns       ReturnRequest[]         @relation("ReturnHandledBy")
+  mailTemplates        MailMarketingTemplate[]
+  mailCampaigns        MailMarketingCampaign[]
 }
 
 model Supplier {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
-  code        String   @unique
-  isPrimary   Boolean  @default(false)
+  code        String          @unique
+  legalName   String?
+  vatNumber   String?
+  taxCode     String?
+  sdiCode     String?
+  pec         String?
+  address     String?
+  cap         String?
+  city        String?
+  province    String?
+  country     String?
+  phone       String?
+  email       String?
+  isPrimary   Boolean         @default(false)
   apiType     SupplierApiType @default(CSV)
   csvFullUrl  String?
   csvStockUrl String?
@@ -122,140 +143,142 @@ model Supplier {
   apiHost     String?
   apiKey      String?
   fieldMap    Json?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime        @default(now())
 
   supplierProducts SupplierProduct[]
   products         Product[]
+  goodsReceipts    GoodsReceipt[]
 }
 
 model SupplierProduct {
-  id           String   @id @default(cuid())
-  supplierId   String
-  supplierSku  String
-  name         String?
-  description  String?
+  id               String   @id @default(cuid())
+  supplierId       String
+  supplierSku      String
+  name             String?
+  description      String?
   shortDescription String?
-  brand        String?
-  category     String?
-  subcategory  String?
-  categoryId   String?
-  published    Boolean? @default(true)
-  visibility   String?
-  productType  String?
-  parentSku    String?
-  childSkus    Json?
-  codicePl     String?
-  mlProduct    Decimal? @db.Decimal(12, 3)
-  nicotine     Decimal? @db.Decimal(12, 3)
-  exciseMl     Decimal? @db.Decimal(12, 6)
-  exciseProduct Decimal? @db.Decimal(12, 6)
-  exciseTotal  Decimal? @db.Decimal(12, 6)
-  taxRate      Decimal? @db.Decimal(6, 2)
-  taxAmount    Decimal? @db.Decimal(12, 6)
-  price        Decimal? @db.Decimal(12, 2)
-  purchasePrice Decimal? @db.Decimal(12, 2)
-  listPrice     Decimal? @db.Decimal(12, 2)
-  discountPrice Decimal? @db.Decimal(12, 2)
-  discountQty   Int?
-  stockQty     Int?
-  imageUrl     String?
-  imageUrls    Json?
-  barcode      String?
-  raw          Json?
-  createdAt    DateTime @default(now())
-  lastSeenAt   DateTime @default(now())
+  brand            String?
+  category         String?
+  subcategory      String?
+  categoryId       String?
+  published        Boolean? @default(true)
+  visibility       String?
+  productType      String?
+  parentSku        String?
+  childSkus        Json?
+  codicePl         String?
+  mlProduct        Decimal? @db.Decimal(12, 3)
+  nicotine         Decimal? @db.Decimal(12, 3)
+  exciseMl         Decimal? @db.Decimal(12, 6)
+  exciseProduct    Decimal? @db.Decimal(12, 6)
+  exciseTotal      Decimal? @db.Decimal(12, 6)
+  taxRate          Decimal? @db.Decimal(6, 2)
+  taxAmount        Decimal? @db.Decimal(12, 6)
+  price            Decimal? @db.Decimal(12, 2)
+  purchasePrice    Decimal? @db.Decimal(12, 2)
+  listPrice        Decimal? @db.Decimal(12, 2)
+  discountPrice    Decimal? @db.Decimal(12, 2)
+  discountQty      Int?
+  stockQty         Int?
+  imageUrl         String?
+  imageUrls        Json?
+  barcode          String?
+  raw              Json?
+  createdAt        DateTime @default(now())
+  lastSeenAt       DateTime @default(now())
 
-  supplier Supplier @relation(fields: [supplierId], references: [id])
+  supplier    Supplier  @relation(fields: [supplierId], references: [id])
   categoryRef Category? @relation(fields: [categoryId], references: [id])
 
   @@unique([supplierId, supplierSku])
 }
 
 model Product {
-  id          String        @id @default(cuid())
-  sku         String        @unique
-  name        String
-  description String?
-  shortDescription String?
-  brand       String?
-  category    String?
-  subcategory String?
-  categoryIds Json?
-  subcategories Json?
-  aroma       String?
-  categoryId  String?
-  parentId    String?
-  isParent    Boolean       @default(false)
-  sellAsSingle Boolean      @default(true)
-  isUnavailable Boolean     @default(false)
-  published   Boolean?      @default(true)
-  visibility  String?
-  productType String?
-  parentSku   String?
-  childSkus   Json?
+  id                String        @id @default(cuid())
+  sku               String        @unique
+  name              String
+  description       String?
+  shortDescription  String?
+  brand             String?
+  category          String?
+  subcategory       String?
+  categoryIds       Json?
+  subcategories     Json?
+  aroma             String?
+  categoryId        String?
+  parentId          String?
+  isParent          Boolean       @default(false)
+  sellAsSingle      Boolean       @default(true)
+  isUnavailable     Boolean       @default(false)
+  published         Boolean?      @default(true)
+  visibility        String?
+  productType       String?
+  parentSku         String?
+  childSkus         Json?
   relatedProductIds Json?
-  parentSort Int      @default(0)
-  codicePl    String?
-  mlProduct   Decimal? @db.Decimal(12, 3)
-  nicotine    Decimal? @db.Decimal(12, 3)
-  exciseMl    Decimal? @db.Decimal(12, 6)
-  exciseProduct Decimal? @db.Decimal(12, 6)
-  exciseTotal Decimal? @db.Decimal(12, 6)
-  taxRate     Decimal? @db.Decimal(6, 2)
-  taxAmount   Decimal? @db.Decimal(12, 6)
-  vatIncluded Boolean  @default(true)
-  price       Decimal       @db.Decimal(12, 2)
-  purchasePrice Decimal? @db.Decimal(12, 2)
-  listPrice     Decimal? @db.Decimal(12, 2)
-  discountPrice Decimal? @db.Decimal(12, 2)
-  discountQty   Int?
-  stockQty    Int           @default(0)
-  imageUrl    String?
-  imageUrls   Json?
-  barcode     String?
-  source      ProductSource @default(MANUAL)
-  createdAt   DateTime      @default(now())
+  parentSort        Int           @default(0)
+  codicePl          String?
+  mlProduct         Decimal?      @db.Decimal(12, 3)
+  nicotine          Decimal?      @db.Decimal(12, 3)
+  exciseMl          Decimal?      @db.Decimal(12, 6)
+  exciseProduct     Decimal?      @db.Decimal(12, 6)
+  exciseTotal       Decimal?      @db.Decimal(12, 6)
+  taxRate           Decimal?      @db.Decimal(6, 2)
+  taxAmount         Decimal?      @db.Decimal(12, 6)
+  vatIncluded       Boolean       @default(true)
+  price             Decimal       @db.Decimal(12, 2)
+  purchasePrice     Decimal?      @db.Decimal(12, 2)
+  listPrice         Decimal?      @db.Decimal(12, 2)
+  discountPrice     Decimal?      @db.Decimal(12, 2)
+  discountQty       Int?
+  stockQty          Int           @default(0)
+  imageUrl          String?
+  imageUrls         Json?
+  barcode           String?
+  source            ProductSource @default(MANUAL)
+  createdAt         DateTime      @default(now())
 
   sourceSupplierId String?
-  sourceSupplier   Supplier? @relation(fields: [sourceSupplierId], references: [id])
-  taxRateId   String?
-  taxRateRef  TaxRate? @relation(fields: [taxRateId], references: [id])
-  exciseRateId String?
-  exciseRateRef ExciseRate? @relation(fields: [exciseRateId], references: [id])
-  categoryRef      Category? @relation(fields: [categoryId], references: [id])
-  parent           Product?  @relation("ProductParent", fields: [parentId], references: [id])
-  children         Product[] @relation("ProductParent")
+  sourceSupplier   Supplier?      @relation(fields: [sourceSupplierId], references: [id])
+  taxRateId        String?
+  taxRateRef       TaxRate?       @relation(fields: [taxRateId], references: [id])
+  exciseRateId     String?
+  exciseRateRef    ExciseRate?    @relation(fields: [exciseRateId], references: [id])
+  categoryRef      Category?      @relation(fields: [categoryId], references: [id])
+  parent           Product?       @relation("ProductParent", fields: [parentId], references: [id])
+  children         Product[]      @relation("ProductParent")
   images           ProductImage[]
 
-  orderItems OrderItem[]
+  orderItems    OrderItem[]
+  companyPrices ProductPrice[]
 }
 
 model TaxRate {
-  id        String   @id @default(cuid())
-  name      String
-  rate      Decimal  @db.Decimal(6, 2)
-  createdAt DateTime @default(now())
-  products  Product[]
+  id                     String                  @id @default(cuid())
+  name                   String
+  rate                   Decimal                 @db.Decimal(6, 2)
+  createdAt              DateTime                @default(now())
+  products               Product[]
   internalInventoryItems InternalInventoryItem[]
 }
 
 model ExciseRate {
-  id        String    @id @default(cuid())
-  name      String
-  type      ExciseType
-  amount    Decimal   @db.Decimal(12, 6)
-  createdAt DateTime  @default(now())
-  products  Product[]
+  id                     String                  @id @default(cuid())
+  name                   String
+  type                   ExciseType
+  amount                 Decimal                 @db.Decimal(12, 6)
+  createdAt              DateTime                @default(now())
+  products               Product[]
   internalInventoryItems InternalInventoryItem[]
 }
 
 model AppSetting {
-  id              String   @id @default(cuid())
-  vatRateDefault  Decimal? @db.Decimal(6, 2)
-  exciseMlDefault Decimal? @db.Decimal(12, 6)
+  id                   String   @id @default(cuid())
+  vatRateDefault       Decimal? @db.Decimal(6, 2)
+  exciseMlDefault      Decimal? @db.Decimal(12, 6)
   exciseProductDefault Decimal? @db.Decimal(12, 6)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model Brand {
@@ -265,15 +288,17 @@ model Brand {
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique
-  parentId  String?
-  createdAt DateTime  @default(now())
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  slug        String   @unique
+  parentId    String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
 
-  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryTree")
-  products Product[]
+  parent           Category?         @relation("CategoryTree", fields: [parentId], references: [id])
+  children         Category[]        @relation("CategoryTree")
+  products         Product[]
   supplierProducts SupplierProduct[]
 
   @@index([parentId])
@@ -292,11 +317,13 @@ model ProductImage {
 }
 
 model Order {
-  id         String      @id @default(cuid())
-  status     OrderStatus @default(DRAFT)
-  total      Decimal     @db.Decimal(12, 2)
-  discountTotal Decimal? @db.Decimal(12, 2)
-  createdAt  DateTime    @default(now())
+  id            String        @id @default(cuid())
+  orderNumber   Int           @unique @default(autoincrement())
+  status        OrderStatus   @default(DRAFT)
+  paymentMethod PaymentMethod @default(BANK_TRANSFER)
+  total         Decimal       @db.Decimal(12, 2)
+  discountTotal Decimal?      @db.Decimal(12, 2)
+  createdAt     DateTime      @default(now())
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
@@ -310,10 +337,12 @@ model Order {
 model Discount {
   id        String       @id @default(cuid())
   name      String
+  code      String?      @unique
   scope     RuleScope    @default(ORDER)
   target    String?
   type      DiscountType @default(PERCENT)
   value     Decimal      @db.Decimal(12, 4)
+  minSpend  Decimal?     @db.Decimal(12, 2)
   active    Boolean      @default(true)
   startDate DateTime?
   endDate   DateTime?
@@ -346,14 +375,14 @@ model DiscountRule {
 }
 
 model OrderItem {
-  id         String  @id @default(cuid())
-  orderId    String
-  productId  String
-  sku        String
-  name       String
-  qty        Int
-  unitPrice  Decimal @db.Decimal(12, 2)
-  lineTotal  Decimal @db.Decimal(12, 2)
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  sku       String
+  name      String
+  qty       Int
+  unitPrice Decimal @db.Decimal(12, 2)
+  lineTotal Decimal @db.Decimal(12, 2)
 
   supplierId String?
 
@@ -366,6 +395,9 @@ model ProductPrice {
   companyId String
   productId String
   price     Decimal @db.Decimal(12, 2)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, productId])
 }
@@ -381,14 +413,14 @@ model ReturnRequest {
   createdAt          DateTime     @default(now())
   handledAt          DateTime?
 
-  companyId  String?
-  company    Company? @relation(fields: [companyId], references: [id])
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
 
-  userId     String?
-  user       User?    @relation("ReturnRequestedBy", fields: [userId], references: [id])
+  userId String?
+  user   User?   @relation("ReturnRequestedBy", fields: [userId], references: [id])
 
   handledById String?
-  handledBy   User?    @relation("ReturnHandledBy", fields: [handledById], references: [id])
+  handledBy   User?   @relation("ReturnHandledBy", fields: [handledById], references: [id])
 
   images ReturnRequestImage[]
 }
@@ -414,62 +446,62 @@ model MailMarketingTemplate {
   updatedAt DateTime @updatedAt
 
   createdById String?
-  createdBy   User? @relation(fields: [createdById], references: [id])
+  createdBy   User?   @relation(fields: [createdById], references: [id])
 
   campaigns MailMarketingCampaign[]
 }
 
 model MailMarketingCampaign {
-  id        String   @id @default(cuid())
-  name      String
-  subject   String
-  html      String
-  listId    Int
-  groupId   Int?
-  status    MarketingCampaignStatus @default(DRAFT)
-  audienceType String @default("ALL_ACTIVE")
+  id                 String                  @id @default(cuid())
+  name               String
+  subject            String
+  html               String
+  listId             Int
+  groupId            Int?
+  status             MarketingCampaignStatus @default(DRAFT)
+  audienceType       String                  @default("ALL_ACTIVE")
   audienceCompanyIds Json?
-  recipientCount Int @default(0)
-  sentCount Int @default(0)
-  failedCount Int @default(0)
-  mailupEmailId Int?
-  mailupSendId  String?
-  scheduledAt DateTime?
-  sentAt      DateTime?
-  lastError   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  recipientCount     Int                     @default(0)
+  sentCount          Int                     @default(0)
+  failedCount        Int                     @default(0)
+  mailupEmailId      Int?
+  mailupSendId       String?
+  scheduledAt        DateTime?
+  sentAt             DateTime?
+  lastError          String?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
 
   templateId String?
   template   MailMarketingTemplate? @relation(fields: [templateId], references: [id])
 
   createdById String?
-  createdBy   User? @relation(fields: [createdById], references: [id])
+  createdBy   User?   @relation(fields: [createdById], references: [id])
 }
 
 model InternalInventoryItem {
-  id          String   @id @default(cuid())
-  sku         String   @unique
-  name        String
-  description String?
+  id               String   @id @default(cuid())
+  sku              String   @unique
+  name             String
+  description      String?
   shortDescription String?
-  brand       String?
-  category    String?
-  subcategory String?
-  barcode     String?
-  nicotine    Decimal? @db.Decimal(12, 3)
-  mlProduct   Decimal? @db.Decimal(12, 3)
-  purchasePrice Decimal? @db.Decimal(12, 2)
-  listPrice     Decimal? @db.Decimal(12, 2)
-  price         Decimal? @db.Decimal(12, 2)
-  stockQty    Int      @default(0)
-  taxRateId   String?
-  exciseRateId String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  brand            String?
+  category         String?
+  subcategory      String?
+  barcode          String?
+  nicotine         Decimal? @db.Decimal(12, 3)
+  mlProduct        Decimal? @db.Decimal(12, 3)
+  purchasePrice    Decimal? @db.Decimal(12, 2)
+  listPrice        Decimal? @db.Decimal(12, 2)
+  price            Decimal? @db.Decimal(12, 2)
+  stockQty         Int      @default(0)
+  taxRateId        String?
+  exciseRateId     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  taxRateRef    TaxRate?    @relation(fields: [taxRateId], references: [id])
-  exciseRateRef ExciseRate? @relation(fields: [exciseRateId], references: [id])
+  taxRateRef    TaxRate?           @relation(fields: [taxRateId], references: [id])
+  exciseRateRef ExciseRate?        @relation(fields: [exciseRateId], references: [id])
   receiptLines  GoodsReceiptLine[]
 }
 
@@ -482,24 +514,26 @@ model GoodsReceipt {
   receivedAt   DateTime @default(now())
   createdAt    DateTime @default(now())
   createdById  String?
+  supplierId   String?
 
-  createdBy User? @relation("GoodsReceiptCreatedBy", fields: [createdById], references: [id])
+  createdBy User?              @relation("GoodsReceiptCreatedBy", fields: [createdById], references: [id])
+  supplier  Supplier?          @relation(fields: [supplierId], references: [id])
   lines     GoodsReceiptLine[]
 }
 
 model GoodsReceiptLine {
-  id         String   @id @default(cuid())
-  receiptId  String
-  itemId     String
-  sku        String
-  name       String
-  qty        Int
-  unitCost   Decimal? @db.Decimal(12, 2)
-  unitPrice  Decimal? @db.Decimal(12, 2)
-  lineNote   String?
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  receiptId String
+  itemId    String
+  sku       String
+  name      String
+  qty       Int
+  unitCost  Decimal? @db.Decimal(12, 2)
+  unitPrice Decimal? @db.Decimal(12, 2)
+  lineNote  String?
+  createdAt DateTime @default(now())
 
-  receipt GoodsReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  receipt GoodsReceipt          @relation(fields: [receiptId], references: [id], onDelete: Cascade)
   item    InternalInventoryItem @relation(fields: [itemId], references: [id])
 
   @@index([receiptId])

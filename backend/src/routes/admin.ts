@@ -794,6 +794,7 @@ export async function adminRoutes(app: FastifyInstance) {
         cmnr: z.string().optional(),
         signNumber: z.string().optional(),
         adminVatNumber: z.string().optional(),
+        groupName: z.string().optional(),
       })
       .parse(request.body);
     const created = await prisma.company.create({
@@ -817,6 +818,7 @@ export async function adminRoutes(app: FastifyInstance) {
         cmnr: body.cmnr || null,
         signNumber: body.signNumber || null,
         adminVatNumber: body.adminVatNumber || null,
+        groupName: body.groupName || null,
       },
     });
     return reply.code(201).send(created);
@@ -846,6 +848,7 @@ export async function adminRoutes(app: FastifyInstance) {
         cmnr: z.string().nullable().optional(),
         signNumber: z.string().nullable().optional(),
         adminVatNumber: z.string().nullable().optional(),
+        groupName: z.string().nullable().optional(),
         status: z.string().optional(),
       })
       .parse(request.body);
@@ -872,6 +875,7 @@ export async function adminRoutes(app: FastifyInstance) {
         ...(body.cmnr !== undefined ? { cmnr: body.cmnr || null } : {}),
         ...(body.signNumber !== undefined ? { signNumber: body.signNumber || null } : {}),
         ...(body.adminVatNumber !== undefined ? { adminVatNumber: body.adminVatNumber || null } : {}),
+        ...(body.groupName !== undefined ? { groupName: body.groupName || null } : {}),
         ...(body.status ? { status: body.status } : {}),
       },
     });
@@ -892,7 +896,14 @@ export async function adminRoutes(app: FastifyInstance) {
     const user = requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
-    return prisma.user.update({ where: { id }, data: { approved: true } });
+    const updated = await prisma.user.update({ where: { id }, data: { approved: true } });
+    if (updated.companyId) {
+      await prisma.company.update({
+        where: { id: updated.companyId },
+        data: { status: "ACTIVE" },
+      });
+    }
+    return updated;
   });
 
   app.delete("/users/:id/reject", async (request, reply) => {
@@ -992,10 +1003,26 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/orders", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
-    const status = (request.query as any)?.status as string | undefined;
-    const where = status ? { status: status as any } : undefined;
+    const query = request.query as any;
+    const status = query?.status as string | undefined;
+    const companyId = query?.companyId as string | undefined;
+    const paymentMethod = query?.paymentMethod as string | undefined;
+    const groupName = query?.groupName as string | undefined;
+    const start = query?.start as string | undefined;
+    const end = query?.end as string | undefined;
+    const where: Prisma.OrderWhereInput = {};
+    if (status && status !== "ALL") where.status = status as any;
+    if (companyId) where.companyId = companyId;
+    if (paymentMethod && paymentMethod !== "ALL") where.paymentMethod = paymentMethod as any;
+    if (groupName && groupName !== "ALL") where.company = { groupName };
+    if (start || end) {
+      where.createdAt = {
+        ...(start ? { gte: new Date(`${start}T00:00:00.000Z`) } : {}),
+        ...(end ? { lte: new Date(`${end}T23:59:59.999Z`) } : {}),
+      };
+    }
     return prisma.order.findMany({
-      where,
+      where: Object.keys(where).length ? where : undefined,
       orderBy: { createdAt: "desc" },
       include: {
         company: true,
@@ -1011,6 +1038,18 @@ export async function adminRoutes(app: FastifyInstance) {
     });
   });
 
+  app.get("/orders/stats", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const grouped = await prisma.order.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+    });
+    const map = new Map(grouped.map((g) => [g.status, g._count._all || 0]));
+    const statuses = ["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"] as const;
+    return statuses.map((status) => ({ status, count: map.get(status) || 0 }));
+  });
+
   app.post("/orders", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -1018,6 +1057,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         companyId: z.string().min(1),
         status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"]).optional(),
+        paymentMethod: z.enum(["BANK_TRANSFER", "CARD", "COD", "OTHER"]).optional(),
         discountTotal: z.number().optional(),
         items: z.array(
           z.object({
@@ -1085,6 +1125,7 @@ export async function adminRoutes(app: FastifyInstance) {
         companyId: company.id,
         createdById: user.id,
         status: body.status ?? "SUBMITTED",
+        paymentMethod: body.paymentMethod ?? "BANK_TRANSFER",
         total,
         discountTotal,
         items: {
@@ -1104,6 +1145,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"]).optional(),
+        paymentMethod: z.enum(["BANK_TRANSFER", "CARD", "COD", "OTHER"]).optional(),
         companyId: z.string().optional(),
         discountTotal: z.number().optional(),
         items: z
@@ -1185,6 +1227,7 @@ export async function adminRoutes(app: FastifyInstance) {
         where: { id },
         data: {
           status: body.status ?? existing.status,
+          paymentMethod: body.paymentMethod ?? existing.paymentMethod,
           companyId: body.companyId ?? existing.companyId,
           discountTotal,
           total,
@@ -1212,6 +1255,22 @@ export async function adminRoutes(app: FastifyInstance) {
       prisma.order.delete({ where: { id } }),
     ]);
     return reply.code(204).send();
+  });
+
+  app.patch("/orders/bulk-status", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        ids: z.array(z.string().min(1)).min(1),
+        status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"]),
+      })
+      .parse(request.body);
+    const result = await prisma.order.updateMany({
+      where: { id: { in: body.ids } },
+      data: { status: body.status },
+    });
+    return { updated: result.count };
   });
 
   app.get("/products", async (request, reply) => {
@@ -1251,6 +1310,55 @@ export async function adminRoutes(app: FastifyInstance) {
     });
   });
 
+  app.get("/products/:id/customer-prices", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const productId = (request.params as any).id as string;
+    const rows = await prisma.productPrice.findMany({
+      where: { productId },
+      include: { company: { select: { id: true, name: true, status: true } } },
+      orderBy: { companyId: "asc" },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      companyId: r.companyId,
+      companyName: r.company?.name || "N/D",
+      companyStatus: r.company?.status || "N/D",
+      price: Number(r.price || 0),
+    }));
+  });
+
+  app.put("/products/:id/customer-prices/:companyId", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const productId = (request.params as any).id as string;
+    const companyId = (request.params as any).companyId as string;
+    const body = z.object({ price: z.number().positive() }).parse(request.body);
+    const [product, company] = await Promise.all([
+      prisma.product.findUnique({ where: { id: productId }, select: { id: true } }),
+      prisma.company.findUnique({ where: { id: companyId }, select: { id: true } }),
+    ]);
+    if (!product) return reply.notFound("Product not found");
+    if (!company) return reply.notFound("Company not found");
+    const row = await prisma.productPrice.upsert({
+      where: { companyId_productId: { companyId, productId } },
+      create: { companyId, productId, price: new Prisma.Decimal(body.price) },
+      update: { price: new Prisma.Decimal(body.price) },
+    });
+    return { id: row.id, companyId: row.companyId, productId: row.productId, price: Number(row.price) };
+  });
+
+  app.delete("/products/:id/customer-prices/:companyId", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const productId = (request.params as any).id as string;
+    const companyId = (request.params as any).companyId as string;
+    await prisma.productPrice.deleteMany({
+      where: { productId, companyId },
+    });
+    return reply.code(204).send();
+  });
+
   app.get("/products/export", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -1261,33 +1369,33 @@ export async function adminRoutes(app: FastifyInstance) {
     const allCategories = await prisma.category.findMany({ select: { id: true, name: true } });
     const categoryNameById = new Map(allCategories.map((c) => [c.id, c.name]));
     const header = [
-      "sku",
-      "name",
-      "price",
-      "stockQty",
-      "brand",
-      "category",
-      "subcategory",
-      "aroma",
-      "parentSku",
-      "isParent",
-      "sellAsSingle",
-      "isUnavailable",
-      "draft",
-      "shortDescription",
-      "description",
-      "mlProduct",
-      "nicotine",
-      "taxRate",
-      "exciseRate",
-      "exciseTotal",
-      "purchasePrice",
-      "listPrice",
-      "discountPrice",
-      "discountQty",
-      "barcode",
-      "relatedSkus",
-      "supplier",
+      "SKU",
+      "NOME",
+      "PREZZO",
+      "GIACENZA",
+      "BRAND",
+      "CATEGORIA",
+      "SOTTOCATEGORIA",
+      "AROMA",
+      "PADRE_SKU",
+      "IS_PADRE",
+      "VENDUTO_ANCHE_SINGOLARMENTE",
+      "NON_DISPONIBILE",
+      "DRAFT",
+      "DESCRIZIONE_BREVE",
+      "DESCRIZIONE",
+      "ML_PRODOTTO",
+      "NICOTINA",
+      "IVA",
+      "ACCISA",
+      "ACCISA_CALCOLATA",
+      "PREZZO_ACQUISTO",
+      "PREZZO_LISTINO",
+      "PREZZO_SCONTATO",
+      "QTA_SCONTO",
+      "BARCODE",
+      "PRODOTTI_CORRELATI_SKU",
+      "FORNITORE",
     ];
     const escape = (v: any) => {
       const s = String(v ?? "");
@@ -1545,12 +1653,35 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/products/stock", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
-    return prisma.product.findMany({
+    const products = await prisma.product.findMany({
       select: {
         id: true,
+        sku: true,
+        source: true,
+        sourceSupplierId: true,
         stockQty: true,
         isUnavailable: true,
       },
+    });
+    const supplierProducts = await prisma.supplierProduct.findMany({
+      select: { supplierId: true, supplierSku: true, stockQty: true },
+    });
+    const supplierStockMap = new Map(
+      supplierProducts.map((sp) => [`${sp.supplierId}::${sp.supplierSku}`, sp.stockQty ?? null])
+    );
+    return products.map((p) => {
+      if (p.source === "SUPPLIER" && p.sourceSupplierId) {
+        const key = `${p.sourceSupplierId}::${p.sku}`;
+        const supplierQty = supplierStockMap.get(key);
+        if (supplierQty !== undefined && supplierQty !== null) {
+          return {
+            id: p.id,
+            stockQty: supplierQty,
+            isUnavailable: Number(supplierQty) <= 0,
+          };
+        }
+      }
+      return { id: p.id, stockQty: p.stockQty, isUnavailable: p.isUnavailable };
     });
   });
 
@@ -1631,7 +1762,7 @@ export async function adminRoutes(app: FastifyInstance) {
           aroma: body.aroma,
           category: categoryName,
           categoryId: firstCategoryId || null,
-          categoryIds: explicitCategoryIds.length ? explicitCategoryIds : firstCategoryId ? [firstCategoryId] : null,
+          categoryIds: explicitCategoryIds.length ? explicitCategoryIds : firstCategoryId ? [firstCategoryId] : undefined,
           parentId: body.parentId || null,
           isParent: body.isParent ?? false,
           sellAsSingle,
@@ -1643,7 +1774,7 @@ export async function adminRoutes(app: FastifyInstance) {
               ? body.subcategories
               : body.subcategory
                 ? [body.subcategory]
-                : null,
+                : undefined,
           published: body.published,
           visibility: body.visibility,
           productType: body.productType,
@@ -1745,15 +1876,15 @@ export async function adminRoutes(app: FastifyInstance) {
       } else {
         data.categoryId = null;
         data.category = null;
-        data.categoryIds = null;
+        data.categoryIds = Prisma.JsonNull;
       }
     }
     if (body.subcategories !== undefined) {
-      data.subcategories = body.subcategories.length ? body.subcategories : null;
+      data.subcategories = body.subcategories.length ? body.subcategories : Prisma.JsonNull;
       data.subcategory = body.subcategories.length ? body.subcategories[0] : null;
     } else if (body.subcategory !== undefined) {
       data.subcategory = body.subcategory || null;
-      data.subcategories = body.subcategory ? [body.subcategory] : null;
+      data.subcategories = body.subcategory ? [body.subcategory] : Prisma.JsonNull;
     }
     if (body.aroma !== undefined) data.aroma = body.aroma || null;
     if (body.parentId !== undefined) data.parentId = body.parentId;
@@ -2749,10 +2880,19 @@ export async function adminRoutes(app: FastifyInstance) {
     for (const item of supplierProducts) if (item.brand) names.add(String(item.brand).trim());
     for (const item of inventoryItems) if (item.brand) names.add(String(item.brand).trim());
 
+    const countAgg = await prisma.product.groupBy({
+      by: ["brand"],
+      where: { brand: { not: null } },
+      _count: { _all: true },
+    });
+    const countMap = new Map(
+      countAgg.map((r) => [String(r.brand || "").trim(), r._count?._all || 0])
+    );
+
     return Array.from(names)
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }))
-      .map((name) => ({ name }));
+      .map((name) => ({ name, productsCount: countMap.get(name) || 0 }));
   });
 
   app.post("/brands", async (request, reply) => {
@@ -2918,6 +3058,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         name: z.string().min(2),
+        code: z.string().min(2).optional(),
         scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).default("ORDER"),
         target: z.string().optional(),
         type: z
@@ -2925,6 +3066,7 @@ export async function adminRoutes(app: FastifyInstance) {
           .default("PERCENT")
           .transform((v) => v.toUpperCase() as "PERCENT" | "FIXED"),
         value: z.number().nonnegative(),
+        minSpend: z.number().nonnegative().optional(),
         active: z.boolean().optional(),
         startDate: z.string().optional(),
         endDate: z.string().optional(),
@@ -2934,10 +3076,12 @@ export async function adminRoutes(app: FastifyInstance) {
     return prisma.discount.create({
       data: {
         name: body.name,
+        code: body.code ? body.code.trim().toUpperCase() : null,
         scope: body.scope,
         target: body.target,
         type: body.type,
         value: new Prisma.Decimal(body.value),
+        minSpend: body.minSpend != null ? new Prisma.Decimal(body.minSpend) : null,
         active: body.active ?? true,
         startDate: body.startDate ? new Date(body.startDate) : null,
         endDate: body.endDate ? new Date(body.endDate) : null,
@@ -2953,6 +3097,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         name: z.string().min(2).optional(),
+        code: z.string().min(2).nullable().optional(),
         scope: z.enum(["ORDER", "PRODUCT", "CATEGORY", "BRAND", "SUPPLIER", "PARENT"]).optional(),
         target: z.string().optional(),
         type: z
@@ -2960,6 +3105,7 @@ export async function adminRoutes(app: FastifyInstance) {
           .optional()
           .transform((v) => (v ? (v.toUpperCase() as "PERCENT" | "FIXED") : undefined)),
         value: z.number().nonnegative().optional(),
+        minSpend: z.number().nonnegative().nullable().optional(),
         active: z.boolean().optional(),
         startDate: z.string().nullable().optional(),
         endDate: z.string().nullable().optional(),
@@ -2970,10 +3116,16 @@ export async function adminRoutes(app: FastifyInstance) {
       where: { id },
       data: {
         ...(body.name ? { name: body.name } : {}),
+        ...(body.code !== undefined
+          ? { code: body.code ? body.code.trim().toUpperCase() : null }
+          : {}),
         ...(body.scope ? { scope: body.scope } : {}),
         ...(body.target !== undefined ? { target: body.target } : {}),
         ...(body.type ? { type: body.type } : {}),
         ...(body.value !== undefined ? { value: new Prisma.Decimal(body.value) } : {}),
+        ...(body.minSpend !== undefined
+          ? { minSpend: body.minSpend != null ? new Prisma.Decimal(body.minSpend) : null }
+          : {}),
         ...(body.active !== undefined ? { active: body.active } : {}),
         ...(body.startDate !== undefined
           ? { startDate: body.startDate ? new Date(body.startDate) : null }
@@ -3151,7 +3303,10 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/categories", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
-    return prisma.category.findMany({ orderBy: { name: "asc" } });
+    return prisma.category.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      include: { _count: { select: { products: true } } },
+    });
   });
 
   app.post("/categories", async (request, reply) => {
@@ -3161,6 +3316,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         name: z.string().min(2),
         parentId: z.string().optional(),
+        description: z.string().optional(),
       })
       .parse(request.body);
     const slug = slugify(body.name);
@@ -3171,6 +3327,7 @@ export async function adminRoutes(app: FastifyInstance) {
         name: body.name,
         slug,
         parentId: body.parentId || null,
+        description: body.description || null,
       },
     });
   });
@@ -3183,6 +3340,8 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         name: z.string().min(2).optional(),
         parentId: z.string().nullable().optional(),
+        description: z.string().nullable().optional(),
+        sortOrder: z.number().int().optional(),
       })
       .parse(request.body);
     const data: any = {};
@@ -3191,7 +3350,21 @@ export async function adminRoutes(app: FastifyInstance) {
       data.slug = slugify(body.name);
     }
     if (body.parentId !== undefined) data.parentId = body.parentId;
+    if (body.description !== undefined) data.description = body.description || null;
+    if (body.sortOrder !== undefined) data.sortOrder = body.sortOrder;
     return prisma.category.update({ where: { id }, data });
+  });
+
+  app.patch("/categories/reorder", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const body = z.object({ ids: z.array(z.string()).min(1) }).parse(request.body);
+    await prisma.$transaction(
+      body.ids.map((id, index) =>
+        prisma.category.update({ where: { id }, data: { sortOrder: index } })
+      )
+    );
+    return { ok: true };
   });
 
   app.delete("/categories/:id", async (request, reply) => {
@@ -3279,6 +3452,18 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         name: z.string().min(2),
         code: z.string().min(2),
+        legalName: z.string().optional(),
+        vatNumber: z.string().optional(),
+        taxCode: z.string().optional(),
+        sdiCode: z.string().optional(),
+        pec: z.string().optional(),
+        address: z.string().optional(),
+        cap: z.string().optional(),
+        city: z.string().optional(),
+        province: z.string().optional(),
+        country: z.string().optional(),
+        phone: z.string().optional(),
+        email: z.string().optional(),
         isPrimary: z.boolean().optional(),
         csvFullUrl: z.string().url().optional(),
         csvStockUrl: z.string().url().optional(),
@@ -3286,7 +3471,23 @@ export async function adminRoutes(app: FastifyInstance) {
       })
       .parse(request.body);
 
-    return prisma.supplier.create({ data: body });
+    return prisma.supplier.create({
+      data: {
+        ...body,
+        legalName: body.legalName || null,
+        vatNumber: body.vatNumber || null,
+        taxCode: body.taxCode || null,
+        sdiCode: body.sdiCode || null,
+        pec: body.pec || null,
+        address: body.address || null,
+        cap: body.cap || null,
+        city: body.city || null,
+        province: body.province || null,
+        country: body.country || null,
+        phone: body.phone || null,
+        email: body.email || null,
+      },
+    });
   });
 
   app.post("/suppliers/:id/import-full", async (request, reply) => {
@@ -3310,10 +3511,39 @@ export async function adminRoutes(app: FastifyInstance) {
     const supplierId = (request.params as any).id as string;
     const body = z
       .object({
-        name: z.string().min(2),
+        name: z.string().min(2).optional(),
+        legalName: z.string().nullable().optional(),
+        vatNumber: z.string().nullable().optional(),
+        taxCode: z.string().nullable().optional(),
+        sdiCode: z.string().nullable().optional(),
+        pec: z.string().nullable().optional(),
+        address: z.string().nullable().optional(),
+        cap: z.string().nullable().optional(),
+        city: z.string().nullable().optional(),
+        province: z.string().nullable().optional(),
+        country: z.string().nullable().optional(),
+        phone: z.string().nullable().optional(),
+        email: z.string().nullable().optional(),
       })
       .parse(request.body);
-    return prisma.supplier.update({ where: { id: supplierId }, data: { name: body.name } });
+    return prisma.supplier.update({
+      where: { id: supplierId },
+      data: {
+        ...(body.name ? { name: body.name } : {}),
+        ...(body.legalName !== undefined ? { legalName: body.legalName || null } : {}),
+        ...(body.vatNumber !== undefined ? { vatNumber: body.vatNumber || null } : {}),
+        ...(body.taxCode !== undefined ? { taxCode: body.taxCode || null } : {}),
+        ...(body.sdiCode !== undefined ? { sdiCode: body.sdiCode || null } : {}),
+        ...(body.pec !== undefined ? { pec: body.pec || null } : {}),
+        ...(body.address !== undefined ? { address: body.address || null } : {}),
+        ...(body.cap !== undefined ? { cap: body.cap || null } : {}),
+        ...(body.city !== undefined ? { city: body.city || null } : {}),
+        ...(body.province !== undefined ? { province: body.province || null } : {}),
+        ...(body.country !== undefined ? { country: body.country || null } : {}),
+        ...(body.phone !== undefined ? { phone: body.phone || null } : {}),
+        ...(body.email !== undefined ? { email: body.email || null } : {}),
+      },
+    });
   });
 
   app.post("/suppliers/:id/update-stock", async (request, reply) => {
@@ -3643,10 +3873,13 @@ export async function adminRoutes(app: FastifyInstance) {
     const rows = await prisma.goodsReceipt.findMany({
       include: {
         lines: {
-          select: { qty: true },
+          select: { qty: true, unitCost: true },
         },
         createdBy: {
           select: { id: true, email: true },
+        },
+        supplier: {
+          select: { id: true, name: true, legalName: true },
         },
       },
       orderBy: [{ receivedAt: "desc" }, { createdAt: "desc" }],
@@ -3656,6 +3889,10 @@ export async function adminRoutes(app: FastifyInstance) {
       ...r,
       linesCount: r.lines.length,
       totalQty: r.lines.reduce((sum, line) => sum + Number(line.qty || 0), 0),
+      totalNet: r.lines.reduce(
+        (sum, line) => sum + Number(line.qty || 0) * Number(line.unitCost || 0),
+        0
+      ),
     }));
   });
 
@@ -3753,6 +3990,7 @@ export async function adminRoutes(app: FastifyInstance) {
         createdBy: {
           select: { id: true, email: true },
         },
+        supplier: true,
       },
     });
     if (!row) return reply.notFound("Carico non trovato");
@@ -3764,6 +4002,7 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!user) return;
     const body = z
       .object({
+        supplierId: z.string().optional().nullable(),
         supplierName: z.string().optional().nullable(),
         reference: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
@@ -3798,10 +4037,14 @@ export async function adminRoutes(app: FastifyInstance) {
       .toUpperCase()}`;
 
     const result = await prisma.$transaction(async (tx) => {
+      const supplier = body.supplierId
+        ? await tx.supplier.findUnique({ where: { id: body.supplierId } })
+        : null;
       const receipt = await tx.goodsReceipt.create({
         data: {
           receiptNo,
-          supplierName: body.supplierName || null,
+          supplierId: body.supplierId || null,
+          supplierName: body.supplierName || supplier?.name || null,
           reference: body.reference || null,
           notes: body.notes || null,
           receivedAt: body.receivedAt ? new Date(body.receivedAt) : new Date(),
@@ -3905,6 +4148,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const id = (request.params as any).id as string;
     const body = z
       .object({
+        supplierId: z.string().optional().nullable(),
         supplierName: z.string().optional().nullable(),
         reference: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
@@ -3935,6 +4179,9 @@ export async function adminRoutes(app: FastifyInstance) {
       .parse(request.body);
 
     const result = await prisma.$transaction(async (tx) => {
+      const supplier = body.supplierId
+        ? await tx.supplier.findUnique({ where: { id: body.supplierId } })
+        : null;
       const existing = await tx.goodsReceipt.findUnique({
         where: { id },
         include: { lines: true },
@@ -4061,7 +4308,8 @@ export async function adminRoutes(app: FastifyInstance) {
       await tx.goodsReceipt.update({
         where: { id },
         data: {
-          supplierName: body.supplierName || null,
+          supplierId: body.supplierId || null,
+          supplierName: body.supplierName || supplier?.name || null,
           reference: body.reference || null,
           notes: body.notes || null,
           receivedAt: body.receivedAt ? new Date(body.receivedAt) : undefined,

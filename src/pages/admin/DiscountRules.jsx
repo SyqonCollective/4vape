@@ -4,11 +4,13 @@ import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 const emptyDiscount = {
   name: "",
+  code: "",
   active: true,
   scope: "ORDER",
   target: "",
   type: "PERCENT",
   value: "",
+  minSpend: "",
   startDate: "",
   endDate: "",
   notes: "",
@@ -221,6 +223,8 @@ export default function AdminDiscountRules() {
   const [productOptions, setProductOptions] = useState([]);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [openDiscounts, setOpenDiscounts] = useState(true);
+  const [openRules, setOpenRules] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -364,8 +368,10 @@ export default function AdminDiscountRules() {
     const payload = {
       ...discountDraft,
       id: discountId,
+      code: discountDraft.code?.trim() || undefined,
       scope: discountDraft.scope || "ORDER",
       value: discountDraft.value ? Number(discountDraft.value) : 0,
+      minSpend: discountDraft.minSpend ? Number(discountDraft.minSpend) : undefined,
     };
     try {
       if (editingDiscountId) {
@@ -394,6 +400,8 @@ export default function AdminDiscountRules() {
     setDiscountDraft({
       ...rule,
       value: rule.value?.toString() || "",
+      minSpend: rule.minSpend?.toString() || "",
+      code: rule.code || "",
     });
   }
 
@@ -429,18 +437,23 @@ export default function AdminDiscountRules() {
                 <h2>Sconti attivi</h2>
                 <div className="muted">{discounts.length} sconti configurati</div>
               </div>
-              <button
-                className="btn primary"
-                onClick={() => {
-                  resetDiscountDraft();
-                  ensureOptions();
-                  setShowDiscountForm(true);
-                }}
-              >
-                Crea nuovo sconto
-              </button>
+              <div className="actions">
+                <button className="btn ghost" onClick={() => setOpenDiscounts((v) => !v)}>
+                  {openDiscounts ? "Nascondi" : "Mostra"}
+                </button>
+                <button
+                  className="btn primary"
+                  onClick={() => {
+                    resetDiscountDraft();
+                    ensureOptions();
+                    setShowDiscountForm(true);
+                  }}
+                >
+                  Crea nuovo sconto
+                </button>
+              </div>
             </div>
-            <div className="rules-table">
+            {openDiscounts ? <div className="rules-table">
                 <div className="row header">
                   <div>Nome</div>
                   <div>Ambito</div>
@@ -467,7 +480,7 @@ export default function AdminDiscountRules() {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> : null}
           </div>
 
           {showDiscountForm ? (
@@ -502,6 +515,14 @@ export default function AdminDiscountRules() {
                             value={discountDraft.name}
                             onChange={(e) => setDiscountDraft({ ...discountDraft, name: e.target.value })}
                             placeholder="Es. Sconto vetrina 5%"
+                          />
+                        </label>
+                        <label>
+                          Codice sconto
+                          <input
+                            value={discountDraft.code}
+                            onChange={(e) => setDiscountDraft({ ...discountDraft, code: e.target.value.toUpperCase() })}
+                            placeholder="Es. WELCOME10"
                           />
                         </label>
                         <label>
@@ -554,6 +575,16 @@ export default function AdminDiscountRules() {
                           />
                         </label>
                         <label>
+                          Ordine minimo (€)
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={discountDraft.minSpend}
+                            onChange={(e) => setDiscountDraft({ ...discountDraft, minSpend: e.target.value })}
+                            placeholder="0.00"
+                          />
+                        </label>
+                        <label>
                           Dal
                           <input
                             type="date"
@@ -601,18 +632,23 @@ export default function AdminDiscountRules() {
                 <h2>Regole attive</h2>
                 <div className="muted">{rules.length} regole configurate</div>
               </div>
-              <button
-                className="btn primary"
-                onClick={() => {
-                  resetDraft();
-                  ensureOptions();
-                  setShowRuleForm(true);
-                }}
-              >
-                Crea nuova regola
-              </button>
+              <div className="actions">
+                <button className="btn ghost" onClick={() => setOpenRules((v) => !v)}>
+                  {openRules ? "Nascondi" : "Mostra"}
+                </button>
+                <button
+                  className="btn primary"
+                  onClick={() => {
+                    resetDraft();
+                    ensureOptions();
+                    setShowRuleForm(true);
+                  }}
+                >
+                  Crea nuova regola
+                </button>
+              </div>
             </div>
-            <div className="rules-table">
+            {openRules ? <div className="rules-table">
               <div className="row header">
                 <div>Nome</div>
                 <div>Ambito</div>
@@ -641,7 +677,7 @@ export default function AdminDiscountRules() {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> : null}
           </div>
 
           {showRuleForm ? (

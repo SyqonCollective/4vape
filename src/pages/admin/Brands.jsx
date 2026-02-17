@@ -98,7 +98,7 @@ export default function AdminBrands() {
         <div className="table category-table">
           <div className="row header">
             <div>Nome</div>
-            <div>Stato</div>
+            <div>Prodotti</div>
             <div>Azioni</div>
           </div>
           {filtered.map((b) => (
@@ -114,7 +114,7 @@ export default function AdminBrands() {
                 )}
               </div>
               <div>
-                <span className="tag success">Attivo</span>
+                <strong>{b.productsCount || 0}</strong>
               </div>
               <div className="actions">
                 {editing === b.name ? (
