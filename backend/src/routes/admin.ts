@@ -308,6 +308,16 @@ export async function adminRoutes(app: FastifyInstance) {
     return undefined;
   };
 
+  const parseMulti = (value: any) => {
+    if (value === null || value === undefined) return [] as string[];
+    const raw = String(value).trim();
+    if (!raw) return [] as string[];
+    return raw
+      .split(/[|,;]/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+  };
+
   async function resolveExciseTotal(
     exciseRateId?: string | null,
     mlProduct?: number | null,
@@ -1248,6 +1258,8 @@ export async function adminRoutes(app: FastifyInstance) {
       include: { taxRateRef: true, exciseRateRef: true, parent: true, sourceSupplier: true },
       orderBy: { createdAt: "desc" },
     });
+    const allCategories = await prisma.category.findMany({ select: { id: true, name: true } });
+    const categoryNameById = new Map(allCategories.map((c) => [c.id, c.name]));
     const header = [
       "sku",
       "name",
@@ -1255,20 +1267,18 @@ export async function adminRoutes(app: FastifyInstance) {
       "stockQty",
       "brand",
       "category",
-      "categoryId",
+      "subcategory",
+      "aroma",
       "parentSku",
       "isParent",
       "sellAsSingle",
       "isUnavailable",
+      "draft",
       "shortDescription",
       "description",
-      "productType",
-      "visibility",
       "mlProduct",
       "nicotine",
-      "taxRateId",
       "taxRate",
-      "exciseRateId",
       "exciseRate",
       "exciseTotal",
       "purchasePrice",
@@ -1292,21 +1302,26 @@ export async function adminRoutes(app: FastifyInstance) {
       p.price,
       p.stockQty,
       p.brand,
-      p.category,
-      p.categoryId,
+      Array.isArray(p.categoryIds) && p.categoryIds.length
+        ? p.categoryIds
+            .map((id: any) => categoryNameById.get(String(id)) || "")
+            .filter(Boolean)
+            .join("|")
+        : p.category || "",
+      Array.isArray(p.subcategories) && p.subcategories.length
+        ? p.subcategories.join("|")
+        : p.subcategory || "",
+      p.aroma || "",
       p.parent?.sku || "",
       p.isParent ? "1" : "0",
       p.sellAsSingle ? "1" : "0",
       p.isUnavailable ? "1" : "0",
+      p.published === false ? "1" : "0",
       p.shortDescription || "",
       p.description || "",
-      p.productType || "",
-      p.visibility || "",
       p.mlProduct ?? "",
       p.nicotine ?? "",
-      p.taxRateId || "",
       p.taxRateRef?.rate ?? p.taxRate ?? "",
-      p.exciseRateId || "",
       p.exciseRateRef?.name || "",
       p.exciseTotal ?? "",
       p.purchasePrice ?? "",
@@ -1384,10 +1399,10 @@ export async function adminRoutes(app: FastifyInstance) {
       if (shortDescription) data.shortDescription = String(shortDescription);
       const description = pick(row, ["description", "descrizione"]);
       if (description) data.description = String(description);
-      const productType = pick(row, ["producttype", "tipo", "prodotto"]);
-      if (productType) data.productType = String(productType).trim();
-      const visibility = pick(row, ["visibility", "visibilita_nel_catalogo", "visibilita"]);
-      if (visibility) data.visibility = String(visibility).trim();
+      const aroma = pick(row, ["aroma", "nome_aroma"]);
+      if (aroma) data.aroma = String(aroma).trim();
+      const draft = toBool(pick(row, ["draft", "bozza"]));
+      if (draft !== undefined) data.published = !draft;
       const barcode = pick(row, ["barcode", "ean", "codice_a_barre"]);
       if (barcode) data.barcode = String(barcode).trim();
       const relatedSkusRaw = pick(row, ["relatedskus", "prodotticorrelati", "related_products"]);
@@ -1422,22 +1437,23 @@ export async function adminRoutes(app: FastifyInstance) {
       const nicotine = toNumber(pick(row, ["nicotine", "nicotina"]));
       if (nicotine !== undefined) data.nicotine = nicotine;
 
-      const categoryId = pick(row, ["categoryid"]);
       const categoryName = pick(row, ["category", "categoria", "categorie"]);
-      if (categoryId) {
-        const cat = categories.find((c) => c.id === String(categoryId));
-        if (cat) {
-          data.categoryId = cat.id;
-          data.category = cat.name;
+      if (categoryName) {
+        const parts = parseMulti(categoryName);
+        const resolvedIds: string[] = [];
+        const resolvedNames: string[] = [];
+        for (const part of parts) {
+          const cat = categoryByName.get(String(part).toLowerCase());
+          if (cat) {
+            resolvedIds.push(cat.id);
+            resolvedNames.push(cat.name);
+          } else {
+            resolvedNames.push(part);
+          }
         }
-      } else if (categoryName) {
-        const cat = categoryByName.get(String(categoryName).toLowerCase());
-        if (cat) {
-          data.categoryId = cat.id;
-          data.category = cat.name;
-        } else {
-          data.category = String(categoryName);
-        }
+        if (resolvedIds.length) data.categoryIds = resolvedIds;
+        if (resolvedIds[0]) data.categoryId = resolvedIds[0];
+        if (resolvedNames.length) data.category = resolvedNames[0];
       }
 
       const parentSku = pick(row, ["parentsku", "padresku", "padre"]);
@@ -1446,20 +1462,14 @@ export async function adminRoutes(app: FastifyInstance) {
         if (parent) data.parentId = parent.id;
       }
 
-      const taxRateId = pick(row, ["taxrateid"]);
       const taxRate = toPercent(pick(row, ["taxrate", "aliquota_di_imposta", "iva"]));
-      if (taxRateId) {
-        data.taxRateId = String(taxRateId);
-      } else if (taxRate !== undefined) {
+      if (taxRate !== undefined) {
         const t = taxByRate.get(taxRate);
         if (t) data.taxRateId = t.id;
       }
 
-      const exciseRateId = pick(row, ["exciserateid"]);
       const exciseRateName = pick(row, ["exciserate", "accisa"]);
-      if (exciseRateId) {
-        data.exciseRateId = String(exciseRateId);
-      } else if (exciseRateName) {
+      if (exciseRateName) {
         const e = exciseByName.get(String(exciseRateName).toLowerCase());
         if (e) data.exciseRateId = e.id;
       }
@@ -1495,7 +1505,13 @@ export async function adminRoutes(app: FastifyInstance) {
       if (discountQty !== undefined) data.discountQty = discountQty;
 
       const subcategory = pick(row, ["sottocategorie", "sottocategoria", "subcategory"]);
-      if (subcategory) data.subcategory = String(subcategory);
+      if (subcategory) {
+        const parts = parseMulti(subcategory);
+        if (parts.length) {
+          data.subcategory = parts[0];
+          data.subcategories = parts;
+        }
+      }
 
       if (
         data.exciseRateId !== undefined ||
@@ -1547,14 +1563,17 @@ export async function adminRoutes(app: FastifyInstance) {
         name: z.string().min(2),
         description: z.string().optional(),
         brand: z.string().optional(),
+        aroma: z.string().optional(),
         category: z.string().optional(),
         categoryId: z.string().optional(),
+        categoryIds: z.array(z.string()).optional(),
         parentId: z.string().optional(),
         isParent: z.boolean().optional(),
         sellAsSingle: z.boolean().optional(),
         isUnavailable: z.boolean().optional(),
         shortDescription: z.string().optional(),
         subcategory: z.string().optional(),
+        subcategories: z.array(z.string()).optional(),
         published: z.boolean().optional(),
         visibility: z.string().optional(),
         productType: z.string().optional(),
@@ -1591,9 +1610,11 @@ export async function adminRoutes(app: FastifyInstance) {
     const sellAsSingle =
       body.sellAsSingle !== undefined ? body.sellAsSingle : body.isParent ? false : true;
 
+    const explicitCategoryIds = (body.categoryIds || []).filter(Boolean);
+    const firstCategoryId = body.categoryId || explicitCategoryIds[0];
     let categoryName = body.category;
-    if (body.categoryId) {
-      const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
+    if (firstCategoryId) {
+      const category = await prisma.category.findUnique({ where: { id: firstCategoryId } });
       if (!category) return reply.badRequest("Category not found");
       categoryName = category.name;
     }
@@ -1607,13 +1628,22 @@ export async function adminRoutes(app: FastifyInstance) {
       return await prisma.product.create({
         data: {
           ...body,
+          aroma: body.aroma,
           category: categoryName,
+          categoryId: firstCategoryId || null,
+          categoryIds: explicitCategoryIds.length ? explicitCategoryIds : firstCategoryId ? [firstCategoryId] : null,
           parentId: body.parentId || null,
           isParent: body.isParent ?? false,
           sellAsSingle,
           isUnavailable: body.isUnavailable ?? false,
           shortDescription: body.shortDescription,
-          subcategory: body.subcategory,
+          subcategory: body.subcategory || body.subcategories?.[0] || null,
+          subcategories:
+            body.subcategories && body.subcategories.length
+              ? body.subcategories
+              : body.subcategory
+                ? [body.subcategory]
+                : null,
           published: body.published,
           visibility: body.visibility,
           productType: body.productType,
@@ -1658,14 +1688,17 @@ export async function adminRoutes(app: FastifyInstance) {
         name: z.string().optional(),
         description: z.string().optional(),
         brand: z.string().optional(),
+        aroma: z.string().optional(),
         category: z.string().optional(),
         categoryId: z.string().nullable().optional(),
+        categoryIds: z.array(z.string()).optional(),
         parentId: z.string().nullable().optional(),
         isParent: z.boolean().optional(),
         sellAsSingle: z.boolean().optional(),
         isUnavailable: z.boolean().optional(),
         shortDescription: z.string().optional(),
         subcategory: z.string().optional(),
+        subcategories: z.array(z.string()).optional(),
         published: z.boolean().optional(),
         visibility: z.string().optional(),
         productType: z.string().optional(),
@@ -1699,15 +1732,30 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!existing) throw app.httpErrors.notFound("Product not found");
 
     const data: any = { ...body };
-    if (body.categoryId !== undefined) {
-      if (body.categoryId) {
-        const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
+    if (body.categoryIds !== undefined || body.categoryId !== undefined) {
+      const explicitCategoryIds = (body.categoryIds || []).filter(Boolean);
+      const firstCategoryId =
+        body.categoryId !== undefined ? body.categoryId : explicitCategoryIds[0] || null;
+      if (firstCategoryId) {
+        const category = await prisma.category.findUnique({ where: { id: firstCategoryId } });
         if (!category) return reply.badRequest("Category not found");
+        data.categoryId = firstCategoryId;
         data.category = category.name;
+        data.categoryIds = explicitCategoryIds.length ? explicitCategoryIds : [firstCategoryId];
       } else {
+        data.categoryId = null;
         data.category = null;
+        data.categoryIds = null;
       }
     }
+    if (body.subcategories !== undefined) {
+      data.subcategories = body.subcategories.length ? body.subcategories : null;
+      data.subcategory = body.subcategories.length ? body.subcategories[0] : null;
+    } else if (body.subcategory !== undefined) {
+      data.subcategory = body.subcategory || null;
+      data.subcategories = body.subcategory ? [body.subcategory] : null;
+    }
+    if (body.aroma !== undefined) data.aroma = body.aroma || null;
     if (body.parentId !== undefined) data.parentId = body.parentId;
     if (body.isParent !== undefined) data.isParent = body.isParent;
     if (body.sellAsSingle !== undefined) data.sellAsSingle = body.sellAsSingle;

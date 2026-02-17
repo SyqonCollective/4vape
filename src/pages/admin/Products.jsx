@@ -94,8 +94,11 @@ export default function AdminProducts() {
     codicePl: "",
     barcode: "",
     brand: "",
+    aroma: "",
     published: true,
     subcategory: "",
+    subcategories: [],
+    categoryIds: [],
     stockQty: "",
     imageUrl: "",
     categoryId: "",
@@ -140,6 +143,7 @@ export default function AdminProducts() {
     price: "",
     stockQty: "",
     brand: "",
+    aroma: "",
     categoryId: "",
     subcategory: "",
     shortDescription: "",
@@ -198,9 +202,13 @@ export default function AdminProducts() {
     acc.set(c.parentId, list);
     return acc;
   }, new Map());
-  const editSubcategoryOptions = (categoryChildrenMap.get(edit.categoryId) || [])
-    .slice()
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const editSubcategoryOptions = Array.from(
+    new Map(
+      (edit.categoryIds || [])
+        .flatMap((id) => categoryChildrenMap.get(id) || [])
+        .map((c) => [c.id, c])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
   const manualSubcategoryOptions = (categoryChildrenMap.get(manualDraft.categoryId) || [])
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -482,11 +490,24 @@ export default function AdminProducts() {
       codicePl: p.codicePl || "",
       barcode: p.barcode || "",
       brand: p.brand || "",
+      aroma: p.aroma || "",
       published: p.published !== false,
       subcategory: p.subcategory || "",
+      subcategories:
+        Array.isArray(p.subcategories) && p.subcategories.length
+          ? p.subcategories
+          : p.subcategory
+            ? [p.subcategory]
+            : [],
       stockQty: p.stockQty ?? "",
       imageUrl: p.imageUrl || "",
       categoryId: p.categoryId || "",
+      categoryIds:
+        Array.isArray(p.categoryIds) && p.categoryIds.length
+          ? p.categoryIds
+          : p.categoryId
+            ? [p.categoryId]
+            : [],
       parentId: p.parentId || "",
       isParent: Boolean(p.isParent),
       sellAsSingle:
@@ -502,8 +523,8 @@ export default function AdminProducts() {
   async function saveEdit(forcePublish = false) {
     if (!selectedProduct) return;
     const nextValidation = {
-      categoryId: !edit.categoryId,
-      subcategory: !String(edit.subcategory || "").trim(),
+      categoryId: !(edit.categoryIds || []).length,
+      subcategory: !(edit.subcategories || []).length,
     };
     if (nextValidation.categoryId || nextValidation.subcategory) {
       setEditValidation(nextValidation);
@@ -531,8 +552,10 @@ export default function AdminProducts() {
           codicePl: edit.codicePl || undefined,
           barcode: edit.barcode || undefined,
           brand: edit.brand || undefined,
+          aroma: edit.aroma || undefined,
           published: forcePublish ? true : edit.published,
-          subcategory: edit.subcategory || undefined,
+          categoryIds: edit.categoryIds || [],
+          subcategories: edit.subcategories || [],
           stockQty: edit.stockQty !== "" ? Number(edit.stockQty) : undefined,
           imageUrl: edit.imageUrl || undefined,
           categoryId: edit.categoryId || undefined,
@@ -737,6 +760,7 @@ export default function AdminProducts() {
           price: Number(manualDraft.price),
           stockQty: manualDraft.stockQty ? Number(manualDraft.stockQty) : 0,
           brand: manualDraft.brand || undefined,
+          aroma: manualDraft.aroma || undefined,
           categoryId: manualDraft.categoryId || undefined,
           subcategory: manualDraft.subcategory || undefined,
           shortDescription: manualDraft.shortDescription || undefined,
@@ -778,6 +802,7 @@ export default function AdminProducts() {
         price: "",
         stockQty: "",
         brand: "",
+        aroma: "",
         categoryId: "",
         subcategory: "",
         shortDescription: "",
@@ -1418,62 +1443,60 @@ export default function AdminProducts() {
                     />
                   </label>
                   <label>
-                    Categoria
+                    Categorie (multi)
                     <select
+                      multiple
                       className={`select ${editValidation.categoryId ? "input-error" : ""}`}
-                      value={edit.categoryId || ""}
+                      value={edit.categoryIds || []}
                       onChange={(e) => {
-                        setEdit({ ...edit, categoryId: e.target.value, subcategory: "" });
+                        const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
+                        const allowedSub = new Set(
+                          selected.flatMap((id) => (categoryChildrenMap.get(id) || []).map((c) => c.name))
+                        );
+                        setEdit({
+                          ...edit,
+                          categoryIds: selected,
+                          categoryId: selected[0] || "",
+                          subcategories: (edit.subcategories || []).filter((s) => allowedSub.has(s)),
+                        });
                         if (editValidation.categoryId) {
                           setEditValidation((prev) => ({ ...prev, categoryId: false }));
                         }
                       }}
                     >
-                      <option value="">Seleziona categoria</option>
                       {topCategoryOptions.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}
                         </option>
                       ))}
-                      {edit.categoryId &&
-                      !topCategoryOptions.some((c) => c.id === edit.categoryId) ? (
-                        <option value={edit.categoryId}>
-                          {categories.find((c) => c.id === edit.categoryId)?.name || "Categoria attuale"}
-                        </option>
-                      ) : null}
                     </select>
                     {editValidation.categoryId ? (
-                      <div className="field-error">Campo obbligatorio</div>
+                      <div className="field-error">Seleziona almeno una categoria</div>
                     ) : null}
                   </label>
                   <label>
-                    Sottocategoria
+                    Sottocategorie (multi)
                     <select
+                      multiple
                       className={`select ${editValidation.subcategory ? "input-error" : ""}`}
-                      value={edit.subcategory}
+                      value={edit.subcategories || []}
                       onChange={(e) => {
-                        setEdit({ ...edit, subcategory: e.target.value });
+                        const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
+                        setEdit({ ...edit, subcategories: selected, subcategory: selected[0] || "" });
                         if (editValidation.subcategory) {
                           setEditValidation((prev) => ({ ...prev, subcategory: false }));
                         }
                       }}
-                      disabled={!edit.categoryId}
+                      disabled={!(edit.categoryIds || []).length}
                     >
-                      <option value="">
-                        {edit.categoryId ? "Seleziona sottocategoria" : "Seleziona prima una categoria"}
-                      </option>
                       {editSubcategoryOptions.map((c) => (
                         <option key={c.id} value={c.name}>
                           {c.name}
                         </option>
                       ))}
-                      {edit.subcategory &&
-                      !editSubcategoryOptions.some((c) => c.name === edit.subcategory) ? (
-                        <option value={edit.subcategory}>{edit.subcategory}</option>
-                      ) : null}
                     </select>
                     {editValidation.subcategory ? (
-                      <div className="field-error">Campo obbligatorio</div>
+                      <div className="field-error">Seleziona almeno una sottocategoria</div>
                     ) : null}
                   </label>
                   <label>
@@ -1489,6 +1512,19 @@ export default function AdminProducts() {
                           {b}
                         </option>
                       ))}
+                      </select>
+                  </label>
+                  <label>
+                    Aroma
+                    <select
+                      className="select"
+                      value={edit.aroma}
+                      onChange={(e) => setEdit({ ...edit, aroma: e.target.value })}
+                    >
+                      <option value="">Seleziona aroma</option>
+                      <option value="TABACCOSI">TABACCOSI</option>
+                      <option value="CREMOSI">CREMOSI</option>
+                      <option value="FRUTTATI">FRUTTATI</option>
                     </select>
                   </label>
                   <label>
@@ -2116,6 +2152,19 @@ export default function AdminProducts() {
                             {b}
                           </option>
                         ))}
+                      </select>
+                    </label>
+                    <label>
+                      Aroma
+                      <select
+                        className="select"
+                        value={manualDraft.aroma}
+                        onChange={(e) => setManualDraft({ ...manualDraft, aroma: e.target.value })}
+                      >
+                        <option value="">Seleziona aroma</option>
+                        <option value="TABACCOSI">TABACCOSI</option>
+                        <option value="CREMOSI">CREMOSI</option>
+                        <option value="FRUTTATI">FRUTTATI</option>
                       </select>
                     </label>
                     <label>

@@ -180,6 +180,9 @@ model Product {
   brand       String?
   category    String?
   subcategory String?
+  categoryIds Json?
+  subcategories Json?
+  aroma       String?
   categoryId  String?
   parentId    String?
   isParent    Boolean       @default(false)

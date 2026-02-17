@@ -2319,6 +2319,10 @@ button {
   background: #fff;
   color: var(--text);
 }
+.select[multiple] {
+  min-height: 120px;
+  padding: 0.55rem;
+}
 .inline-create {
   display: grid;
   gap: 8px;
