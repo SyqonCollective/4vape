@@ -2929,6 +2929,17 @@ button {
   min-width: 1380px;
 }
 
+.orders-table .row > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+  align-items: center;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
 .orders-table .row.header {
   background: #f8fafc;
   text-transform: uppercase;
