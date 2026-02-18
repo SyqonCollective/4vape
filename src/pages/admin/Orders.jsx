@@ -25,6 +25,7 @@ const STATUS_SORT_PRIORITY = {
   DRAFT: 3,
   CANCELLED: 4,
 };
+const STATUS_DISPLAY_ORDER = ["FULFILLED", "APPROVED", "SUBMITTED", "DRAFT", "CANCELLED"];
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(
@@ -216,6 +217,11 @@ export default function AdminOrders() {
     );
     return { ...base, total: base.subtotal + base.vat + base.excise };
   }, [editLineItems]);
+
+  const orderedStats = useMemo(() => {
+    const byStatus = new Map((orderStats || []).map((s) => [s.status, Number(s.count || 0)]));
+    return STATUS_DISPLAY_ORDER.map((status) => ({ status, count: byStatus.get(status) || 0 }));
+  }, [orderStats]);
 
   const orderedItems = useMemo(() => {
     return [...items].sort((a, b) => {
@@ -490,7 +496,7 @@ export default function AdminOrders() {
       </div>
 
       <div className="orders-stats">
-        {orderStats.map((s) => {
+        {orderedStats.map((s) => {
           const meta = statusMeta(s.status);
           return (
             <div key={s.status} className={`orders-stat-card ${meta.cls}`}>
