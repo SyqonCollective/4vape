@@ -106,6 +106,17 @@ export default function AdminInventory() {
     return { totalItems, totalStock, totalValue, subtotal, totalExcise, totalVat };
   }, [items]);
 
+  const subcategoryStats = useMemo(() => {
+    const map = new Map();
+    for (const item of items) {
+      const key = (item.subcategory || "Senza sottocategoria").trim();
+      const prev = map.get(key) || { name: key, qty: 0 };
+      prev.qty += Number(item.stockQty || 0);
+      map.set(key, prev);
+    }
+    return Array.from(map.values()).sort((a, b) => b.qty - a.qty || a.name.localeCompare(b.name, "it"));
+  }, [items]);
+
   function openCreate() {
     setForm(initialForm);
     setShowEditModal(true);
@@ -241,6 +252,26 @@ export default function AdminInventory() {
             placeholder="SKU, nome, brand, categoria"
           />
         </div>
+      </div>
+
+      <div className="table subcategory-stock-table">
+        <div className="row header">
+          <div>Sottocategoria</div>
+          <div>Quantità totale</div>
+        </div>
+        {subcategoryStats.length ? (
+          subcategoryStats.map((s) => (
+            <div className="row" key={s.name}>
+              <div>{s.name}</div>
+              <div>{s.qty}</div>
+            </div>
+          ))
+        ) : (
+          <div className="row">
+            <div className="muted">Nessuna sottocategoria</div>
+            <div>0</div>
+          </div>
+        )}
       </div>
 
       <div className="inventory-table">

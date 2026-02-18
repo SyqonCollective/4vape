@@ -60,6 +60,7 @@ export default function AdminOrders() {
   const [editLineItems, setEditLineItems] = useState([]);
   const [editSearchQuery, setEditSearchQuery] = useState("");
   const [editSearchResults, setEditSearchResults] = useState([]);
+  const [confirmCompleteOrder, setConfirmCompleteOrder] = useState(null);
 
   async function loadOrders() {
     try {
@@ -574,7 +575,7 @@ export default function AdminOrders() {
                 className="btn ghost"
                 onClick={(e) => {
                   e.stopPropagation();
-                  updateStatus(o.id, "FULFILLED");
+                  setConfirmCompleteOrder(o);
                 }}
               >
                 Completato
@@ -588,20 +589,39 @@ export default function AdminOrders() {
               >
                 Modifica
               </button>
-              <button
-                className="btn ghost order-kebab"
-                title="Apri ordine"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSummaryOrder(o);
-                }}
-              >
-                ⋯
-              </button>
             </div>
           </div>
         ))}
       </div>
+
+      {confirmCompleteOrder ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setConfirmCompleteOrder(null)}>
+            <div className="modal confirm-dialog" onClick={(e) => e.stopPropagation()}>
+              <h3>Conferma completamento</h3>
+              <p>
+                Sei sicuro di voler segnare come completato l&apos;ordine{" "}
+                <strong>{confirmCompleteOrder.orderNumber || confirmCompleteOrder.id}</strong>?
+              </p>
+              <div className="actions">
+                <button className="btn ghost" onClick={() => setConfirmCompleteOrder(null)}>
+                  Annulla
+                </button>
+                <button
+                  className="btn primary"
+                  onClick={async () => {
+                    const orderId = confirmCompleteOrder.id;
+                    setConfirmCompleteOrder(null);
+                    await updateStatus(orderId, "FULFILLED");
+                  }}
+                >
+                  Conferma
+                </button>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
 
       {showCreate ? (
         <Portal>
