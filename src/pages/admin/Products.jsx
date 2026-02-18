@@ -1196,6 +1196,13 @@ export default function AdminProducts() {
               placeholder="SKU, nome, brand..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  setCurrentPage(1);
+                  setSearchTerm((v) => v.trimStart());
+                }
+              }}
             />
           </div>
           <div className="toolbar-group">
@@ -1307,6 +1314,15 @@ export default function AdminProducts() {
             Boolean(p.parentId || p.parent?.id) &&
             Boolean(p.sellAsSingle) &&
             p.price != null;
+          const categoriesLabel = Array.isArray(p.categoryIds) && p.categoryIds.length
+            ? (p.categoryIds
+                .map((id) => topCategoryOptions.find((c) => c.id === id)?.name)
+                .filter(Boolean)
+                .join(", ") || p.category || dash)
+            : (p.category || dash);
+          const subcategoriesLabel = Array.isArray(p.subcategories) && p.subcategories.length
+            ? p.subcategories.join(", ")
+            : (p.subcategory || "");
           return (
           <div
             className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
@@ -1390,7 +1406,10 @@ export default function AdminProducts() {
               {isParentRow ? "Padre" : isChildSingle ? "Figlio+singolo" : p.parentId ? "Figlio" : "Singolo"}
             </div>
             <div>{row.parent?.sku || p.parent?.sku || dash}</div>
-            <div>{p.category || dash}</div>
+            <div>
+              <div>{categoriesLabel}</div>
+              {subcategoriesLabel ? <div className="muted">{subcategoriesLabel}</div> : null}
+            </div>
             <div className="excise-cell">
               {p.exciseRateRef?.name || (p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : dash)}
             </div>
@@ -1529,9 +1548,12 @@ export default function AdminProducts() {
                 {selectedProduct.isParent ? (
                   <div><strong>Figli:</strong> {selectedProduct.children?.length || 0}</div>
                 ) : null}
-                <div className="order-card" style={{ padding: 12 }}>
-                  <div className="card-title" style={{ marginBottom: 8 }}>Prezzo dedicato per cliente</div>
-                  <div className="input-row" style={{ marginBottom: 8 }}>
+                <div className="customer-price-panel">
+                  <div className="customer-price-header">
+                    <div className="card-title" style={{ marginBottom: 0 }}>Prezzo dedicato per cliente</div>
+                    <div className="muted">Override prezzo solo per cliente selezionato</div>
+                  </div>
+                  <div className="customer-price-form">
                     <select
                       className="select"
                       value={companyPriceDraft.companyId}
@@ -1555,7 +1577,7 @@ export default function AdminProducts() {
                       Salva prezzo
                     </button>
                   </div>
-                  <div className="table compact">
+                  <div className="table compact customer-price-table">
                     <div className="row header">
                       <div>Cliente</div>
                       <div>Prezzo</div>

@@ -214,6 +214,20 @@ export default function AdminSuppliers() {
     }
   }
 
+  async function deleteSupplier(id) {
+    if (!window.confirm("Eliminare questo fornitore?")) return;
+    try {
+      await api(`/admin/suppliers/${id}`, { method: "DELETE" });
+      if (selected?.id === id) {
+        setSelected(null);
+        setSupplierProducts([]);
+      }
+      await load();
+    } catch (err) {
+      setError("Impossibile eliminare fornitore (controlla collegamenti prodotti)");
+    }
+  }
+
   async function promoteToStore(product) {
     if (!selected) return;
     if (!categoryId) {
@@ -353,8 +367,8 @@ export default function AdminSuppliers() {
     <section>
       <div className="page-header">
         <div>
-          <h1>Fornitori</h1>
-          <p>Configura e importa prodotti dal fornitore</p>
+          <h1>Drop</h1>
+          <p>Configura e importa prodotti dal drop</p>
         </div>
       </div>
 
@@ -466,6 +480,9 @@ export default function AdminSuppliers() {
                   >
                     Rinomina
                   </button>
+                  <button className="btn danger" onClick={() => deleteSupplier(s.id)}>
+                    Elimina
+                  </button>
                 </div>
               )}
             </div>
@@ -494,6 +511,13 @@ export default function AdminSuppliers() {
                 placeholder="Cerca SKU o nome"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setPage(1);
+                    viewProducts(selected, 1);
+                  }
+                }}
               />
               <button
                 className="btn"

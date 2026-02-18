@@ -245,7 +245,7 @@ export default function AdminInventory() {
 
       <div className="inventory-table">
         <div className="inventory-row header">
-          <div>SKU</div><div>Nome</div><div>Brand</div><div>Categoria</div><div>Giacenza</div><div>Costo</div><div>Prezzo</div><div>Accisa</div><div>IVA</div><div></div>
+          <div>SKU</div><div>Nome</div><div>Brand</div><div>Categoria</div><div>Sottocategoria</div><div>Giacenza</div><div>Costo</div><div>Prezzo</div><div>Accisa</div><div>IVA</div><div></div>
         </div>
         {loading ? <div className="inventory-empty">Caricamento...</div> : null}
         {!loading && !items.length ? <div className="inventory-empty">Nessun articolo</div> : null}
@@ -256,6 +256,7 @@ export default function AdminInventory() {
                 <div>{item.name}</div>
                 <div>{item.brand || "-"}</div>
                 <div>{item.category || "-"}</div>
+                <div>{item.subcategory || "-"}</div>
                 <div>{item.stockQty}</div>
                 <div>{item.purchasePrice != null ? money(item.purchasePrice) : "-"}</div>
                 <div>{item.price != null ? money(item.price) : "-"}</div>

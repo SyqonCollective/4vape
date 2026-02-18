@@ -16,7 +16,7 @@ const links = [
   { to: "/admin/products", label: "Prodotti" },
   { to: "/admin/brands", label: "Brand" },
   { to: "/admin/categories", label: "Categorie" },
-  { to: "/admin/suppliers", label: "Fornitori" },
+  { to: "/admin/suppliers", label: "Drop" },
   { to: "/admin/discounts", label: "Sconti e Regole" },
   { to: "/admin/settings", label: "Impostazioni" },
   { to: "/admin/orders", label: "Ordini" },

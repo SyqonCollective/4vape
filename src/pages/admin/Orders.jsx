@@ -509,6 +509,7 @@ export default function AdminOrders() {
           </div>
           <div>Ordine #</div>
           <div>Azienda</div>
+          <div>Referente</div>
           <div>Stato</div>
           <div>Pagamento</div>
           <div>Totale</div>
@@ -531,6 +532,11 @@ export default function AdminOrders() {
             </div>
             <div className="mono">{o.orderNumber || "-"}</div>
             <div>{o.company?.name || "-"}</div>
+            <div>
+              {(o.company?.contactFirstName || o.company?.contactLastName)
+                ? `${o.company?.contactFirstName || ""} ${o.company?.contactLastName || ""}`.trim()
+                : (o.company?.email || "-")}
+            </div>
             <div>
               <span className={statusMeta(o.status).cls}>{statusMeta(o.status).label}</span>
             </div>
@@ -564,6 +570,16 @@ export default function AdminOrders() {
                 }}
               >
                 Modifica
+              </button>
+              <button
+                className="btn ghost order-kebab"
+                title="Apri ordine"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSummaryOrder(o);
+                }}
+              >
+                ⋯
               </button>
             </div>
           </div>
@@ -776,6 +792,14 @@ export default function AdminOrders() {
                         <div>
                           <strong>Creato</strong>
                           <div>{new Date(summaryOrder.createdAt).toLocaleString()}</div>
+                        </div>
+                        <div>
+                          <strong>Referente</strong>
+                          <div>
+                            {(summaryOrder.company?.contactFirstName || summaryOrder.company?.contactLastName)
+                              ? `${summaryOrder.company?.contactFirstName || ""} ${summaryOrder.company?.contactLastName || ""}`.trim()
+                              : (summaryOrder.company?.email || "-")}
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -807,7 +807,7 @@ button {
 }
 .rules-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-top: 1.2rem;
 }
@@ -2921,12 +2921,12 @@ button {
 
 .orders-table .row {
   display: grid;
-  grid-template-columns: 42px 90px 1.15fr 170px 130px 130px 170px 220px;
+  grid-template-columns: 42px 90px 1.1fr 180px 150px 130px 130px 170px 220px;
   gap: 12px;
   padding: 14px 18px;
   align-items: center;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1240px;
+  min-width: 1380px;
 }
 
 .orders-table .row.header {
@@ -2968,6 +2968,13 @@ button {
 
 .orders-bulk-row select {
   min-width: 220px;
+}
+
+.order-kebab {
+  min-width: 36px;
+  padding: 6px 10px;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .status {
@@ -3333,8 +3340,8 @@ button {
 
   .orders-table .row,
   .orders-table .row.header {
-    grid-template-columns: 42px 90px 1.15fr 170px 130px 130px 170px 220px;
-    min-width: 1240px;
+    grid-template-columns: 42px 90px 1.1fr 180px 150px 130px 130px 170px 220px;
+    min-width: 1380px;
   }
 
   .order-lines-header,
@@ -3360,6 +3367,39 @@ button {
     border: 1px solid rgba(148, 163, 184, 0.25);
     margin-bottom: 10px;
     background: #fff;
+  }
+}
+
+.customer-price-panel {
+  margin-top: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 16px;
+  padding: 14px;
+  background: #f8fafc;
+}
+
+.customer-price-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.customer-price-form {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.customer-price-table .row {
+  grid-template-columns: 1.4fr 0.6fr 0.5fr;
+}
+
+@media (max-width: 900px) {
+  .customer-price-form {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -3403,7 +3443,7 @@ button {
 
 .inventory-row {
   display: grid;
-  grid-template-columns: 110px 1.5fr 0.9fr 0.9fr 90px 120px 120px 120px 120px 100px;
+  grid-template-columns: 110px 1.5fr 0.9fr 0.9fr 0.9fr 90px 120px 120px 120px 120px 100px;
   gap: 10px;
   align-items: center;
   padding: 12px 14px;

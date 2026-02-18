@@ -158,6 +158,12 @@ export default function AdminGoodsReceipts() {
       }
       return "";
     };
+    const productCategories = Array.isArray(prod.categoryIds) ? prod.categoryIds.filter(Boolean) : [];
+    const productSubcategories = Array.isArray(prod.subcategories)
+      ? prod.subcategories.filter(Boolean)
+      : [];
+    const categoryFallback = productCategories.join(", ");
+    const subcategoryFallback = productSubcategories.join(", ");
     return {
       ...row,
       name: pick(inv.name, prod.name, row.name),
@@ -165,8 +171,8 @@ export default function AdminGoodsReceipts() {
       description: pick(inv.description, prod.description, row.description),
       shortDescription: pick(inv.shortDescription, prod.shortDescription, row.shortDescription),
       brand: pick(inv.brand, prod.brand, row.brand),
-      category: pick(inv.category, prod.category, row.category),
-      subcategory: pick(inv.subcategory, prod.subcategory, row.subcategory),
+      category: pick(inv.category, prod.category, categoryFallback, row.category),
+      subcategory: pick(inv.subcategory, prod.subcategory, subcategoryFallback, row.subcategory),
       barcode: pick(inv.barcode, prod.barcode, row.barcode),
       nicotine: String(pick(inv.nicotine, prod.nicotine, row.nicotine)),
       mlProduct: String(pick(inv.mlProduct, prod.mlProduct, row.mlProduct)),

@@ -3546,6 +3546,28 @@ export async function adminRoutes(app: FastifyInstance) {
     });
   });
 
+  app.delete("/suppliers/:id", async (request, reply) => {
+    const user = requireAdmin(request, reply);
+    if (!user) return;
+    const supplierId = (request.params as any).id as string;
+    const linkedProducts = await prisma.product.count({
+      where: { sourceSupplierId: supplierId },
+    });
+    const linkedSupplierProducts = await prisma.supplierProduct.count({
+      where: { supplierId },
+    });
+    const linkedReceipts = await prisma.goodsReceipt.count({
+      where: { supplierId },
+    });
+    if (linkedProducts > 0 || linkedSupplierProducts > 0 || linkedReceipts > 0) {
+      return reply
+        .code(409)
+        .send({ error: "Fornitore collegato a prodotti/import/carichi: rimuovi prima i collegamenti" });
+    }
+    await prisma.supplier.delete({ where: { id: supplierId } });
+    return reply.code(204).send();
+  });
+
   app.post("/suppliers/:id/update-stock", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
@@ -3914,6 +3936,8 @@ export async function adminRoutes(app: FastifyInstance) {
           brand: true,
           category: true,
           subcategory: true,
+          categoryIds: true,
+          subcategories: true,
           barcode: true,
           nicotine: true,
           mlProduct: true,
