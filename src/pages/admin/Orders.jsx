@@ -439,20 +439,42 @@ export default function AdminOrders() {
 
   function printSummary(order) {
     if (!order) return;
+    const company = order.company || {};
+    const safe = (value) =>
+      String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
     const totals = computeOrderTotals(order);
     const rows = (order.items || [])
       .map(
         (item) => `
         <tr>
-          <td>${item.name || "-"}</td>
-          <td>${item.sku || "-"}</td>
+          <td>${safe(item.name || "-")}</td>
+          <td>${safe(item.sku || "-")}</td>
           <td>${Number(item.qty || 0)}</td>
           <td>${formatCurrency(item.unitPrice)}</td>
           <td>${formatCurrency(item.lineTotal)}</td>
-          <td>${item.product?.sourceSupplier?.name || "-"}</td>
+          <td>${safe(item.product?.sourceSupplier?.name || "-")}</td>
         </tr>`
       )
       .join("");
+    const customerContact =
+      [company.contactFirstName, company.contactLastName].filter(Boolean).join(" ").trim() || "-";
+    const customerAddress = [company.address, company.cap, company.city, company.province]
+      .filter(Boolean)
+      .join(", ");
+    const shippingAddress =
+      [
+        order.shippingAddress,
+        order.shippingAddressLine1,
+        order.shippingAddressLine2,
+        [order.shippingCap, order.shippingCity, order.shippingProvince].filter(Boolean).join(" "),
+      ]
+        .filter(Boolean)
+        .join(", ") || customerAddress || "-";
     const w = window.open("", "_blank", "width=1100,height=800");
     if (!w) {
       setError("Popup bloccato: abilita i popup per stampare.");
@@ -468,6 +490,11 @@ export default function AdminOrders() {
             body{font-family:Arial,sans-serif;padding:24px;color:#0f172a}
             h1{margin:0 0 8px}
             .meta{margin:0 0 18px;color:#475569}
+            .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 14px}
+            .card{border:1px solid #cbd5e1;border-radius:10px;padding:12px}
+            .card h3{margin:0 0 10px;font-size:14px;color:#334155;text-transform:uppercase;letter-spacing:.04em}
+            .line{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid #e2e8f0;font-size:13px}
+            .line:last-child{border-bottom:0}
             table{width:100%;border-collapse:collapse;margin-top:14px}
             th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;font-size:13px}
             th{background:#f8fafc}
@@ -477,8 +504,24 @@ export default function AdminOrders() {
           </style>
         </head>
         <body>
-          <h1>${title}</h1>
-          <div class="meta">${order.company?.name || "-"} • ${created}</div>
+          <h1>${safe(title)}</h1>
+          <div class="meta">${safe(company.name || "-")} • ${safe(created)}</div>
+          <div class="grid">
+            <div class="card">
+              <h3>Dati cliente</h3>
+              <div class="line"><span>Azienda</span><strong>${safe(company.legalName || company.name || "-")}</strong></div>
+              <div class="line"><span>Referente</span><strong>${safe(customerContact)}</strong></div>
+              <div class="line"><span>P.IVA</span><strong>${safe(company.vatNumber || "-")}</strong></div>
+              <div class="line"><span>Cod. univoco</span><strong>${safe(company.sdiCode || "-")}</strong></div>
+              <div class="line"><span>Email</span><strong>${safe(company.email || "-")}</strong></div>
+              <div class="line"><span>Telefono</span><strong>${safe(company.phone || "-")}</strong></div>
+              <div class="line"><span>Indirizzo cliente</span><strong>${safe(customerAddress || "-")}</strong></div>
+            </div>
+            <div class="card">
+              <h3>Indirizzo di spedizione</h3>
+              <div style="font-size:14px;line-height:1.5">${safe(shippingAddress)}</div>
+            </div>
+          </div>
           <table>
             <thead>
               <tr>
