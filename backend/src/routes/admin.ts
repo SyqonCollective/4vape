@@ -1120,8 +1120,14 @@ export async function adminRoutes(app: FastifyInstance) {
     const gross = subtotal.add(new Prisma.Decimal(vatTotal)).add(new Prisma.Decimal(exciseTotal));
     const total = Prisma.Decimal.max(gross.sub(discountTotal), new Prisma.Decimal(0));
 
+    const maxOrderRow = await prisma.order.aggregate({
+      _max: { orderNumber: true },
+    });
+    const nextOrderNumber = Math.max(20000, Number(maxOrderRow._max.orderNumber || 19999) + 1);
+
     const order = await prisma.order.create({
       data: {
+        orderNumber: nextOrderNumber,
         companyId: company.id,
         createdById: user.id,
         status: body.status ?? "SUBMITTED",
@@ -3308,15 +3314,43 @@ export async function adminRoutes(app: FastifyInstance) {
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       }),
       prisma.product.findMany({
-        select: { category: true, categoryId: true, categoryIds: true },
+        select: {
+          category: true,
+          categoryId: true,
+          categoryIds: true,
+          subcategory: true,
+          subcategories: true,
+        },
       }),
     ]);
-    const categoryIdByName = new Map<string, string>();
+    const normalizeCategoryToken = (value?: string | null) =>
+      (value || "")
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ");
+    const categoryIdsByName = new Map<string, string[]>();
     for (const c of categories) {
-      const key = (c.name || "").trim().toLowerCase();
-      if (key) categoryIdByName.set(key, c.id);
+      const key = normalizeCategoryToken(c.name);
+      if (!key) continue;
+      const list = categoryIdsByName.get(key) || [];
+      list.push(c.id);
+      categoryIdsByName.set(key, list);
     }
     const countMap = new Map<string, number>();
+    const addByName = (ids: Set<string>, raw?: string | null) => {
+      if (!raw) return;
+      const parts = String(raw)
+        .split(/[|;,]/g)
+        .map((x) => normalizeCategoryToken(x))
+        .filter(Boolean);
+      for (const key of parts) {
+        const matches = categoryIdsByName.get(key) || [];
+        for (const id of matches) ids.add(id);
+      }
+    };
     for (const p of products) {
       const ids = new Set<string>();
       if (p.categoryId) ids.add(p.categoryId);
@@ -3325,8 +3359,12 @@ export async function adminRoutes(app: FastifyInstance) {
           if (typeof id === "string" && id) ids.add(id);
         }
       }
-      if (p.category && categoryIdByName.has(p.category.trim().toLowerCase())) {
-        ids.add(categoryIdByName.get(p.category.trim().toLowerCase()) as string);
+      addByName(ids, p.category);
+      addByName(ids, p.subcategory);
+      if (Array.isArray(p.subcategories)) {
+        for (const sub of p.subcategories) {
+          if (typeof sub === "string") addByName(ids, sub);
+        }
       }
       for (const id of ids) {
         countMap.set(id, (countMap.get(id) || 0) + 1);
@@ -4086,11 +4124,20 @@ export async function adminRoutes(app: FastifyInstance) {
       })
       .parse(request.body);
 
-    const receiptNo = `AR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${randomUUID()
-      .slice(0, 8)
-      .toUpperCase()}`;
+    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const cleanRef = String(body.reference || "").trim();
+    const baseReceiptNo =
+      cleanRef.length > 0
+        ? `FATT-${cleanRef}`
+        : `CAR-${datePart}-${randomUUID().slice(0, 8).toUpperCase()}`;
 
     const result = await prisma.$transaction(async (tx) => {
+      let receiptNo = baseReceiptNo;
+      let suffix = 2;
+      while (await tx.goodsReceipt.findUnique({ where: { receiptNo } })) {
+        receiptNo = `${baseReceiptNo}-${suffix}`;
+        suffix += 1;
+      }
       const supplier = body.supplierId
         ? await tx.supplier.findUnique({ where: { id: body.supplierId } })
         : null;

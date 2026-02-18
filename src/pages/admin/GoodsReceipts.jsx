@@ -98,6 +98,7 @@ export default function AdminGoodsReceipts() {
   const [editReference, setEditReference] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editRows, setEditRows] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingImportRows, setPendingImportRows] = useState([]);
   const [conflictSkus, setConflictSkus] = useState([]);
   const [skuInfoCache, setSkuInfoCache] = useState({});
@@ -539,6 +540,7 @@ export default function AdminGoodsReceipts() {
       setSupplierName("");
       setReference("");
       setNotes("");
+      setShowCreateModal(false);
       await loadReceipts();
     } catch {
       setError("Impossibile salvare arrivo merci");
@@ -682,217 +684,240 @@ export default function AdminGoodsReceipts() {
           <h1>Arrivo merci</h1>
           <p>Inserimento massivo rapido per magazzino interno</p>
         </div>
+        <div className="page-actions">
+          <button className="btn primary" onClick={() => setShowCreateModal(true)}>
+            Nuovo arrivo merci
+          </button>
+        </div>
       </div>
 
       <InlineError message={error} onClose={() => setError("")} />
       {success ? <div className="success-banner">{success}</div> : null}
 
-      <div className="goods-layout">
-        <div className="goods-main">
-          <div className="order-card">
-            <div className="card-title">Dati carico</div>
-            <div className="order-form">
+      <div className="order-card">
+        <div className="card-title">Carichi registrati</div>
+        <div className="goods-receipts-list">
+          {!receipts.length ? <div className="field-hint">Nessun arrivo merci registrato.</div> : null}
+          {receipts.map((r) => (
+            <div key={r.id} className="goods-receipt-item">
               <div>
-                <label>Fornitore (anagrafica)</label>
-                <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-                  <option value="">Seleziona fornitore</option>
-                  {suppliers.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label>Fornitore (testo)</label>
-                <input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
-              </div>
-              <div>
-                <label>Riferimento documento</label>
-                <input value={reference} onChange={(e) => setReference(e.target.value)} />
-              </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label>Note arrivo merci</label>
-                <input value={notes} onChange={(e) => setNotes(e.target.value)} />
-              </div>
-            </div>
-          </div>
-
-          <div className="order-card">
-            <div className="card-title">Incolla da Excel/CSV</div>
-            <p className="field-hint">
-              Ordine colonne: SKU, Nome, CodicePL, Qta, PrezzoNetto, Sconto, Brand, Categoria, Sottocategoria, Barcode, Nicotina, ML
-            </p>
-            <textarea
-              className="goods-paste"
-              value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
-              placeholder="SKU123\tProdotto A\tPL123\t12\t3.50\t0"
-            />
-            <div className="actions">
-              <button className="btn ghost" onClick={downloadTemplateCsv}>
-                Scarica template CSV
-              </button>
-              <button className="btn ghost" onClick={() => fileInputRef.current?.click()}>
-                Importa CSV
-              </button>
-              <button className="btn ghost" onClick={applyPaste}>Applica incolla</button>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                onCsvImport(f);
-                e.target.value = "";
-              }}
-            />
-          </div>
-
-          <div className="order-card">
-            <div className="goods-toolbar">
-              <div className="card-title" style={{ marginBottom: 0 }}>Righe arrivo merci</div>
-            </div>
-            <div className="goods-grid">
-              <div className="goods-row header">
-                <div>SKU</div>
-                <div>Nome</div>
-                <div>Codice PL</div>
-                <div>Qta</div>
-                <div>Prezzo netto</div>
-                <div>Sconto</div>
-                <div>IVA</div>
-                <div>Totale riga</div>
-                <div>Nota riga</div>
-                <div></div>
-              </div>
-              {rows.map((row, idx) => (
-                <div key={idx} className="goods-row">
-                  <input
-                    ref={(el) => {
-                      skuInputsRef.current[idx] = el;
-                    }}
-                    value={row.sku}
-                    onChange={(e) => updateRow(idx, { sku: e.target.value })}
-                    onBlur={() => handleSkuBlur(idx)}
-                    onKeyDown={(e) => handleRowEnter(idx, e)}
-                  />
-                  <input value={row.name} onChange={(e) => updateRow(idx, { name: e.target.value })} />
-                  <input value={row.codicePl || ""} onChange={(e) => updateRow(idx, { codicePl: e.target.value })} />
-                  <input
-                    type="number"
-                    value={row.qty}
-                    onChange={(e) => updateRow(idx, { qty: Number(e.target.value || 0) })}
-                    onKeyDown={(e) => handleRowEnter(idx, e)}
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={row.unitCost}
-                    onChange={(e) => updateRow(idx, { unitCost: e.target.value })}
-                    onKeyDown={(e) => handleRowEnter(idx, e)}
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={row.discount || ""}
-                    onChange={(e) => updateRow(idx, { discount: e.target.value })}
-                    placeholder="%"
-                    onKeyDown={(e) => handleRowEnter(idx, e)}
-                  />
-                  <select
-                    value={row.taxRateId}
-                    onChange={(e) => updateRow(idx, { taxRateId: e.target.value })}
-                  >
-                    <option value="">IVA</option>
-                    {taxes.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0))}</div>
-                  <input
-                    value={row.lineNote}
-                    onChange={(e) => updateRow(idx, { lineNote: e.target.value })}
-                    placeholder="Nota"
-                  />
-                  <button className="btn ghost small" onClick={() => removeRow(idx)}>Rimuovi</button>
+                <strong>{r.reference || r.receiptNo}</strong>
+                <div className="field-hint">{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
+                <div className="field-hint">
+                  {r.supplier?.name || r.supplierName || "Fornitore non impostato"}
                 </div>
-              ))}
+                {r.reference ? <div className="field-hint">Rif. fattura: {r.reference}</div> : null}
+              </div>
+              <div className="goods-receipt-right">
+                <div className="field-hint">
+                  {r.linesCount} righe · {r.totalQty} pz · {money(r.totalNet)}
+                </div>
+                <button className="btn ghost small" onClick={() => openEditReceipt(r.id)}>
+                  Modifica
+                </button>
+                <button className="btn ghost small" onClick={() => setConfirmDelete(r)}>
+                  Elimina
+                </button>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-
-        <aside className="goods-side">
-          <div className="order-summary-card order-card">
-            <div className="card-title">Riepilogo</div>
-            <div className="summary-grid">
-              <div>
-                <strong>Righe valide</strong>
-                <div>{stats.lines}</div>
-              </div>
-              <div>
-                <strong>Quantità totale</strong>
-                <div>{stats.qty}</div>
-              </div>
-              <div>
-                <strong>Valore a costo</strong>
-                <div>{money(stats.cost)}</div>
-              </div>
-              <div>
-                <strong>Subtotale (imponibile)</strong>
-                <div>{money(stats.subtotal)}</div>
-              </div>
-              <div>
-                <strong>IVA stimata</strong>
-                <div>{money(stats.vat)}</div>
-              </div>
-              <div>
-                <strong>Totale stimato</strong>
-                <div>{money(stats.subtotal + stats.vat)}</div>
-              </div>
-            </div>
-            <div className="summary-actions" style={{ marginTop: 16 }}>
-              <button className="btn primary" onClick={saveReceipt} disabled={saving}>
-                {saving ? "Salvataggio..." : "Conferma arrivo merci"}
-              </button>
-            </div>
-          </div>
-
-          <div className="order-card">
-            <div className="card-title">Ultimi carichi</div>
-            <div className="goods-receipts-list">
-              {!receipts.length ? <div className="field-hint">Nessun arrivo merci registrato.</div> : null}
-              {receipts.slice(0, 10).map((r) => (
-                <div key={r.id} className="goods-receipt-item">
-                  <div>
-                    <strong>{r.receiptNo}</strong>
-                    <div className="field-hint">{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
-                    <div className="field-hint">
-                      {r.supplier?.name || r.supplierName || "Fornitore non impostato"}
-                    </div>
-                    {r.reference ? <div className="field-hint">Rif: {r.reference}</div> : null}
-                  </div>
-                    <div className="goods-receipt-right">
-                      <div className="field-hint">
-                        {r.linesCount} righe · {r.totalQty} pz · {money(r.totalNet)}
-                      </div>
-                    <button className="btn ghost small" onClick={() => openEditReceipt(r.id)}>
-                      Modifica
-                    </button>
-                    <button className="btn ghost small" onClick={() => setConfirmDelete(r)}>
-                      Elimina
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
       </div>
+
+      {showCreateModal ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
+            <div className="modal returns-detail-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div className="modal-title">
+                  <h3>Nuovo arrivo merci</h3>
+                </div>
+                <button className="btn ghost" onClick={() => setShowCreateModal(false)}>
+                  Chiudi
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="goods-layout">
+                  <div className="goods-main">
+                    <div className="order-card">
+                      <div className="card-title">Dati carico</div>
+                      <div className="order-form">
+                        <div>
+                          <label>Fornitore (anagrafica)</label>
+                          <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+                            <option value="">Seleziona fornitore</option>
+                            {suppliers.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label>Fornitore (testo)</label>
+                          <input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+                        </div>
+                        <div>
+                          <label>Riferimento fattura</label>
+                          <input value={reference} onChange={(e) => setReference(e.target.value)} />
+                        </div>
+                        <div style={{ gridColumn: "1 / -1" }}>
+                          <label>Note arrivo merci</label>
+                          <input value={notes} onChange={(e) => setNotes(e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="order-card">
+                      <div className="card-title">Incolla da Excel/CSV</div>
+                      <p className="field-hint">
+                        Ordine colonne: SKU, Nome, CodicePL, Qta, PrezzoNetto, Sconto, Brand, Categoria, Sottocategoria, Barcode, Nicotina, ML
+                      </p>
+                      <textarea
+                        className="goods-paste"
+                        value={pasteText}
+                        onChange={(e) => setPasteText(e.target.value)}
+                        placeholder="SKU123\tProdotto A\tPL123\t12\t3.50\t0"
+                      />
+                      <div className="actions">
+                        <button className="btn ghost" onClick={downloadTemplateCsv}>
+                          Scarica template CSV
+                        </button>
+                        <button className="btn ghost" onClick={() => fileInputRef.current?.click()}>
+                          Importa CSV
+                        </button>
+                        <button className="btn ghost" onClick={applyPaste}>Applica incolla</button>
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv,text/csv"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          onCsvImport(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+
+                    <div className="order-card">
+                      <div className="goods-toolbar">
+                        <div className="card-title" style={{ marginBottom: 0 }}>Righe arrivo merci</div>
+                      </div>
+                      <div className="goods-grid">
+                        <div className="goods-row header">
+                          <div>SKU</div>
+                          <div>Nome</div>
+                          <div>Codice PL</div>
+                          <div>Qta</div>
+                          <div>Prezzo netto</div>
+                          <div>Sconto</div>
+                          <div>IVA</div>
+                          <div>Totale riga</div>
+                          <div>Nota riga</div>
+                          <div></div>
+                        </div>
+                        {rows.map((row, idx) => (
+                          <div key={idx} className="goods-row">
+                            <input
+                              ref={(el) => {
+                                skuInputsRef.current[idx] = el;
+                              }}
+                              value={row.sku}
+                              onChange={(e) => updateRow(idx, { sku: e.target.value })}
+                              onBlur={() => handleSkuBlur(idx)}
+                              onKeyDown={(e) => handleRowEnter(idx, e)}
+                            />
+                            <input value={row.name} onChange={(e) => updateRow(idx, { name: e.target.value })} />
+                            <input value={row.codicePl || ""} onChange={(e) => updateRow(idx, { codicePl: e.target.value })} />
+                            <input
+                              type="number"
+                              value={row.qty}
+                              onChange={(e) => updateRow(idx, { qty: Number(e.target.value || 0) })}
+                              onKeyDown={(e) => handleRowEnter(idx, e)}
+                            />
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={row.unitCost}
+                              onChange={(e) => updateRow(idx, { unitCost: e.target.value })}
+                              onKeyDown={(e) => handleRowEnter(idx, e)}
+                            />
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={row.discount || ""}
+                              onChange={(e) => updateRow(idx, { discount: e.target.value })}
+                              placeholder="%"
+                              onKeyDown={(e) => handleRowEnter(idx, e)}
+                            />
+                            <select
+                              value={row.taxRateId}
+                              onChange={(e) => updateRow(idx, { taxRateId: e.target.value })}
+                            >
+                              <option value="">IVA</option>
+                              {taxes.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name}
+                                </option>
+                              ))}
+                            </select>
+                            <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0))}</div>
+                            <input
+                              value={row.lineNote}
+                              onChange={(e) => updateRow(idx, { lineNote: e.target.value })}
+                              placeholder="Nota"
+                            />
+                            <button className="btn ghost small" onClick={() => removeRow(idx)}>Rimuovi</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <aside className="goods-side">
+                    <div className="order-summary-card order-card">
+                      <div className="card-title">Riepilogo</div>
+                      <div className="summary-grid">
+                        <div>
+                          <strong>Righe valide</strong>
+                          <div>{stats.lines}</div>
+                        </div>
+                        <div>
+                          <strong>Quantità totale</strong>
+                          <div>{stats.qty}</div>
+                        </div>
+                        <div>
+                          <strong>Valore a costo</strong>
+                          <div>{money(stats.cost)}</div>
+                        </div>
+                        <div>
+                          <strong>Subtotale (imponibile)</strong>
+                          <div>{money(stats.subtotal)}</div>
+                        </div>
+                        <div>
+                          <strong>IVA stimata</strong>
+                          <div>{money(stats.vat)}</div>
+                        </div>
+                        <div>
+                          <strong>Totale stimato</strong>
+                          <div>{money(stats.subtotal + stats.vat)}</div>
+                        </div>
+                      </div>
+                      <div className="summary-actions" style={{ marginTop: 16 }}>
+                        <button className="btn primary" onClick={saveReceipt} disabled={saving}>
+                          {saving ? "Salvataggio..." : "Conferma arrivo merci"}
+                        </button>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
       {confirmDelete ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setConfirmDelete(null)}>
