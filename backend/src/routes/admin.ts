@@ -3303,10 +3303,40 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/categories", async (request, reply) => {
     const user = requireAdmin(request, reply);
     if (!user) return;
-    return prisma.category.findMany({
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      include: { _count: { select: { products: true } } },
-    });
+    const [categories, products] = await Promise.all([
+      prisma.category.findMany({
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      }),
+      prisma.product.findMany({
+        select: { category: true, categoryId: true, categoryIds: true },
+      }),
+    ]);
+    const categoryIdByName = new Map<string, string>();
+    for (const c of categories) {
+      const key = (c.name || "").trim().toLowerCase();
+      if (key) categoryIdByName.set(key, c.id);
+    }
+    const countMap = new Map<string, number>();
+    for (const p of products) {
+      const ids = new Set<string>();
+      if (p.categoryId) ids.add(p.categoryId);
+      if (Array.isArray(p.categoryIds)) {
+        for (const id of p.categoryIds) {
+          if (typeof id === "string" && id) ids.add(id);
+        }
+      }
+      if (p.category && categoryIdByName.has(p.category.trim().toLowerCase())) {
+        ids.add(categoryIdByName.get(p.category.trim().toLowerCase()) as string);
+      }
+      for (const id of ids) {
+        countMap.set(id, (countMap.get(id) || 0) + 1);
+      }
+    }
+    return categories.map((c) => ({
+      ...c,
+      _count: { products: countMap.get(c.id) || 0 },
+      productsCount: countMap.get(c.id) || 0,
+    }));
   });
 
   app.post("/categories", async (request, reply) => {

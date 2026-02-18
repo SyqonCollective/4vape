@@ -18,6 +18,14 @@ const PAYMENT_OPTIONS = [
   { value: "OTHER", label: "Altro" },
 ];
 
+const STATUS_SORT_PRIORITY = {
+  FULFILLED: 0,
+  APPROVED: 1,
+  SUBMITTED: 2,
+  DRAFT: 3,
+  CANCELLED: 4,
+};
+
 const formatCurrency = (value) =>
   new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(
     Number(value || 0)
@@ -207,6 +215,15 @@ export default function AdminOrders() {
     );
     return { ...base, total: base.subtotal + base.vat + base.excise };
   }, [editLineItems]);
+
+  const orderedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const pa = STATUS_SORT_PRIORITY[a.status] ?? 99;
+      const pb = STATUS_SORT_PRIORITY[b.status] ?? 99;
+      if (pa !== pb) return pa - pb;
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    });
+  }, [items]);
 
   function addItem(product) {
     setLineItems((prev) => {
@@ -501,9 +518,9 @@ export default function AdminOrders() {
           <div>
             <input
               type="checkbox"
-              checked={items.length > 0 && selectedIds.length === items.length}
+              checked={orderedItems.length > 0 && selectedIds.length === orderedItems.length}
               onChange={(e) =>
-                setSelectedIds(e.target.checked ? items.map((o) => o.id) : [])
+                setSelectedIds(e.target.checked ? orderedItems.map((o) => o.id) : [])
               }
             />
           </div>
@@ -516,7 +533,7 @@ export default function AdminOrders() {
           <div>Creato</div>
           <div></div>
         </div>
-        {items.map((o) => (
+        {orderedItems.map((o) => (
           <div className="row" key={o.id} onClick={() => setSummaryOrder(o)}>
             <div>
               <input

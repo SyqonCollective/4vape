@@ -292,6 +292,22 @@ export default function AdminProducts() {
     }
   }
 
+  async function runProductsSearch() {
+    const q = searchTerm.trim();
+    try {
+      if (!q) {
+        await reloadProducts();
+        return;
+      }
+      const res = await api(`/admin/products?q=${encodeURIComponent(q)}&limit=800&orderBy=created-desc`);
+      setItems(res || []);
+      setCurrentPage(1);
+      setCollapsedParents(new Set());
+    } catch {
+      setError("Ricerca prodotti non riuscita");
+    }
+  }
+
   async function exportCsv() {
     try {
       const res = await fetch("/api/admin/products/export", {
@@ -995,11 +1011,12 @@ export default function AdminProducts() {
 
     const byParent = new Map();
     const singles = [];
-    const parentsOnly = sortItems(items.filter((p) => p.isParent));
+    const baseItems = filteredItems;
+    const parentsOnly = sortItems(baseItems.filter((p) => p.isParent));
     for (const parent of parentsOnly) {
       byParent.set(parent.id, []);
     }
-    for (const item of items) {
+    for (const item of baseItems) {
       if (item.isParent) continue;
       const parentId = item.parentId || item.parent?.id;
       if (parentId && byParent.has(parentId)) {
@@ -1199,11 +1216,13 @@ export default function AdminProducts() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  setCurrentPage(1);
-                  setSearchTerm((v) => v.trimStart());
+                  runProductsSearch();
                 }
               }}
             />
+            <button className="btn ghost" onClick={runProductsSearch}>
+              Cerca
+            </button>
           </div>
           <div className="toolbar-group">
             <div className="toolbar-label">Ordina per</div>
