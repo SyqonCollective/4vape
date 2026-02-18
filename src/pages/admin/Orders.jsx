@@ -32,6 +32,27 @@ const formatCurrency = (value) =>
     Number(value || 0)
   );
 
+function computeOrderTotals(order) {
+  return (order?.items || []).reduce(
+    (acc, item) => {
+      const lineTotal = Number(item.lineTotal || 0);
+      const qty = Number(item.qty || 0);
+      const product = item.product;
+      const rate = Number(product?.taxRate || product?.taxRateRef?.rate || 0);
+      const exciseUnit = Number(
+        product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
+      );
+      const excise = exciseUnit * qty;
+      const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
+      acc.revenue += lineTotal;
+      acc.vat += vat;
+      acc.excise += excise;
+      return acc;
+    },
+    { revenue: 0, vat: 0, excise: 0 }
+  );
+}
+
 export default function AdminOrders() {
   const [items, setItems] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -414,6 +435,76 @@ export default function AdminOrders() {
 
   function paymentLabel(value) {
     return PAYMENT_OPTIONS.find((p) => p.value === value)?.label || value || "-";
+  }
+
+  function printSummary(order) {
+    if (!order) return;
+    const totals = computeOrderTotals(order);
+    const rows = (order.items || [])
+      .map(
+        (item) => `
+        <tr>
+          <td>${item.name || "-"}</td>
+          <td>${item.sku || "-"}</td>
+          <td>${Number(item.qty || 0)}</td>
+          <td>${formatCurrency(item.unitPrice)}</td>
+          <td>${formatCurrency(item.lineTotal)}</td>
+          <td>${item.product?.sourceSupplier?.name || "-"}</td>
+        </tr>`
+      )
+      .join("");
+    const w = window.open("", "_blank", "width=1100,height=800");
+    if (!w) {
+      setError("Popup bloccato: abilita i popup per stampare.");
+      return;
+    }
+    const title = `Ordine #${order.orderNumber || "-"}`;
+    const created = new Date(order.createdAt).toLocaleString("it-IT");
+    w.document.write(`
+      <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body{font-family:Arial,sans-serif;padding:24px;color:#0f172a}
+            h1{margin:0 0 8px}
+            .meta{margin:0 0 18px;color:#475569}
+            table{width:100%;border-collapse:collapse;margin-top:14px}
+            th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;font-size:13px}
+            th{background:#f8fafc}
+            .tot{margin-top:16px;display:grid;gap:6px;max-width:340px;margin-left:auto}
+            .tot div{display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding:3px 0}
+            .tot .grand{font-weight:700;font-size:15px}
+          </style>
+        </head>
+        <body>
+          <h1>${title}</h1>
+          <div class="meta">${order.company?.name || "-"} • ${created}</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Prodotto</th>
+                <th>SKU</th>
+                <th>Qta</th>
+                <th>Prezzo</th>
+                <th>Totale</th>
+                <th>Fornitore</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="6">Nessuna riga ordine.</td></tr>'}</tbody>
+          </table>
+          <div class="tot">
+            <div><span>Subtotale</span><strong>${formatCurrency(totals.revenue)}</strong></div>
+            <div><span>IVA</span><strong>${formatCurrency(totals.vat)}</strong></div>
+            <div><span>Accise</span><strong>${formatCurrency(totals.excise)}</strong></div>
+            <div class="grand"><span>Totale ordine</span><strong>${formatCurrency(
+              totals.revenue + totals.vat + totals.excise
+            )}</strong></div>
+          </div>
+          <script>window.onload = () => { window.print(); window.close(); };</script>
+        </body>
+      </html>
+    `);
+    w.document.close();
   }
 
   const companyGroups = useMemo(
@@ -814,9 +905,18 @@ export default function AdminOrders() {
                     #{summaryOrder.orderNumber || "-"} • {summaryOrder.company?.name || "-"}
                   </div>
                 </div>
-                <button className="btn ghost" onClick={() => setSummaryOrder(null)}>
-                  Chiudi
-                </button>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => printSummary(summaryOrder)} title="Stampa riepilogo ordine">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ marginRight: 6 }}>
+                      <path d="M7 8V3h10v5M6 17H4a1 1 0 0 1-1-1v-5a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v5a1 1 0 0 1-1 1h-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                      <rect x="7" y="14" width="10" height="7" rx="1" stroke="currentColor" strokeWidth="1.8"/>
+                    </svg>
+                    Stampa
+                  </button>
+                  <button className="btn ghost" onClick={() => setSummaryOrder(null)}>
+                    Chiudi
+                  </button>
+                </div>
               </div>
               <div className="modal-body">
                 <div className="order-layout">
@@ -878,24 +978,7 @@ export default function AdminOrders() {
                     <div className="order-card order-summary-card">
                       <div className="card-title">Totali</div>
                       {(() => {
-                        const totals = (summaryOrder.items || []).reduce(
-                          (acc, item) => {
-                            const lineTotal = Number(item.lineTotal || 0);
-                            const qty = Number(item.qty || 0);
-                            const product = item.product;
-                            const rate = Number(product?.taxRate || product?.taxRateRef?.rate || 0);
-                            const exciseUnit = Number(
-                              product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
-                            );
-                            const excise = exciseUnit * qty;
-                            const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
-                            acc.revenue += lineTotal;
-                            acc.vat += vat;
-                            acc.excise += excise;
-                            return acc;
-                          },
-                          { revenue: 0, vat: 0, excise: 0 }
-                        );
+                        const totals = computeOrderTotals(summaryOrder);
                         return (
                           <div className="summary-stack">
                             <div className="summary-row">
