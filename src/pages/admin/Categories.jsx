@@ -9,10 +9,73 @@ export default function AdminCategories() {
   const [form, setForm] = useState({ name: "", description: "", parentId: "" });
   const [editing, setEditing] = useState(null);
 
+  function normalizeToken(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+  }
+
+  function splitTokens(raw) {
+    return String(raw || "")
+      .split(/[|;,]/g)
+      .map((x) => normalizeToken(x))
+      .filter(Boolean);
+  }
+
+  function applyComputedCounts(categories, products) {
+    const idsByName = new Map();
+    for (const c of categories) {
+      const key = normalizeToken(c.name);
+      if (!key) continue;
+      const list = idsByName.get(key) || [];
+      list.push(c.id);
+      idsByName.set(key, list);
+    }
+
+    const countMap = new Map();
+    const addByName = (ids, raw) => {
+      for (const token of splitTokens(raw)) {
+        const matches = idsByName.get(token) || [];
+        for (const id of matches) ids.add(id);
+      }
+    };
+
+    for (const p of products || []) {
+      const ids = new Set();
+      const categoryIds = Array.isArray(p.categoryIds)
+        ? p.categoryIds
+        : p.categoryId
+          ? [p.categoryId]
+          : [];
+      for (const id of categoryIds) {
+        if (id) ids.add(id);
+      }
+      addByName(ids, p.category);
+      addByName(ids, p.subcategory);
+      if (Array.isArray(p.subcategories)) {
+        for (const sub of p.subcategories) addByName(ids, sub);
+      }
+      for (const id of ids) {
+        countMap.set(id, (countMap.get(id) || 0) + 1);
+      }
+    }
+
+    return categories.map((c) => {
+      const count = countMap.get(c.id) || 0;
+      return { ...c, productsCount: count, _count: { ...(c._count || {}), products: count } };
+    });
+  }
+
   async function load() {
     try {
-      const res = await api("/admin/categories");
-      setItems(res || []);
+      const [cats, products] = await Promise.all([
+        api("/admin/categories"),
+        api("/admin/products"),
+      ]);
+      setItems(applyComputedCounts(cats || [], products || []));
     } catch {
       setError("Impossibile caricare categorie");
     }
