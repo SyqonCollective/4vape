@@ -55,6 +55,15 @@ export default function AdminLogin() {
             fallbackRedirectUrl="/admin/dashboard"
             signUpUrl="/register"
             appearance={{
+              variables: {
+                colorText: "#e8f2ff",
+                colorTextSecondary: "#c5d8f3",
+                colorPrimary: "#2ba9ff",
+                colorDanger: "#fca5a5",
+                colorInputText: "#0f172a",
+                colorInputBackground: "#f4f8ff",
+                colorBackground: "transparent",
+              },
               elements: {
                 rootBox: { width: "100%" },
                 card: {
@@ -82,6 +91,28 @@ export default function AdminLogin() {
                   height: "44px",
                   background: "linear-gradient(135deg, #1f7dff, #2bc4ff)",
                   fontWeight: 700,
+                },
+                formButtonReset: {
+                  background: "rgba(12, 22, 38, 0.9)",
+                  border: "1px solid rgba(103, 137, 184, 0.35)",
+                  borderRadius: "12px",
+                  color: "#dcecff",
+                },
+                alternativeMethods: {
+                  background: "rgba(8, 15, 26, 0.72)",
+                  border: "1px solid rgba(103, 137, 184, 0.2)",
+                  borderRadius: "12px",
+                },
+                alternativeMethodsBlockButton: {
+                  background: "rgba(245, 249, 255, 0.92)",
+                  border: "1px solid rgba(120, 145, 182, 0.45)",
+                  borderRadius: "12px",
+                },
+                alternativeMethodsBlockButtonText: {
+                  color: "#0f172a",
+                },
+                alternativeMethodsBlockButtonArrow: {
+                  color: "#0f172a",
                 },
                 formFieldAction: { color: "#9ed4ff" },
                 formFieldActionLink: { color: "#9ed4ff" },

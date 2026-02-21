@@ -3918,6 +3918,13 @@ button {
   margin-top: 8px;
 }
 
+.auth-simple-login .cl-main *,
+.auth-simple-login .cl-card *,
+.auth-simple-login [class*="cl-form"] *,
+.auth-simple-login [class*="cl-alternativeMethods"] * {
+  color: #deebff;
+}
+
 .auth-simple-login .cl-formFieldAction,
 .auth-simple-login .cl-formFieldAction a,
 .auth-simple-login .cl-formResendCodeLink,
@@ -3945,6 +3952,25 @@ button {
 .auth-simple-login .cl-formFieldErrorText,
 .auth-simple-login .cl-alertText {
   color: #fecaca !important;
+}
+
+.auth-simple-login .cl-formButtonReset,
+.auth-simple-login [class*="cl-formButtonReset"] {
+  background: rgba(12, 22, 38, 0.9) !important;
+  border: 1px solid rgba(103, 137, 184, 0.35) !important;
+  color: #eaf4ff !important;
+}
+
+.auth-simple-login .cl-alternativeMethodsBlockButton,
+.auth-simple-login [class*="cl-alternativeMethodsBlockButton"] {
+  background: rgba(245, 249, 255, 0.92) !important;
+  border: 1px solid rgba(120, 145, 182, 0.45) !important;
+  color: #0f172a !important;
+}
+
+.auth-simple-login .cl-alternativeMethodsBlockButton *,
+.auth-simple-login [class*="cl-alternativeMethodsBlockButton"] * {
+  color: #0f172a !important;
 }
 
 .auth-simple-login .cl-otpCodeFieldInput {
