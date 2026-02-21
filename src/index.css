@@ -3981,6 +3981,14 @@ button {
 
 .auth-simple-login [data-input-otp-slot] {
   color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+.auth-simple-login [data-input-otp-slot] *,
+.auth-simple-login .cl-otpCodeFieldInput,
+.auth-simple-login .cl-otpCodeFieldInput * {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
 }
 
 .auth-simple-login [data-input-otp] {
