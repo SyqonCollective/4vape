@@ -104,7 +104,7 @@ export async function api(path, options = {}) {
     const token = await resolveToken(forceTokenRefresh);
     if (token) headers.set("Authorization", `Bearer ${token}`);
     if (DEV_API_LOG) {
-      console.debug(`[api#${reqId}] -> ${method} ${path}`, {
+      console.log(`[api#${reqId}] -> ${method} ${path}`, {
         forceTokenRefresh,
         hasAuthHeader: Boolean(token),
         authReady,
@@ -117,7 +117,16 @@ export async function api(path, options = {}) {
     });
   }
 
-  let res = await runRequest(false);
+  let res;
+  try {
+    res = await runRequest(false);
+  } catch (err) {
+    console.error(`[api#${reqId}] NETWORK FAIL ${method} ${path}`, {
+      elapsedMs: Date.now() - startedAt,
+      error: String(err?.message || err),
+    });
+    throw err;
+  }
 
   // Clerk token can be a few ms late right after login; retry once with refreshed token.
   if ((res.status === 401 || res.status === 403) && authTokenResolver) {
@@ -125,10 +134,26 @@ export async function api(path, options = {}) {
       console.warn(`[api#${reqId}] ${res.status} retrying ${method} ${path}`);
     }
     await sleep(300);
-    res = await runRequest(true);
+    try {
+      res = await runRequest(true);
+    } catch (err) {
+      console.error(`[api#${reqId}] NETWORK FAIL retry1 ${method} ${path}`, {
+        elapsedMs: Date.now() - startedAt,
+        error: String(err?.message || err),
+      });
+      throw err;
+    }
     if (res.status === 401 || res.status === 403) {
       await sleep(450);
-      res = await runRequest(true);
+      try {
+        res = await runRequest(true);
+      } catch (err) {
+        console.error(`[api#${reqId}] NETWORK FAIL retry2 ${method} ${path}`, {
+          elapsedMs: Date.now() - startedAt,
+          error: String(err?.message || err),
+        });
+        throw err;
+      }
     }
   }
 
@@ -143,7 +168,7 @@ export async function api(path, options = {}) {
   }
 
   if (DEV_API_LOG) {
-    console.debug(`[api#${reqId}] <- ${res.status} ${method} ${path}`, {
+    console.log(`[api#${reqId}] <- ${res.status} ${method} ${path}`, {
       elapsedMs: Date.now() - startedAt,
     });
   }
