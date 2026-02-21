@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Lottie from "lottie-react";
-import { api, logout } from "../lib/api.js";
+import { api, getToken, logout } from "../lib/api.js";
 import Portal from "./Portal.jsx";
 import logo from "../assets/logo.png";
 import notificationOn from "../assets/NotificationOn.json";
@@ -31,8 +31,31 @@ const ORDER_KEY = "admin_sidebar_order";
 const NOTIF_SEEN_KEY = "admin_notifications_seen_at";
 const NOTIF_DISMISSED_KEY = "admin_notifications_dismissed";
 
+function resolveAdminNameFromToken() {
+  const token = getToken();
+  if (!token || !token.includes(".")) return "Admin";
+  try {
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+    const payload = JSON.parse(atob(padded));
+    const raw =
+      payload?.given_name ||
+      payload?.first_name ||
+      payload?.name ||
+      payload?.email ||
+      payload?.username ||
+      "Admin";
+    const firstPart = String(raw).split("@")[0].trim();
+    if (!firstPart) return "Admin";
+    return firstPart.charAt(0).toUpperCase() + firstPart.slice(1);
+  } catch {
+    return "Admin";
+  }
+}
+
 export default function AdminLayout() {
   const navigate = useNavigate();
+  const [adminName, setAdminName] = useState(() => resolveAdminNameFromToken());
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [dragging, setDragging] = useState(null);
   const [dragOver, setDragOver] = useState(null);
@@ -158,6 +181,13 @@ export default function AdminLayout() {
   }, []);
 
   useEffect(() => {
+    const refreshName = () => setAdminName(resolveAdminNameFromToken());
+    refreshName();
+    window.addEventListener("storage", refreshName);
+    return () => window.removeEventListener("storage", refreshName);
+  }, []);
+
+  useEffect(() => {
     function onDocClick(e) {
       if (!notifOpen) return;
       if (notifPanelRef.current && !notifPanelRef.current.contains(e.target)) {
@@ -224,8 +254,10 @@ export default function AdminLayout() {
             <img src={logo} alt="4Vape B2B" className="brand-logo" />
           </div>
           <div className="brand-text">
-            <div className="brand-title">4Vape B2B</div>
-            <div className="brand-sub">Console Admin</div>
+            <div className="brand-greeting">
+              <span>Buon lavoro,</span>
+              <strong>{adminName}</strong>
+            </div>
           </div>
         </div>
 
