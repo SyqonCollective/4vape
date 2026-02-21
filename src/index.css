@@ -3881,6 +3881,15 @@ button {
   margin: 0 auto 2px;
 }
 
+.auth-simple-title {
+  margin: 2px 0 4px;
+  text-align: center;
+  color: #e9f2ff;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
 .auth-simple-login .cl-internal-b3fm6y,
 .auth-simple-login .cl-cardBox {
   width: 100%;

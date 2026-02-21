@@ -46,73 +46,46 @@ export default function AdminLogin() {
           <AuthSmokeBackground />
           <div className="auth-vignette" />
         </div>
-        <div className="auth-clerk-shell">
-          <section className="auth-clerk-brand">
-            <div className="auth-badge">Pannello Logistica</div>
-            <img src={logo} alt="4Vape B2B" className="auth-logo" />
-            <h1>4Vape B2B Control</h1>
-            <p>Accesso amministrativo sicuro con verifica account e ruoli aziendali.</p>
-            <div className="auth-clerk-points">
-              <span>Gestione ordini e logistica</span>
-              <span>Controllo accessi aziende</span>
-              <span>Audit e report centralizzati</span>
-            </div>
-          </section>
-          <section className="auth-clerk-login">
-            <div className="auth-clerk-title">
-              <h2>Accedi</h2>
-              <p>Usa un account già attivato. Se non entri, completa prima il link invito ricevuto via email.</p>
-            </div>
-            <SignIn
-              routing="virtual"
-              forceRedirectUrl="/admin/dashboard"
-              fallbackRedirectUrl="/admin/dashboard"
-              signUpUrl="/register"
-              appearance={{
-                elements: {
-                  rootBox: { width: "100%" },
-                  card: {
-                    boxShadow: "none",
-                    border: "1px solid rgba(103, 137, 184, 0.28)",
-                    background: "rgba(8, 13, 24, 0.74)",
-                    borderRadius: "18px",
-                    padding: "20px 20px 16px",
-                  },
-                  headerTitle: { display: "none" },
-                  headerSubtitle: { display: "none" },
-                  socialButtonsBlockButton: { borderRadius: "12px" },
-                  formFieldInput: {
-                    borderRadius: "12px",
-                    background: "rgba(4, 9, 18, 0.88)",
-                    border: "1px solid rgba(88, 118, 164, 0.42)",
-                    color: "#e8eef9",
-                    height: "46px",
-                  },
-                  formFieldLabel: {
-                    color: "#cdd7ea",
-                    fontSize: "13px",
-                  },
-                  formButtonPrimary: {
-                    borderRadius: "12px",
-                    height: "46px",
-                    background: "linear-gradient(135deg, #1f7dff, #2bc4ff)",
-                    fontWeight: 700,
-                  },
-                  footerActionText: { color: "#9db0cd" },
-                  footerActionLink: { color: "#7ec8ff", pointerEvents: "none", opacity: 0.55 },
-                  footer: { display: "none" },
-                  identityPreviewText: { color: "#cdd7ea" },
-                  formResendCodeLink: { color: "#7ec8ff" },
-                  otpCodeFieldInput: {
-                    borderRadius: "10px",
-                    background: "rgba(4, 9, 18, 0.88)",
-                    border: "1px solid rgba(88, 118, 164, 0.42)",
-                    color: "#e8eef9",
-                  },
+        <div className="auth-simple-login">
+          <img src={logo} alt="4Vape B2B" className="auth-logo" />
+          <h1 className="auth-simple-title">Accedi al pannello admin</h1>
+          <SignIn
+            routing="virtual"
+            forceRedirectUrl="/admin/dashboard"
+            fallbackRedirectUrl="/admin/dashboard"
+            signUpUrl="/register"
+            appearance={{
+              elements: {
+                rootBox: { width: "100%" },
+                card: {
+                  boxShadow: "none",
+                  border: "none",
+                  background: "transparent",
+                  borderRadius: "0",
+                  padding: 0,
                 },
-              }}
-            />
-          </section>
+                headerTitle: { display: "none" },
+                headerSubtitle: { display: "none" },
+                footer: { display: "none" },
+                socialButtonsBlockButton: { display: "none" },
+                dividerRow: { display: "none" },
+                formFieldLabel: { display: "none" },
+                formFieldInput: {
+                  borderRadius: "12px",
+                  background: "rgba(245, 249, 255, 0.9)",
+                  border: "1px solid rgba(120, 145, 182, 0.45)",
+                  color: "#0f172a",
+                  height: "46px",
+                },
+                formButtonPrimary: {
+                  borderRadius: "12px",
+                  height: "44px",
+                  background: "linear-gradient(135deg, #1f7dff, #2bc4ff)",
+                  fontWeight: 700,
+                },
+              },
+            }}
+          />
         </div>
       </div>
     );
