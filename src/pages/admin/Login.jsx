@@ -83,6 +83,19 @@ export default function AdminLogin() {
                   background: "linear-gradient(135deg, #1f7dff, #2bc4ff)",
                   fontWeight: 700,
                 },
+                formFieldAction: { color: "#9ed4ff" },
+                formFieldActionLink: { color: "#9ed4ff" },
+                footerActionText: { color: "#d5e7ff" },
+                footerActionLink: { color: "#9ed4ff" },
+                identityPreviewText: { color: "#e8f2ff" },
+                identityPreviewEditButton: { color: "#9ed4ff" },
+                formResendCodeLink: { color: "#9ed4ff" },
+                otpCodeFieldInput: {
+                  borderRadius: "10px",
+                  background: "rgba(245, 249, 255, 0.96)",
+                  border: "1px solid rgba(120, 145, 182, 0.45)",
+                  color: "#0f172a",
+                },
               },
             }}
           />

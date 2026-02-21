@@ -3917,3 +3917,44 @@ button {
 .auth-simple-login .cl-formButtonPrimary {
   margin-top: 8px;
 }
+
+.auth-simple-login .cl-formFieldAction,
+.auth-simple-login .cl-formFieldAction a,
+.auth-simple-login .cl-formResendCodeLink,
+.auth-simple-login .cl-identityPreviewEditButton,
+.auth-simple-login .cl-footerActionLink,
+.auth-simple-login .cl-navbarButton {
+  color: #9ed4ff !important;
+}
+
+.auth-simple-login .cl-formFieldAction:hover,
+.auth-simple-login .cl-formResendCodeLink:hover,
+.auth-simple-login .cl-identityPreviewEditButton:hover,
+.auth-simple-login .cl-footerActionLink:hover {
+  color: #c9e8ff !important;
+}
+
+.auth-simple-login .cl-footerActionText,
+.auth-simple-login .cl-formFieldHintText,
+.auth-simple-login .cl-formFieldLabel,
+.auth-simple-login .cl-identityPreviewText,
+.auth-simple-login .cl-userPreviewTextContainer {
+  color: #d8e9ff !important;
+}
+
+.auth-simple-login .cl-formFieldErrorText,
+.auth-simple-login .cl-alertText {
+  color: #fecaca !important;
+}
+
+.auth-simple-login .cl-otpCodeFieldInput {
+  background: rgba(245, 249, 255, 0.96) !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(120, 145, 182, 0.45) !important;
+}
+
+.auth-simple-login .cl-formFieldInput:-webkit-autofill,
+.auth-simple-login .cl-otpCodeFieldInput:-webkit-autofill {
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
