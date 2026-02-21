@@ -115,28 +115,72 @@ export default function AdminLogin() {
           <div className="auth-aurora" />
           <div className="auth-vignette" />
         </div>
-        <div className="auth-card" style={{ maxWidth: 500 }}>
-          <div className="auth-header">
-            <div className="auth-badge">Admin</div>
+        <div className="auth-clerk-shell">
+          <section className="auth-clerk-brand">
+            <div className="auth-badge">Pannello Logistica</div>
             <img src={logo} alt="4Vape B2B" className="auth-logo" />
-            <h1>4Vape B2B</h1>
-            <p>Accesso con Clerk</p>
-          </div>
-          <SignIn
-            path="/admin/login"
-            routing="path"
-            forceRedirectUrl="/admin/dashboard"
-            fallbackRedirectUrl="/admin/dashboard"
-            signUpUrl="/register"
-            appearance={{
-              elements: {
-                rootBox: { width: "100%" },
-                card: { boxShadow: "none", border: "none", background: "transparent", padding: 0 },
-                headerTitle: { display: "none" },
-                headerSubtitle: { display: "none" },
-              },
-            }}
-          />
+            <h1>4Vape B2B Control</h1>
+            <p>Accesso amministrativo sicuro con verifica account e ruoli aziendali.</p>
+            <div className="auth-clerk-points">
+              <span>Gestione ordini e logistica</span>
+              <span>Controllo accessi aziende</span>
+              <span>Audit e report centralizzati</span>
+            </div>
+          </section>
+          <section className="auth-clerk-login">
+            <div className="auth-clerk-title">
+              <h2>Accedi</h2>
+              <p>Inserisci email e password del tuo account approvato.</p>
+            </div>
+            <SignIn
+              routing="virtual"
+              forceRedirectUrl="/admin/dashboard"
+              fallbackRedirectUrl="/admin/dashboard"
+              signUpUrl="/register"
+              appearance={{
+                elements: {
+                  rootBox: { width: "100%" },
+                  card: {
+                    boxShadow: "none",
+                    border: "1px solid rgba(103, 137, 184, 0.28)",
+                    background: "rgba(8, 13, 24, 0.74)",
+                    borderRadius: "18px",
+                    padding: "20px 20px 16px",
+                  },
+                  headerTitle: { display: "none" },
+                  headerSubtitle: { display: "none" },
+                  socialButtonsBlockButton: { borderRadius: "12px" },
+                  formFieldInput: {
+                    borderRadius: "12px",
+                    background: "rgba(4, 9, 18, 0.88)",
+                    border: "1px solid rgba(88, 118, 164, 0.42)",
+                    color: "#e8eef9",
+                    height: "46px",
+                  },
+                  formFieldLabel: {
+                    color: "#cdd7ea",
+                    fontSize: "13px",
+                  },
+                  formButtonPrimary: {
+                    borderRadius: "12px",
+                    height: "46px",
+                    background: "linear-gradient(135deg, #1f7dff, #2bc4ff)",
+                    fontWeight: 700,
+                  },
+                  footerActionText: { color: "#9db0cd" },
+                  footerActionLink: { color: "#7ec8ff" },
+                  identityPreviewText: { color: "#cdd7ea" },
+                  formResendCodeLink: { color: "#7ec8ff" },
+                  otpCodeFieldInput: {
+                    borderRadius: "10px",
+                    background: "rgba(4, 9, 18, 0.88)",
+                    border: "1px solid rgba(88, 118, 164, 0.42)",
+                    color: "#e8eef9",
+                  },
+                },
+              }}
+            />
+          </section>
         </div>
       </div>
     );

@@ -3745,3 +3745,103 @@ button {
     grid-template-columns: 130px 120px 1fr;
   }
 }
+
+/* Clerk Login Redesign */
+.auth-clerk-shell {
+  width: min(1080px, 95vw);
+  min-height: 680px;
+  border-radius: 30px;
+  border: 1px solid rgba(103, 137, 184, 0.28);
+  background:
+    linear-gradient(145deg, rgba(6, 12, 22, 0.9), rgba(4, 9, 18, 0.82)),
+    radial-gradient(circle at 20% 20%, rgba(63, 152, 255, 0.2), transparent 35%),
+    radial-gradient(circle at 85% 80%, rgba(43, 196, 255, 0.14), transparent 35%);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 40px 90px rgba(1, 8, 20, 0.55);
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(360px, 460px);
+  overflow: hidden;
+}
+
+.auth-clerk-brand {
+  padding: 56px 48px;
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  border-right: 1px solid rgba(103, 137, 184, 0.2);
+}
+
+.auth-clerk-brand h1 {
+  margin: 0;
+  color: #eff5ff;
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  line-height: 1.06;
+}
+
+.auth-clerk-brand p {
+  margin: 0;
+  color: #b8c8e1;
+  font-size: 1.04rem;
+  line-height: 1.6;
+}
+
+.auth-clerk-points {
+  margin-top: 6px;
+  display: grid;
+  gap: 10px;
+}
+
+.auth-clerk-points span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #d9e6f8;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.auth-clerk-points span::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #27b6ff, #58d3ff);
+  box-shadow: 0 0 10px rgba(88, 211, 255, 0.7);
+}
+
+.auth-clerk-login {
+  padding: 54px 36px;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+}
+
+.auth-clerk-title h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #eff5ff;
+}
+
+.auth-clerk-title p {
+  margin: 6px 0 0;
+  color: #aebfdb;
+}
+
+@media (max-width: 900px) {
+  .auth-clerk-shell {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .auth-clerk-brand {
+    padding: 32px 24px 20px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(103, 137, 184, 0.2);
+  }
+
+  .auth-clerk-login {
+    padding: 20px 16px 24px;
+  }
+}
