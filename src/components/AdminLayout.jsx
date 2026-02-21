@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Lottie from "lottie-react";
-import { api, clearToken } from "../lib/api.js";
+import { api, logout } from "../lib/api.js";
 import Portal from "./Portal.jsx";
 import logo from "../assets/logo.png";
 import notificationOn from "../assets/NotificationOn.json";
@@ -346,8 +346,8 @@ export default function AdminLayout() {
                   <button className="btn ghost" onClick={() => setConfirmLogout(false)}>Resta</button>
                   <button
                     className="btn primary"
-                    onClick={() => {
-                      clearToken();
+                    onClick={async () => {
+                      await logout();
                       navigate("/admin/login");
                     }}
                   >

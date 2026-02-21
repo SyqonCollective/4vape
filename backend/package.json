@@ -17,6 +17,7 @@
     "node": ">=20 <21"
   },
   "dependencies": {
+    "@clerk/backend": "^1.30.2",
     "@fastify/cors": "^9.0.0",
     "@fastify/multipart": "^7.7.2",
     "@fastify/sensible": "^5.0.0",

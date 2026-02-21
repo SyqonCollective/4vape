@@ -4,37 +4,37 @@ import { Prisma, OrderStatus } from "@prisma/client";
 import { prisma } from "../lib/db.js";
 import { importFullFromSupplier, importStockFromSupplier } from "../jobs/importer.js";
 import { parse as parseCsv } from "csv-parse/sync";
-import jwt from "jsonwebtoken";
 import http from "node:http";
 import https from "node:https";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { getBearerTokenFromRequest, resolveSessionUserFromToken } from "../lib/session.js";
 
-function getUser(request: any, reply: any) {
-  const auth = request.headers?.authorization || "";
-  if (!auth.startsWith("Bearer ")) {
+async function getUser(request: any, reply: any) {
+  if (request.user) return request.user;
+  const token = getBearerTokenFromRequest(request);
+  if (!token) {
     reply.code(401).send({ error: "Unauthorized", message: "Missing Bearer token" });
     return null;
   }
-  const token = auth.slice(7).trim();
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET || "dev_secret") as any;
-  } catch (err: any) {
-    reply.code(401).send({ error: "Unauthorized", message: err?.message || "Invalid token" });
+  const user = await resolveSessionUserFromToken(token);
+  if (!user) {
+    reply.code(401).send({ error: "Unauthorized", message: "Invalid token" });
     return null;
   }
+  request.user = user;
+  return user;
 }
 
-function requireAdmin(request: any, reply: any) {
-  const user = getUser(request, reply);
+async function requireAdmin(request: any, reply: any) {
+  const user = await getUser(request, reply);
   if (!user) return null;
   const role = user.role;
   if (role !== "ADMIN" && role !== "MANAGER") {
     reply.forbidden("Admin only");
     return null;
   }
-  request.user = user;
   return user;
 }
 
@@ -334,19 +334,19 @@ export async function adminRoutes(app: FastifyInstance) {
     return amount;
   }
   app.get("/ping", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return { ok: true };
   });
 
   app.get("/mail-marketing/meta", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return defaultMailupMeta;
   });
 
   app.get("/mail-marketing/status", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const cfg = getMailupConfig();
     return {
@@ -356,7 +356,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/mail-marketing/test", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     try {
       await getMailupAccessToken();
@@ -368,7 +368,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/mail-marketing/lists", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     try {
       const data = await mailupRequest("/List");
@@ -379,7 +379,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/mail-marketing/groups", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const listId = Number((request.query as any)?.listId || process.env.MAILUP_DEFAULT_LIST_ID || 1);
     try {
@@ -401,13 +401,13 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/mail-marketing/fields", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return { items: defaultMailupMeta.fields };
   });
 
   app.post("/mail-marketing/sync/companies", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -469,7 +469,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/mail-marketing/templates", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return prisma.mailMarketingTemplate.findMany({
       orderBy: { createdAt: "desc" },
@@ -477,7 +477,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/mail-marketing/templates", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -499,7 +499,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/mail-marketing/templates/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -517,7 +517,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/mail-marketing/templates/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     await prisma.mailMarketingTemplate.delete({ where: { id } });
@@ -525,7 +525,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/mail-marketing/campaigns", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return prisma.mailMarketingCampaign.findMany({
       include: { template: true },
@@ -534,7 +534,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/mail-marketing/history", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const listId = Number((request.query as any)?.listId || process.env.MAILUP_DEFAULT_LIST_ID || 1);
     try {
@@ -560,7 +560,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/mail-marketing/history/:emailId", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const emailId = Number((request.params as any)?.emailId);
     const listId = Number((request.query as any)?.listId || process.env.MAILUP_DEFAULT_LIST_ID || 1);
@@ -579,7 +579,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/mail-marketing/campaigns", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -612,7 +612,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/mail-marketing/campaigns/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -640,7 +640,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/mail-marketing/campaigns/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     await prisma.mailMarketingCampaign.delete({ where: { id } });
@@ -648,7 +648,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/mail-marketing/campaigns/:id/send", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const campaign = await prisma.mailMarketingCampaign.findUnique({ where: { id } });
@@ -753,7 +753,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/users/pending", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return prisma.user.findMany({
       where: { approved: false },
@@ -763,7 +763,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/users", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return prisma.user.findMany({
       include: { company: true },
@@ -772,7 +772,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/companies", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -825,7 +825,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/companies/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -882,7 +882,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/companies/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const orders = await prisma.order.count({ where: { companyId: id } });
@@ -893,7 +893,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/users/:id/approve", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const updated = await prisma.user.update({ where: { id }, data: { approved: true } });
@@ -907,7 +907,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/users/:id/reject", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const existing = await prisma.user.findUnique({ where: { id } });
@@ -928,7 +928,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/companies", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const companies = await prisma.company.findMany({
       orderBy: { name: "asc" },
@@ -1001,7 +1001,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/orders", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const query = request.query as any;
     const status = query?.status as string | undefined;
@@ -1039,7 +1039,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/orders/stats", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const grouped = await prisma.order.groupBy({
       by: ["status"],
@@ -1051,7 +1051,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/orders", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -1145,7 +1145,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/orders/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -1253,7 +1253,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/orders/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     await prisma.$transaction([
@@ -1264,7 +1264,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/orders/bulk-status", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -1280,7 +1280,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/products", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const parentOnly = (request.query as any)?.parents === "true";
     const q = (request.query as any)?.q as string | undefined;
@@ -1317,7 +1317,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/products/:id/customer-prices", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const productId = (request.params as any).id as string;
     const rows = await prisma.productPrice.findMany({
@@ -1335,7 +1335,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.put("/products/:id/customer-prices/:companyId", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const productId = (request.params as any).id as string;
     const companyId = (request.params as any).companyId as string;
@@ -1355,7 +1355,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/products/:id/customer-prices/:companyId", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const productId = (request.params as any).id as string;
     const companyId = (request.params as any).companyId as string;
@@ -1366,7 +1366,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/products/export", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const products = await prisma.product.findMany({
       include: { taxRateRef: true, exciseRateRef: true, parent: true, sourceSupplier: true },
@@ -1458,7 +1458,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/products/import", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const file = await request.file();
     if (!file) return reply.badRequest("File mancante");
@@ -1657,7 +1657,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/products/stock", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const products = await prisma.product.findMany({
       select: {
@@ -1692,7 +1692,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/products", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -1817,7 +1817,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/products/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -1933,7 +1933,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/products/bulk", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -2011,14 +2011,14 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/products/:id/images", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     return prisma.productImage.findMany({ where: { productId: id }, orderBy: { sortOrder: "asc" } });
   });
 
   app.post("/products/:id/images", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const product = await prisma.product.findUnique({ where: { id } });
@@ -2046,7 +2046,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/products/:id/images/:imageId", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const { id, imageId } = request.params as any;
     const image = await prisma.productImage.findUnique({ where: { id: imageId } });
@@ -2056,7 +2056,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/products/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const product = await prisma.product.findUnique({
@@ -2100,7 +2100,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/suppliers", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const timeout = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("DB timeout in /admin/suppliers")), 2000)
@@ -2113,7 +2113,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/metrics", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -2194,7 +2194,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/analytics", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const query = request.query as { start?: string; end?: string; productId?: string };
     const now = new Date();
@@ -2492,7 +2492,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/analytics/export", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const query = request.query as { start?: string; end?: string; format?: string };
     const format = (query.format || "csv").toLowerCase();
@@ -2580,7 +2580,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/reports", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
 
     const query = request.query as {
@@ -2776,7 +2776,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/reports/export", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const query = request.query as { start?: string; end?: string; companyId?: string; productId?: string };
 
@@ -2848,7 +2848,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/settings", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     let settings = await prisma.appSetting.findFirst();
     if (!settings) {
@@ -2858,7 +2858,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/brands", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
 
     const [saved, products, supplierProducts, inventoryItems] = await Promise.all([
@@ -2902,7 +2902,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/brands", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z.object({ name: z.string().min(1) }).parse(request.body);
     const name = body.name.trim();
@@ -2917,7 +2917,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/brands/:name", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const oldName = decodeURIComponent((request.params as any).name || "").trim();
     const body = z.object({ name: z.string().min(1) }).parse(request.body);
@@ -2944,7 +2944,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/brands/:name", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const name = decodeURIComponent((request.params as any).name || "").trim();
     if (!name) return reply.badRequest("Nome brand non valido");
@@ -2964,13 +2964,13 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/taxes", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return prisma.taxRate.findMany({ orderBy: { name: "asc" } });
   });
 
   app.post("/taxes", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -2984,7 +2984,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/taxes/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -3003,7 +3003,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/taxes/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     await prisma.taxRate.delete({ where: { id } });
@@ -3011,13 +3011,13 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/excises", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return prisma.exciseRate.findMany({ orderBy: { name: "asc" } });
   });
 
   app.post("/excises", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -3032,7 +3032,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/excises/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -3053,13 +3053,13 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/discounts", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return prisma.discount.findMany({ orderBy: { createdAt: "desc" } });
   });
 
   app.post("/discounts", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -3097,7 +3097,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/discounts/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -3143,7 +3143,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/discounts/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     await prisma.discount.delete({ where: { id } });
@@ -3151,13 +3151,13 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/rules", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     return prisma.discountRule.findMany({ orderBy: { createdAt: "desc" } });
   });
 
   app.post("/rules", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -3211,7 +3211,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/rules/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -3275,7 +3275,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/rules/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     await prisma.discountRule.delete({ where: { id } });
@@ -3283,7 +3283,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/excises/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     await prisma.exciseRate.delete({ where: { id } });
@@ -3291,7 +3291,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/settings", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -3307,7 +3307,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/categories", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const [categories, products] = await Promise.all([
       prisma.category.findMany({
@@ -3378,7 +3378,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/categories", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -3401,7 +3401,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/categories/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -3424,7 +3424,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/categories/reorder", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z.object({ ids: z.array(z.string()).min(1) }).parse(request.body);
     await prisma.$transaction(
@@ -3436,7 +3436,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/categories/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const children = await prisma.category.count({ where: { parentId: id } });
@@ -3446,7 +3446,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/suppliers/:id/products", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const supplierId = (request.params as any).id as string;
     const limitParam = (request.query as any)?.limit as string | undefined;
@@ -3514,7 +3514,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
 
   app.post("/suppliers", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -3559,7 +3559,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/suppliers/:id/import-full", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const supplierId = (request.params as any).id as string;
     const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
@@ -3574,7 +3574,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/suppliers/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const supplierId = (request.params as any).id as string;
     const body = z
@@ -3615,7 +3615,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/suppliers/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const supplierId = (request.params as any).id as string;
     const linkedProducts = await prisma.product.count({
@@ -3637,7 +3637,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/suppliers/:id/update-stock", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const supplierId = (request.params as any).id as string;
     const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
@@ -3648,7 +3648,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/suppliers/:id/promote", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const supplierId = (request.params as any).id as string;
     const body = z
@@ -3796,7 +3796,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/inventory/items", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const q = String((request.query as any)?.q || "").trim();
     const limitRaw = Number((request.query as any)?.limit || 400);
@@ -3822,7 +3822,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/inventory/items", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -3873,7 +3873,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/inventory/items/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -3928,7 +3928,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/inventory/quick-qty", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -3958,7 +3958,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/goods-receipts", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const rows = await prisma.goodsReceipt.findMany({
       include: {
@@ -3987,7 +3987,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/goods-receipts/sku-info", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const sku = String((request.query as any)?.sku || "").trim();
     if (!sku) return reply.badRequest("SKU obbligatorio");
@@ -4067,7 +4067,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/goods-receipts/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const row = await prisma.goodsReceipt.findUnique({
@@ -4090,7 +4090,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/goods-receipts", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const body = z
       .object({
@@ -4244,7 +4244,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/goods-receipts/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const body = z
@@ -4427,7 +4427,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/goods-receipts/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
 
@@ -4480,7 +4480,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/returns", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const status = String((request.query as any)?.status || "ALL");
     const rows = await prisma.returnRequest.findMany({
@@ -4504,7 +4504,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/returns/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const row = await prisma.returnRequest.findUnique({
@@ -4528,7 +4528,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch("/returns/:id/handle", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     const updated = await prisma.returnRequest.update({
@@ -4543,7 +4543,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.delete("/returns/:id", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
     await prisma.returnRequest.delete({ where: { id } });
@@ -4551,7 +4551,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/notifications", async (request, reply) => {
-    const user = requireAdmin(request, reply);
+    const user = await requireAdmin(request, reply);
     if (!user) return;
 
     const [returns, orders, companies, pendingUsers] = await Promise.all([
@@ -4625,18 +4625,10 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/suppliers/:id/image", async (request, reply) => {
-    const auth = request.headers?.authorization || "";
-    const token =
-      auth.startsWith("Bearer ")
-        ? auth.slice(7).trim()
-        : (request.query as any)?.token;
+    const token = getBearerTokenFromRequest(request) || ((request.query as any)?.token as string);
     if (!token) return reply.code(401).send({ error: "Unauthorized", message: "Missing token" });
-    let user: any;
-    try {
-      user = jwt.verify(token, process.env.JWT_SECRET || "dev_secret") as any;
-    } catch (err: any) {
-      return reply.code(401).send({ error: "Unauthorized", message: err?.message || "Invalid token" });
-    }
+    const user = await resolveSessionUserFromToken(token);
+    if (!user) return reply.code(401).send({ error: "Unauthorized", message: "Invalid token" });
     if (user.role !== "ADMIN" && user.role !== "MANAGER") {
       return reply.code(403).send({ error: "Forbidden", message: "Admin only" });
     }

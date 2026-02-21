@@ -102,6 +102,7 @@ model Company {
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
+  clerkUserId  String?   @unique
   passwordHash String
   role         UserRole  @default(BUYER)
   approved     Boolean   @default(false)

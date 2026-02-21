@@ -6,7 +6,6 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
-import jwt from "jsonwebtoken";
 import { importStockFromSupplier } from "./jobs/importer.js";
 import { authRoutes } from "./routes/auth.js";
 import { adminRoutes } from "./routes/admin.js";
@@ -18,6 +17,7 @@ import { prisma } from "./lib/db.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
+import { getBearerTokenFromRequest, resolveSessionUserFromToken } from "./lib/session.js";
 
 const app = Fastify({ logger: true });
 
@@ -55,20 +55,16 @@ if (process.env.ENABLE_SWAGGER === "true") {
   await app.register(swaggerUi, { routePrefix: "/docs" });
 }
 
-app.decorate("authenticate", (request: any, _reply: any, done: any) => {
-  const authHeader = request.headers?.authorization || "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return done(app.httpErrors.unauthorized("Missing Bearer token"));
+app.decorate("authenticate", async (request: any) => {
+  const token = getBearerTokenFromRequest(request);
+  if (!token) {
+    throw app.httpErrors.unauthorized("Missing Bearer token");
   }
-
-  const token = authHeader.slice(7).trim();
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || "dev_secret");
-    request.user = payload;
-    return done();
-  } catch (err: any) {
-    return done(app.httpErrors.unauthorized(err?.message || "Invalid token"));
+  const user = await resolveSessionUserFromToken(token);
+  if (!user) {
+    throw app.httpErrors.unauthorized("Invalid token");
   }
+  request.user = user;
 });
 
 await app.register(authRoutes, { prefix: "/auth" });

@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
+import { SignIn } from "@clerk/clerk-react";
 import correctAnim from "../../assets/Correct.json";
 import logo from "../../assets/logo.png";
 import { api, setToken } from "../../lib/api.js";
 
 export default function AdminLogin() {
+  const clerkEnabled = Boolean(
+    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  );
   const navigate = useNavigate();
   const canvasRef = useRef(null);
   const [email, setEmail] = useState("");
@@ -102,6 +106,41 @@ export default function AdminLogin() {
       window.removeEventListener("resize", onResize);
     };
   }, []);
+
+  if (clerkEnabled) {
+    return (
+      <div className="auth-wrap auth-epic">
+        <div className="auth-scene">
+          <div className="auth-sky" />
+          <div className="auth-aurora" />
+          <div className="auth-vignette" />
+        </div>
+        <div className="auth-card" style={{ maxWidth: 500 }}>
+          <div className="auth-header">
+            <div className="auth-badge">Admin</div>
+            <img src={logo} alt="4Vape B2B" className="auth-logo" />
+            <h1>4Vape B2B</h1>
+            <p>Accesso con Clerk</p>
+          </div>
+          <SignIn
+            path="/admin/login"
+            routing="path"
+            forceRedirectUrl="/admin/dashboard"
+            fallbackRedirectUrl="/admin/dashboard"
+            signUpUrl="/register"
+            appearance={{
+              elements: {
+                rootBox: { width: "100%" },
+                card: { boxShadow: "none", border: "none", background: "transparent", padding: 0 },
+                headerTitle: { display: "none" },
+                headerSubtitle: { display: "none" },
+              },
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-wrap auth-epic">
