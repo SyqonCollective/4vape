@@ -7,6 +7,7 @@ let authTokenResolver = null;
 let logoutResolver = null;
 let authReady = !CLERK_ENABLED;
 let authReadyWaiters = [];
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -60,8 +61,23 @@ export async function logout() {
 }
 
 export async function api(path, options = {}) {
-  if (CLERK_ENABLED && String(path || "").startsWith("/admin")) {
+  const isAdminPath = String(path || "").startsWith("/admin");
+  if (CLERK_ENABLED && isAdminPath) {
     await waitForAuthReady();
+  }
+
+  async function resolveToken(forceTokenRefresh = false) {
+    if (!isAdminPath) {
+      return forceTokenRefresh && authTokenResolver ? await authTokenResolver() : await getAuthToken();
+    }
+    // On Clerk login transition, token can be briefly unavailable: wait before firing request.
+    for (let i = 0; i < 16; i += 1) {
+      const token =
+        forceTokenRefresh && authTokenResolver ? await authTokenResolver() : await getAuthToken();
+      if (token) return token;
+      await sleep(150);
+    }
+    return forceTokenRefresh && authTokenResolver ? await authTokenResolver() : await getAuthToken();
   }
 
   async function runRequest(forceTokenRefresh = false) {
@@ -70,7 +86,7 @@ export async function api(path, options = {}) {
       headers.set("Content-Type", "application/json");
     }
 
-    const token = forceTokenRefresh && authTokenResolver ? await authTokenResolver() : await getAuthToken();
+    const token = await resolveToken(forceTokenRefresh);
     if (token) headers.set("Authorization", `Bearer ${token}`);
 
     return fetch(`${API_BASE}${path}`, {
@@ -83,8 +99,12 @@ export async function api(path, options = {}) {
 
   // Clerk token can be a few ms late right after login; retry once with refreshed token.
   if ((res.status === 401 || res.status === 403) && authTokenResolver) {
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await sleep(300);
     res = await runRequest(true);
+    if (res.status === 401 || res.status === 403) {
+      await sleep(450);
+      res = await runRequest(true);
+    }
   }
 
   if (!res.ok) {
