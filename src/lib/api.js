@@ -3,11 +3,15 @@ const TOKEN_KEY = "4vape_token";
 const CLERK_ENABLED = Boolean(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 );
+const DEV_API_LOG =
+  typeof window !== "undefined" &&
+  (localStorage.getItem("4vape_debug_api") === "1" || import.meta.env.DEV);
 let authTokenResolver = null;
 let logoutResolver = null;
 let authReady = !CLERK_ENABLED;
 let authReadyWaiters = [];
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+let apiReqSeq = 0;
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -69,7 +73,10 @@ export async function logout() {
 }
 
 export async function api(path, options = {}) {
+  const reqId = ++apiReqSeq;
   const isAdminPath = String(path || "").startsWith("/admin");
+  const method = String(options.method || "GET").toUpperCase();
+  const startedAt = Date.now();
   if (CLERK_ENABLED && isAdminPath) {
     await waitForAuthReady();
   }
@@ -96,6 +103,13 @@ export async function api(path, options = {}) {
 
     const token = await resolveToken(forceTokenRefresh);
     if (token) headers.set("Authorization", `Bearer ${token}`);
+    if (DEV_API_LOG) {
+      console.debug(`[api#${reqId}] -> ${method} ${path}`, {
+        forceTokenRefresh,
+        hasAuthHeader: Boolean(token),
+        authReady,
+      });
+    }
 
     return fetch(`${API_BASE}${path}`, {
       ...options,
@@ -107,6 +121,9 @@ export async function api(path, options = {}) {
 
   // Clerk token can be a few ms late right after login; retry once with refreshed token.
   if ((res.status === 401 || res.status === 403) && authTokenResolver) {
+    if (DEV_API_LOG) {
+      console.warn(`[api#${reqId}] ${res.status} retrying ${method} ${path}`);
+    }
     await sleep(300);
     res = await runRequest(true);
     if (res.status === 401 || res.status === 403) {
@@ -117,7 +134,18 @@ export async function api(path, options = {}) {
 
   if (!res.ok) {
     const text = await res.text();
+    console.error(`[api#${reqId}] FAIL ${method} ${path}`, {
+      status: res.status,
+      elapsedMs: Date.now() - startedAt,
+      body: text?.slice?.(0, 400) || text,
+    });
     throw new Error(text || `Request failed: ${res.status}`);
+  }
+
+  if (DEV_API_LOG) {
+    console.debug(`[api#${reqId}] <- ${res.status} ${method} ${path}`, {
+      elapsedMs: Date.now() - startedAt,
+    });
   }
 
   if (res.status === 204) return null;
