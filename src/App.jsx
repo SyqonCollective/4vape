@@ -59,9 +59,19 @@ function RequireAuthClerk({ children }) {
           return;
         }
         setToken(token);
-        const me = await api("/auth/me");
+        let me = null;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            me = await api("/auth/me");
+            break;
+          } catch {
+            if (attempt < 2) {
+              await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+            }
+          }
+        }
         const role = String(me?.role || "");
-        if (role !== "ADMIN" && role !== "MANAGER") {
+        if (!me || (role !== "ADMIN" && role !== "MANAGER")) {
           await logout();
           if (mounted) {
             setAllowed(false);
