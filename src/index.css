@@ -3979,6 +3979,16 @@ button {
   border: 1px solid rgba(120, 145, 182, 0.45) !important;
 }
 
+.auth-simple-login [class*="cl-otp"] input,
+.auth-simple-login [class*="cl-verification"] input,
+.auth-simple-login input[inputmode="numeric"] {
+  background: rgba(245, 249, 255, 0.96) !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+  border: 1px solid rgba(120, 145, 182, 0.45) !important;
+}
+
 .auth-simple-login .cl-formFieldInput:-webkit-autofill,
 .auth-simple-login .cl-otpCodeFieldInput:-webkit-autofill {
   -webkit-text-fill-color: #0f172a !important;
