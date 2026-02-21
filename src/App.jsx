@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
+import { useEffect, useState } from "react";
 import AdminLayout from "./components/AdminLayout.jsx";
 import ClerkBridge from "./components/ClerkBridge.jsx";
 import AdminLogin from "./pages/admin/Login.jsx";
@@ -21,7 +22,7 @@ import AdminReports from "./pages/admin/Reports.jsx";
 import AdminMailMarketing from "./pages/admin/MailMarketing.jsx";
 import RegisterCompany from "./pages/RegisterCompany.jsx";
 import ReturnsTest from "./pages/ReturnsTest.jsx";
-import { getToken } from "./lib/api.js";
+import { api, getToken, logout, setToken } from "./lib/api.js";
 
 const clerkEnabled = Boolean(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
@@ -34,9 +35,45 @@ function RequireAuthLegacy({ children }) {
 }
 
 function RequireAuthClerk({ children }) {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function bootstrapToken() {
+      if (!isLoaded || !isSignedIn) {
+        if (mounted) setReady(false);
+        return;
+      }
+      try {
+        const token = await getToken();
+        if (!token) {
+          if (mounted) setReady(false);
+          return;
+        }
+        setToken(token);
+        const me = await api("/auth/me");
+        const role = String(me?.role || "");
+        if (role !== "ADMIN" && role !== "MANAGER") {
+          await logout();
+          if (mounted) setReady(false);
+          return;
+        }
+        if (mounted) setReady(true);
+        return;
+      } finally {
+        // no-op: ready is explicitly controlled above
+      }
+    }
+    bootstrapToken();
+    return () => {
+      mounted = false;
+    };
+  }, [isLoaded, isSignedIn, getToken]);
+
   if (!isLoaded) return null;
   if (!isSignedIn) return <Navigate to="/admin/login" replace />;
+  if (!ready) return null;
   return children;
 }
 
