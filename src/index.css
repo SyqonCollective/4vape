@@ -1939,7 +1939,7 @@ button {
 }
 
 .auth-wrap.auth-epic {
-  background: #11111f;
+  background: #000000;
 }
 .auth-filter {
   position: absolute;
@@ -2051,7 +2051,7 @@ button {
 .auth-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(17, 17, 31, 0.12) 20%, rgba(17, 17, 31, 0.88) 85%);
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.08) 18%, rgba(0, 0, 0, 0.9) 84%);
   z-index: 7;
 }
 .auth-front-fog {
@@ -3857,4 +3857,54 @@ button {
   .auth-clerk-login {
     padding: 20px 16px 24px;
   }
+}
+
+.auth-simple-login {
+  width: min(420px, 92vw);
+  min-height: 430px;
+  border-radius: 24px;
+  border: 1px solid rgba(103, 137, 184, 0.28);
+  background: rgba(7, 14, 24, 0.84);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 34px 70px rgba(1, 8, 20, 0.55);
+  position: relative;
+  z-index: 3;
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  padding: 28px;
+}
+
+.auth-simple-login .auth-logo {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 2px;
+}
+
+.auth-simple-login .cl-internal-b3fm6y,
+.auth-simple-login .cl-cardBox {
+  width: 100%;
+}
+
+.auth-simple-login .cl-formFieldInput {
+  background: rgba(245, 249, 255, 0.9) !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(120, 145, 182, 0.45) !important;
+}
+
+.auth-simple-login .cl-formFieldInput:focus,
+.auth-simple-login .cl-formFieldInput:focus-visible,
+.auth-simple-login .cl-formFieldInput[data-focus="true"] {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+.auth-simple-login .cl-formFieldInput::placeholder {
+  color: #64748b !important;
+}
+
+.auth-simple-login .cl-formButtonPrimary {
+  margin-top: 8px;
 }

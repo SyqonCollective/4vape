@@ -34,11 +34,11 @@ export default function AuthSmokeBackground() {
       scene.add(camera);
       clock = new THREE.Clock();
 
-      const light = new THREE.DirectionalLight(0xffffff, 0.5);
+      const light = new THREE.DirectionalLight(0xe8ffe8, 0.55);
       light.position.set(-1, 0, 1);
       scene.add(light);
 
-      const ambient = new THREE.AmbientLight(0x3b607e, 0.4);
+      const ambient = new THREE.AmbientLight(0x1f5c2f, 0.45);
       scene.add(ambient);
 
       const textureLoader = new THREE.TextureLoader();
@@ -64,7 +64,7 @@ export default function AuthSmokeBackground() {
       }
 
       const smokeMaterial = new THREE.MeshLambertMaterial({
-        color: 0x00dddd,
+        color: 0x4dff88,
         map: smokeTexture,
         transparent: true,
         opacity: 0.22,
