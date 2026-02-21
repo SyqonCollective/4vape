@@ -32,6 +32,22 @@ const NOTIF_SEEN_KEY = "admin_notifications_seen_at";
 const NOTIF_DISMISSED_KEY = "admin_notifications_dismissed";
 
 function resolveAdminNameFromToken() {
+  const clerkUser =
+    window?.Clerk?.user ||
+    window?.Clerk?.client?.activeSessions?.[0]?.user ||
+    null;
+  if (clerkUser) {
+    const clerkName =
+      clerkUser.firstName ||
+      clerkUser.username ||
+      clerkUser.primaryEmailAddress?.emailAddress ||
+      clerkUser.emailAddresses?.[0]?.emailAddress;
+    if (clerkName) {
+      const firstPart = String(clerkName).split("@")[0].trim();
+      if (firstPart) return firstPart.charAt(0).toUpperCase() + firstPart.slice(1);
+    }
+  }
+
   const token = getToken();
   if (!token || !token.includes(".")) return "Admin";
   try {
@@ -183,8 +199,12 @@ export default function AdminLayout() {
   useEffect(() => {
     const refreshName = () => setAdminName(resolveAdminNameFromToken());
     refreshName();
+    const t = setInterval(refreshName, 1200);
     window.addEventListener("storage", refreshName);
-    return () => window.removeEventListener("storage", refreshName);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("storage", refreshName);
+    };
   }, []);
 
   useEffect(() => {

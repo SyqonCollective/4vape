@@ -403,12 +403,7 @@ button {
   flex-direction: column;
   gap: 2px;
   line-height: 1.1;
-  background: linear-gradient(90deg, #0ea5e9, #22c55e, #38bdf8, #0ea5e9);
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: brandGreetingFlow 4s linear infinite;
+  color: #dbeafe;
 }
 
 .brand-greeting span {
@@ -425,6 +420,12 @@ button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  background: linear-gradient(90deg, #0ea5e9, #38bdf8, #2563eb, #0ea5e9);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: brandGreetingFlow 4s linear infinite;
 }
 
 .brand-title {
