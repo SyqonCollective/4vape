@@ -1939,7 +1939,7 @@ button {
 }
 
 .auth-wrap.auth-epic {
-  background: radial-gradient(circle at 20% 10%, #1c2029, #0b0f14 50%, #06080b 100%);
+  background: #11111f;
 }
 .auth-filter {
   position: absolute;
@@ -1954,9 +1954,9 @@ button {
 }
 .auth-smoke-layer {
   position: absolute;
-  inset: -6%;
+  inset: 0;
   z-index: 0;
-  opacity: 0.82;
+  opacity: 0.95;
 }
 .auth-sky {
   position: absolute;
@@ -2051,7 +2051,7 @@ button {
 .auth-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, transparent 35%, rgba(5, 6, 10, 0.9) 80%);
+  background: radial-gradient(circle at center, rgba(17, 17, 31, 0.12) 20%, rgba(17, 17, 31, 0.88) 85%);
   z-index: 7;
 }
 .auth-front-fog {
