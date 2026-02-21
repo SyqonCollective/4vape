@@ -7,8 +7,6 @@ export default function ClerkBridge() {
   const { signOut } = useClerk();
 
   useEffect(() => {
-    setAuthReady(false);
-
     setAuthTokenResolver(async () => {
       if (!isSignedIn) return null;
       const token = await getToken();
@@ -28,13 +26,13 @@ export default function ClerkBridge() {
         })
         .finally(() => setAuthReady(true));
     } else {
+      clearToken();
       setAuthReady(true);
     }
 
     return () => {
       setAuthTokenResolver(null);
       setLogoutResolver(null);
-      setAuthReady(false);
     };
   }, [isSignedIn, getToken, signOut]);
 

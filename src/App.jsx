@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
-import { useEffect, useState } from "react";
 import AdminLayout from "./components/AdminLayout.jsx";
 import ClerkBridge from "./components/ClerkBridge.jsx";
 import AdminLogin from "./pages/admin/Login.jsx";
@@ -22,7 +21,7 @@ import AdminReports from "./pages/admin/Reports.jsx";
 import AdminMailMarketing from "./pages/admin/MailMarketing.jsx";
 import RegisterCompany from "./pages/RegisterCompany.jsx";
 import ReturnsTest from "./pages/ReturnsTest.jsx";
-import { api, getToken, logout, setToken } from "./lib/api.js";
+import { getToken } from "./lib/api.js";
 
 const clerkEnabled = Boolean(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
@@ -35,72 +34,9 @@ function RequireAuthLegacy({ children }) {
 }
 
 function RequireAuthClerk({ children }) {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
-  const [ready, setReady] = useState(false);
-  const [allowed, setAllowed] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    async function bootstrapToken() {
-      if (!isLoaded || !isSignedIn) {
-        if (mounted) {
-          setAllowed(false);
-          setReady(true);
-        }
-        return;
-      }
-      try {
-        const token = await getToken();
-        if (!token) {
-          if (mounted) {
-            setAllowed(false);
-            setReady(true);
-          }
-          return;
-        }
-        setToken(token);
-        let me = null;
-        for (let attempt = 0; attempt < 3; attempt += 1) {
-          try {
-            me = await api("/auth/me");
-            break;
-          } catch {
-            if (attempt < 2) {
-              await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
-            }
-          }
-        }
-        const role = String(me?.role || "");
-        if (!me || (role !== "ADMIN" && role !== "MANAGER")) {
-          await logout();
-          if (mounted) {
-            setAllowed(false);
-            setReady(true);
-          }
-          return;
-        }
-        if (mounted) {
-          setAllowed(true);
-          setReady(true);
-        }
-        return;
-      } catch {
-        if (mounted) {
-          setAllowed(false);
-          setReady(true);
-        }
-      } finally {
-        // no-op: ready is explicitly controlled above
-      }
-    }
-    bootstrapToken();
-    return () => {
-      mounted = false;
-    };
-  }, [isLoaded, isSignedIn, getToken]);
-
-  if (!isLoaded || !ready) return null;
-  if (!isSignedIn || !allowed) return <Navigate to="/admin/login" replace />;
+  const { isLoaded, isSignedIn } = useAuth();
+  if (!isLoaded) return null;
+  if (!isSignedIn) return <Navigate to="/admin/login" replace />;
   return children;
 }
 
