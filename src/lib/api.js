@@ -49,6 +49,14 @@ export async function getAuthToken() {
   if (authTokenResolver) {
     const resolved = await authTokenResolver();
     if (resolved) return resolved;
+    try {
+      const clerkToken = await window?.Clerk?.session?.getToken?.();
+      if (clerkToken) return clerkToken;
+    } catch {
+      // ignore and continue
+    }
+    // When Clerk resolver is active, avoid falling back to stale local JWT.
+    return null;
   }
   return getToken();
 }
