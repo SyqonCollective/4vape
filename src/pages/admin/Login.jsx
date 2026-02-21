@@ -1,17 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import { SignIn } from "@clerk/clerk-react";
 import correctAnim from "../../assets/Correct.json";
 import logo from "../../assets/logo.png";
 import { api, setToken } from "../../lib/api.js";
+import AuthSmokeBackground from "../../components/AuthSmokeBackground.jsx";
 
 export default function AdminLogin() {
   const clerkEnabled = Boolean(
     import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   );
   const navigate = useNavigate();
-  const canvasRef = useRef(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,78 +39,11 @@ export default function AdminLogin() {
     }
   }
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return undefined;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return undefined;
-
-    let raf = 0;
-    let width = 0;
-    let height = 0;
-    const particles = [];
-
-    function resize() {
-      const rect = canvas.getBoundingClientRect();
-      width = Math.max(1, Math.floor(rect.width));
-      height = Math.max(1, Math.floor(rect.height));
-      canvas.width = width * window.devicePixelRatio;
-      canvas.height = height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    }
-
-    function seed() {
-      particles.length = 0;
-      const count = Math.min(140, Math.floor((width * height) / 12000));
-      for (let i = 0; i < count; i += 1) {
-        particles.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          r: 0.6 + Math.random() * 1.6,
-          a: 0.12 + Math.random() * 0.4,
-          vy: 0.1 + Math.random() * 0.4,
-          vx: (Math.random() - 0.5) * 0.25,
-        });
-      }
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "rgba(210, 235, 255, 0.8)";
-      for (const p of particles) {
-        ctx.globalAlpha = p.a;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
-        p.x += p.vx;
-        p.y -= p.vy;
-        if (p.y < -20) p.y = height + 20;
-        if (p.x < -20) p.x = width + 20;
-        if (p.x > width + 20) p.x = -20;
-      }
-      ctx.globalAlpha = 1;
-      raf = requestAnimationFrame(draw);
-    }
-
-    const onResize = () => {
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      resize();
-      seed();
-    };
-
-    onResize();
-    draw();
-    window.addEventListener("resize", onResize);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", onResize);
-    };
-  }, []);
-
   if (clerkEnabled) {
     return (
       <div className="auth-wrap auth-epic">
         <div className="auth-scene">
+          <AuthSmokeBackground />
           <div className="auth-sky" />
           <div className="auth-aurora" />
           <div className="auth-vignette" />
@@ -130,7 +63,7 @@ export default function AdminLogin() {
           <section className="auth-clerk-login">
             <div className="auth-clerk-title">
               <h2>Accedi</h2>
-              <p>Inserisci email e password del tuo account approvato.</p>
+              <p>Usa un account già attivato. Se non entri, completa prima il link invito ricevuto via email.</p>
             </div>
             <SignIn
               routing="virtual"
@@ -168,7 +101,8 @@ export default function AdminLogin() {
                     fontWeight: 700,
                   },
                   footerActionText: { color: "#9db0cd" },
-                  footerActionLink: { color: "#7ec8ff" },
+                  footerActionLink: { color: "#7ec8ff", pointerEvents: "none", opacity: 0.55 },
+                  footer: { display: "none" },
                   identityPreviewText: { color: "#cdd7ea" },
                   formResendCodeLink: { color: "#7ec8ff" },
                   otpCodeFieldInput: {
@@ -195,6 +129,7 @@ export default function AdminLogin() {
         </filter>
       </svg>
       <div className="auth-scene">
+        <AuthSmokeBackground />
         <div className="auth-sky" />
         <div className="auth-aurora" />
         <div className="auth-fog">
@@ -202,7 +137,6 @@ export default function AdminLogin() {
           <span className="fog f2" />
           <span className="fog f3" />
         </div>
-        <canvas ref={canvasRef} className="auth-canvas" />
         <div className="auth-noise" />
         <div className="auth-sparks">
           {Array.from({ length: 12 }).map((_, i) => (
