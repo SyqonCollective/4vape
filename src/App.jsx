@@ -37,18 +37,25 @@ function RequireAuthLegacy({ children }) {
 function RequireAuthClerk({ children }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [ready, setReady] = useState(false);
+  const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     async function bootstrapToken() {
       if (!isLoaded || !isSignedIn) {
-        if (mounted) setReady(false);
+        if (mounted) {
+          setAllowed(false);
+          setReady(true);
+        }
         return;
       }
       try {
         const token = await getToken();
         if (!token) {
-          if (mounted) setReady(false);
+          if (mounted) {
+            setAllowed(false);
+            setReady(true);
+          }
           return;
         }
         setToken(token);
@@ -56,11 +63,22 @@ function RequireAuthClerk({ children }) {
         const role = String(me?.role || "");
         if (role !== "ADMIN" && role !== "MANAGER") {
           await logout();
-          if (mounted) setReady(false);
+          if (mounted) {
+            setAllowed(false);
+            setReady(true);
+          }
           return;
         }
-        if (mounted) setReady(true);
+        if (mounted) {
+          setAllowed(true);
+          setReady(true);
+        }
         return;
+      } catch {
+        if (mounted) {
+          setAllowed(false);
+          setReady(true);
+        }
       } finally {
         // no-op: ready is explicitly controlled above
       }
@@ -71,9 +89,8 @@ function RequireAuthClerk({ children }) {
     };
   }, [isLoaded, isSignedIn, getToken]);
 
-  if (!isLoaded) return null;
-  if (!isSignedIn) return <Navigate to="/admin/login" replace />;
-  if (!ready) return null;
+  if (!isLoaded || !ready) return null;
+  if (!isSignedIn || !allowed) return <Navigate to="/admin/login" replace />;
   return children;
 }
 
