@@ -394,6 +394,25 @@ button {
   filter: drop-shadow(0 6px 12px rgba(14, 165, 233, 0.2));
 }
 
+.brand-text {
+  min-width: 0;
+}
+
+.brand-greeting {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: linear-gradient(90deg, #0ea5e9, #22c55e, #38bdf8, #0ea5e9);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: brandGreetingFlow 4s linear infinite;
+}
+
 .brand-title {
   font-weight: 700;
   font-size: 1.05rem;
@@ -402,6 +421,11 @@ button {
 .brand-sub {
   font-size: 0.85rem;
   color: var(--muted);
+}
+
+@keyframes brandGreetingFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 220% 50%; }
 }
 
 .admin-nav {
