@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
+// CHECKLIST (admin richieste):
+// [x] Click riga cliente apre scheda/modifica
+
 export default function AdminCompanies() {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [companies, setCompanies] = useState([]);

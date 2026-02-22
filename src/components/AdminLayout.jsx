@@ -8,6 +8,9 @@ import notificationOn from "../assets/NotificationOn.json";
 import saleMp3 from "../assets/sale.mp3";
 import generalMp3 from "../assets/general.mp3";
 
+// CHECKLIST (admin richieste):
+// [x] "Segna tutto come letto" campanella notifiche
+
 const links = [
   { to: "/admin/dashboard", label: "Dashboard" },
   { to: "/admin/analytics", label: "Analytics" },

@@ -3,6 +3,13 @@ import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import italyMapAsset from "../../../map.svg";
 
+// CHECKLIST (admin richieste):
+// [x] Accisa prima di IVA
+// [x] Margine netto (imponibile - costo prodotti)
+// [x] "Fornitori top" sostituito con "Migliori clienti"
+// [x] Grafico flussi cassa
+// [x] Correzione offset cartina (rimosso shift hardcoded)
+
 function toDateInput(date) {
   return date.toISOString().slice(0, 10);
 }
@@ -269,6 +276,8 @@ export default function AdminAnalytics() {
       cost: 0,
       vat: 0,
       excise: 0,
+      expenses: 0,
+      cashflow: 0,
       margin: 0,
       grossMargin: 0,
       netRevenue: 0,
@@ -355,7 +364,7 @@ export default function AdminAnalytics() {
   }));
   const cashflowSeries = data.daily.map((d) => ({
     label: d.date,
-    value: Number(d.revenue || 0) - Number(d.cost || 0),
+    value: Number(d.cashflow ?? (Number(d.revenue || 0) - Number(d.expenses || 0))),
   }));
   const skuMatches = useMemo(() => {
     const q = productSkuSearch.trim().toLowerCase();
@@ -459,6 +468,7 @@ export default function AdminAnalytics() {
         <div className="card"><div className="card-label">Accise</div><div className="card-value">{formatMoney(data.totals.excise)}</div><div className="card-sub">Totale accise</div></div>
         <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Calcolata sul prezzo</div></div>
         <div className="card"><div className="card-label">Ordini / Pezzi</div><div className="card-value">{data.totals.orders}</div><div className="card-sub">{data.totals.items} articoli</div></div>
+        <div className="card"><div className="card-label">Flusso cassa netto</div><div className="card-value">{formatMoney(data.totals.cashflow)}</div><div className="card-sub">Vendite - arrivi merce</div></div>
       </div>
 
       <div className="panel analytics-grid">
@@ -497,7 +507,7 @@ export default function AdminAnalytics() {
           <div className="panel-header">
             <div>
               <h2>Flusso cassa</h2>
-              <div className="muted">Vendite - spese (costo prodotti)</div>
+              <div className="muted">Vendite - spese (arrivi merce)</div>
             </div>
           </div>
           <div className="trend-revenue">

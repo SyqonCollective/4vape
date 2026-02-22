@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
+// CHECKLIST (admin richieste):
+// [x] Stati ordini recenti con etichette UI (non raw enum)
+
 function statusLabel(status) {
   if (status === "SUBMITTED") return "In attesa pagamento";
   if (status === "APPROVED") return "Elaborazione";

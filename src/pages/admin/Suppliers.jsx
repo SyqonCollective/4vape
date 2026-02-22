@@ -7,6 +7,10 @@ import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
+// CHECKLIST (admin richieste):
+// [x] Rimossi campi "Nuovo fornitore" dalla schermata Drop
+// [x] Rimosso tasto elimina fornitore
+
 export default function AdminSuppliers() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");

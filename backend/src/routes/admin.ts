@@ -1458,6 +1458,8 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post("/products/import", async (request, reply) => {
+    // CHECKLIST (admin richieste):
+    // [x] Update giacenza via CSV anche con colonne quantita/qta/qty
     const user = await requireAdmin(request, reply);
     if (!user) return;
     const file = await request.file();
@@ -2196,6 +2198,8 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/analytics", async (request, reply) => {
+    // CHECKLIST (admin richieste):
+    // [x] Flussi cassa = vendite - spese (arrivi merce da goods receipts)
     const user = await requireAdmin(request, reply);
     if (!user) return;
     const query = request.query as { start?: string; end?: string; productId?: string };
@@ -2235,6 +2239,8 @@ export async function adminRoutes(app: FastifyInstance) {
       cost: number;
       vat: number;
       excise: number;
+      expenses: number;
+      cashflow: number;
       orders: number;
       items: number;
       margin: number;
@@ -2250,6 +2256,8 @@ export async function adminRoutes(app: FastifyInstance) {
         cost: 0,
         vat: 0,
         excise: 0,
+        expenses: 0,
+        cashflow: 0,
         orders: 0,
         items: 0,
         margin: 0,
@@ -2261,6 +2269,7 @@ export async function adminRoutes(app: FastifyInstance) {
     let cost = 0;
     let vat = 0;
     let excise = 0;
+    let expenses = 0;
     let items = 0;
     let orderCount = 0;
     const productAgg = new Map<string, { id: string; name: string; sku: string; revenue: number; qty: number }>();
@@ -2274,6 +2283,8 @@ export async function adminRoutes(app: FastifyInstance) {
       cost: 0,
       vat: 0,
       excise: 0,
+      expenses: 0,
+      cashflow: 0,
       orders: 0,
       items: 0,
       margin: 0,
@@ -2285,6 +2296,33 @@ export async function adminRoutes(app: FastifyInstance) {
     let selectedExcise = 0;
     let selectedItems = 0;
     let selectedOrders = 0;
+
+    const receiptLines = await prisma.goodsReceiptLine.findMany({
+      where: {
+        receipt: {
+          receivedAt: {
+            gte: start,
+            lte: end,
+          },
+        },
+      },
+      include: {
+        receipt: {
+          select: {
+            receivedAt: true,
+          },
+        },
+      },
+    });
+    for (const line of receiptLines) {
+      const key = line.receipt.receivedAt.toISOString().slice(0, 10);
+      const idx = dayIndex.get(key);
+      const lineExpense = Number(line.unitCost || 0) * Number(line.qty || 0);
+      expenses += lineExpense;
+      if (idx != null) {
+        days[idx].expenses += lineExpense;
+      }
+    }
 
     for (const order of orders) {
       const key = order.createdAt.toISOString().slice(0, 10);
@@ -2416,9 +2454,11 @@ export async function adminRoutes(app: FastifyInstance) {
 
     for (const d of days) {
       d.margin = d.revenue - d.cost - d.vat - d.excise;
+      d.cashflow = d.revenue - d.expenses;
     }
     for (const d of selectedDaily) {
       d.margin = d.revenue - d.cost - d.vat - d.excise;
+      d.cashflow = d.revenue - d.expenses;
     }
 
     const topProducts = Array.from(productAgg.values())
@@ -2456,6 +2496,8 @@ export async function adminRoutes(app: FastifyInstance) {
         cost,
         vat,
         excise,
+        expenses,
+        cashflow: revenue - expenses,
         margin,
         grossMargin,
         netRevenue,

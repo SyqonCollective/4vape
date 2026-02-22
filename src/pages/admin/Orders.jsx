@@ -3,6 +3,12 @@ import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
+// CHECKLIST (admin richieste):
+// [x] Ordini ordinati per arrivo (createdAt desc)
+// [x] Modifica ordine: rimozione riga prodotto disponibile
+// [x] Accisa prima di IVA nei riepiloghi
+// [x] Contatore "Modifica selezionati" corretto
+
 const STATUS_OPTIONS = [
   { value: "DRAFT", label: "Bozza" },
   { value: "SUBMITTED", label: "In attesa pagamento" },

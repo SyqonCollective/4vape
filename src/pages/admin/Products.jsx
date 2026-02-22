@@ -5,6 +5,11 @@ import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
+// CHECKLIST (admin richieste):
+// [x] Import CSV giacenza (alias quantità supportati lato API)
+// [x] Breve descrizione sopra descrizione con stesso editor rich text
+// [x] Scheda prodotto aperta più ampia (quasi full-screen)
+
 function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione..." }) {
   const editorRef = useRef(null);
 

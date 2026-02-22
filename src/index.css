@@ -1591,6 +1591,7 @@ button {
 }
 
 .modal.product-modal {
+  /* CHECKLIST: scheda prodotto più ampia/full-screen */
   width: min(1480px, 98vw);
   max-height: 92vh;
   display: flex;

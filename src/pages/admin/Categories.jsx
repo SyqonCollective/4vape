@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
+// CHECKLIST (admin richieste):
+// [x] Riordino categorie principali e sottocategorie coerente per parent
+// [x] Descrizione categoria con editor ricco
+
 function RichTextEditor({ value, onChange, placeholder = "Descrizione categoria..." }) {
   const editorRef = useRef(null);
 

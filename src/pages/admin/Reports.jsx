@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
+// CHECKLIST (admin richieste):
+// [x] Accisa prima di IVA
+// [x] Ricerca scrivibile cliente/prodotto (input testuale + select filtrata)
+// [x] Margine rinominato "netto-costo"
+// [x] Numero ordine reale in dettaglio vendite
+
 function toDateInput(date) {
   return date.toISOString().slice(0, 10);
 }
