@@ -140,6 +140,16 @@ export default function AdminLayout() {
     localStorage.setItem(NOTIF_SEEN_KEY, String(effectiveSeenAt));
   }
 
+  function markAllNotificationsAsReadAndHide() {
+    markNotificationsSeen();
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      for (const n of notifications) next.add(n.id);
+      localStorage.setItem(NOTIF_DISMISSED_KEY, JSON.stringify(Array.from(next)));
+      return next;
+    });
+  }
+
   function dismissNotification(id) {
     setDismissedIds((prev) => {
       const next = new Set(prev);
@@ -379,7 +389,7 @@ export default function AdminLayout() {
                     ))}
                   </div>
                   <div className="notif-footer">
-                    <button className="btn ghost small" onClick={markNotificationsSeen}>
+                    <button className="btn ghost small" onClick={markAllNotificationsAsReadAndHide}>
                       Segna tutto come letto
                     </button>
                   </div>

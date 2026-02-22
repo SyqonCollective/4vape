@@ -1,0 +1,13 @@
+deploy
+
+cd "/Users/michaelruggeri/Desktop/Code/4vape buono"
+git add src/pages/admin/Login.jsx src/index.css
+git commit -m "auth: fix Clerk text contrast and reset-password styles"
+git push origin main
+git push production main
+
+vps
+
+cd /var/www/4vape
+npm run build
+systemctl reload nginx

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../lib/api.js";
+import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
@@ -35,6 +35,11 @@ export default function AdminInventory() {
   const [taxes, setTaxes] = useState([]);
   const [excises, setExcises] = useState([]);
   const [q, setQ] = useState("");
+  const [asOfDate, setAsOfDate] = useState("");
+  const [brandFilter, setBrandFilter] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState([]);
+  const [subcategoryFilter, setSubcategoryFilter] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
@@ -46,7 +51,11 @@ export default function AdminInventory() {
   async function loadInventory() {
     setLoading(true);
     try {
-      const res = await api(`/admin/inventory/items?q=${encodeURIComponent(q.trim())}&limit=800`);
+      const params = new URLSearchParams();
+      params.set("q", q.trim());
+      params.set("limit", "1200");
+      if (asOfDate) params.set("asOf", asOfDate);
+      const res = await api(`/admin/inventory/items?${params.toString()}`);
       setItems(res || []);
     } catch {
       setError("Impossibile caricare inventario");
@@ -73,7 +82,7 @@ export default function AdminInventory() {
   useEffect(() => {
     const t = setTimeout(loadInventory, 250);
     return () => clearTimeout(t);
-  }, [q]);
+  }, [q, asOfDate]);
 
   const stats = useMemo(() => {
     const totalItems = items.length;
@@ -106,16 +115,48 @@ export default function AdminInventory() {
     return { totalItems, totalStock, totalValue, subtotal, totalExcise, totalVat };
   }, [items]);
 
-  const subcategoryStats = useMemo(() => {
-    const map = new Map();
-    for (const item of items) {
-      const key = (item.subcategory || "Senza sottocategoria").trim();
-      const prev = map.get(key) || { name: key, qty: 0 };
-      prev.qty += Number(item.stockQty || 0);
-      map.set(key, prev);
+  const brandOptions = useMemo(
+    () => Array.from(new Set(items.map((i) => i.brand).filter(Boolean))).sort((a, b) => a.localeCompare(b, "it")),
+    [items]
+  );
+  const categoryOptions = useMemo(
+    () => Array.from(new Set(items.map((i) => i.category).filter(Boolean))).sort((a, b) => a.localeCompare(b, "it")),
+    [items]
+  );
+  const subcategoryOptions = useMemo(
+    () => Array.from(new Set(items.map((i) => i.subcategory).filter(Boolean))).sort((a, b) => a.localeCompare(b, "it")),
+    [items]
+  );
+  const filteredItems = useMemo(
+    () =>
+      items.filter(
+        (i) =>
+          (!brandFilter.length || brandFilter.includes(i.brand || "")) &&
+          (!categoryFilter.length || categoryFilter.includes(i.category || "")) &&
+          (!subcategoryFilter.length || subcategoryFilter.includes(i.subcategory || ""))
+      ),
+    [items, brandFilter, categoryFilter, subcategoryFilter]
+  );
+
+  async function exportInventoryXls() {
+    try {
+      const res = await fetch(`/api/admin/inventory/export?q=${encodeURIComponent(q.trim())}`, {
+        headers: { Authorization: `Bearer ${getToken() || ""}` },
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "inventario.xls";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Impossibile esportare inventario");
     }
-    return Array.from(map.values()).sort((a, b) => b.qty - a.qty || a.name.localeCompare(b.name, "it"));
-  }, [items]);
+  }
 
   function openCreate() {
     setForm(initialForm);
@@ -228,6 +269,7 @@ export default function AdminInventory() {
         <div className="page-actions inventory-actions">
           <button className="btn ghost" onClick={() => navigate("/admin/goods-receipts")}>Arrivo merci</button>
           <button className="btn ghost" onClick={openQuickQty}>Modifica quantità rapida</button>
+          <button className="btn ghost" onClick={exportInventoryXls}>Export Excel</button>
           <button className="btn primary" onClick={openCreate}>Nuovo articolo</button>
         </div>
       </div>
@@ -252,37 +294,54 @@ export default function AdminInventory() {
             placeholder="SKU, nome, brand, categoria"
           />
         </div>
-      </div>
-
-      <div className="table subcategory-stock-table">
-        <div className="row header">
-          <div>Sottocategoria</div>
-          <div>Quantità totale</div>
+        <div className="filter-group">
+          <label>Data giacenza</label>
+          <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} />
         </div>
-        {subcategoryStats.length ? (
-          subcategoryStats.map((s) => (
-            <div className="row" key={s.name}>
-              <div>{s.name}</div>
-              <div>{s.qty}</div>
-            </div>
-          ))
-        ) : (
-          <div className="row">
-            <div className="muted">Nessuna sottocategoria</div>
-            <div>0</div>
-          </div>
-        )}
+        <div className="filter-group">
+          <label>Brand</label>
+          <select multiple className="select" value={brandFilter} onChange={(e) => setBrandFilter(Array.from(e.target.selectedOptions).map((o) => o.value))}>
+            {brandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>Categoria</label>
+          <select multiple className="select" value={categoryFilter} onChange={(e) => setCategoryFilter(Array.from(e.target.selectedOptions).map((o) => o.value))}>
+            {categoryOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>Sottocategoria</label>
+          <select multiple className="select" value={subcategoryFilter} onChange={(e) => setSubcategoryFilter(Array.from(e.target.selectedOptions).map((o) => o.value))}>
+            {subcategoryOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
       </div>
 
       <div className="inventory-table">
         <div className="inventory-row header">
-          <div>SKU</div><div>Nome</div><div>Brand</div><div>Categoria</div><div>Sottocategoria</div><div>Giacenza</div><div>Costo</div><div>Prezzo</div><div>Accisa</div><div>IVA</div><div></div>
+          <div><input type="checkbox" checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length} onChange={(e) => setSelectedIds(e.target.checked ? new Set(filteredItems.map((x) => x.id)) : new Set())} /></div>
+          <div>SKU</div><div>Nome</div><div>Brand</div><div>Categoria</div><div>Sottocategoria</div><div>Giacenza</div><div>Costo</div><div>Prezzo</div><div>Accisa</div><div>ML Prodotto</div><div></div>
         </div>
         {loading ? <div className="inventory-empty">Caricamento...</div> : null}
         {!loading && !items.length ? <div className="inventory-empty">Nessun articolo</div> : null}
         {!loading
-          ? items.map((item) => (
+          ? filteredItems.map((item) => (
               <div key={item.id} className="inventory-row">
+                <div>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(item.id)}
+                    onChange={(e) =>
+                      setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        if (e.target.checked) next.add(item.id);
+                        else next.delete(item.id);
+                        return next;
+                      })
+                    }
+                  />
+                </div>
                 <div className="mono">{item.sku}</div>
                 <div>{item.name}</div>
                 <div>{item.brand || "-"}</div>
@@ -292,7 +351,7 @@ export default function AdminInventory() {
                 <div>{item.purchasePrice != null ? money(item.purchasePrice) : "-"}</div>
                 <div>{item.price != null ? money(item.price) : "-"}</div>
                 <div>{item.exciseRateRef?.name || "-"}</div>
-                <div>{item.taxRateRef?.name || "-"}</div>
+                <div>{item.mlProduct ?? "-"}</div>
                 <div><button className="btn ghost small" onClick={() => openEdit(item)}>Modifica</button></div>
               </div>
             ))

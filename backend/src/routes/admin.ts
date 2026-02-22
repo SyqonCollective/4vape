@@ -3845,9 +3845,38 @@ export async function adminRoutes(app: FastifyInstance) {
     const user = await requireAdmin(request, reply);
     if (!user) return;
     const q = String((request.query as any)?.q || "").trim();
+    const asOf = String((request.query as any)?.asOf || "").trim();
+    const asOfDate = asOf ? new Date(`${asOf}T23:59:59.999Z`) : null;
     const limitRaw = Number((request.query as any)?.limit || 400);
     const limit = Math.max(1, Math.min(1000, Number.isFinite(limitRaw) ? limitRaw : 400));
     return prisma.internalInventoryItem.findMany({
+      where: {
+        ...(q
+          ? {
+              OR: [
+                { sku: { contains: q, mode: "insensitive" } },
+                { name: { contains: q, mode: "insensitive" } },
+                { brand: { contains: q, mode: "insensitive" } },
+                { category: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+        ...(asOfDate ? { updatedAt: { lte: asOfDate } } : {}),
+      },
+      include: {
+        taxRateRef: true,
+        exciseRateRef: true,
+      },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      take: limit,
+    });
+  });
+
+  app.get("/inventory/export", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const q = String((request.query as any)?.q || "").trim();
+    const rows = await prisma.internalInventoryItem.findMany({
       where: q
         ? {
             OR: [
@@ -3858,13 +3887,54 @@ export async function adminRoutes(app: FastifyInstance) {
             ],
           }
         : undefined,
-      include: {
-        taxRateRef: true,
-        exciseRateRef: true,
-      },
+      include: { exciseRateRef: true },
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-      take: limit,
+      take: 5000,
     });
+    const header = [
+      "SKU",
+      "Nome",
+      "Brand",
+      "Categoria",
+      "Sottocategoria",
+      "CodicePL",
+      "MLProdotto",
+      "Giacenza",
+      "Costo",
+      "Prezzo",
+      "Accisa",
+    ];
+    const xml = `<?xml version="1.0"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Worksheet ss:Name="Inventario">
+  <Table>
+   ${[header, ...rows.map((r) => [
+      r.sku,
+      r.name,
+      r.brand || "",
+      r.category || "",
+      r.subcategory || "",
+      r.codicePl || "",
+      Number(r.mlProduct || 0).toString(),
+      Number(r.stockQty || 0).toString(),
+      Number(r.purchasePrice || 0).toFixed(2),
+      Number(r.price || 0).toFixed(2),
+      r.exciseRateRef?.name || "",
+    ])]
+      .map(
+        (row) =>
+          `<Row>${row
+            .map((c) => `<Cell><Data ss:Type="String">${String(c ?? "")}</Data></Cell>`)
+            .join("")}</Row>`
+      )
+      .join("")}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+    reply.header("Content-Type", "application/vnd.ms-excel");
+    reply.header("Content-Disposition", 'attachment; filename="inventario.xls"');
+    return reply.send(xml);
   });
 
   app.post("/inventory/items", async (request, reply) => {
@@ -4003,13 +4073,149 @@ export async function adminRoutes(app: FastifyInstance) {
     return result;
   });
 
+  app.get("/inventory/movements", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const query = request.query as { start?: string; end?: string };
+    const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : null;
+    const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : null;
+
+    const [receiptLines, orders] = await Promise.all([
+      prisma.goodsReceiptLine.findMany({
+        where: {
+          receipt: {
+            receivedAt: {
+              ...(start ? { gte: start } : {}),
+              ...(end ? { lte: end } : {}),
+            },
+          },
+        },
+        include: {
+          receipt: {
+            select: {
+              receivedAt: true,
+              reference: true,
+              supplierName: true,
+              supplier: { select: { name: true } },
+            },
+          },
+          item: {
+            include: { exciseRateRef: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5000,
+      }),
+      prisma.order.findMany({
+        where: {
+          createdAt: {
+            ...(start ? { gte: start } : {}),
+            ...(end ? { lte: end } : {}),
+          },
+          status: { in: ["APPROVED", "FULFILLED"] },
+        },
+        include: {
+          company: { select: { name: true } },
+          items: {
+            include: {
+              product: {
+                include: { exciseRateRef: true },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5000,
+      }),
+    ]);
+
+    const movements: Array<any> = [];
+    for (const line of receiptLines) {
+      const excise = line.item?.exciseRateRef;
+      movements.push({
+        type: "CARICO",
+        date: line.receipt.receivedAt,
+        invoiceNo: line.receipt.reference || "",
+        counterparty: line.receipt.supplier?.name || line.receipt.supplierName || "Fornitore",
+        sku: line.sku,
+        name: line.name,
+        codicePl: line.item?.codicePl || "",
+        mlProduct: Number(line.item?.mlProduct || 0),
+        excise: excise ? `${excise.name}` : "",
+        loadQty: Number(line.qty || 0),
+        unloadQty: 0,
+      });
+    }
+
+    for (const order of orders) {
+      for (const line of order.items) {
+        const excise = line.product?.exciseRateRef;
+        movements.push({
+          type: "SCARICO",
+          date: order.createdAt,
+          invoiceNo: String(order.orderNumber || ""),
+          counterparty: order.company?.name || "Cliente",
+          sku: line.sku,
+          name: line.name,
+          codicePl: line.product?.codicePl || "",
+          mlProduct: Number(line.product?.mlProduct || 0),
+          excise: excise ? `${excise.name}` : "",
+          loadQty: 0,
+          unloadQty: Number(line.qty || 0),
+        });
+      }
+    }
+
+    movements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return movements.slice(0, 10000);
+  });
+
+  function parseReceiptNotes(raw: string | null | undefined) {
+    const text = String(raw || "");
+    const m = text.match(/\[INV_DATE:([0-9]{4}-[0-9]{2}-[0-9]{2})\]/);
+    const invoiceDate = m?.[1] || null;
+    const plainNotes = text.replace(/\[INV_DATE:[0-9]{4}-[0-9]{2}-[0-9]{2}\]\s*/g, "").trim();
+    return { invoiceDate, plainNotes };
+  }
+
+  function composeReceiptNotes(invoiceDate?: string | null, notes?: string | null) {
+    const parts: string[] = [];
+    const d = String(invoiceDate || "").trim();
+    if (d) parts.push(`[INV_DATE:${d}]`);
+    const n = String(notes || "").trim();
+    if (n) parts.push(n);
+    return parts.join("\n");
+  }
+
   app.get("/goods-receipts", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
+    const query = request.query as { start?: string; end?: string; supplierId?: string };
+    const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : null;
+    const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : null;
     const rows = await prisma.goodsReceipt.findMany({
+      where: {
+        ...(query.supplierId ? { supplierId: query.supplierId } : {}),
+        ...((start || end)
+          ? {
+              receivedAt: {
+                ...(start ? { gte: start } : {}),
+                ...(end ? { lte: end } : {}),
+              },
+            }
+          : {}),
+      },
       include: {
         lines: {
-          select: { qty: true, unitCost: true },
+          select: {
+            qty: true,
+            unitCost: true,
+            item: {
+              select: {
+                taxRateRef: { select: { rate: true } },
+              },
+            },
+          },
         },
         createdBy: {
           select: { id: true, email: true },
@@ -4021,15 +4227,30 @@ export async function adminRoutes(app: FastifyInstance) {
       orderBy: [{ receivedAt: "desc" }, { createdAt: "desc" }],
       take: 300,
     });
-    return rows.map((r) => ({
-      ...r,
-      linesCount: r.lines.length,
-      totalQty: r.lines.reduce((sum, line) => sum + Number(line.qty || 0), 0),
-      totalNet: r.lines.reduce(
+    return rows.map((r, index) => {
+      const parsed = parseReceiptNotes(r.notes);
+      const totalNet = r.lines.reduce(
         (sum, line) => sum + Number(line.qty || 0) * Number(line.unitCost || 0),
         0
-      ),
-    }));
+      );
+      const totalVat = r.lines.reduce((sum, line) => {
+        const rate = Number(line.item?.taxRateRef?.rate || 0);
+        const lineNet = Number(line.qty || 0) * Number(line.unitCost || 0);
+        return sum + lineNet * (rate / 100);
+      }, 0);
+      return {
+        ...r,
+        progressiveNo: rows.length - index,
+        invoiceNo: r.reference || null,
+        invoiceDate: parsed.invoiceDate,
+        notes: parsed.plainNotes,
+        linesCount: r.lines.length,
+        totalQty: r.lines.reduce((sum, line) => sum + Number(line.qty || 0), 0),
+        totalNet,
+        totalVat,
+        totalGross: totalNet + totalVat,
+      };
+    });
   });
 
   app.get("/goods-receipts/sku-info", async (request, reply) => {
@@ -4132,7 +4353,13 @@ export async function adminRoutes(app: FastifyInstance) {
       },
     });
     if (!row) return reply.notFound("Carico non trovato");
-    return row;
+    const parsed = parseReceiptNotes(row.notes);
+    return {
+      ...row,
+      invoiceNo: row.reference || null,
+      invoiceDate: parsed.invoiceDate,
+      notes: parsed.plainNotes,
+    };
   });
 
   app.post("/goods-receipts", async (request, reply) => {
@@ -4142,6 +4369,8 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         supplierId: z.string().optional().nullable(),
         supplierName: z.string().optional().nullable(),
+        invoiceNo: z.string().optional().nullable(),
+        invoiceDate: z.string().optional().nullable(),
         reference: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
         receivedAt: z.string().optional().nullable(),
@@ -4171,7 +4400,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .parse(request.body);
 
     const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    const cleanRef = String(body.reference || "").trim();
+    const cleanRef = String(body.invoiceNo || body.reference || "").trim();
     const baseReceiptNo =
       cleanRef.length > 0
         ? `FATT-${cleanRef}`
@@ -4192,8 +4421,8 @@ export async function adminRoutes(app: FastifyInstance) {
           receiptNo,
           supplierId: body.supplierId || null,
           supplierName: body.supplierName || supplier?.name || null,
-          reference: body.reference || null,
-          notes: body.notes || null,
+          reference: body.invoiceNo || body.reference || null,
+          notes: composeReceiptNotes(body.invoiceDate || null, body.notes || null) || null,
           receivedAt: body.receivedAt ? new Date(body.receivedAt) : new Date(),
           createdById: user.id || null,
         },
@@ -4209,29 +4438,58 @@ export async function adminRoutes(app: FastifyInstance) {
         const qty = Number(rawLine.qty || 0);
         totalQty += qty;
 
-        const existing = await tx.internalInventoryItem.findUnique({ where: { sku } });
+        const [existing, product] = await Promise.all([
+          tx.internalInventoryItem.findUnique({ where: { sku } }),
+          tx.product.findUnique({
+            where: { sku },
+            select: {
+              name: true,
+              description: true,
+              shortDescription: true,
+              brand: true,
+              category: true,
+              subcategory: true,
+              barcode: true,
+              nicotine: true,
+              mlProduct: true,
+              taxRateId: true,
+              exciseRateId: true,
+              purchasePrice: true,
+              price: true,
+            },
+          }),
+        ]);
+        const pickVal = (...vals: any[]) => {
+          for (const v of vals) {
+            if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+          }
+          return null;
+        };
 
         const nextData: Prisma.InternalInventoryItemUncheckedUpdateInput = {
           stockQty: { increment: qty },
-          ...(rawLine.name ? { name } : {}),
-          ...(rawLine.description !== undefined
-            ? { description: rawLine.description || null }
-            : {}),
-          ...(rawLine.shortDescription !== undefined
-            ? { shortDescription: rawLine.shortDescription || null }
-            : {}),
-          ...(rawLine.brand !== undefined ? { brand: rawLine.brand || null } : {}),
-          ...(rawLine.category !== undefined ? { category: rawLine.category || null } : {}),
-          ...(rawLine.subcategory !== undefined ? { subcategory: rawLine.subcategory || null } : {}),
-          ...(rawLine.barcode !== undefined ? { barcode: rawLine.barcode || null } : {}),
-          ...(rawLine.nicotine !== undefined ? { nicotine: rawLine.nicotine } : {}),
-          ...(rawLine.mlProduct !== undefined ? { mlProduct: rawLine.mlProduct } : {}),
-          ...(rawLine.unitCost !== undefined ? { purchasePrice: rawLine.unitCost } : {}),
-          ...(rawLine.unitPrice !== undefined ? { price: rawLine.unitPrice } : {}),
-          ...(rawLine.taxRateId !== undefined ? { taxRateId: rawLine.taxRateId || null } : {}),
-          ...(rawLine.exciseRateId !== undefined
-            ? { exciseRateId: rawLine.exciseRateId || null }
-            : {}),
+          name: String(pickVal(rawLine.name, existing?.name, product?.name, sku) || sku),
+          description: pickVal(rawLine.description, existing?.description, product?.description),
+          shortDescription: pickVal(
+            rawLine.shortDescription,
+            existing?.shortDescription,
+            product?.shortDescription
+          ),
+          brand: pickVal(rawLine.brand, existing?.brand, product?.brand),
+          category: pickVal(rawLine.category, existing?.category, product?.category),
+          subcategory: pickVal(rawLine.subcategory, existing?.subcategory, product?.subcategory),
+          barcode: pickVal(rawLine.barcode, existing?.barcode, product?.barcode),
+          nicotine: rawLine.nicotine ?? existing?.nicotine ?? product?.nicotine ?? null,
+          mlProduct: rawLine.mlProduct ?? existing?.mlProduct ?? product?.mlProduct ?? null,
+          purchasePrice:
+            rawLine.unitCost ?? existing?.purchasePrice ?? product?.purchasePrice ?? null,
+          price: rawLine.unitPrice ?? existing?.price ?? product?.price ?? null,
+          taxRateId: pickVal(rawLine.taxRateId, existing?.taxRateId, product?.taxRateId),
+          exciseRateId: pickVal(
+            rawLine.exciseRateId,
+            existing?.exciseRateId,
+            product?.exciseRateId
+          ),
         };
 
         const item = existing
@@ -4242,20 +4500,20 @@ export async function adminRoutes(app: FastifyInstance) {
           : await tx.internalInventoryItem.create({
               data: {
                 sku,
-                name,
-                description: rawLine.description || null,
-                shortDescription: rawLine.shortDescription || null,
-                brand: rawLine.brand || null,
-                category: rawLine.category || null,
-                subcategory: rawLine.subcategory || null,
-                barcode: rawLine.barcode || null,
-                nicotine: rawLine.nicotine ?? null,
-                mlProduct: rawLine.mlProduct ?? null,
-                purchasePrice: rawLine.unitCost ?? null,
-                price: rawLine.unitPrice ?? null,
+                name: String(pickVal(rawLine.name, product?.name, sku) || sku),
+                description: pickVal(rawLine.description, product?.description),
+                shortDescription: pickVal(rawLine.shortDescription, product?.shortDescription),
+                brand: pickVal(rawLine.brand, product?.brand),
+                category: pickVal(rawLine.category, product?.category),
+                subcategory: pickVal(rawLine.subcategory, product?.subcategory),
+                barcode: pickVal(rawLine.barcode, product?.barcode),
+                nicotine: rawLine.nicotine ?? product?.nicotine ?? null,
+                mlProduct: rawLine.mlProduct ?? product?.mlProduct ?? null,
+                purchasePrice: rawLine.unitCost ?? product?.purchasePrice ?? null,
+                price: rawLine.unitPrice ?? product?.price ?? null,
                 stockQty: qty,
-                taxRateId: rawLine.taxRateId || null,
-                exciseRateId: rawLine.exciseRateId || null,
+                taxRateId: pickVal(rawLine.taxRateId, product?.taxRateId),
+                exciseRateId: pickVal(rawLine.exciseRateId, product?.exciseRateId),
               },
             });
 
@@ -4297,6 +4555,8 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         supplierId: z.string().optional().nullable(),
         supplierName: z.string().optional().nullable(),
+        invoiceNo: z.string().optional().nullable(),
+        invoiceDate: z.string().optional().nullable(),
         reference: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
         receivedAt: z.string().optional().nullable(),
@@ -4353,52 +4613,81 @@ export async function adminRoutes(app: FastifyInstance) {
       for (const rawLine of body.lines) {
         const sku = rawLine.sku.trim();
         const name = (rawLine.name || sku).trim();
-        let item = await tx.internalInventoryItem.findUnique({ where: { sku } });
+        const [current, product] = await Promise.all([
+          tx.internalInventoryItem.findUnique({ where: { sku } }),
+          tx.product.findUnique({
+            where: { sku },
+            select: {
+              name: true,
+              description: true,
+              shortDescription: true,
+              brand: true,
+              category: true,
+              subcategory: true,
+              barcode: true,
+              nicotine: true,
+              mlProduct: true,
+              taxRateId: true,
+              exciseRateId: true,
+              purchasePrice: true,
+              price: true,
+            },
+          }),
+        ]);
+        const pickVal = (...vals: any[]) => {
+          for (const v of vals) {
+            if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+          }
+          return null;
+        };
+        let item = current;
+        const itemName = String(pickVal(rawLine.name, current?.name, product?.name, sku) || sku);
         if (!item) {
           item = await tx.internalInventoryItem.create({
             data: {
               sku,
-              name,
-              description: rawLine.description || null,
-              shortDescription: rawLine.shortDescription || null,
-              brand: rawLine.brand || null,
-              category: rawLine.category || null,
-              subcategory: rawLine.subcategory || null,
-              barcode: rawLine.barcode || null,
-              nicotine: rawLine.nicotine ?? null,
-              mlProduct: rawLine.mlProduct ?? null,
-              purchasePrice: rawLine.unitCost ?? null,
-              price: rawLine.unitPrice ?? null,
+              name: itemName,
+              description: pickVal(rawLine.description, product?.description),
+              shortDescription: pickVal(rawLine.shortDescription, product?.shortDescription),
+              brand: pickVal(rawLine.brand, product?.brand),
+              category: pickVal(rawLine.category, product?.category),
+              subcategory: pickVal(rawLine.subcategory, product?.subcategory),
+              barcode: pickVal(rawLine.barcode, product?.barcode),
+              nicotine: rawLine.nicotine ?? product?.nicotine ?? null,
+              mlProduct: rawLine.mlProduct ?? product?.mlProduct ?? null,
+              purchasePrice: rawLine.unitCost ?? product?.purchasePrice ?? null,
+              price: rawLine.unitPrice ?? product?.price ?? null,
               stockQty: 0,
-              taxRateId: rawLine.taxRateId || null,
-              exciseRateId: rawLine.exciseRateId || null,
+              taxRateId: pickVal(rawLine.taxRateId, product?.taxRateId),
+              exciseRateId: pickVal(rawLine.exciseRateId, product?.exciseRateId),
             },
           });
         } else {
           await tx.internalInventoryItem.update({
             where: { id: item.id },
             data: {
-              ...(rawLine.name ? { name } : {}),
-              ...(rawLine.description !== undefined
-                ? { description: rawLine.description || null }
-                : {}),
-              ...(rawLine.shortDescription !== undefined
-                ? { shortDescription: rawLine.shortDescription || null }
-                : {}),
-              ...(rawLine.brand !== undefined ? { brand: rawLine.brand || null } : {}),
-              ...(rawLine.category !== undefined ? { category: rawLine.category || null } : {}),
-              ...(rawLine.subcategory !== undefined
-                ? { subcategory: rawLine.subcategory || null }
-                : {}),
-              ...(rawLine.barcode !== undefined ? { barcode: rawLine.barcode || null } : {}),
-              ...(rawLine.nicotine !== undefined ? { nicotine: rawLine.nicotine } : {}),
-              ...(rawLine.mlProduct !== undefined ? { mlProduct: rawLine.mlProduct } : {}),
-              ...(rawLine.unitCost !== undefined ? { purchasePrice: rawLine.unitCost } : {}),
-              ...(rawLine.unitPrice !== undefined ? { price: rawLine.unitPrice } : {}),
-              ...(rawLine.taxRateId !== undefined ? { taxRateId: rawLine.taxRateId || null } : {}),
-              ...(rawLine.exciseRateId !== undefined
-                ? { exciseRateId: rawLine.exciseRateId || null }
-                : {}),
+              name: itemName,
+              description: pickVal(rawLine.description, current?.description, product?.description),
+              shortDescription: pickVal(
+                rawLine.shortDescription,
+                current?.shortDescription,
+                product?.shortDescription
+              ),
+              brand: pickVal(rawLine.brand, current?.brand, product?.brand),
+              category: pickVal(rawLine.category, current?.category, product?.category),
+              subcategory: pickVal(rawLine.subcategory, current?.subcategory, product?.subcategory),
+              barcode: pickVal(rawLine.barcode, current?.barcode, product?.barcode),
+              nicotine: rawLine.nicotine ?? current?.nicotine ?? product?.nicotine ?? null,
+              mlProduct: rawLine.mlProduct ?? current?.mlProduct ?? product?.mlProduct ?? null,
+              purchasePrice:
+                rawLine.unitCost ?? current?.purchasePrice ?? product?.purchasePrice ?? null,
+              price: rawLine.unitPrice ?? current?.price ?? product?.price ?? null,
+              taxRateId: pickVal(rawLine.taxRateId, current?.taxRateId, product?.taxRateId),
+              exciseRateId: pickVal(
+                rawLine.exciseRateId,
+                current?.exciseRateId,
+                product?.exciseRateId
+              ),
             },
           });
         }
@@ -4457,8 +4746,8 @@ export async function adminRoutes(app: FastifyInstance) {
         data: {
           supplierId: body.supplierId || null,
           supplierName: body.supplierName || supplier?.name || null,
-          reference: body.reference || null,
-          notes: body.notes || null,
+          reference: body.invoiceNo || body.reference || null,
+          notes: composeReceiptNotes(body.invoiceDate || null, body.notes || null) || null,
           receivedAt: body.receivedAt ? new Date(body.receivedAt) : undefined,
         },
       });

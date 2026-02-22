@@ -1,0 +1,102 @@
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../../lib/api.js";
+import InlineError from "../../components/InlineError.jsx";
+
+const money = (v) =>
+  new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(Number(v || 0));
+
+export default function AdminExpenses() {
+  const [rows, setRows] = useState([]);
+  const [error, setError] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [draft, setDraft] = useState({ invoiceNo: "", expenseDate: "", supplier: "", category: "", amountNet: "", vat: "", notes: "" });
+
+  async function load() {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.set("start", startDate);
+      if (endDate) params.set("end", endDate);
+      const res = await api(`/admin/expenses${params.toString() ? `?${params.toString()}` : ""}`);
+      setRows(res || []);
+    } catch {
+      setError("Impossibile caricare spese");
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, [startDate, endDate]);
+
+  async function createExpense() {
+    try {
+      await api("/admin/expenses", {
+        method: "POST",
+        body: JSON.stringify({
+          invoiceNo: draft.invoiceNo,
+          expenseDate: draft.expenseDate,
+          supplier: draft.supplier,
+          category: draft.category,
+          amountNet: Number(draft.amountNet || 0),
+          vat: Number(draft.vat || 0),
+          notes: draft.notes,
+        }),
+      });
+      setDraft({ invoiceNo: "", expenseDate: "", supplier: "", category: "", amountNet: "", vat: "", notes: "" });
+      load();
+    } catch {
+      setError("Impossibile salvare fattura spesa");
+    }
+  }
+
+  const totals = useMemo(() => rows.reduce((acc, r) => {
+    acc.net += Number(r.amountNet || 0);
+    acc.vat += Number(r.vat || 0);
+    acc.total += Number(r.total || 0);
+    return acc;
+  }, { net: 0, vat: 0, total: 0 }), [rows]);
+
+  return (
+    <section>
+      <div className="page-header"><div><h1>Registro fatture spese</h1><p>Corrente, internet, affitto e altre spese aziendali</p></div></div>
+      <InlineError message={error} onClose={() => setError("")} />
+
+      <div className="cards">
+        <div className="card"><div className="card-label">Imponibile</div><div className="card-value">{money(totals.net)}</div></div>
+        <div className="card"><div className="card-label">IVA</div><div className="card-value">{money(totals.vat)}</div></div>
+        <div className="card"><div className="card-label">Totale spese</div><div className="card-value">{money(totals.total)}</div></div>
+      </div>
+
+      <div className="panel form-grid">
+        <label>Numero fattura<input value={draft.invoiceNo} onChange={(e) => setDraft({ ...draft, invoiceNo: e.target.value })} /></label>
+        <label>Data fattura<input type="date" value={draft.expenseDate} onChange={(e) => setDraft({ ...draft, expenseDate: e.target.value })} /></label>
+        <label>Fornitore<input value={draft.supplier} onChange={(e) => setDraft({ ...draft, supplier: e.target.value })} /></label>
+        <label>Categoria<input value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} placeholder="es. Affitto" /></label>
+        <label>Imponibile<input type="number" step="0.01" value={draft.amountNet} onChange={(e) => setDraft({ ...draft, amountNet: e.target.value })} /></label>
+        <label>IVA<input type="number" step="0.01" value={draft.vat} onChange={(e) => setDraft({ ...draft, vat: e.target.value })} /></label>
+        <label className="full">Note<input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
+        <div className="actions"><button className="btn primary" onClick={createExpense}>Registra spesa</button></div>
+      </div>
+
+      <div className="filters-row">
+        <div className="filter-group"><label>Data dal</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
+        <div className="filter-group"><label>Data al</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
+      </div>
+
+      <div className="table">
+        <div className="row header"><div>Data</div><div>N. fattura</div><div>Fornitore</div><div>Categoria</div><div>Imponibile</div><div>IVA</div><div>Totale</div></div>
+        {rows.map((r) => (
+          <div className="row" key={r.id}>
+            <div>{new Date(r.expenseDate).toLocaleDateString("it-IT")}</div>
+            <div className="mono">{r.invoiceNo}</div>
+            <div>{r.supplier || "-"}</div>
+            <div>{r.category || "-"}</div>
+            <div>{money(r.amountNet)}</div>
+            <div>{money(r.vat)}</div>
+            <div>{money(r.total)}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}

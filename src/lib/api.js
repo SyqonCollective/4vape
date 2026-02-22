@@ -174,5 +174,26 @@ export async function api(path, options = {}) {
   }
 
   if (res.status === 204) return null;
-  return res.json();
+  const contentType = String(res.headers.get("content-type") || "").toLowerCase();
+  if (!contentType.includes("application/json")) {
+    const body = await res.text();
+    console.error(`[api#${reqId}] NON-JSON ${method} ${path}`, {
+      status: res.status,
+      contentType,
+      body: body?.slice?.(0, 400) || body,
+    });
+    throw new Error(`Unexpected response type (${contentType || "unknown"})`);
+  }
+  try {
+    return await res.json();
+  } catch (err) {
+    const body = await res.text().catch(() => "");
+    console.error(`[api#${reqId}] JSON PARSE FAIL ${method} ${path}`, {
+      status: res.status,
+      contentType,
+      body: body?.slice?.(0, 400) || body,
+      error: String(err?.message || err),
+    });
+    throw err;
+  }
 }

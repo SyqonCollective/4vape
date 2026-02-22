@@ -83,8 +83,10 @@ export default function AdminGoodsReceipts() {
   const [inventorySkuSet, setInventorySkuSet] = useState(new Set());
   const [supplierName, setSupplierName] = useState("");
   const [supplierId, setSupplierId] = useState("");
+  const [supplierQuery, setSupplierQuery] = useState("");
   const [suppliers, setSuppliers] = useState([]);
-  const [reference, setReference] = useState("");
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
   const [notes, setNotes] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [saving, setSaving] = useState(false);
@@ -95,17 +97,26 @@ export default function AdminGoodsReceipts() {
   const [editingReceipt, setEditingReceipt] = useState(null);
   const [editSupplierName, setEditSupplierName] = useState("");
   const [editSupplierId, setEditSupplierId] = useState("");
-  const [editReference, setEditReference] = useState("");
+  const [editSupplierQuery, setEditSupplierQuery] = useState("");
+  const [editInvoiceNo, setEditInvoiceNo] = useState("");
+  const [editInvoiceDate, setEditInvoiceDate] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editRows, setEditRows] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingImportRows, setPendingImportRows] = useState([]);
   const [conflictSkus, setConflictSkus] = useState([]);
   const [skuInfoCache, setSkuInfoCache] = useState({});
+  const [filterFromDate, setFilterFromDate] = useState("");
+  const [filterToDate, setFilterToDate] = useState("");
+  const [filterSupplierId, setFilterSupplierId] = useState("");
 
   async function loadReceipts() {
     try {
-      const res = await api("/admin/goods-receipts");
+      const params = new URLSearchParams();
+      if (filterFromDate) params.set("start", filterFromDate);
+      if (filterToDate) params.set("end", filterToDate);
+      if (filterSupplierId) params.set("supplierId", filterSupplierId);
+      const res = await api(`/admin/goods-receipts${params.toString() ? `?${params.toString()}` : ""}`);
       setReceipts(res || []);
     } catch {
       setError("Impossibile caricare arrivi merci");
@@ -114,7 +125,7 @@ export default function AdminGoodsReceipts() {
 
   useEffect(() => {
     loadReceipts();
-  }, []);
+  }, [filterFromDate, filterToDate, filterSupplierId]);
 
   useEffect(() => {
     async function loadMeta() {
@@ -256,7 +267,9 @@ export default function AdminGoodsReceipts() {
     return parsedRows.reduce(
       (acc, row) => {
         const qty = Number(row.qty || 0);
-        const unitCost = Number(row.unitCost || 0);
+        const baseUnitCost = Number(row.unitCost || 0);
+        const discountPct = Math.max(0, Math.min(100, Number(row.discount || 0)));
+        const unitCost = baseUnitCost * (1 - discountPct / 100);
         const rowNet = qty * unitCost;
         const ml = Number(row.mlProduct || 0);
         const tax = taxes.find((t) => t.id === row.taxRateId);
@@ -267,7 +280,7 @@ export default function AdminGoodsReceipts() {
             ? Number(excise.amount || 0) * ml
             : Number(excise.amount || 0)
           : 0;
-        const vatUnit = taxRate > 0 ? (unitCost + exciseUnit) * (taxRate / 100) : 0;
+        const vatUnit = taxRate > 0 ? unitCost * (taxRate / 100) : 0;
         acc.lines += 1;
         acc.qty += qty;
         acc.cost += rowNet;
@@ -278,6 +291,18 @@ export default function AdminGoodsReceipts() {
       { lines: 0, qty: 0, cost: 0, subtotal: 0, vat: 0 }
     );
   }, [parsedRows, taxes, excises]);
+
+  const filteredSuppliers = useMemo(() => {
+    const q = supplierQuery.trim().toLowerCase();
+    if (!q) return suppliers;
+    return suppliers.filter((s) => String(s.name || "").toLowerCase().includes(q));
+  }, [suppliers, supplierQuery]);
+
+  const filteredEditSuppliers = useMemo(() => {
+    const q = editSupplierQuery.trim().toLowerCase();
+    if (!q) return suppliers;
+    return suppliers.filter((s) => String(s.name || "").toLowerCase().includes(q));
+  }, [suppliers, editSupplierQuery]);
 
   function updateRow(index, patch) {
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
@@ -302,6 +327,17 @@ export default function AdminGoodsReceipts() {
 
   function removeRow(index) {
     setRows((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function moveRow(index, direction) {
+    setRows((prev) => {
+      const target = direction === "up" ? index - 1 : index + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(index, 1);
+      next.splice(target, 0, moved);
+      return next;
+    });
   }
 
   function handleRowEnter(index, e) {
@@ -502,8 +538,8 @@ export default function AdminGoodsReceipts() {
         method: "POST",
         body: JSON.stringify({
           supplierId: supplierId || null,
-          supplierName: supplierName || null,
-          reference: reference || null,
+          invoiceNo: invoiceNo || null,
+          invoiceDate: invoiceDate || null,
           notes: notes || null,
           lines: parsedRows.map((r) => ({
             sku: r.sku.trim(),
@@ -538,7 +574,9 @@ export default function AdminGoodsReceipts() {
       setRows([newRow()]);
       setSupplierId("");
       setSupplierName("");
-      setReference("");
+      setSupplierQuery("");
+      setInvoiceNo("");
+      setInvoiceDate("");
       setNotes("");
       setShowCreateModal(false);
       await loadReceipts();
@@ -585,13 +623,34 @@ export default function AdminGoodsReceipts() {
     setEditRows((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function moveEditRow(index, direction) {
+    setEditRows((prev) => {
+      const target = direction === "up" ? index - 1 : index + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(index, 1);
+      next.splice(target, 0, moved);
+      return next;
+    });
+  }
+
+  function handleEditRowEnter(index, e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (index === editRows.length - 1) {
+      setEditRows((prev) => [...prev, newRow()]);
+    }
+  }
+
   async function openEditReceipt(id) {
     try {
       const res = await api(`/admin/goods-receipts/${id}`);
       setEditingReceipt(res);
       setEditSupplierId(res.supplierId || "");
       setEditSupplierName(res.supplierName || "");
-      setEditReference(res.reference || "");
+      setEditSupplierQuery("");
+      setEditInvoiceNo(res.invoiceNo || res.reference || "");
+      setEditInvoiceDate(res.invoiceDate || "");
       setEditNotes(res.notes || "");
       setEditRows(
         (res.lines || []).map((line) => ({
@@ -637,8 +696,8 @@ export default function AdminGoodsReceipts() {
         method: "PATCH",
         body: JSON.stringify({
           supplierId: editSupplierId || null,
-          supplierName: editSupplierName || null,
-          reference: editReference || null,
+          invoiceNo: editInvoiceNo || null,
+          invoiceDate: editInvoiceDate || null,
           notes: editNotes || null,
           lines: validRows.map((r) => ({
             sku: r.sku.trim(),
@@ -694,34 +753,66 @@ export default function AdminGoodsReceipts() {
       <InlineError message={error} onClose={() => setError("")} />
       {success ? <div className="success-banner">{success}</div> : null}
 
-      <div className="order-card">
-        <div className="card-title">Carichi registrati</div>
-        <div className="goods-receipts-list">
-          {!receipts.length ? <div className="field-hint">Nessun arrivo merci registrato.</div> : null}
-          {receipts.map((r) => (
-            <div key={r.id} className="goods-receipt-item">
-              <div>
-                <strong>{r.reference || r.receiptNo}</strong>
-                <div className="field-hint">{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
-                <div className="field-hint">
-                  {r.supplier?.name || r.supplierName || "Fornitore non impostato"}
-                </div>
-                {r.reference ? <div className="field-hint">Rif. fattura: {r.reference}</div> : null}
-              </div>
-              <div className="goods-receipt-right">
-                <div className="field-hint">
-                  {r.linesCount} righe · {r.totalQty} pz · {money(r.totalNet)}
-                </div>
-                <button className="btn ghost small" onClick={() => openEditReceipt(r.id)}>
-                  Modifica
-                </button>
-                <button className="btn ghost small" onClick={() => setConfirmDelete(r)}>
-                  Elimina
-                </button>
-              </div>
-            </div>
-          ))}
+      <div className="filters-row">
+        <div className="filter-group">
+          <label>Data dal</label>
+          <input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)} />
         </div>
+        <div className="filter-group">
+          <label>Data al</label>
+          <input type="date" value={filterToDate} onChange={(e) => setFilterToDate(e.target.value)} />
+        </div>
+        <div className="filter-group">
+          <label>Fornitore</label>
+          <select value={filterSupplierId} onChange={(e) => setFilterSupplierId(e.target.value)}>
+            <option value="">Tutti</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="table">
+        <div className="row header">
+          <div>Data</div>
+          <div>N. progressivo</div>
+          <div>Fornitore</div>
+          <div>Note</div>
+          <div>N. fattura</div>
+          <div>Data fattura</div>
+          <div>Imponibile</div>
+          <div>IVA</div>
+          <div>Totale</div>
+          <div></div>
+        </div>
+        {!receipts.length ? (
+          <div className="row">
+            <div className="muted">Nessun arrivo merci registrato.</div>
+            <div /><div /><div /><div /><div /><div /><div /><div /><div />
+          </div>
+        ) : null}
+        {receipts.map((r) => (
+          <div key={r.id} className="row" onClick={() => openEditReceipt(r.id)} style={{ cursor: "pointer" }}>
+            <div>{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
+            <div className="mono">{r.progressiveNo}</div>
+            <div>{r.supplier?.name || r.supplierName || "—"}</div>
+            <div>{r.notes || "—"}</div>
+            <div className="mono">{r.invoiceNo || "—"}</div>
+            <div>{r.invoiceDate || "—"}</div>
+            <div>{money(r.totalNet)}</div>
+            <div>{money(r.totalVat)}</div>
+            <div>{money(r.totalGross)}</div>
+            <div className="actions">
+              <button className="btn ghost small" onClick={(e) => { e.stopPropagation(); openEditReceipt(r.id); }}>
+                Modifica
+              </button>
+              <button className="btn ghost small" onClick={(e) => { e.stopPropagation(); setConfirmDelete(r); }}>
+                Elimina
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {showCreateModal ? (
@@ -744,9 +835,14 @@ export default function AdminGoodsReceipts() {
                       <div className="order-form">
                         <div>
                           <label>Fornitore (anagrafica)</label>
+                          <input
+                            placeholder="Cerca fornitore..."
+                            value={supplierQuery}
+                            onChange={(e) => setSupplierQuery(e.target.value)}
+                          />
                           <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
                             <option value="">Seleziona fornitore</option>
-                            {suppliers.map((s) => (
+                            {filteredSuppliers.map((s) => (
                               <option key={s.id} value={s.id}>
                                 {s.name}
                               </option>
@@ -754,12 +850,12 @@ export default function AdminGoodsReceipts() {
                           </select>
                         </div>
                         <div>
-                          <label>Fornitore (testo)</label>
-                          <input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+                          <label>Numero fattura</label>
+                          <input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} />
                         </div>
                         <div>
-                          <label>Riferimento fattura</label>
-                          <input value={reference} onChange={(e) => setReference(e.target.value)} />
+                          <label>Data fattura</label>
+                          <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
                         </div>
                         <div style={{ gridColumn: "1 / -1" }}>
                           <label>Note arrivo merci</label>
@@ -863,13 +959,23 @@ export default function AdminGoodsReceipts() {
                                 </option>
                               ))}
                             </select>
-                            <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0))}</div>
+                            <div>
+                              {money(
+                                Number(row.qty || 0) *
+                                  Number(row.unitCost || 0) *
+                                  (1 - Math.max(0, Math.min(100, Number(row.discount || 0))) / 100)
+                              )}
+                            </div>
                             <input
                               value={row.lineNote}
                               onChange={(e) => updateRow(idx, { lineNote: e.target.value })}
                               placeholder="Nota"
                             />
-                            <button className="btn ghost small" onClick={() => removeRow(idx)}>Rimuovi</button>
+                            <div className="actions">
+                              <button className="btn ghost small" onClick={() => moveRow(idx, "up")}>↑</button>
+                              <button className="btn ghost small" onClick={() => moveRow(idx, "down")}>↓</button>
+                              <button className="btn ghost small" onClick={() => removeRow(idx)}>Rimuovi</button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -964,9 +1070,14 @@ export default function AdminGoodsReceipts() {
                 <div className="order-form">
                   <div>
                     <label>Fornitore (anagrafica)</label>
+                    <input
+                      placeholder="Cerca fornitore..."
+                      value={editSupplierQuery}
+                      onChange={(e) => setEditSupplierQuery(e.target.value)}
+                    />
                     <select value={editSupplierId} onChange={(e) => setEditSupplierId(e.target.value)}>
                       <option value="">Seleziona fornitore</option>
-                      {suppliers.map((s) => (
+                      {filteredEditSuppliers.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.name}
                         </option>
@@ -974,15 +1085,12 @@ export default function AdminGoodsReceipts() {
                     </select>
                   </div>
                   <div>
-                    <label>Fornitore (testo)</label>
-                    <input
-                      value={editSupplierName}
-                      onChange={(e) => setEditSupplierName(e.target.value)}
-                    />
+                    <label>Numero fattura</label>
+                    <input value={editInvoiceNo} onChange={(e) => setEditInvoiceNo(e.target.value)} />
                   </div>
                   <div>
-                    <label>Riferimento</label>
-                    <input value={editReference} onChange={(e) => setEditReference(e.target.value)} />
+                    <label>Data fattura</label>
+                    <input type="date" value={editInvoiceDate} onChange={(e) => setEditInvoiceDate(e.target.value)} />
                   </div>
                   <div style={{ gridColumn: "1 / -1" }}>
                     <label>Note</label>
@@ -1012,19 +1120,24 @@ export default function AdminGoodsReceipts() {
                         value={row.sku}
                         onChange={(e) => updateEditRow(idx, { sku: e.target.value })}
                         onBlur={() => handleEditSkuBlur(idx)}
+                        onKeyDown={(e) => handleEditRowEnter(idx, e)}
                       />
-                      <input value={row.name} onChange={(e) => updateEditRow(idx, { name: e.target.value })} />
+                      <input value={row.name} onChange={(e) => updateEditRow(idx, { name: e.target.value })} onKeyDown={(e) => handleEditRowEnter(idx, e)} />
                       <input value={row.codicePl || ""} onChange={(e) => updateEditRow(idx, { codicePl: e.target.value })} />
-                      <input type="number" value={row.qty} onChange={(e) => updateEditRow(idx, { qty: Number(e.target.value || 0) })} />
-                      <input type="number" step="0.01" value={row.unitCost} onChange={(e) => updateEditRow(idx, { unitCost: e.target.value })} />
-                      <input type="number" step="0.01" value={row.discount || ""} onChange={(e) => updateEditRow(idx, { discount: e.target.value })} placeholder="%" />
+                      <input type="number" value={row.qty} onChange={(e) => updateEditRow(idx, { qty: Number(e.target.value || 0) })} onKeyDown={(e) => handleEditRowEnter(idx, e)} />
+                      <input type="number" step="0.01" value={row.unitCost} onChange={(e) => updateEditRow(idx, { unitCost: e.target.value })} onKeyDown={(e) => handleEditRowEnter(idx, e)} />
+                      <input type="number" step="0.01" value={row.discount || ""} onChange={(e) => updateEditRow(idx, { discount: e.target.value })} placeholder="%" onKeyDown={(e) => handleEditRowEnter(idx, e)} />
                       <select value={row.taxRateId} onChange={(e) => updateEditRow(idx, { taxRateId: e.target.value })}>
                         <option value="">IVA</option>
                         {taxes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                       </select>
-                      <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0))}</div>
+                      <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0) * (1 - Math.max(0, Math.min(100, Number(row.discount || 0))) / 100))}</div>
                       <input value={row.lineNote} onChange={(e) => updateEditRow(idx, { lineNote: e.target.value })} placeholder="Nota" />
-                      <button className="btn ghost small" onClick={() => removeEditRow(idx)}>Rimuovi</button>
+                      <div className="actions">
+                        <button className="btn ghost small" onClick={() => moveEditRow(idx, "up")}>↑</button>
+                        <button className="btn ghost small" onClick={() => moveEditRow(idx, "down")}>↓</button>
+                        <button className="btn ghost small" onClick={() => removeEditRow(idx)}>Rimuovi</button>
+                      </div>
                     </div>
                   ))}
                 </div>
