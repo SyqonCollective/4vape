@@ -1063,13 +1063,59 @@ button {
 .category-table .row.header {
   grid-template-columns: 2fr 1fr 120px;
 }
+.categories-panel {
+  padding: 1.2rem;
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+}
+.categories-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(320px, 1.35fr) minmax(240px, 1fr) minmax(220px, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+.categories-form label {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #556274;
+}
+.categories-form .field-description .rte {
+  min-height: 112px;
+}
+.categories-form .field-description .rte-editor {
+  min-height: 90px;
+}
+.categories-form .form-actions {
+  justify-content: flex-end;
+  align-self: end;
+}
+.categories-form .form-actions .btn {
+  height: 46px;
+  min-width: 160px;
+  white-space: nowrap;
+}
 .categories-rich-table .row {
   grid-template-columns: 2fr 1fr 2fr 0.7fr 1.6fr;
   min-width: 980px;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
 }
 .categories-rich-table .row.header {
   grid-template-columns: 2fr 1fr 2fr 0.7fr 1.6fr;
   min-width: 980px;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+.categories-rich-table .row > div:nth-child(3) {
+  white-space: normal;
+  line-height: 1.35;
+}
+.categories-rich-table .row .actions {
+  justify-content: flex-end;
 }
 .btn.small {
   padding: 0.35rem 0.6rem;
@@ -2746,6 +2792,19 @@ button {
   .panel.grid-2 {
     grid-template-columns: 1fr;
   }
+
+  .categories-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .categories-form .field-description,
+  .categories-form .form-actions {
+    grid-column: 1 / -1;
+  }
+
+  .categories-form .form-actions {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 640px) {
@@ -2773,6 +2832,20 @@ button {
   .modal.product-modal {
     width: 94vw;
     padding: 1.2rem 1.1rem;
+  }
+
+  .categories-form {
+    grid-template-columns: 1fr;
+  }
+
+  .categories-form .field-description,
+  .categories-form .form-actions {
+    grid-column: auto;
+  }
+
+  .categories-rich-table .row,
+  .categories-rich-table .row.header {
+    min-width: 860px;
   }
 
   .modal.product-modal .modal-body {

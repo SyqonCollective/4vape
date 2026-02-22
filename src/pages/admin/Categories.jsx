@@ -250,13 +250,13 @@ export default function AdminCategories() {
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="panel">
-        <form className="form-grid" onSubmit={createCategory}>
-          <label>
+      <div className="panel categories-panel">
+        <form className="categories-form" onSubmit={createCategory}>
+          <label className="field-name">
             Nome categoria
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </label>
-          <label>
+          <label className="field-description">
             Descrizione
             <RichTextEditor
               value={form.description}
@@ -264,7 +264,7 @@ export default function AdminCategories() {
               placeholder="Descrizione categoria"
             />
           </label>
-          <label>
+          <label className="field-parent">
             Sottocategoria di
             <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} className="select">
               <option value="">Nessuna (categoria principale)</option>
@@ -273,11 +273,11 @@ export default function AdminCategories() {
               ))}
             </select>
           </label>
-          <label>
+          <label className="field-search">
             Cerca
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome o descrizione" />
           </label>
-          <div className="actions">
+          <div className="actions form-actions">
             <button className="btn primary" type="submit">Crea categoria</button>
           </div>
         </form>
