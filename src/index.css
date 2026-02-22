@@ -1591,6 +1591,7 @@ button {
 }
 
 .modal.product-modal {
+  width: min(1480px, 98vw);
   max-height: 92vh;
   display: flex;
   flex-direction: column;
@@ -1599,6 +1600,10 @@ button {
 .modal.product-modal .modal-body {
   overflow-y: auto;
   padding-right: 0.4rem;
+}
+
+.analytics-grid-single {
+  grid-template-columns: 1fr;
 }
 
 .modal-header {

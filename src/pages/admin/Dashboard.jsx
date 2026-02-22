@@ -2,6 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
+function statusLabel(status) {
+  if (status === "SUBMITTED") return "In attesa pagamento";
+  if (status === "APPROVED") return "Elaborazione";
+  if (status === "FULFILLED") return "Completato";
+  if (status === "CANCELLED") return "Fallito";
+  return "Bozza";
+}
+
 function calcTrend(values = []) {
   if (!values.length) return [];
   const n = values.length;
@@ -74,6 +82,7 @@ export default function AdminDashboard() {
         setStats(res.totals);
         setDaily(res.daily || []);
         setRecent(res.recentOrders || []);
+        setError("");
       } catch {
         setError("Impossibile caricare i dati");
       }
@@ -145,7 +154,7 @@ export default function AdminDashboard() {
             {recent.map((o) => (
               <div className="row" key={o.id}>
                 <div>{o.company}</div>
-                <div className="mono">{o.status}</div>
+                <div className="mono">{statusLabel(o.status)}</div>
                 <div>€ {Number(o.total).toFixed(2)}</div>
               </div>
             ))}

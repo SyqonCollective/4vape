@@ -126,9 +126,15 @@ export default function AdminLayout() {
   );
 
   function markNotificationsSeen() {
+    const latestCreatedAt = notifications.reduce((maxTs, n) => {
+      const ts = new Date(n.createdAt).getTime();
+      return Number.isFinite(ts) ? Math.max(maxTs, ts) : maxTs;
+    }, 0);
     const now = Date.now();
-    setSeenAt(now);
-    localStorage.setItem(NOTIF_SEEN_KEY, String(now));
+    // Use the max server/client timestamp to avoid "new" items stuck because of clock skew.
+    const effectiveSeenAt = Math.max(now, latestCreatedAt + 1000);
+    setSeenAt(effectiveSeenAt);
+    localStorage.setItem(NOTIF_SEEN_KEY, String(effectiveSeenAt));
   }
 
   function dismissNotification(id) {

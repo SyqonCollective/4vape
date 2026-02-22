@@ -399,47 +399,6 @@ export default function AdminSuppliers() {
         </Portal>
       ) : null}
 
-      <form className="panel supplier-create-form" onSubmit={createSupplier}>
-        <div className="card-title">Nuovo fornitore</div>
-        <div className="order-form">
-          <div>
-            <label>Nome</label>
-            <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required />
-          </div>
-          <div>
-            <label>Codice</label>
-            <input value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))} required />
-          </div>
-          <div>
-            <label>CSV completo</label>
-            <input value={form.csvFullUrl} onChange={(e) => setForm((p) => ({ ...p, csvFullUrl: e.target.value }))} />
-          </div>
-          <div>
-            <label>CSV stock</label>
-            <input value={form.csvStockUrl} onChange={(e) => setForm((p) => ({ ...p, csvStockUrl: e.target.value }))} />
-          </div>
-          <div>
-            <label>Ragione sociale</label>
-            <input value={form.legalName} onChange={(e) => setForm((p) => ({ ...p, legalName: e.target.value }))} />
-          </div>
-          <div>
-            <label>P.IVA</label>
-            <input value={form.vatNumber} onChange={(e) => setForm((p) => ({ ...p, vatNumber: e.target.value }))} />
-          </div>
-          <div>
-            <label>SDI</label>
-            <input value={form.sdiCode} onChange={(e) => setForm((p) => ({ ...p, sdiCode: e.target.value }))} />
-          </div>
-          <div>
-            <label>PEC</label>
-            <input value={form.pec} onChange={(e) => setForm((p) => ({ ...p, pec: e.target.value }))} />
-          </div>
-        </div>
-        <div className="actions">
-          <button className="btn primary" type="submit">Crea fornitore</button>
-        </div>
-      </form>
-
       <div className="table suppliers-table">
         <div className="row header">
           <div>Nome</div>
@@ -479,9 +438,6 @@ export default function AdminSuppliers() {
                     }}
                   >
                     Rinomina
-                  </button>
-                  <button className="btn danger" onClick={() => deleteSupplier(s.id)}>
-                    Elimina
                   </button>
                 </div>
               )}

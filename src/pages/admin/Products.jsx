@@ -1628,13 +1628,6 @@ export default function AdminProducts() {
                     <input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
                   </label>
                   <label>
-                    Breve descrizione
-                    <input
-                      value={edit.shortDescription}
-                      onChange={(e) => setEdit({ ...edit, shortDescription: e.target.value })}
-                    />
-                  </label>
-                  <label>
                     Prezzo
                     <input
                       type="number"
@@ -2005,6 +1998,14 @@ export default function AdminProducts() {
                     <input value={edit.imageUrl} onChange={(e) => setEdit({ ...edit, imageUrl: e.target.value })} />
                   </label>
                 </div>
+                <label className="full">
+                  Breve descrizione
+                  <RichTextEditor
+                    value={edit.shortDescription}
+                    onChange={(next) => setEdit({ ...edit, shortDescription: next })}
+                    placeholder="Breve descrizione prodotto..."
+                  />
+                </label>
                 <label>
                   Descrizione
                   <RichTextEditor
@@ -2496,9 +2497,10 @@ export default function AdminProducts() {
                     </label>
                     <label className="full">
                       Breve descrizione
-                      <input
+                      <RichTextEditor
                         value={manualDraft.shortDescription}
-                        onChange={(e) => setManualDraft({ ...manualDraft, shortDescription: e.target.value })}
+                        onChange={(next) => setManualDraft({ ...manualDraft, shortDescription: next })}
+                        placeholder="Breve descrizione prodotto..."
                       />
                     </label>
                     <label className="full">

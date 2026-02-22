@@ -27,6 +27,8 @@ export default function AdminReports() {
   const [error, setError] = useState("");
   const [companies, setCompanies] = useState([]);
   const [products, setProducts] = useState([]);
+  const [companyQuery, setCompanyQuery] = useState("");
+  const [productQuery, setProductQuery] = useState("");
   const [data, setData] = useState({
     totals: {
       rows: 0,
@@ -93,6 +95,22 @@ export default function AdminReports() {
     load();
   }, []);
 
+  const filteredCompanies = useMemo(() => {
+    const q = companyQuery.trim().toLowerCase();
+    if (!q) return companies;
+    return (companies || []).filter((c) =>
+      [c.name, c.legalName, c.email, c.vatNumber].filter(Boolean).join(" ").toLowerCase().includes(q)
+    );
+  }, [companies, companyQuery]);
+
+  const filteredProducts = useMemo(() => {
+    const q = productQuery.trim().toLowerCase();
+    if (!q) return products;
+    return (products || []).filter((p) =>
+      [p.sku, p.name].filter(Boolean).join(" ").toLowerCase().includes(q)
+    );
+  }, [products, productQuery]);
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -134,19 +152,37 @@ export default function AdminReports() {
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </label>
           <label>
+            Cerca cliente
+            <input
+              type="text"
+              value={companyQuery}
+              onChange={(e) => setCompanyQuery(e.target.value)}
+              placeholder="Nome, email o P.IVA"
+            />
+          </label>
+          <label>
             Cliente
             <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
               <option value="">Tutti i clienti</option>
-              {companies.map((c) => (
+              {filteredCompanies.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </label>
           <label>
+            Cerca prodotto
+            <input
+              type="text"
+              value={productQuery}
+              onChange={(e) => setProductQuery(e.target.value)}
+              placeholder="SKU o nome prodotto"
+            />
+          </label>
+          <label>
             Prodotto (SKU)
             <select value={productId} onChange={(e) => setProductId(e.target.value)}>
               <option value="">Tutti i prodotti</option>
-              {products.map((p) => (
+              {filteredProducts.map((p) => (
                 <option key={p.id} value={p.id}>{p.sku} · {p.name}</option>
               ))}
             </select>
@@ -165,10 +201,10 @@ export default function AdminReports() {
         <div className="card"><div className="card-label">Ordini</div><div className="card-value">{data.totals.orders}</div><div className="card-sub">Univoci</div></div>
         <div className="card"><div className="card-label">Pezzi</div><div className="card-value">{data.totals.qty}</div><div className="card-sub">Totale quantità</div></div>
         <div className="card"><div className="card-label">Totale imponibile</div><div className="card-value">{formatMoney(data.totals.revenueNet)}</div><div className="card-sub">Netto</div></div>
-        <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Nel periodo</div></div>
         <div className="card"><div className="card-label">Accise</div><div className="card-value">{formatMoney(data.totals.excise)}</div><div className="card-sub">Nel periodo</div></div>
+        <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Nel periodo</div></div>
         <div className="card"><div className="card-label">Totale lordo</div><div className="card-value">{formatMoney(data.totals.revenueGross)}</div><div className="card-sub">Imponibile + IVA + accise</div></div>
-        <div className="card"><div className="card-label">Margine stimato</div><div className="card-value">{formatMoney(data.totals.margin)}</div><div className="card-sub">Lordo - costo</div></div>
+        <div className="card"><div className="card-label">Margine netto-costo</div><div className="card-value">{formatMoney(data.totals.margin)}</div><div className="card-sub">Lordo - costo</div></div>
       </div>
 
       <div className="panel analytics-grid">
@@ -218,21 +254,21 @@ export default function AdminReports() {
             <div>Prodotto</div>
             <div>Q.tà</div>
             <div>Imponibile</div>
-            <div>IVA</div>
             <div>Accisa</div>
+            <div>IVA</div>
             <div>Totale lordo</div>
           </div>
           {data.lines.map((r) => (
             <div className="row" key={r.id}>
               <div>{new Date(r.createdAt).toLocaleDateString("it-IT")}</div>
-              <div className="mono">{r.orderId.slice(-8).toUpperCase()}</div>
+              <div className="mono">{r.orderNumber || r.orderId.slice(-8).toUpperCase()}</div>
               <div>{r.companyName}</div>
               <div className="mono">{r.sku}</div>
               <div>{r.productName}</div>
               <div>{r.qty}</div>
               <div>{formatMoney(r.lineNet)}</div>
-              <div>{formatMoney(r.vat)}</div>
               <div>{formatMoney(r.excise)}</div>
+              <div>{formatMoney(r.vat)}</div>
               <div>{formatMoney(r.lineGross)}</div>
             </div>
           ))}
@@ -241,4 +277,3 @@ export default function AdminReports() {
     </section>
   );
 }
-

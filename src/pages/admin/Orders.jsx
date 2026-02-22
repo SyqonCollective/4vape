@@ -18,13 +18,6 @@ const PAYMENT_OPTIONS = [
   { value: "OTHER", label: "Altro" },
 ];
 
-const STATUS_SORT_PRIORITY = {
-  FULFILLED: 0,
-  APPROVED: 1,
-  SUBMITTED: 2,
-  DRAFT: 3,
-  CANCELLED: 4,
-};
 const STATUS_DISPLAY_ORDER = ["FULFILLED", "APPROVED", "SUBMITTED", "DRAFT", "CANCELLED"];
 
 const formatCurrency = (value) =>
@@ -245,13 +238,12 @@ export default function AdminOrders() {
   }, [orderStats]);
 
   const orderedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      const pa = STATUS_SORT_PRIORITY[a.status] ?? 99;
-      const pb = STATUS_SORT_PRIORITY[b.status] ?? 99;
-      if (pa !== pb) return pa - pb;
-      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-    });
+    return [...items].sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
   }, [items]);
+
+  const selectedCount = useMemo(() => new Set(selectedIds).size, [selectedIds]);
 
   function addItem(product) {
     setLineItems((prev) => {
@@ -537,8 +529,8 @@ export default function AdminOrders() {
           </table>
           <div class="tot">
             <div><span>Subtotale</span><strong>${formatCurrency(totals.revenue)}</strong></div>
-            <div><span>IVA</span><strong>${formatCurrency(totals.vat)}</strong></div>
             <div><span>Accise</span><strong>${formatCurrency(totals.excise)}</strong></div>
+            <div><span>IVA</span><strong>${formatCurrency(totals.vat)}</strong></div>
             <div class="grand"><span>Totale ordine</span><strong>${formatCurrency(
               totals.revenue + totals.vat + totals.excise
             )}</strong></div>
@@ -649,8 +641,8 @@ export default function AdminOrders() {
             </option>
           ))}
         </select>
-        <button className="btn ghost" onClick={updateBatchStatus} disabled={!selectedIds.length}>
-          Modifica selezionati ({selectedIds.length})
+        <button className="btn ghost" onClick={updateBatchStatus} disabled={!selectedCount}>
+          Modifica selezionati ({selectedCount})
         </button>
       </div>
 
@@ -659,7 +651,7 @@ export default function AdminOrders() {
           <div>
             <input
               type="checkbox"
-              checked={orderedItems.length > 0 && selectedIds.length === orderedItems.length}
+              checked={orderedItems.length > 0 && selectedCount === orderedItems.length}
               onChange={(e) =>
                 setSelectedIds(e.target.checked ? orderedItems.map((o) => o.id) : [])
               }
@@ -682,9 +674,12 @@ export default function AdminOrders() {
                 checked={selectedIds.includes(o.id)}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) =>
-                  setSelectedIds((prev) =>
-                    e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id)
-                  )
+                  setSelectedIds((prev) => {
+                    if (e.target.checked) {
+                      return Array.from(new Set([...prev, o.id]));
+                    }
+                    return prev.filter((id) => id !== o.id);
+                  })
                 }
               />
             </div>
@@ -909,12 +904,12 @@ export default function AdminOrders() {
                       <strong>{formatCurrency(totals.subtotal)}</strong>
                     </div>
                     <div className="summary-row">
-                      <span>IVA</span>
-                      <strong>{formatCurrency(totals.vat)}</strong>
-                    </div>
-                    <div className="summary-row">
                       <span>Accise</span>
                       <strong>{formatCurrency(totals.excise)}</strong>
+                    </div>
+                    <div className="summary-row">
+                      <span>IVA</span>
+                      <strong>{formatCurrency(totals.vat)}</strong>
                     </div>
                     <div className="summary-row total">
                       <span>Totale ordine</span>
@@ -1029,12 +1024,12 @@ export default function AdminOrders() {
                               <strong>{formatCurrency(totals.revenue)}</strong>
                             </div>
                             <div className="summary-row">
-                              <span>IVA totale</span>
-                              <strong>{formatCurrency(totals.vat)}</strong>
-                            </div>
-                            <div className="summary-row">
                               <span>Accise totali</span>
                               <strong>{formatCurrency(totals.excise)}</strong>
+                            </div>
+                            <div className="summary-row">
+                              <span>IVA totale</span>
+                              <strong>{formatCurrency(totals.vat)}</strong>
                             </div>
                             <div className="summary-row total">
                               <span>Totale ordine</span>
@@ -1206,12 +1201,12 @@ export default function AdminOrders() {
                         <strong>{formatCurrency(editTotals.subtotal)}</strong>
                       </div>
                       <div className="summary-row">
-                        <span>IVA</span>
-                        <strong>{formatCurrency(editTotals.vat)}</strong>
-                      </div>
-                      <div className="summary-row">
                         <span>Accise</span>
                         <strong>{formatCurrency(editTotals.excise)}</strong>
+                      </div>
+                      <div className="summary-row">
+                        <span>IVA</span>
+                        <strong>{formatCurrency(editTotals.vat)}</strong>
                       </div>
                       <div className="summary-row total">
                         <span>Totale ordine</span>

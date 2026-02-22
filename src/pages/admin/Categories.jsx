@@ -1,6 +1,53 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
+
+function RichTextEditor({ value, onChange, placeholder = "Descrizione categoria..." }) {
+  const editorRef = useRef(null);
+
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    if ((value || "") !== el.innerHTML) {
+      el.innerHTML = value || "";
+    }
+  }, [value]);
+
+  function run(command, arg) {
+    const el = editorRef.current;
+    if (!el) return;
+    el.focus();
+    document.execCommand(command, false, arg);
+    onChange(el.innerHTML);
+  }
+
+  function onInput() {
+    const el = editorRef.current;
+    if (!el) return;
+    onChange(el.innerHTML);
+  }
+
+  return (
+    <div className="rte">
+      <div className="rte-toolbar">
+        <button type="button" className="rte-btn" onClick={() => run("bold")}>B</button>
+        <button type="button" className="rte-btn" onClick={() => run("italic")}>I</button>
+        <button type="button" className="rte-btn" onClick={() => run("underline")}>U</button>
+        <button type="button" className="rte-btn" onClick={() => run("insertUnorderedList")}>• List</button>
+        <button type="button" className="rte-btn" onClick={() => run("insertOrderedList")}>1. List</button>
+        <button type="button" className="rte-btn" onClick={() => run("removeFormat")}>Clear</button>
+      </div>
+      <div
+        ref={editorRef}
+        className="rte-editor"
+        contentEditable
+        suppressContentEditableWarning
+        data-placeholder={placeholder}
+        onInput={onInput}
+      />
+    </div>
+  );
+}
 
 export default function AdminCategories() {
   const [items, setItems] = useState([]);
@@ -133,7 +180,12 @@ export default function AdminCategories() {
   }
 
   async function moveCategory(id, direction) {
-    const flatIds = visibleFlat.map((x) => x.id);
+    const current = items.find((x) => x.id === id);
+    if (!current) return;
+    const flatIds = items
+      .filter((x) => (x.parentId || "") === (current.parentId || ""))
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .map((x) => x.id);
     const idx = flatIds.indexOf(id);
     if (idx < 0) return;
     const swap = direction === "up" ? idx - 1 : idx + 1;
@@ -181,6 +233,8 @@ export default function AdminCategories() {
     });
   }, [search, items]);
 
+  const stripHtml = (html) => String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+
   return (
     <section>
       <div className="page-header">
@@ -200,7 +254,11 @@ export default function AdminCategories() {
           </label>
           <label>
             Descrizione
-            <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <RichTextEditor
+              value={form.description}
+              onChange={(next) => setForm({ ...form, description: next })}
+              placeholder="Descrizione categoria"
+            />
           </label>
           <label>
             Sottocategoria di
@@ -233,7 +291,7 @@ export default function AdminCategories() {
           <div className="row" key={c.id}>
             <div>{c.label}</div>
             <div className="muted">{c.parentId ? "Sottocategoria" : "Principale"}</div>
-            <div>{c.description || "—"}</div>
+            <div>{stripHtml(c.description) || "—"}</div>
             <div>{c._count?.products || 0}</div>
             <div className="actions">
               <button className="btn ghost small" onClick={() => setEditing({ ...c })}>Modifica</button>
@@ -255,7 +313,11 @@ export default function AdminCategories() {
             </label>
             <label>
               Descrizione
-              <input value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
+              <RichTextEditor
+                value={editing.description || ""}
+                onChange={(next) => setEditing({ ...editing, description: next })}
+                placeholder="Descrizione categoria"
+              />
             </label>
             <label>
               Parent

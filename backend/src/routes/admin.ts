@@ -1505,7 +1505,9 @@ export async function adminRoutes(app: FastifyInstance) {
       if (name) data.name = String(name).trim();
       const price = toNumber(pick(row, ["price", "prezzo"]));
       if (price !== undefined) data.price = price;
-      const stockQty = toNumber(pick(row, ["stockqty", "giacenza", "magazzino"]));
+      const stockQty = toNumber(
+        pick(row, ["stockqty", "giacenza", "magazzino", "quantita", "qta", "qty"])
+      );
       if (stockQty !== undefined) data.stockQty = Math.max(0, Math.floor(stockQty));
       const brand = pick(row, ["brand", "marca", "marchi"]);
       if (brand) data.brand = String(brand).trim();
@@ -2515,8 +2517,8 @@ export async function adminRoutes(app: FastifyInstance) {
       "Items",
       "Revenue",
       "Cost",
-      "VAT",
       "Excise",
+      "VAT",
       "Margin",
     ];
     const csvEscape = (v: any) => {
@@ -2535,8 +2537,8 @@ export async function adminRoutes(app: FastifyInstance) {
           r.items,
           Number(r.revenue || 0).toFixed(2),
           Number(r.cost || 0).toFixed(2),
-          Number(r.vat || 0).toFixed(2),
           Number(r.excise || 0).toFixed(2),
+          Number(r.vat || 0).toFixed(2),
           Number(r.margin || 0).toFixed(2),
         ]);
       const xml = `<?xml version="1.0"?>
@@ -2568,8 +2570,8 @@ export async function adminRoutes(app: FastifyInstance) {
       r.items,
       Number(r.revenue || 0).toFixed(2),
       Number(r.cost || 0).toFixed(2),
-      Number(r.vat || 0).toFixed(2),
       Number(r.excise || 0).toFixed(2),
+      Number(r.vat || 0).toFixed(2),
       Number(r.margin || 0).toFixed(2),
     ]))]
       .map((row) => row.map(csvEscape).join(","))
@@ -2627,6 +2629,7 @@ export async function adminRoutes(app: FastifyInstance) {
       id: string;
       createdAt: Date;
       orderId: string;
+      orderNumber: number | null;
       companyId: string | null;
       companyName: string;
       productId: string;
@@ -2658,12 +2661,13 @@ export async function adminRoutes(app: FastifyInstance) {
         const vat = rate > 0 ? (lineNet + excise) * (rate / 100) : 0;
         const lineGross = lineNet + vat + excise;
         const cost = purchase * qty;
-        const margin = lineGross - cost;
+        const margin = lineNet - cost;
 
         lines.push({
           id: item.id,
           createdAt: order.createdAt,
           orderId: order.id,
+          orderNumber: order.orderNumber ?? null,
           companyId: order.company?.id || null,
           companyName: order.company?.name || "N/D",
           productId: item.productId,
@@ -2808,8 +2812,8 @@ export async function adminRoutes(app: FastifyInstance) {
       "Quantita",
       "PrezzoUnitario",
       "Imponibile",
-      "IVA",
       "Accisa",
+      "IVA",
       "TotaleLordo",
     ];
     const csvEscape = (v: any) => {
@@ -2824,15 +2828,15 @@ export async function adminRoutes(app: FastifyInstance) {
       ...rows.map((r: any) =>
         [
           new Date(r.createdAt).toISOString().slice(0, 10),
-          r.orderId,
+          r.orderNumber || r.orderId,
           r.companyName,
           r.sku,
           r.productName,
           r.qty,
           Number(r.unitPrice || 0).toFixed(2),
           Number(r.lineNet || 0).toFixed(2),
-          Number(r.vat || 0).toFixed(2),
           Number(r.excise || 0).toFixed(2),
+          Number(r.vat || 0).toFixed(2),
           Number(r.lineGross || 0).toFixed(2),
         ]
           .map(csvEscape)

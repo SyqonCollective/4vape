@@ -349,7 +349,7 @@ export default function AdminCompanies() {
             </div>
           ) : (
             visibleCompanies.map((c) => (
-              <div className="row" key={c.id}>
+              <div className="row" key={c.id} onClick={() => openEditCompany(c)} style={{ cursor: "pointer" }}>
                 <div>{c.legalName || c.name}</div>
                 <div>{c.vatNumber || "—"}</div>
                 <div>
@@ -373,7 +373,13 @@ export default function AdminCompanies() {
                       ? "In attesa"
                       : "Attivo"}
                   </span>
-                  <button className="btn ghost" onClick={() => openEditCompany(c)}>
+                  <button
+                    className="btn ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditCompany(c);
+                    }}
+                  >
                     Modifica
                   </button>
                 </div>

@@ -195,9 +195,6 @@ function buildRegionData(topGeo = []) {
 function ItalyMap({ data = [] }) {
   const max = Math.max(...data.map((d) => d.revenue), 1);
   const [active, setActive] = useState(null);
-  // Global fine-tune for this specific SVG: points were slightly shifted to the east/south.
-  const MAP_X_SHIFT = -118;
-  const MAP_Y_SHIFT = -72;
   return (
     <div className="italy-map-wrap">
       <div className="italy-map-canvas">
@@ -207,8 +204,8 @@ function ItalyMap({ data = [] }) {
             const intensity = Math.max(region.revenue / max, 0);
             const radius = 18 + intensity * 34;
             const alpha = 0.28 + intensity * 0.62;
-            const cx = region.x + MAP_X_SHIFT;
-            const cy = region.y + MAP_Y_SHIFT;
+            const cx = region.x;
+            const cy = region.y;
             return (
               <g
                 key={region.key}
@@ -356,6 +353,10 @@ export default function AdminAnalytics() {
     excise: d.excise,
     margin: d.margin,
   }));
+  const cashflowSeries = data.daily.map((d) => ({
+    label: d.date,
+    value: Number(d.revenue || 0) - Number(d.cost || 0),
+  }));
   const skuMatches = useMemo(() => {
     const q = productSkuSearch.trim().toLowerCase();
     if (!q) return [];
@@ -454,9 +455,9 @@ export default function AdminAnalytics() {
       <div className="cards analytics-cards">
         <div className="card"><div className="card-label">Fatturato</div><div className="card-value">{formatMoney(data.totals.revenue)}</div><div className="card-sub">Ordini nel periodo</div></div>
         <div className="card"><div className="card-label">Costo prodotti</div><div className="card-value">{formatMoney(data.totals.cost)}</div><div className="card-sub">Costo fornitore stimato</div></div>
-        <div className="card"><div className="card-label">Margine lordo</div><div className="card-value">{formatMoney(data.totals.grossMargin)}</div><div className="card-sub">Senza tasse</div></div>
-        <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Calcolata sul prezzo</div></div>
+        <div className="card"><div className="card-label">Margine netto</div><div className="card-value">{formatMoney(data.totals.grossMargin)}</div><div className="card-sub">Imponibile - costo prodotti</div></div>
         <div className="card"><div className="card-label">Accise</div><div className="card-value">{formatMoney(data.totals.excise)}</div><div className="card-sub">Totale accise</div></div>
+        <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Calcolata sul prezzo</div></div>
         <div className="card"><div className="card-label">Ordini / Pezzi</div><div className="card-value">{data.totals.orders}</div><div className="card-sub">{data.totals.items} articoli</div></div>
       </div>
 
@@ -492,6 +493,17 @@ export default function AdminAnalytics() {
           </div>
           <StackedChart series={stackedSeries} />
         </div>
+        <div className="analytics-panel">
+          <div className="panel-header">
+            <div>
+              <h2>Flusso cassa</h2>
+              <div className="muted">Vendite - spese (costo prodotti)</div>
+            </div>
+          </div>
+          <div className="trend-revenue">
+            <TrendChart series={cashflowSeries} variant="line" />
+          </div>
+        </div>
       </div>
 
       <div className="panel analytics-grid">
@@ -517,11 +529,11 @@ export default function AdminAnalytics() {
           </div>
         </div>
         <div className="analytics-panel">
-          <div className="panel-header"><div><h2>Fornitori top</h2><div className="muted">Per fatturato</div></div></div>
+          <div className="panel-header"><div><h2>Migliori clienti</h2><div className="muted">Per fatturato nel periodo</div></div></div>
           <div className="table compact">
-            <div className="row header"><div>Fornitore</div><div>Fatturato</div><div>Articoli</div></div>
-            {data.topSuppliers.map((s) => (
-              <div className="row" key={s.id}><div>{s.name}</div><div>{formatMoney(s.revenue)}</div><div>{s.qty}</div></div>
+            <div className="row header"><div>Cliente</div><div>Ordini</div><div>Fatturato</div></div>
+            {(data.topClients || []).map((c) => (
+              <div className="row" key={c.id}><div>{c.name}</div><div>{c.orders}</div><div>{formatMoney(c.revenue)}</div></div>
             ))}
           </div>
         </div>
@@ -536,17 +548,7 @@ export default function AdminAnalytics() {
         </div>
       </div>
 
-      <div className="panel analytics-grid">
-        <div className="analytics-panel">
-          <div className="panel-header"><div><h2>Top clienti</h2><div className="muted">Per fatturato nel periodo</div></div></div>
-          <div className="table compact">
-            <div className="row header"><div>Cliente</div><div>Ordini</div><div>Fatturato</div></div>
-            {(data.topClients || []).map((c) => (
-              <div className="row" key={c.id}><div>{c.name}</div><div>{c.orders}</div><div>{formatMoney(c.revenue)}</div></div>
-            ))}
-          </div>
-        </div>
-
+      <div className="panel analytics-grid analytics-grid-single">
         <div className="analytics-panel">
           <div className="panel-header">
             <div>
