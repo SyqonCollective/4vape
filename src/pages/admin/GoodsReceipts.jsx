@@ -892,7 +892,7 @@ export default function AdminGoodsReceipts() {
                   Chiudi
                 </button>
               </div>
-              <div className="modal-body goods-receipt-modal-body">
+              <div className="modal-body modal-body-single goods-receipt-modal-body">
                 <div className="goods-layout">
                   <div className="goods-main">
                     <div className="order-card">
