@@ -1264,6 +1264,20 @@ button {
   box-shadow: 0 16px 34px rgba(16, 23, 40, 0.12);
 }
 
+.row.selected {
+  border-color: rgba(14, 165, 233, 0.55);
+  box-shadow: 0 14px 28px rgba(14, 165, 233, 0.15);
+  background: linear-gradient(180deg, #f6fbff, #ffffff);
+}
+
+.fiscal-toolbar {
+  margin-bottom: 12px;
+}
+
+.fiscal-section .page-header h3 {
+  margin-bottom: 4px;
+}
+
 .row.parent-row {
   border-left: 4px solid rgba(59, 130, 246, 0.6);
   background: linear-gradient(135deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.95));
