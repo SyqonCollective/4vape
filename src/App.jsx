@@ -26,6 +26,7 @@ import AdminWarehouseMovements from "./pages/admin/WarehouseMovements.jsx";
 import AdminFiscal from "./pages/admin/Fiscal.jsx";
 import RegisterCompany from "./pages/RegisterCompany.jsx";
 import ReturnsTest from "./pages/ReturnsTest.jsx";
+import PublicHome from "./pages/PublicHome.jsx";
 import { getToken } from "./lib/api.js";
 
 const clerkEnabled = Boolean(
@@ -51,7 +52,7 @@ export default function App() {
     <>
       {clerkEnabled ? <ClerkBridge /> : null}
       <Routes>
-        <Route path="/" element={<Navigate to="/admin/login" replace />} />
+        <Route path="/" element={<PublicHome />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/register" element={<RegisterCompany />} />
         <Route path="/returns-test" element={<ReturnsTest />} />
