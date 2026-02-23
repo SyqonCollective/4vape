@@ -241,7 +241,7 @@ export default function AdminInventory() {
   async function saveQuickQty() {
     const changes = items
       .map((item) => ({ id: item.id, stockQty: Number(qtyDraft[item.id]) }))
-      .filter((row) => Number.isFinite(row.stockQty) && row.stockQty >= 0);
+      .filter((row) => Number.isFinite(row.stockQty));
 
     if (!changes.length) return;
     setSaving(true);
@@ -380,7 +380,7 @@ export default function AdminInventory() {
                   <div><label>ML</label><input type="number" step="0.01" value={form.mlProduct} onChange={(e) => setForm((p) => ({ ...p, mlProduct: e.target.value }))} /></div>
                   <div><label>Giacenza</label><input type="number" value={form.stockQty} onChange={(e) => setForm((p) => ({ ...p, stockQty: Number(e.target.value || 0) }))} /></div>
                   <div><label>Prezzo acquisto</label><input type="number" step="0.01" value={form.purchasePrice} onChange={(e) => setForm((p) => ({ ...p, purchasePrice: e.target.value }))} /></div>
-                  <div><label>Prezzo listino</label><input type="number" step="0.01" value={form.listPrice} onChange={(e) => setForm((p) => ({ ...p, listPrice: e.target.value }))} /></div>
+                  <div><label>Prezzo consigliato</label><input type="number" step="0.01" value={form.listPrice} onChange={(e) => setForm((p) => ({ ...p, listPrice: e.target.value }))} /></div>
                   <div><label>Prezzo vendita</label><input type="number" step="0.01" value={form.price} onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))} /></div>
                   <div><label>IVA</label><select value={form.taxRateId} onChange={(e) => setForm((p) => ({ ...p, taxRateId: e.target.value }))}><option value="">Nessuna</option>{taxes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
                   <div><label>Accisa</label><select value={form.exciseRateId} onChange={(e) => setForm((p) => ({ ...p, exciseRateId: e.target.value }))}><option value="">Nessuna</option>{excises.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></div>
@@ -415,7 +415,6 @@ export default function AdminInventory() {
                       <div>
                         <input
                           type="number"
-                          min="0"
                           value={qtyDraft[item.id] ?? item.stockQty}
                           onChange={(e) =>
                             setQtyDraft((prev) => ({ ...prev, [item.id]: e.target.value }))

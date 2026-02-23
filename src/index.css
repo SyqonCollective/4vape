@@ -1117,6 +1117,14 @@ button {
 .categories-rich-table .row .actions {
   justify-content: flex-end;
 }
+.suppliers-table .row {
+  grid-template-columns: 1.7fr 0.9fr 0.9fr 1fr 1.1fr 0.8fr;
+  min-width: 980px;
+}
+.suppliers-table .row.header {
+  grid-template-columns: 1.7fr 0.9fr 0.9fr 1fr 1.1fr 0.8fr;
+  min-width: 980px;
+}
 .btn.small {
   padding: 0.35rem 0.6rem;
   font-size: 0.82rem;

@@ -313,6 +313,13 @@ export default function AdminProducts() {
     }
   }
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      runProductsSearch();
+    }, 260);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
   async function exportCsv() {
     try {
       const res = await fetch("/api/admin/products/export", {
@@ -1225,9 +1232,7 @@ export default function AdminProducts() {
                 }
               }}
             />
-            <button className="btn ghost" onClick={runProductsSearch}>
-              Cerca
-            </button>
+            <button className="btn ghost" onClick={runProductsSearch}>Aggiorna</button>
           </div>
           <div className="toolbar-group">
             <div className="toolbar-label">Ordina per</div>
@@ -1642,7 +1647,7 @@ export default function AdminProducts() {
                     />
                   </label>
                   <label>
-                    Prezzo listino
+                    Prezzo consigliato
                     <input
                       type="number"
                       step="0.01"
@@ -2420,7 +2425,7 @@ export default function AdminProducts() {
                       />
                     </label>
                     <label>
-                      Listino
+                      Prezzo consigliato
                       <input
                         type="number"
                         step="0.01"
@@ -2624,7 +2629,7 @@ export default function AdminProducts() {
                   <div>SKU</div>
                   <div>Nome</div>
                   <div>Prezzo</div>
-                  <div>Listino</div>
+                          <div>Prezzo consigliato</div>
                   <div>Acquisto</div>
                   <div>Sconto</div>
                   <div>Q.tà Sconto</div>

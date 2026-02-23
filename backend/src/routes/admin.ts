@@ -2893,6 +2893,218 @@ export async function adminRoutes(app: FastifyInstance) {
     return reply.send(csv);
   });
 
+  app.get("/fiscal/overview", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+
+    const query = request.query as { start?: string; end?: string; companyId?: string };
+    const now = new Date();
+    const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : now;
+    const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : new Date(end);
+    if (!query.start) start.setDate(end.getDate() - 29);
+    const companyId = String(query.companyId || "").trim();
+    const fiscalStatuses: OrderStatus[] = ["APPROVED", "FULFILLED"];
+
+    const orders = await prisma.order.findMany({
+      where: {
+        createdAt: { gte: start, lte: end },
+        status: { in: fiscalStatuses },
+        ...(companyId ? { companyId } : {}),
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            legalName: true,
+            vatNumber: true,
+            address: true,
+            cap: true,
+            city: true,
+            province: true,
+          },
+        },
+        items: {
+          include: {
+            product: {
+              include: {
+                taxRateRef: true,
+                sourceSupplier: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8000,
+    });
+
+    const lines: Array<any> = [];
+    const byCustomer = new Map<string, any>();
+    const byFortnight = new Map<string, any>();
+
+    for (const order of orders) {
+      const d = new Date(order.createdAt);
+      const day = d.getUTCDate();
+      const month = d.getUTCMonth();
+      const year = d.getUTCFullYear();
+      const half = day <= 15 ? 1 : 2;
+      const periodStart = day <= 15
+        ? new Date(Date.UTC(year, month, 1))
+        : new Date(Date.UTC(year, month, 16));
+      const periodEnd = day <= 15
+        ? new Date(Date.UTC(year, month, 15, 23, 59, 59, 999))
+        : new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+      const fortnightKey = `${year}-${String(month + 1).padStart(2, "0")}-Q${half}`;
+      const fortnightRow = byFortnight.get(fortnightKey) || {
+        key: fortnightKey,
+        half,
+        periodStart,
+        periodEnd,
+        orders: 0,
+        qty: 0,
+        imponibile: 0,
+        accisa: 0,
+        iva: 0,
+        totale: 0,
+      };
+      fortnightRow.orders += 1;
+
+      for (const item of order.items) {
+        const qty = Number(item.qty || 0);
+        const imponibile = Number(item.lineTotal || 0);
+        const purchase = Number(item.product?.purchasePrice || 0) * qty;
+        const vatRate = Number(item.product?.taxRate || item.product?.taxRateRef?.rate || 0);
+        const exciseUnit = Number(
+          item.product?.exciseTotal ??
+          (Number(item.product?.exciseMl || 0) + Number(item.product?.exciseProduct || 0))
+        );
+        const accisa = exciseUnit * qty;
+        const iva = vatRate > 0 ? (imponibile + accisa) * (vatRate / 100) : 0;
+        const totale = imponibile + accisa + iva;
+
+        lines.push({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          date: order.createdAt,
+          customerId: order.company?.id || "",
+          customerName: order.company?.name || "N/D",
+          customerVat: order.company?.vatNumber || "",
+          customerAddress: [order.company?.address, order.company?.cap, order.company?.city, order.company?.province]
+            .filter(Boolean)
+            .join(" "),
+          sku: item.sku,
+          productName: item.name,
+          supplierName: item.product?.sourceSupplier?.name || "",
+          qty,
+          imponibile,
+          accisa,
+          iva,
+          totale,
+          cost: purchase,
+          marginNet: imponibile - purchase,
+          vatRate,
+        });
+
+        const customerKey = order.company?.id || `company:${order.companyId}`;
+        const customerRow = byCustomer.get(customerKey) || {
+          companyId: order.company?.id || order.companyId,
+          name: order.company?.name || "N/D",
+          vatNumber: order.company?.vatNumber || "",
+          orders: new Set<string>(),
+          qty: 0,
+          imponibile: 0,
+          accisa: 0,
+          iva: 0,
+          totale: 0,
+          cost: 0,
+        };
+        customerRow.orders.add(order.id);
+        customerRow.qty += qty;
+        customerRow.imponibile += imponibile;
+        customerRow.accisa += accisa;
+        customerRow.iva += iva;
+        customerRow.totale += totale;
+        customerRow.cost += purchase;
+        byCustomer.set(customerKey, customerRow);
+
+        fortnightRow.qty += qty;
+        fortnightRow.imponibile += imponibile;
+        fortnightRow.accisa += accisa;
+        fortnightRow.iva += iva;
+        fortnightRow.totale += totale;
+      }
+
+      byFortnight.set(fortnightKey, fortnightRow);
+    }
+
+    const customerSummary = Array.from(byCustomer.values())
+      .map((r) => ({
+        companyId: r.companyId,
+        name: r.name,
+        vatNumber: r.vatNumber,
+        orders: r.orders.size,
+        qty: r.qty,
+        imponibile: r.imponibile,
+        accisa: r.accisa,
+        iva: r.iva,
+        totale: r.totale,
+        cost: r.cost,
+        marginNet: r.imponibile - r.cost,
+      }))
+      .sort((a, b) => b.totale - a.totale);
+
+    const quindicinaliAccisa = Array.from(byFortnight.values()).sort(
+      (a, b) => new Date(a.periodStart).getTime() - new Date(b.periodStart).getTime()
+    );
+
+    const totals = lines.reduce(
+      (acc, row) => {
+        acc.lines += 1;
+        acc.orders.add(row.orderId);
+        acc.qty += row.qty;
+        acc.imponibile += row.imponibile;
+        acc.accisa += row.accisa;
+        acc.iva += row.iva;
+        acc.totale += row.totale;
+        acc.cost += row.cost;
+        return acc;
+      },
+      {
+        lines: 0,
+        orders: new Set<string>(),
+        qty: 0,
+        imponibile: 0,
+        accisa: 0,
+        iva: 0,
+        totale: 0,
+        cost: 0,
+      }
+    );
+
+    return {
+      filters: {
+        start: start.toISOString().slice(0, 10),
+        end: end.toISOString().slice(0, 10),
+        companyId: companyId || null,
+      },
+      totals: {
+        lines: totals.lines,
+        orders: totals.orders.size,
+        qty: totals.qty,
+        imponibile: totals.imponibile,
+        accisa: totals.accisa,
+        iva: totals.iva,
+        totale: totals.totale,
+        cost: totals.cost,
+        marginNet: totals.imponibile - totals.cost,
+      },
+      lines,
+      customerSummary,
+      quindicinaliAccisa,
+    };
+  });
+
   app.get("/settings", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
@@ -4052,7 +4264,7 @@ export async function adminRoutes(app: FastifyInstance) {
           .array(
             z.object({
               id: z.string().min(1),
-              stockQty: z.number().int().min(0),
+              stockQty: z.number().int(),
             })
           )
           .min(1),
@@ -4482,7 +4694,7 @@ export async function adminRoutes(app: FastifyInstance) {
           nicotine: rawLine.nicotine ?? existing?.nicotine ?? product?.nicotine ?? null,
           mlProduct: rawLine.mlProduct ?? existing?.mlProduct ?? product?.mlProduct ?? null,
           purchasePrice:
-            rawLine.unitCost ?? existing?.purchasePrice ?? product?.purchasePrice ?? null,
+            rawLine.unitCost ?? product?.purchasePrice ?? existing?.purchasePrice ?? null,
           price: rawLine.unitPrice ?? existing?.price ?? product?.price ?? null,
           taxRateId: pickVal(rawLine.taxRateId, existing?.taxRateId, product?.taxRateId),
           exciseRateId: pickVal(
@@ -4680,7 +4892,7 @@ export async function adminRoutes(app: FastifyInstance) {
               nicotine: rawLine.nicotine ?? current?.nicotine ?? product?.nicotine ?? null,
               mlProduct: rawLine.mlProduct ?? current?.mlProduct ?? product?.mlProduct ?? null,
               purchasePrice:
-                rawLine.unitCost ?? current?.purchasePrice ?? product?.purchasePrice ?? null,
+                rawLine.unitCost ?? product?.purchasePrice ?? current?.purchasePrice ?? null,
               price: rawLine.unitPrice ?? current?.price ?? product?.price ?? null,
               taxRateId: pickVal(rawLine.taxRateId, current?.taxRateId, product?.taxRateId),
               exciseRateId: pickVal(

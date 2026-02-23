@@ -8,6 +8,7 @@ import AdminAnalytics from "./pages/admin/Analytics.jsx";
 import AdminProducts from "./pages/admin/Products.jsx";
 import AdminBrands from "./pages/admin/Brands.jsx";
 import AdminSuppliers from "./pages/admin/Suppliers.jsx";
+import AdminSupplierRegistry from "./pages/admin/SupplierRegistry.jsx";
 import AdminDiscounts from "./pages/admin/DiscountRules.jsx";
 import AdminCategories from "./pages/admin/Categories.jsx";
 import AdminOrders from "./pages/admin/Orders.jsx";
@@ -19,6 +20,10 @@ import AdminGoodsReceipts from "./pages/admin/GoodsReceipts.jsx";
 import AdminReturns from "./pages/admin/Returns.jsx";
 import AdminReports from "./pages/admin/Reports.jsx";
 import AdminMailMarketing from "./pages/admin/MailMarketing.jsx";
+import AdminExpenses from "./pages/admin/Expenses.jsx";
+import AdminTreasury from "./pages/admin/Treasury.jsx";
+import AdminWarehouseMovements from "./pages/admin/WarehouseMovements.jsx";
+import AdminFiscal from "./pages/admin/Fiscal.jsx";
 import RegisterCompany from "./pages/RegisterCompany.jsx";
 import ReturnsTest from "./pages/ReturnsTest.jsx";
 import { getToken } from "./lib/api.js";
@@ -64,11 +69,16 @@ export default function App() {
           <Route path="brands" element={<AdminBrands />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="suppliers" element={<AdminSuppliers />} />
+          <Route path="supplier-registry" element={<AdminSupplierRegistry />} />
           <Route path="discounts" element={<AdminDiscounts />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="inventory" element={<AdminInventory />} />
           <Route path="goods-receipts" element={<AdminGoodsReceipts />} />
+          <Route path="warehouse-movements" element={<AdminWarehouseMovements />} />
+          <Route path="expenses" element={<AdminExpenses />} />
+          <Route path="treasury" element={<AdminTreasury />} />
+          <Route path="fiscal" element={<AdminFiscal />} />
           <Route path="returns" element={<AdminReturns />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="mail-marketing" element={<AdminMailMarketing />} />

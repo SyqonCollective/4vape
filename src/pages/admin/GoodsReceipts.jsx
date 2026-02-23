@@ -109,6 +109,18 @@ export default function AdminGoodsReceipts() {
   const [filterFromDate, setFilterFromDate] = useState("");
   const [filterToDate, setFilterToDate] = useState("");
   const [filterSupplierId, setFilterSupplierId] = useState("");
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [supplierDraft, setSupplierDraft] = useState({
+    name: "",
+    legalName: "",
+    vatNumber: "",
+    email: "",
+    phone: "",
+    address: "",
+    cap: "",
+    city: "",
+    province: "",
+  });
 
   async function loadReceipts() {
     try {
@@ -160,6 +172,59 @@ export default function AdminGoodsReceipts() {
     }
   }
 
+  async function createSupplierQuick() {
+    const name = String(supplierDraft.name || "").trim();
+    if (!name) {
+      setError("Inserisci almeno il nome fornitore");
+      return;
+    }
+    const slug = name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "")
+      .slice(0, 12);
+    const code = `${(slug || "forn").toUpperCase()}-${Date.now().toString().slice(-4)}`;
+    try {
+      const created = await api("/admin/suppliers", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          code,
+          legalName: supplierDraft.legalName || undefined,
+          vatNumber: supplierDraft.vatNumber || undefined,
+          email: supplierDraft.email || undefined,
+          phone: supplierDraft.phone || undefined,
+          address: supplierDraft.address || undefined,
+          cap: supplierDraft.cap || undefined,
+          city: supplierDraft.city || undefined,
+          province: supplierDraft.province || undefined,
+        }),
+      });
+      setSuppliers((prev) => [created, ...prev]);
+      setSupplierId(created.id);
+      setEditSupplierId(created.id);
+      setSupplierQuery(created.name || "");
+      setEditSupplierQuery(created.name || "");
+      setSupplierDraft({
+        name: "",
+        legalName: "",
+        vatNumber: "",
+        email: "",
+        phone: "",
+        address: "",
+        cap: "",
+        city: "",
+        province: "",
+      });
+      setShowSupplierModal(false);
+      setSuccess("Fornitore creato");
+    } catch {
+      setError("Impossibile creare fornitore");
+    }
+  }
+
   function mergeRowWithSkuInfo(row, info) {
     if (!info?.found) return row;
     const inv = info.inventory || {};
@@ -178,27 +243,27 @@ export default function AdminGoodsReceipts() {
     const subcategoryFallback = productSubcategories.join(", ");
     return {
       ...row,
-      name: pick(inv.name, prod.name, row.name),
+      name: pick(prod.name, inv.name, row.name),
       codicePl: pick(prod.codicePl, row.codicePl),
-      description: pick(inv.description, prod.description, row.description),
-      shortDescription: pick(inv.shortDescription, prod.shortDescription, row.shortDescription),
-      brand: pick(inv.brand, prod.brand, row.brand),
-      category: pick(inv.category, prod.category, categoryFallback, row.category),
-      subcategory: pick(inv.subcategory, prod.subcategory, subcategoryFallback, row.subcategory),
-      barcode: pick(inv.barcode, prod.barcode, row.barcode),
-      nicotine: String(pick(inv.nicotine, prod.nicotine, row.nicotine)),
-      mlProduct: String(pick(inv.mlProduct, prod.mlProduct, row.mlProduct)),
-      taxRateId: pick(inv.taxRateId, prod.taxRateId, row.taxRateId),
-      exciseRateId: pick(inv.exciseRateId, prod.exciseRateId, row.exciseRateId),
+      description: pick(prod.description, inv.description, row.description),
+      shortDescription: pick(prod.shortDescription, inv.shortDescription, row.shortDescription),
+      brand: pick(prod.brand, inv.brand, row.brand),
+      category: pick(prod.category, inv.category, categoryFallback, row.category),
+      subcategory: pick(prod.subcategory, inv.subcategory, subcategoryFallback, row.subcategory),
+      barcode: pick(prod.barcode, inv.barcode, row.barcode),
+      nicotine: String(pick(prod.nicotine, inv.nicotine, row.nicotine)),
+      mlProduct: String(pick(prod.mlProduct, inv.mlProduct, row.mlProduct)),
+      taxRateId: pick(prod.taxRateId, inv.taxRateId, row.taxRateId),
+      exciseRateId: pick(prod.exciseRateId, inv.exciseRateId, row.exciseRateId),
       unitCost:
-        info.last?.unitCost !== null && info.last?.unitCost !== undefined
-          ? String(info.last.unitCost)
+        prod.purchasePrice !== undefined && prod.purchasePrice !== null
+          ? String(prod.purchasePrice)
           : row.unitCost !== ""
             ? row.unitCost
             : inv.purchasePrice !== undefined && inv.purchasePrice !== null
               ? String(inv.purchasePrice)
-              : prod.purchasePrice !== undefined && prod.purchasePrice !== null
-                ? String(prod.purchasePrice)
+              : info.last?.unitCost !== null && info.last?.unitCost !== undefined
+                ? String(info.last.unitCost)
                 : prod.price !== undefined && prod.price !== null
                   ? String(prod.price)
                   : "",
@@ -848,6 +913,9 @@ export default function AdminGoodsReceipts() {
                               </option>
                             ))}
                           </select>
+                          <button type="button" className="btn ghost small" onClick={() => setShowSupplierModal(true)}>
+                            + Nuovo fornitore
+                          </button>
                         </div>
                         <div>
                           <label>Numero fattura</label>
@@ -1083,6 +1151,9 @@ export default function AdminGoodsReceipts() {
                         </option>
                       ))}
                     </select>
+                    <button type="button" className="btn ghost small" onClick={() => setShowSupplierModal(true)}>
+                      + Nuovo fornitore
+                    </button>
                   </div>
                   <div>
                     <label>Numero fattura</label>
@@ -1146,6 +1217,35 @@ export default function AdminGoodsReceipts() {
                   <button className="btn primary" onClick={saveEditedReceipt} disabled={saving}>
                     {saving ? "Salvataggio..." : "Salva modifiche"}
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+      {showSupplierModal ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowSupplierModal(false)}>
+            <div className="modal modal-compact" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div className="modal-title"><h3>Nuovo fornitore</h3></div>
+                <button className="btn ghost" onClick={() => setShowSupplierModal(false)}>Chiudi</button>
+              </div>
+              <div className="modal-body modal-body-single">
+                <div className="form-grid">
+                  <label>Nome *<input value={supplierDraft.name} onChange={(e) => setSupplierDraft((p) => ({ ...p, name: e.target.value }))} /></label>
+                  <label>Ragione sociale<input value={supplierDraft.legalName} onChange={(e) => setSupplierDraft((p) => ({ ...p, legalName: e.target.value }))} /></label>
+                  <label>P.IVA<input value={supplierDraft.vatNumber} onChange={(e) => setSupplierDraft((p) => ({ ...p, vatNumber: e.target.value }))} /></label>
+                  <label>Email<input value={supplierDraft.email} onChange={(e) => setSupplierDraft((p) => ({ ...p, email: e.target.value }))} /></label>
+                  <label>Telefono<input value={supplierDraft.phone} onChange={(e) => setSupplierDraft((p) => ({ ...p, phone: e.target.value }))} /></label>
+                  <label>Indirizzo<input value={supplierDraft.address} onChange={(e) => setSupplierDraft((p) => ({ ...p, address: e.target.value }))} /></label>
+                  <label>CAP<input value={supplierDraft.cap} onChange={(e) => setSupplierDraft((p) => ({ ...p, cap: e.target.value }))} /></label>
+                  <label>Città<input value={supplierDraft.city} onChange={(e) => setSupplierDraft((p) => ({ ...p, city: e.target.value }))} /></label>
+                  <label>Provincia<input value={supplierDraft.province} onChange={(e) => setSupplierDraft((p) => ({ ...p, province: e.target.value }))} /></label>
+                </div>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setShowSupplierModal(false)}>Annulla</button>
+                  <button className="btn primary" onClick={createSupplierQuick}>Crea fornitore</button>
                 </div>
               </div>
             </div>

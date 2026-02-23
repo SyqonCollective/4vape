@@ -696,28 +696,6 @@ export default function AdminSuppliers() {
                       ))}
                     </select>
                   </label>
-                  <div className="inline-create">
-                    <input
-                      placeholder="Nuova categoria"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                    />
-                    <select
-                      value={newCategoryParent}
-                      onChange={(e) => setNewCategoryParent(e.target.value)}
-                      className="select"
-                    >
-                      <option value="">Sottocategoria di…</option>
-                      {categoryOptions.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                    <button className="btn ghost" onClick={createCategoryInline}>
-                      Crea
-                    </button>
-                  </div>
                   <label>
                     Prezzo vendita (€)
                     <input
