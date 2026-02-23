@@ -2,6 +2,8 @@ import { FastifyInstance } from "fastify";
 import { prisma } from "../lib/db.js";
 
 export async function catalogRoutes(app: FastifyInstance) {
+  const UNCATEGORIZED_ID = "__uncategorized__";
+
   app.get("/public", async () => {
     const [products, categories] = await Promise.all([
       prisma.product.findMany({
@@ -54,16 +56,17 @@ export async function catalogRoutes(app: FastifyInstance) {
           }
         }
       }
-      if (!assignTo.size) continue;
+      if (!assignTo.size) {
+        assignTo.add(UNCATEGORIZED_ID);
+      }
 
       for (const cid of assignTo) {
         const c = categoryById.get(cid);
-        if (!c) continue;
         const g = grouped.get(cid) || {
-          id: c.id,
-          name: c.name,
-          description: c.description || null,
-          sortOrder: c.sortOrder ?? 0,
+          id: c?.id || UNCATEGORIZED_ID,
+          name: c?.name || "Prodotti",
+          description: c?.description || null,
+          sortOrder: c?.sortOrder ?? 999999,
           products: [],
         };
         g.products.push({
@@ -99,9 +102,7 @@ export async function catalogRoutes(app: FastifyInstance) {
     };
   });
 
-  app.addHook("preHandler", app.authenticate);
-
-  app.get("/", async (request) => {
+  app.get("/", { preHandler: app.authenticate }, async (request) => {
     const companyId = request.user?.companyId || undefined;
     const products = await prisma.product.findMany({
       orderBy: { createdAt: "desc" },
