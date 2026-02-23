@@ -1899,6 +1899,25 @@ button {
   padding-right: 0.4rem;
 }
 
+.category-edit-modal {
+  width: min(980px, 96vw);
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.24);
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(56, 189, 248, 0.08), rgba(56, 189, 248, 0) 46%),
+    #ffffff;
+}
+
+.category-edit-modal .modal-header {
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.category-edit-modal .modal-body {
+  padding-top: 1rem;
+}
+
 .analytics-grid-single {
   grid-template-columns: 1fr;
 }

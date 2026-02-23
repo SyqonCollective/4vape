@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
+import Portal from "../../components/Portal.jsx";
 
 // CHECKLIST (admin richieste):
 // [x] Riordino categorie principali e sottocategorie coerente per parent
@@ -317,50 +318,52 @@ export default function AdminCategories() {
       </div>
 
       {editing ? (
-        <div className="modal-backdrop" onClick={() => setEditing(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <div className="modal-title">Modifica categoria</div>
-                <div className="modal-subtitle">
-                  {editing.parentId
-                    ? `Sottocategoria di: ${parentNameById.get(editing.parentId) || "-"}`
-                    : "Categoria principale"}
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setEditing(null)}>
+            <div className="modal category-edit-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">Modifica categoria</div>
+                  <div className="modal-subtitle">
+                    {editing.parentId
+                      ? `Sottocategoria di: ${parentNameById.get(editing.parentId) || "-"}`
+                      : "Categoria principale"}
+                  </div>
                 </div>
+                <button className="btn ghost" onClick={() => setEditing(null)}>Chiudi</button>
               </div>
-              <button className="btn ghost" onClick={() => setEditing(null)}>Chiudi</button>
-            </div>
-            <div className="modal-body modal-body-single">
-              <div className="form-grid">
-                <label>
-                  Nome
-                  <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
-                </label>
-                <label>
-                  Descrizione
-                  <RichTextEditor
-                    value={editing.description || ""}
-                    onChange={(next) => setEditing({ ...editing, description: next })}
-                    placeholder="Descrizione categoria"
-                  />
-                </label>
-                <label>
-                  Parent
-                  <select className="select" value={editing.parentId || ""} onChange={(e) => setEditing({ ...editing, parentId: e.target.value })}>
-                    <option value="">Nessuno</option>
-                    {flat.filter((x) => x.id !== editing.id).map((x) => (
-                      <option key={x.id} value={x.id}>{x.label}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <div className="actions">
-                <button className="btn ghost" onClick={() => setEditing(null)}>Annulla</button>
-                <button className="btn primary" onClick={saveEdit}>Salva</button>
+              <div className="modal-body modal-body-single">
+                <div className="form-grid">
+                  <label>
+                    Nome
+                    <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+                  </label>
+                  <label>
+                    Descrizione
+                    <RichTextEditor
+                      value={editing.description || ""}
+                      onChange={(next) => setEditing({ ...editing, description: next })}
+                      placeholder="Descrizione categoria"
+                    />
+                  </label>
+                  <label>
+                    Parent
+                    <select className="select" value={editing.parentId || ""} onChange={(e) => setEditing({ ...editing, parentId: e.target.value })}>
+                      <option value="">Nessuno</option>
+                      {flat.filter((x) => x.id !== editing.id).map((x) => (
+                        <option key={x.id} value={x.id}>{x.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setEditing(null)}>Annulla</button>
+                  <button className="btn primary" onClick={saveEdit}>Salva</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </Portal>
       ) : null}
     </section>
   );
