@@ -232,12 +232,18 @@ export default function AdminCategories() {
     const q = search.trim().toLowerCase();
     if (!q) return flat;
     return flat.filter((c) => {
-      const blob = `${c.name || ""} ${c.description || ""}`.toLowerCase();
+      const parentName = c.parentId ? (items.find((x) => x.id === c.parentId)?.name || "") : "";
+      const blob = `${c.name || ""} ${c.description || ""} ${parentName}`.toLowerCase();
       return blob.includes(q);
     });
   }, [search, items]);
 
   const stripHtml = (html) => String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const parentNameById = useMemo(() => {
+    const map = new Map();
+    for (const c of items) map.set(c.id, c.name || "");
+    return map;
+  }, [items]);
 
   return (
     <section>
@@ -293,7 +299,10 @@ export default function AdminCategories() {
         </div>
         {visibleFlat.map((c) => (
           <div className="row" key={c.id}>
-            <div>{c.label}</div>
+            <div>
+              <div>{c.label}</div>
+              {c.parentId ? <div className="muted">Parent: {parentNameById.get(c.parentId) || "-"}</div> : null}
+            </div>
             <div className="muted">{c.parentId ? "Sottocategoria" : "Principale"}</div>
             <div>{stripHtml(c.description) || "—"}</div>
             <div>{c._count?.products || 0}</div>
@@ -308,33 +317,47 @@ export default function AdminCategories() {
       </div>
 
       {editing ? (
-        <div className="panel" style={{ marginTop: 12 }}>
-          <h3>Modifica categoria</h3>
-          <div className="form-grid">
-            <label>
-              Nome
-              <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
-            </label>
-            <label>
-              Descrizione
-              <RichTextEditor
-                value={editing.description || ""}
-                onChange={(next) => setEditing({ ...editing, description: next })}
-                placeholder="Descrizione categoria"
-              />
-            </label>
-            <label>
-              Parent
-              <select className="select" value={editing.parentId || ""} onChange={(e) => setEditing({ ...editing, parentId: e.target.value })}>
-                <option value="">Nessuno</option>
-                {flat.filter((x) => x.id !== editing.id).map((x) => (
-                  <option key={x.id} value={x.id}>{x.label}</option>
-                ))}
-              </select>
-            </label>
-            <div className="actions">
-              <button className="btn ghost" onClick={() => setEditing(null)}>Annulla</button>
-              <button className="btn primary" onClick={saveEdit}>Salva</button>
+        <div className="modal-backdrop" onClick={() => setEditing(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Modifica categoria</div>
+                <div className="modal-subtitle">
+                  {editing.parentId
+                    ? `Sottocategoria di: ${parentNameById.get(editing.parentId) || "-"}`
+                    : "Categoria principale"}
+                </div>
+              </div>
+              <button className="btn ghost" onClick={() => setEditing(null)}>Chiudi</button>
+            </div>
+            <div className="modal-body modal-body-single">
+              <div className="form-grid">
+                <label>
+                  Nome
+                  <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+                </label>
+                <label>
+                  Descrizione
+                  <RichTextEditor
+                    value={editing.description || ""}
+                    onChange={(next) => setEditing({ ...editing, description: next })}
+                    placeholder="Descrizione categoria"
+                  />
+                </label>
+                <label>
+                  Parent
+                  <select className="select" value={editing.parentId || ""} onChange={(e) => setEditing({ ...editing, parentId: e.target.value })}>
+                    <option value="">Nessuno</option>
+                    {flat.filter((x) => x.id !== editing.id).map((x) => (
+                      <option key={x.id} value={x.id}>{x.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="actions">
+                <button className="btn ghost" onClick={() => setEditing(null)}>Annulla</button>
+                <button className="btn primary" onClick={saveEdit}>Salva</button>
+              </div>
             </div>
           </div>
         </div>
