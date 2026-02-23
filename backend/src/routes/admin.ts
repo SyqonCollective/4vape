@@ -47,6 +47,12 @@ function slugify(value: string) {
     .replace(/(^-|-$)+/g, "");
 }
 
+function buildCategorySlug(name: string, parentId?: string | null) {
+  const base = slugify(name) || "categoria";
+  if (!parentId) return base;
+  return `${base}--${String(parentId).slice(-10).toLowerCase()}`;
+}
+
 export async function adminRoutes(app: FastifyInstance) {
   const defaultMailupMeta = {
     lists: [
@@ -3649,7 +3655,11 @@ export async function adminRoutes(app: FastifyInstance) {
         description: z.string().optional(),
       })
       .parse(request.body);
-    const slug = slugify(body.name);
+    if (body.parentId) {
+      const parent = await prisma.category.findUnique({ where: { id: body.parentId } });
+      if (!parent) return reply.badRequest("Parent category not found");
+    }
+    const slug = buildCategorySlug(body.name, body.parentId || null);
     const existing = await prisma.category.findUnique({ where: { slug } });
     if (existing) return reply.conflict("Category already exists");
     return prisma.category.create({
@@ -3674,12 +3684,23 @@ export async function adminRoutes(app: FastifyInstance) {
         sortOrder: z.number().int().optional(),
       })
       .parse(request.body);
+    const current = await prisma.category.findUnique({ where: { id } });
+    if (!current) return reply.notFound("Category not found");
+    const nextParentId = body.parentId !== undefined ? body.parentId : current.parentId;
+    if (nextParentId === id) return reply.badRequest("A category cannot be its own parent");
+    if (nextParentId) {
+      const parent = await prisma.category.findUnique({ where: { id: nextParentId } });
+      if (!parent) return reply.badRequest("Parent category not found");
+    }
+    const nextName = body.name || current.name;
     const data: any = {};
     if (body.name) {
       data.name = body.name;
-      data.slug = slugify(body.name);
     }
     if (body.parentId !== undefined) data.parentId = body.parentId;
+    if (body.name !== undefined || body.parentId !== undefined) {
+      data.slug = buildCategorySlug(nextName, nextParentId);
+    }
     if (body.description !== undefined) data.description = body.description || null;
     if (body.sortOrder !== undefined) data.sortOrder = body.sortOrder;
     return prisma.category.update({ where: { id }, data });
