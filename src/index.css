@@ -4043,11 +4043,11 @@ button {
 }
 
 .goods-receipt-modal {
-  position: relative;
-  top: auto;
-  left: auto;
-  transform: none;
-  margin: auto;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
   width: min(1540px, 98vw);
   max-height: calc(100vh - 30px);
   display: flex;
