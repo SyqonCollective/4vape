@@ -4042,6 +4042,54 @@ button {
   align-items: start;
 }
 
+.goods-receipt-modal {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  margin: auto;
+  width: min(1540px, 98vw);
+  max-height: calc(100vh - 30px);
+  display: flex;
+  flex-direction: column;
+  padding: 1.15rem 1.35rem;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.24);
+  background:
+    radial-gradient(130% 110% at 100% 0%, rgba(56, 189, 248, 0.08), rgba(56, 189, 248, 0) 48%),
+    #fff;
+}
+
+.goods-receipt-modal .modal-header {
+  padding: 0.1rem 0 0.9rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.goods-receipt-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding-top: 1rem;
+  padding-right: 4px;
+}
+
+.goods-receipt-modal .order-card {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.8), rgba(255, 255, 255, 1));
+}
+
+.goods-receipt-modal .order-form {
+  gap: 14px;
+}
+
+.goods-receipt-modal .order-form input,
+.goods-receipt-modal .order-form select,
+.goods-receipt-modal .goods-row input,
+.goods-receipt-modal .goods-row select {
+  min-height: 42px;
+}
+
 .goods-main {
   display: grid;
   gap: 14px;
@@ -4122,6 +4170,13 @@ button {
 }
 
 @media (max-width: 1200px) {
+  .goods-receipt-modal {
+    width: min(99vw, 99vw);
+    max-height: calc(100vh - 14px);
+    border-radius: 16px;
+    padding: 0.9rem;
+  }
+
   .goods-layout {
     grid-template-columns: 1fr;
   }

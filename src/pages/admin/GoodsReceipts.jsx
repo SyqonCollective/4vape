@@ -883,7 +883,7 @@ export default function AdminGoodsReceipts() {
       {showCreateModal ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
-            <div className="modal returns-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal goods-receipt-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-title">
                   <h3>Nuovo arrivo merci</h3>
@@ -892,7 +892,7 @@ export default function AdminGoodsReceipts() {
                   Chiudi
                 </button>
               </div>
-              <div className="modal-body">
+              <div className="modal-body goods-receipt-modal-body">
                 <div className="goods-layout">
                   <div className="goods-main">
                     <div className="order-card">
@@ -1125,7 +1125,7 @@ export default function AdminGoodsReceipts() {
       {editingReceipt ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setEditingReceipt(null)}>
-            <div className="modal returns-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal goods-receipt-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-title">
                   <h3>Modifica carico {editingReceipt.receiptNo}</h3>
@@ -1134,7 +1134,7 @@ export default function AdminGoodsReceipts() {
                   Chiudi
                 </button>
               </div>
-              <div className="modal-body modal-body-single returns-modal-body">
+              <div className="modal-body modal-body-single returns-modal-body goods-receipt-modal-body">
                 <div className="order-form">
                   <div>
                     <label>Fornitore (anagrafica)</label>
