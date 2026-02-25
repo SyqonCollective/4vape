@@ -12,6 +12,7 @@ import AdminSupplierRegistry from "./pages/admin/SupplierRegistry.jsx";
 import AdminDiscounts from "./pages/admin/DiscountRules.jsx";
 import AdminCategories from "./pages/admin/Categories.jsx";
 import AdminOrders from "./pages/admin/Orders.jsx";
+import AdminInvoices from "./pages/admin/Invoices.jsx";
 import AdminUsers from "./pages/admin/Users.jsx";
 import AdminSettings from "./pages/admin/Settings.jsx";
 import AdminCompanies from "./pages/admin/Companies.jsx";
@@ -24,6 +25,8 @@ import AdminExpenses from "./pages/admin/Expenses.jsx";
 import AdminTreasury from "./pages/admin/Treasury.jsx";
 import AdminWarehouseMovements from "./pages/admin/WarehouseMovements.jsx";
 import AdminFiscal from "./pages/admin/Fiscal.jsx";
+import AdminBundles from "./pages/admin/Bundles.jsx";
+import AdminLogistics from "./pages/admin/Logistics.jsx";
 import RegisterCompany from "./pages/RegisterCompany.jsx";
 import ReturnsTest from "./pages/ReturnsTest.jsx";
 import PublicHome from "./pages/PublicHome.jsx";
@@ -74,12 +77,15 @@ export default function App() {
           <Route path="discounts" element={<AdminDiscounts />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="invoices" element={<AdminInvoices />} />
           <Route path="inventory" element={<AdminInventory />} />
           <Route path="goods-receipts" element={<AdminGoodsReceipts />} />
           <Route path="warehouse-movements" element={<AdminWarehouseMovements />} />
           <Route path="expenses" element={<AdminExpenses />} />
           <Route path="treasury" element={<AdminTreasury />} />
           <Route path="fiscal" element={<AdminFiscal />} />
+          <Route path="bundles" element={<AdminBundles />} />
+          <Route path="logistics" element={<AdminLogistics />} />
           <Route path="returns" element={<AdminReturns />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="mail-marketing" element={<AdminMailMarketing />} />

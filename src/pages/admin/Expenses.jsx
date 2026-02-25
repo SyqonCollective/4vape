@@ -8,11 +8,22 @@ const money = (v) =>
 export default function AdminExpenses() {
   const [rows, setRows] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [taxes, setTaxes] = useState([]);
   const [error, setError] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [supplierFilter, setSupplierFilter] = useState("");
-  const [draft, setDraft] = useState({ invoiceNo: "", expenseDate: "", supplier: "", category: "", amountNet: "", vat: "", notes: "" });
+  const [draft, setDraft] = useState({
+    invoiceNo: "",
+    expenseDate: "",
+    supplier: "",
+    category: "",
+    amountNet: "",
+    taxRateId: "",
+    vat: "",
+    total: "",
+    notes: "",
+  });
 
   async function load() {
     try {
@@ -34,13 +45,28 @@ export default function AdminExpenses() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api("/admin/suppliers");
-        setSuppliers(res || []);
+        const [sup, tax] = await Promise.all([api("/admin/suppliers"), api("/admin/taxes")]);
+        setSuppliers(sup || []);
+        setTaxes(tax || []);
       } catch {
         setSuppliers([]);
+        setTaxes([]);
       }
     })();
   }, []);
+
+  useEffect(() => {
+    const imponibile = Number(draft.amountNet || 0);
+    const selectedTax = taxes.find((t) => t.id === draft.taxRateId);
+    const rate = Number(selectedTax?.rate || 0);
+    const vat = draft.taxRateId ? imponibile * (rate / 100) : Number(draft.vat || 0);
+    const total = imponibile + vat;
+    setDraft((prev) => ({
+      ...prev,
+      vat: Number.isFinite(vat) ? vat.toFixed(2) : prev.vat,
+      total: Number.isFinite(total) ? total.toFixed(2) : prev.total,
+    }));
+  }, [draft.amountNet, draft.taxRateId, taxes]);
 
   async function createExpense() {
     try {
@@ -56,7 +82,17 @@ export default function AdminExpenses() {
           notes: draft.notes,
         }),
       });
-      setDraft({ invoiceNo: "", expenseDate: "", supplier: "", category: "", amountNet: "", vat: "", notes: "" });
+      setDraft({
+        invoiceNo: "",
+        expenseDate: "",
+        supplier: "",
+        category: "",
+        amountNet: "",
+        taxRateId: "",
+        vat: "",
+        total: "",
+        notes: "",
+      });
       load();
     } catch {
       setError("Impossibile salvare fattura spesa");
@@ -101,7 +137,19 @@ export default function AdminExpenses() {
         </label>
         <label>Categoria<input value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} placeholder="es. Affitto" /></label>
         <label>Imponibile<input type="number" step="0.01" value={draft.amountNet} onChange={(e) => setDraft({ ...draft, amountNet: e.target.value })} /></label>
-        <label>IVA<input type="number" step="0.01" value={draft.vat} onChange={(e) => setDraft({ ...draft, vat: e.target.value })} /></label>
+        <label>
+          IVA (aliquota)
+          <select className="select" value={draft.taxRateId} onChange={(e) => setDraft({ ...draft, taxRateId: e.target.value })}>
+            <option value="">Manuale</option>
+            {taxes.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({Number(t.rate || 0).toFixed(2)}%)
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>IVA (importo)<input type="number" step="0.01" value={draft.vat} onChange={(e) => setDraft({ ...draft, vat: e.target.value, taxRateId: "" })} /></label>
+        <label>Totale fattura<input type="number" step="0.01" value={draft.total} readOnly /></label>
         <label className="full">Note<input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
         <div className="actions"><button className="btn primary" onClick={createExpense}>Registra spesa</button></div>
       </div>

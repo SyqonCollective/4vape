@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
@@ -53,6 +54,7 @@ function computeOrderTotals(order) {
 }
 
 export default function AdminOrders() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [error, setError] = useState("");
@@ -363,6 +365,15 @@ export default function AdminOrders() {
       await loadOrderStats();
     } catch (err) {
       setError("Impossibile aggiornare lo stato");
+    }
+  }
+
+  async function createInvoiceFromOrder(orderId) {
+    try {
+      await api(`/admin/invoices/from-order/${orderId}`, { method: "POST" });
+      await loadOrders();
+    } catch {
+      setError("Impossibile generare fattura da ordine");
     }
   }
 
@@ -703,12 +714,14 @@ export default function AdminOrders() {
             <div>{formatCurrency(o.total)}</div>
             <div>{new Date(o.createdAt).toLocaleString()}</div>
             <div>
+              {o.fiscalInvoice ? <span className="tag success">Fatturato</span> : null}
               <button
                 className="btn ghost"
                 onClick={(e) => {
                   e.stopPropagation();
                   updateStatus(o.id, "APPROVED");
                 }}
+                disabled={Boolean(o.fiscalInvoice)}
               >
                 In elaborazione
               </button>
@@ -718,6 +731,7 @@ export default function AdminOrders() {
                   e.stopPropagation();
                   setConfirmCompleteOrder(o);
                 }}
+                disabled={Boolean(o.fiscalInvoice)}
               >
                 Completato
               </button>
@@ -727,9 +741,31 @@ export default function AdminOrders() {
                   e.stopPropagation();
                   setEditingOrder(o);
                 }}
+                disabled={Boolean(o.fiscalInvoice)}
               >
                 Modifica
               </button>
+              {o.fiscalInvoice ? (
+                <button
+                  className="btn ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("/admin/invoices");
+                  }}
+                >
+                  Vedi fattura
+                </button>
+              ) : (
+                <button
+                  className="btn primary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    createInvoiceFromOrder(o.id);
+                  }}
+                >
+                  Fattura
+                </button>
+              )}
             </div>
           </div>
         ))}

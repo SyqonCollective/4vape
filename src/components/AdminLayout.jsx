@@ -24,12 +24,15 @@ const links = [
   { to: "/admin/discounts", label: "Sconti e Regole" },
   { to: "/admin/settings", label: "Impostazioni" },
   { to: "/admin/orders", label: "Ordini" },
+  { to: "/admin/invoices", label: "Fatture" },
   { to: "/admin/inventory", label: "Inventario" },
   { to: "/admin/goods-receipts", label: "Arrivo merci" },
   { to: "/admin/warehouse-movements", label: "Movimenti magazzino" },
   { to: "/admin/expenses", label: "Registro spese" },
   { to: "/admin/treasury", label: "Tesoreria" },
   { to: "/admin/fiscal", label: "Gestione fiscale" },
+  { to: "/admin/bundles", label: "Bundle prodotto" },
+  { to: "/admin/logistics", label: "Logistica" },
   { to: "/admin/returns", label: "Resi" },
   { to: "/admin/companies", label: "Clienti/Aziende" },
   { to: "/admin/users", label: "Utenti admin" },
@@ -129,8 +132,11 @@ export default function AdminLayout() {
   );
 
   const visibleNotifications = useMemo(
-    () => notifications.filter((n) => !dismissedIds.has(n.id)),
-    [notifications, dismissedIds]
+    () =>
+      notifications.filter(
+        (n) => !dismissedIds.has(n.id) && new Date(n.createdAt).getTime() > seenAt
+      ),
+    [notifications, dismissedIds, seenAt]
   );
 
   function markNotificationsSeen() {
@@ -245,7 +251,6 @@ export default function AdminLayout() {
   function toggleNotifications() {
     const next = !notifOpen;
     setNotifOpen(next);
-    if (next) markNotificationsSeen();
   }
 
   function openNotification(item) {

@@ -299,6 +299,8 @@ export async function adminRoutes(app: FastifyInstance) {
     return undefined;
   };
 
+  const roundUp2 = (value: number) => Math.ceil((Number(value) + Number.EPSILON) * 100) / 100;
+
   const normalizeKey = (value: string) =>
     value
       .toLowerCase()
@@ -1033,6 +1035,7 @@ export async function adminRoutes(app: FastifyInstance) {
       include: {
         company: true,
         createdBy: true,
+        fiscalInvoice: { select: { id: true, invoiceNumber: true } },
         items: {
           include: {
             product: {
@@ -1114,14 +1117,11 @@ export async function adminRoutes(app: FastifyInstance) {
     const subtotal = items.reduce((sum, i) => sum.add(i.lineTotal), new Prisma.Decimal(0));
     const vatTotal = items.reduce((sum, i: any) => {
       const rate = Number(i.__taxRate || 0);
-      const exciseLine = Number(i.__exciseUnit || 0) * Number(i.qty || 0);
+      const exciseLine = roundUp2(Number(i.__exciseUnit || 0) * Number(i.qty || 0));
       const base = Number(i.lineTotal) + exciseLine;
-      return sum + (rate > 0 ? base * (rate / 100) : 0);
+      return sum + (rate > 0 ? roundUp2(base * (rate / 100)) : 0);
     }, 0);
-    const exciseTotal = items.reduce(
-      (sum, i: any) => sum + Number(i.__exciseUnit || 0) * Number(i.qty || 0),
-      0
-    );
+    const exciseTotal = items.reduce((sum, i: any) => sum + roundUp2(Number(i.__exciseUnit || 0) * Number(i.qty || 0)), 0);
     const discountTotal = body.discountTotal ? new Prisma.Decimal(body.discountTotal) : new Prisma.Decimal(0);
     const gross = subtotal.add(new Prisma.Decimal(vatTotal)).add(new Prisma.Decimal(exciseTotal));
     const total = Prisma.Decimal.max(gross.sub(discountTotal), new Prisma.Decimal(0));
@@ -1174,9 +1174,12 @@ export async function adminRoutes(app: FastifyInstance) {
 
     const existing = await prisma.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: true, fiscalInvoice: { select: { id: true } } },
     });
     if (!existing) return reply.notFound("Order not found");
+    if (existing.fiscalInvoice) {
+      return reply.badRequest("Ordine già fatturato: modifica non consentita");
+    }
 
     let itemsPayload: Prisma.OrderItemCreateManyOrderInput[] | undefined;
     let total = existing.total;
@@ -1221,14 +1224,11 @@ export async function adminRoutes(app: FastifyInstance) {
       );
       const vatTotal = itemsPayload.reduce((sum: number, i: any) => {
         const rate = Number(i.__taxRate || 0);
-        const exciseLine = Number(i.__exciseUnit || 0) * Number(i.qty || 0);
+        const exciseLine = roundUp2(Number(i.__exciseUnit || 0) * Number(i.qty || 0));
         const base = Number(i.lineTotal) + exciseLine;
-        return sum + (rate > 0 ? base * (rate / 100) : 0);
+        return sum + (rate > 0 ? roundUp2(base * (rate / 100)) : 0);
       }, 0);
-      const exciseTotal = itemsPayload.reduce(
-        (sum: number, i: any) => sum + Number(i.__exciseUnit || 0) * Number(i.qty || 0),
-        0
-      );
+      const exciseTotal = itemsPayload.reduce((sum: number, i: any) => sum + roundUp2(Number(i.__exciseUnit || 0) * Number(i.qty || 0)), 0);
       const discountValue = discountTotal || new Prisma.Decimal(0);
       const gross = subtotal.add(new Prisma.Decimal(vatTotal)).add(new Prisma.Decimal(exciseTotal));
       total = Prisma.Decimal.max(gross.sub(discountValue), new Prisma.Decimal(0));
@@ -1262,6 +1262,12 @@ export async function adminRoutes(app: FastifyInstance) {
     const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
+    const existing = await prisma.order.findUnique({
+      where: { id },
+      include: { fiscalInvoice: { select: { id: true } } },
+    });
+    if (!existing) return reply.notFound("Order not found");
+    if (existing.fiscalInvoice) return reply.badRequest("Ordine già fatturato: eliminazione non consentita");
     await prisma.$transaction([
       prisma.orderItem.deleteMany({ where: { orderId: id } }),
       prisma.order.delete({ where: { id } }),
@@ -3014,6 +3020,7 @@ export async function adminRoutes(app: FastifyInstance) {
             unitGross,
             exciseUnit,
             exciseTotal: accisa,
+            vatTotal: iva,
           };
         })
         .filter(Boolean) as any[];
@@ -3189,6 +3196,244 @@ export async function adminRoutes(app: FastifyInstance) {
       },
       lines: fiscalLines,
     };
+  });
+
+  app.get("/invoices", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const query = request.query as { start?: string; end?: string; companyId?: string; status?: string };
+    const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : null;
+    const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : null;
+    const companyId = String(query.companyId || "").trim();
+    const status = String(query.status || "").trim().toUpperCase();
+
+    const invoices = await prisma.fiscalInvoice.findMany({
+      where: {
+        ...(start || end
+          ? {
+              issuedAt: {
+                ...(start ? { gte: start } : {}),
+                ...(end ? { lte: end } : {}),
+              },
+            }
+          : {}),
+        ...(companyId ? { companyId } : {}),
+      },
+      include: {
+        company: { select: { id: true, name: true, legalName: true } },
+        order: { select: { id: true, orderNumber: true, paymentMethod: true } },
+        lines: {
+          select: {
+            qty: true,
+            unitGross: true,
+            exciseTotal: true,
+            vatTotal: true,
+            product: { select: { purchasePrice: true } },
+          },
+        },
+      },
+      orderBy: [{ issuedAt: "desc" }, { createdAt: "desc" }],
+      take: 5000,
+    });
+
+    const settlements = invoices.length
+      ? await prisma.treasurySettlement.findMany({
+          where: {
+            sourceType: TreasurySourceType.FISCAL_INVOICE,
+            sourceId: { in: invoices.map((i) => i.id) },
+          },
+        })
+      : [];
+    const settlementById = new Map(
+      settlements.map((s) => [s.sourceId, { paid: s.paid, paidAt: s.paidAt }])
+    );
+
+    const rows = invoices
+      .map((invoice) => {
+        const paidState = settlementById.get(invoice.id);
+        const total = (invoice.lines || []).reduce(
+          (sum, line) => sum + Number(line.unitGross || 0) * Number(line.qty || 0),
+          0
+        );
+        const accisa = (invoice.lines || []).reduce((sum, line) => sum + Number(line.exciseTotal || 0), 0);
+        const iva = (invoice.lines || []).reduce((sum, line) => sum + Number(line.vatTotal || 0), 0);
+        const imponibileProdotti = total - accisa - iva;
+        const costoProdotti = (invoice.lines || []).reduce(
+          (sum, line) => sum + Number(line.product?.purchasePrice || 0) * Number(line.qty || 0),
+          0
+        );
+        return {
+          id: invoice.id,
+          numero: invoice.invoiceNumber,
+          data: invoice.issuedAt,
+          cliente: invoice.legalName || invoice.company?.legalName || invoice.company?.name || "",
+          stato: paidState?.paid ? "SALDATA" : "DA_SALDARE",
+          pagamento: invoice.order?.paymentMethod || "OTHER",
+          totaleFattura: total,
+          imponibileProdotti,
+          accisa,
+          iva,
+          riferimentoOrdine: invoice.order?.orderNumber || null,
+          guadagno: imponibileProdotti - costoProdotti,
+          paidAt: paidState?.paidAt || null,
+          companyId: invoice.companyId,
+        };
+      })
+      .filter((r) => (status ? r.stato === status : true));
+
+    return rows;
+  });
+
+  app.post("/invoices/manual", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        invoiceNumber: z.string().min(1),
+        issuedAt: z.string().min(1),
+        companyId: z.string().min(1),
+        paymentMethod: z.string().optional(),
+        imponibileProdotti: z.number().nonnegative(),
+        accisa: z.number().nonnegative(),
+        iva: z.number().nonnegative(),
+        costoProdotti: z.number().nonnegative().optional(),
+      })
+      .parse(request.body);
+
+    const company = await prisma.company.findUnique({ where: { id: body.companyId } });
+    if (!company) return reply.badRequest("Cliente non trovato");
+    const total = Number(body.imponibileProdotti || 0) + Number(body.accisa || 0) + Number(body.iva || 0);
+
+    const created = await prisma.fiscalInvoice.create({
+      data: {
+        invoiceNumber: body.invoiceNumber.trim(),
+        issuedAt: new Date(`${body.issuedAt}T00:00:00.000Z`),
+        companyId: company.id,
+        legalName: company.legalName || company.name || null,
+        city: company.city || null,
+        province: company.province || null,
+        adminVatNumber: company.adminVatNumber || company.vatNumber || null,
+        lines: {
+          create: {
+            sku: "MANUAL",
+            productName: "Fattura manuale",
+            qty: 1,
+            unitGross: new Prisma.Decimal(total),
+            exciseUnit: new Prisma.Decimal(body.accisa || 0),
+            exciseTotal: new Prisma.Decimal(body.accisa || 0),
+            vatTotal: new Prisma.Decimal(body.iva || 0),
+          },
+        },
+      },
+    });
+
+    await prisma.treasurySettlement.upsert({
+      where: {
+        sourceType_sourceId: {
+          sourceType: TreasurySourceType.FISCAL_INVOICE,
+          sourceId: created.id,
+        },
+      },
+      create: {
+        sourceType: TreasurySourceType.FISCAL_INVOICE,
+        sourceId: created.id,
+        paid: false,
+        paidAt: null,
+      },
+      update: {},
+    });
+
+    return reply.code(201).send({ ok: true, id: created.id });
+  });
+
+  app.post("/invoices/from-order/:id", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const orderId = (request.params as any).id as string;
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        company: true,
+        fiscalInvoice: { select: { id: true, invoiceNumber: true } },
+        items: {
+          include: {
+            product: { include: { taxRateRef: true } },
+          },
+        },
+      },
+    });
+    if (!order) return reply.notFound("Ordine non trovato");
+    if (order.fiscalInvoice) {
+      return reply.code(200).send({ ok: true, invoiceId: order.fiscalInvoice.id, invoiceNumber: order.fiscalInvoice.invoiceNumber, already: true });
+    }
+    if (!order.items.length) return reply.badRequest("Ordine senza righe");
+
+    const invoice = await prisma.fiscalInvoice.create({
+      data: {
+        invoiceNumber: String(order.orderNumber || ""),
+        issuedAt: order.createdAt,
+        orderId: order.id,
+        companyId: order.companyId,
+        exerciseNumber: order.company?.licenseNumber || null,
+        cmnr: order.company?.cmnr || null,
+        signNumber: order.company?.signNumber || null,
+        legalName: order.company?.legalName || order.company?.name || null,
+        city: order.company?.city || null,
+        province: order.company?.province || null,
+        adminVatNumber: order.company?.adminVatNumber || order.company?.vatNumber || null,
+      },
+    });
+
+    const linesToCreate = order.items
+      .map((item) => {
+        const p = item.product;
+        if (!p) return null;
+        const qty = Number(item.qty || 0);
+        if (qty <= 0) return null;
+        const imponibile = Number(item.lineTotal || 0);
+        const exciseUnit = Number(p.exciseTotal ?? Number(p.exciseMl || 0) + Number(p.exciseProduct || 0));
+        const accisa = roundUp2(exciseUnit * qty);
+        const vatRate = Number(p.taxRate || p.taxRateRef?.rate || 0);
+        const iva = vatRate > 0 ? roundUp2((imponibile + accisa) * (vatRate / 100)) : 0;
+        const unitGross = qty > 0 ? (imponibile + accisa + iva) / qty : 0;
+        return {
+          invoiceId: invoice.id,
+          productId: p.id,
+          sku: item.sku || p.sku,
+          productName: item.name || p.name,
+          codicePl: p.codicePl || null,
+          mlProduct: p.mlProduct ?? null,
+          nicotine: p.nicotine ?? null,
+          qty,
+          unitGross,
+          exciseUnit,
+          exciseTotal: accisa,
+          vatTotal: iva,
+        };
+      })
+      .filter(Boolean) as any[];
+
+    if (linesToCreate.length) {
+      await prisma.fiscalInvoiceLine.createMany({ data: linesToCreate });
+    }
+
+    await prisma.treasurySettlement.upsert({
+      where: {
+        sourceType_sourceId: {
+          sourceType: TreasurySourceType.FISCAL_INVOICE,
+          sourceId: invoice.id,
+        },
+      },
+      create: {
+        sourceType: TreasurySourceType.FISCAL_INVOICE,
+        sourceId: invoice.id,
+        paid: false,
+        paidAt: null,
+      },
+      update: {},
+    });
+
+    return reply.code(201).send({ ok: true, invoiceId: invoice.id, invoiceNumber: invoice.invoiceNumber });
   });
 
   app.get("/settings", async (request, reply) => {
@@ -5386,6 +5631,231 @@ export async function adminRoutes(app: FastifyInstance) {
       },
     });
     return { ok: true, row };
+  });
+
+  app.get("/bundles", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    return prisma.productBundle.findMany({
+      include: {
+        items: {
+          include: {
+            product: { select: { id: true, sku: true, name: true, price: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      take: 1000,
+    });
+  });
+
+  app.post("/bundles", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        name: z.string().min(1),
+        bundlePrice: z.number().nonnegative(),
+        active: z.boolean().optional(),
+        items: z
+          .array(
+            z.object({
+              productId: z.string().min(1),
+              qty: z.number().int().positive().optional(),
+            })
+          )
+          .min(1),
+      })
+      .parse(request.body);
+    const created = await prisma.productBundle.create({
+      data: {
+        name: body.name.trim(),
+        bundlePrice: new Prisma.Decimal(body.bundlePrice),
+        active: body.active ?? true,
+        items: {
+          create: body.items.map((i) => ({
+            productId: i.productId,
+            qty: i.qty ?? 1,
+          })),
+        },
+      },
+      include: {
+        items: {
+          include: { product: { select: { id: true, sku: true, name: true, price: true } } },
+        },
+      },
+    });
+    return reply.code(201).send(created);
+  });
+
+  app.patch("/bundles/:id", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        name: z.string().min(1).optional(),
+        bundlePrice: z.number().nonnegative().optional(),
+        active: z.boolean().optional(),
+        items: z
+          .array(
+            z.object({
+              productId: z.string().min(1),
+              qty: z.number().int().positive().optional(),
+            })
+          )
+          .optional(),
+      })
+      .parse(request.body);
+
+    const updated = await prisma.$transaction(async (tx) => {
+      if (body.items) {
+        await tx.productBundleItem.deleteMany({ where: { bundleId: id } });
+        await tx.productBundleItem.createMany({
+          data: body.items.map((i) => ({
+            bundleId: id,
+            productId: i.productId,
+            qty: i.qty ?? 1,
+          })),
+        });
+      }
+      return tx.productBundle.update({
+        where: { id },
+        data: {
+          ...(body.name !== undefined ? { name: body.name.trim() } : {}),
+          ...(body.bundlePrice !== undefined ? { bundlePrice: new Prisma.Decimal(body.bundlePrice) } : {}),
+          ...(body.active !== undefined ? { active: body.active } : {}),
+        },
+        include: {
+          items: {
+            include: { product: { select: { id: true, sku: true, name: true, price: true } } },
+          },
+        },
+      });
+    });
+    return updated;
+  });
+
+  app.delete("/bundles/:id", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.productBundle.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
+  app.get("/logistics/shipments", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const query = request.query as {
+      start?: string;
+      end?: string;
+      status?: string;
+      carrier?: string;
+      q?: string;
+    };
+    const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : null;
+    const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : null;
+    const status = String(query.status || "").trim();
+    const carrier = String(query.carrier || "").trim();
+    const q = String(query.q || "").trim();
+    return prisma.shipment.findMany({
+      where: {
+        ...(status ? { status: status as any } : {}),
+        ...(carrier ? { carrier: { contains: carrier, mode: "insensitive" } } : {}),
+        ...(q
+          ? {
+              OR: [
+                { trackingCode: { contains: q, mode: "insensitive" } },
+                { notes: { contains: q, mode: "insensitive" } },
+                { order: { company: { name: { contains: q, mode: "insensitive" } } } },
+              ],
+            }
+          : {}),
+        ...((start || end)
+          ? {
+              createdAt: {
+                ...(start ? { gte: start } : {}),
+                ...(end ? { lte: end } : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        order: {
+          include: {
+            company: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 5000,
+    });
+  });
+
+  app.post("/logistics/shipments", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        orderId: z.string().optional().nullable(),
+        fiscalInvoiceId: z.string().optional().nullable(),
+        carrier: z.string().optional().nullable(),
+        trackingCode: z.string().optional().nullable(),
+        status: z.enum(["DRAFT", "READY", "SHIPPED", "DELIVERED", "EXCEPTION"]).optional(),
+        shippingDate: z.string().optional().nullable(),
+        deliveredAt: z.string().optional().nullable(),
+        notes: z.string().optional().nullable(),
+      })
+      .parse(request.body);
+    const created = await prisma.shipment.create({
+      data: {
+        orderId: body.orderId || null,
+        fiscalInvoiceId: body.fiscalInvoiceId || null,
+        carrier: body.carrier || null,
+        trackingCode: body.trackingCode || null,
+        status: body.status || "DRAFT",
+        shippingDate: body.shippingDate ? new Date(body.shippingDate) : null,
+        deliveredAt: body.deliveredAt ? new Date(body.deliveredAt) : null,
+        notes: body.notes || null,
+      },
+      include: {
+        order: { include: { company: { select: { id: true, name: true } } } },
+      },
+    });
+    return reply.code(201).send(created);
+  });
+
+  app.patch("/logistics/shipments/:id", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const body = z
+      .object({
+        carrier: z.string().optional().nullable(),
+        trackingCode: z.string().optional().nullable(),
+        status: z.enum(["DRAFT", "READY", "SHIPPED", "DELIVERED", "EXCEPTION"]).optional(),
+        shippingDate: z.string().optional().nullable(),
+        deliveredAt: z.string().optional().nullable(),
+        notes: z.string().optional().nullable(),
+      })
+      .parse(request.body);
+    const updated = await prisma.shipment.update({
+      where: { id },
+      data: {
+        ...(body.carrier !== undefined ? { carrier: body.carrier || null } : {}),
+        ...(body.trackingCode !== undefined ? { trackingCode: body.trackingCode || null } : {}),
+        ...(body.status !== undefined ? { status: body.status } : {}),
+        ...(body.shippingDate !== undefined ? { shippingDate: body.shippingDate ? new Date(body.shippingDate) : null } : {}),
+        ...(body.deliveredAt !== undefined ? { deliveredAt: body.deliveredAt ? new Date(body.deliveredAt) : null } : {}),
+        ...(body.notes !== undefined ? { notes: body.notes || null } : {}),
+      },
+      include: {
+        order: { include: { company: { select: { id: true, name: true } } } },
+      },
+    });
+    return updated;
   });
 
   app.get("/returns", async (request, reply) => {

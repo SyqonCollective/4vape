@@ -68,6 +68,14 @@ enum TreasurySourceType {
   EXPENSE_INVOICE
 }
 
+enum ShipmentStatus {
+  DRAFT
+  READY
+  SHIPPED
+  DELIVERED
+  EXCEPTION
+}
+
 enum MarketingCampaignStatus {
   DRAFT
   SCHEDULED
@@ -260,6 +268,7 @@ model Product {
   orderItems    OrderItem[]
   companyPrices ProductPrice[]
   fiscalLines   FiscalInvoiceLine[]
+  bundleItems   ProductBundleItem[]
 }
 
 model TaxRate {
@@ -342,6 +351,7 @@ model Order {
 
   items         OrderItem[]
   fiscalInvoice FiscalInvoice?
+  shipment      Shipment?
 }
 
 model FiscalInvoice {
@@ -380,6 +390,7 @@ model FiscalInvoiceLine {
   unitGross   Decimal  @db.Decimal(12, 4)
   exciseUnit  Decimal  @db.Decimal(12, 6)
   exciseTotal Decimal  @db.Decimal(12, 6)
+  vatTotal    Decimal  @default(0) @db.Decimal(12, 6)
   createdAt   DateTime @default(now())
 
   invoice FiscalInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
@@ -620,4 +631,49 @@ model TreasurySettlement {
 
   @@unique([sourceType, sourceId])
   @@index([sourceType, sourceId])
+}
+
+model ProductBundle {
+  id          String   @id @default(cuid())
+  name        String
+  bundlePrice Decimal  @db.Decimal(12, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items ProductBundleItem[]
+}
+
+model ProductBundleItem {
+  id        String   @id @default(cuid())
+  bundleId  String
+  productId String
+  qty       Int      @default(1)
+  createdAt DateTime @default(now())
+
+  bundle  ProductBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  product Product       @relation(fields: [productId], references: [id])
+
+  @@unique([bundleId, productId])
+  @@index([bundleId])
+  @@index([productId])
+}
+
+model Shipment {
+  id           String         @id @default(cuid())
+  orderId       String?        @unique
+  fiscalInvoiceId String?
+  carrier      String?
+  trackingCode String?
+  status       ShipmentStatus @default(DRAFT)
+  shippingDate DateTime?
+  deliveredAt  DateTime?
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([shippingDate])
 }
