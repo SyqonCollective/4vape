@@ -8,12 +8,14 @@ export default function AdminWarehouseMovements() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [q, setQ] = useState("");
+  const [movementType, setMovementType] = useState("");
 
   async function load() {
     try {
       const params = new URLSearchParams();
       if (startDate) params.set("start", startDate);
       if (endDate) params.set("end", endDate);
+      if (movementType) params.set("movementType", movementType);
       const res = await api(`/admin/inventory/movements${params.toString() ? `?${params.toString()}` : ""}`);
       setRows(res || []);
     } catch {
@@ -23,7 +25,7 @@ export default function AdminWarehouseMovements() {
 
   useEffect(() => {
     load();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, movementType]);
 
   const filtered = useMemo(() => {
     const key = q.trim().toLowerCase();
@@ -61,6 +63,14 @@ export default function AdminWarehouseMovements() {
           <label>Ricerca</label>
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Fattura, cliente/fornitore, SKU..." />
         </div>
+        <div className="filter-group">
+          <label>Tipo movimento</label>
+          <select className="select" value={movementType} onChange={(e) => setMovementType(e.target.value)}>
+            <option value="">Tutti</option>
+            <option value="CARICO">Solo carichi</option>
+            <option value="SCARICO">Solo scarichi</option>
+          </select>
+        </div>
       </div>
 
       <div className="table">
@@ -83,8 +93,8 @@ export default function AdminWarehouseMovements() {
             <div>{r.counterparty || "-"}</div>
             <div className="mono">{r.sku}</div>
             <div>{r.name}</div>
-            <div>{r.loadQty || 0}</div>
-            <div>{r.unloadQty || 0}</div>
+            <div>{r.loadQty == null || Number(r.loadQty) === 0 ? "" : r.loadQty}</div>
+            <div>{r.unloadQty == null || Number(r.unloadQty) === 0 ? "" : r.unloadQty}</div>
             <div className="mono">{r.codicePl || "-"}</div>
             <div>{r.mlProduct ?? "-"}</div>
             <div>{r.excise || "-"}</div>

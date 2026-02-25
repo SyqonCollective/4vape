@@ -62,6 +62,12 @@ enum ReturnStatus {
   HANDLED
 }
 
+enum TreasurySourceType {
+  FISCAL_INVOICE
+  GOODS_RECEIPT
+  EXPENSE_INVOICE
+}
+
 enum MarketingCampaignStatus {
   DRAFT
   SCHEDULED
@@ -588,4 +594,30 @@ model GoodsReceiptLine {
 
   @@index([receiptId])
   @@index([itemId])
+}
+
+model ExpenseInvoice {
+  id          String   @id @default(cuid())
+  invoiceNo   String
+  expenseDate DateTime
+  supplier    String?
+  supplierId  String?
+  category    String?
+  amountNet   Decimal  @db.Decimal(12, 2)
+  vat         Decimal  @db.Decimal(12, 2)
+  total       Decimal  @db.Decimal(12, 2)
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+model TreasurySettlement {
+  id         String             @id @default(cuid())
+  sourceType TreasurySourceType
+  sourceId   String
+  paid       Boolean            @default(false)
+  paidAt     DateTime?
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([sourceType, sourceId])
+  @@index([sourceType, sourceId])
 }

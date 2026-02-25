@@ -7,9 +7,11 @@ const money = (v) =>
 
 export default function AdminExpenses() {
   const [rows, setRows] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [error, setError] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [supplierFilter, setSupplierFilter] = useState("");
   const [draft, setDraft] = useState({ invoiceNo: "", expenseDate: "", supplier: "", category: "", amountNet: "", vat: "", notes: "" });
 
   async function load() {
@@ -17,6 +19,7 @@ export default function AdminExpenses() {
       const params = new URLSearchParams();
       if (startDate) params.set("start", startDate);
       if (endDate) params.set("end", endDate);
+      if (supplierFilter) params.set("supplier", supplierFilter);
       const res = await api(`/admin/expenses${params.toString() ? `?${params.toString()}` : ""}`);
       setRows(res || []);
     } catch {
@@ -26,7 +29,18 @@ export default function AdminExpenses() {
 
   useEffect(() => {
     load();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, supplierFilter]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api("/admin/suppliers");
+        setSuppliers(res || []);
+      } catch {
+        setSuppliers([]);
+      }
+    })();
+  }, []);
 
   async function createExpense() {
     try {
@@ -70,7 +84,21 @@ export default function AdminExpenses() {
       <div className="panel form-grid">
         <label>Numero fattura<input value={draft.invoiceNo} onChange={(e) => setDraft({ ...draft, invoiceNo: e.target.value })} /></label>
         <label>Data fattura<input type="date" value={draft.expenseDate} onChange={(e) => setDraft({ ...draft, expenseDate: e.target.value })} /></label>
-        <label>Fornitore<input value={draft.supplier} onChange={(e) => setDraft({ ...draft, supplier: e.target.value })} /></label>
+        <label>
+          Fornitore
+          <select
+            className="select"
+            value={draft.supplier}
+            onChange={(e) => setDraft({ ...draft, supplier: e.target.value })}
+          >
+            <option value="">Seleziona fornitore</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.name}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <label>Categoria<input value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} placeholder="es. Affitto" /></label>
         <label>Imponibile<input type="number" step="0.01" value={draft.amountNet} onChange={(e) => setDraft({ ...draft, amountNet: e.target.value })} /></label>
         <label>IVA<input type="number" step="0.01" value={draft.vat} onChange={(e) => setDraft({ ...draft, vat: e.target.value })} /></label>
@@ -81,6 +109,17 @@ export default function AdminExpenses() {
       <div className="filters-row">
         <div className="filter-group"><label>Data dal</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
         <div className="filter-group"><label>Data al</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
+        <div className="filter-group">
+          <label>Fornitore</label>
+          <select className="select" value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)}>
+            <option value="">Tutti</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.name}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="table">

@@ -12,19 +12,15 @@ function toDateInput(date) {
   return date.toISOString().slice(0, 10);
 }
 
-function rangeDays(days) {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - (days - 1));
-  return { start, end };
-}
-
 function formatMoney(v) {
   return `€ ${Number(v || 0).toFixed(2)}`;
 }
 
 export default function AdminReports() {
-  const defaultRange = useMemo(() => rangeDays(30), []);
+  const defaultRange = useMemo(() => {
+    const now = new Date();
+    return { start: now, end: now };
+  }, []);
   const [startDate, setStartDate] = useState(toDateInput(defaultRange.start));
   const [endDate, setEndDate] = useState(toDateInput(defaultRange.end));
   const [companyId, setCompanyId] = useState("");
@@ -210,7 +206,7 @@ export default function AdminReports() {
         <div className="card"><div className="card-label">Accise</div><div className="card-value">{formatMoney(data.totals.excise)}</div><div className="card-sub">Nel periodo</div></div>
         <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Nel periodo</div></div>
         <div className="card"><div className="card-label">Totale lordo</div><div className="card-value">{formatMoney(data.totals.revenueGross)}</div><div className="card-sub">Imponibile + IVA + accise</div></div>
-        <div className="card"><div className="card-label">Margine netto-costo</div><div className="card-value">{formatMoney(data.totals.margin)}</div><div className="card-sub">Lordo - costo</div></div>
+        <div className="card"><div className="card-label">Margine netto-costo</div><div className="card-value">{formatMoney(data.totals.margin)}</div><div className="card-sub">Imponibile - costo prodotti</div></div>
       </div>
 
       <div className="panel analytics-grid">

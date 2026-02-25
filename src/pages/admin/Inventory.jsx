@@ -39,6 +39,8 @@ export default function AdminInventory() {
   const [brandFilter, setBrandFilter] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState([]);
   const [subcategoryFilter, setSubcategoryFilter] = useState([]);
+  const [exciseFilter, setExciseFilter] = useState("");
+  const [mlFilter, setMlFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -55,6 +57,8 @@ export default function AdminInventory() {
       params.set("q", q.trim());
       params.set("limit", "1200");
       if (asOfDate) params.set("asOf", asOfDate);
+      if (exciseFilter) params.set("excise", exciseFilter);
+      if (mlFilter) params.set("ml", mlFilter);
       const res = await api(`/admin/inventory/items?${params.toString()}`);
       setItems(res || []);
     } catch {
@@ -82,7 +86,7 @@ export default function AdminInventory() {
   useEffect(() => {
     const t = setTimeout(loadInventory, 250);
     return () => clearTimeout(t);
-  }, [q, asOfDate]);
+  }, [q, asOfDate, exciseFilter, mlFilter]);
 
   const stats = useMemo(() => {
     const totalItems = items.length;
@@ -140,7 +144,12 @@ export default function AdminInventory() {
 
   async function exportInventoryXls() {
     try {
-      const res = await fetch(`/api/admin/inventory/export?q=${encodeURIComponent(q.trim())}`, {
+      const base = import.meta.env.VITE_API_BASE || "/api";
+      const params = new URLSearchParams();
+      if (q.trim()) params.set("q", q.trim());
+      if (exciseFilter) params.set("excise", exciseFilter);
+      if (mlFilter) params.set("ml", mlFilter);
+      const res = await fetch(`${base}/admin/inventory/export?${params.toString()}`, {
         headers: { Authorization: `Bearer ${getToken() || ""}` },
       });
       if (!res.ok) throw new Error();
@@ -315,6 +324,24 @@ export default function AdminInventory() {
           <select multiple className="select" value={subcategoryFilter} onChange={(e) => setSubcategoryFilter(Array.from(e.target.selectedOptions).map((o) => o.value))}>
             {subcategoryOptions.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
+        </div>
+        <div className="filter-group">
+          <label>Accisa</label>
+          <select className="select" value={exciseFilter} onChange={(e) => setExciseFilter(e.target.value)}>
+            <option value="">Tutte</option>
+            <option value="with">Con accisa</option>
+            <option value="without">Senza accisa</option>
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>ML prodotto</label>
+          <input
+            type="number"
+            step="0.001"
+            value={mlFilter}
+            onChange={(e) => setMlFilter(e.target.value)}
+            placeholder="es. 10"
+          />
         </div>
       </div>
 

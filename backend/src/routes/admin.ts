@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { Prisma, OrderStatus } from "@prisma/client";
+import { Prisma, OrderStatus, TreasurySourceType } from "@prisma/client";
 import { prisma } from "../lib/db.js";
 import { importFullFromSupplier, importStockFromSupplier } from "../jobs/importer.js";
 import { parse as parseCsv } from "csv-parse/sync";
@@ -4159,10 +4159,13 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!user) return;
     const q = String((request.query as any)?.q || "").trim();
     const asOf = String((request.query as any)?.asOf || "").trim();
+    const exciseFilter = String((request.query as any)?.excise || "").trim();
+    const mlFilterRaw = String((request.query as any)?.ml || "").trim();
+    const mlFilter = mlFilterRaw ? Number(mlFilterRaw) : null;
     const asOfDate = asOf ? new Date(`${asOf}T23:59:59.999Z`) : null;
     const limitRaw = Number((request.query as any)?.limit || 400);
     const limit = Math.max(1, Math.min(1000, Number.isFinite(limitRaw) ? limitRaw : 400));
-    return prisma.internalInventoryItem.findMany({
+    const rows = await prisma.internalInventoryItem.findMany({
       where: {
         ...(q
           ? {
@@ -4175,6 +4178,9 @@ export async function adminRoutes(app: FastifyInstance) {
             }
           : {}),
         ...(asOfDate ? { updatedAt: { lte: asOfDate } } : {}),
+        ...(exciseFilter === "with" ? { exciseRateId: { not: null } } : {}),
+        ...(exciseFilter === "without" ? { exciseRateId: null } : {}),
+        ...(mlFilter != null && Number.isFinite(mlFilter) ? { mlProduct: new Prisma.Decimal(mlFilter) } : {}),
       },
       include: {
         taxRateRef: true,
@@ -4183,40 +4189,74 @@ export async function adminRoutes(app: FastifyInstance) {
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       take: limit,
     });
+    if (!rows.length) return rows;
+
+    const skus = rows.map((r) => r.sku).filter(Boolean);
+    const products = await prisma.product.findMany({
+      where: { sku: { in: skus } },
+      select: {
+        sku: true,
+        codicePl: true,
+        brand: true,
+        category: true,
+        subcategory: true,
+        mlProduct: true,
+        nicotine: true,
+        exciseRateId: true,
+      },
+    });
+    const bySku = new Map(products.map((p) => [String(p.sku || "").trim().toLowerCase(), p]));
+
+    return rows.map((row) => {
+      const ref = bySku.get(String(row.sku || "").trim().toLowerCase());
+      return {
+        ...row,
+        codicePl: ref?.codicePl || "",
+        brand: row.brand || ref?.brand || "",
+        category: row.category || ref?.category || "",
+        subcategory: row.subcategory || ref?.subcategory || "",
+        mlProduct: row.mlProduct ?? ref?.mlProduct ?? null,
+        nicotine: row.nicotine ?? ref?.nicotine ?? null,
+        exciseRateId: row.exciseRateId || ref?.exciseRateId || null,
+      };
+    });
   });
 
   app.get("/inventory/export", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
     const q = String((request.query as any)?.q || "").trim();
+    const exciseFilter = String((request.query as any)?.excise || "").trim();
+    const mlFilterRaw = String((request.query as any)?.ml || "").trim();
+    const mlFilter = mlFilterRaw ? Number(mlFilterRaw) : null;
     const rows = await prisma.internalInventoryItem.findMany({
-      where: q
-        ? {
-            OR: [
-              { sku: { contains: q, mode: "insensitive" } },
-              { name: { contains: q, mode: "insensitive" } },
-              { brand: { contains: q, mode: "insensitive" } },
-              { category: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : undefined,
+      where: {
+        ...(q
+          ? {
+              OR: [
+                { sku: { contains: q, mode: "insensitive" } },
+                { name: { contains: q, mode: "insensitive" } },
+                { brand: { contains: q, mode: "insensitive" } },
+                { category: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+        ...(exciseFilter === "with" ? { exciseRateId: { not: null } } : {}),
+        ...(exciseFilter === "without" ? { exciseRateId: null } : {}),
+        ...(mlFilter != null && Number.isFinite(mlFilter) ? { mlProduct: new Prisma.Decimal(mlFilter) } : {}),
+      },
       include: { exciseRateRef: true },
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       take: 5000,
     });
-    const header = [
-      "SKU",
-      "Nome",
-      "Brand",
-      "Categoria",
-      "Sottocategoria",
-      "CodicePL",
-      "MLProdotto",
-      "Giacenza",
-      "Costo",
-      "Prezzo",
-      "Accisa",
-    ];
+    const products = await prisma.product.findMany({
+      where: { sku: { in: rows.map((r) => r.sku).filter(Boolean) } },
+      select: { sku: true, codicePl: true },
+    });
+    const codiceBySku = new Map(
+      products.map((p) => [String(p.sku || "").trim().toLowerCase(), p.codicePl || ""])
+    );
+    const header = ["SKU", "Nome", "Codice PL", "ML prodotto", "Nicotina", "Giacenza"];
     const xml = `<?xml version="1.0"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
@@ -4225,15 +4265,10 @@ export async function adminRoutes(app: FastifyInstance) {
    ${[header, ...rows.map((r) => [
       r.sku,
       r.name,
-      r.brand || "",
-      r.category || "",
-      r.subcategory || "",
-      "",
+      codiceBySku.get(String(r.sku || "").trim().toLowerCase()) || "",
       Number(r.mlProduct || 0).toString(),
+      Number(r.nicotine || 0).toString(),
       Number(r.stockQty || 0).toString(),
-      Number(r.purchasePrice || 0).toFixed(2),
-      Number(r.price || 0).toFixed(2),
-      r.exciseRateRef?.name || "",
     ])]
       .map(
         (row) =>
@@ -4389,9 +4424,10 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/inventory/movements", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
-    const query = request.query as { start?: string; end?: string };
+    const query = request.query as { start?: string; end?: string; movementType?: string };
     const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : null;
     const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : null;
+    const movementType = String(query.movementType || "").toUpperCase();
 
     const [receiptLines, orders] = await Promise.all([
       prisma.goodsReceiptLine.findMany({
@@ -4443,7 +4479,8 @@ export async function adminRoutes(app: FastifyInstance) {
     ]);
 
     const movements: Array<any> = [];
-    for (const line of receiptLines) {
+    if (movementType !== "SCARICO") {
+      for (const line of receiptLines) {
       const excise = line.item?.exciseRateRef;
       movements.push({
         type: "CARICO",
@@ -4456,11 +4493,13 @@ export async function adminRoutes(app: FastifyInstance) {
         mlProduct: Number(line.item?.mlProduct || 0),
         excise: excise ? `${excise.name}` : "",
         loadQty: Number(line.qty || 0),
-        unloadQty: 0,
+        unloadQty: null,
       });
     }
+    }
 
-    for (const order of orders) {
+    if (movementType !== "CARICO") {
+      for (const order of orders) {
       for (const line of order.items) {
         const excise = line.product?.exciseRateRef;
         movements.push({
@@ -4473,10 +4512,11 @@ export async function adminRoutes(app: FastifyInstance) {
           codicePl: line.product?.codicePl || "",
           mlProduct: Number(line.product?.mlProduct || 0),
           excise: excise ? `${excise.name}` : "",
-          loadQty: 0,
+          loadQty: null,
           unloadQty: Number(line.qty || 0),
         });
       }
+    }
     }
 
     movements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -5125,6 +5165,227 @@ export async function adminRoutes(app: FastifyInstance) {
     });
 
     return result;
+  });
+
+  app.get("/expenses", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const query = request.query as { start?: string; end?: string; supplier?: string };
+    const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : null;
+    const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : null;
+    const supplier = String(query.supplier || "").trim();
+    return prisma.expenseInvoice.findMany({
+      where: {
+        ...(supplier ? { supplier: { equals: supplier, mode: "insensitive" } } : {}),
+        ...((start || end)
+          ? {
+              expenseDate: {
+                ...(start ? { gte: start } : {}),
+                ...(end ? { lte: end } : {}),
+              },
+            }
+          : {}),
+      },
+      orderBy: [{ expenseDate: "desc" }, { createdAt: "desc" }],
+      take: 5000,
+    });
+  });
+
+  app.post("/expenses", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        invoiceNo: z.string().min(1),
+        expenseDate: z.string().min(1),
+        supplier: z.string().optional().nullable(),
+        category: z.string().optional().nullable(),
+        amountNet: z.number().nonnegative(),
+        vat: z.number().nonnegative(),
+        notes: z.string().optional().nullable(),
+      })
+      .parse(request.body);
+    const total = Number(body.amountNet || 0) + Number(body.vat || 0);
+    const created = await prisma.expenseInvoice.create({
+      data: {
+        invoiceNo: body.invoiceNo.trim(),
+        expenseDate: new Date(`${body.expenseDate}T00:00:00.000Z`),
+        supplier: body.supplier ? body.supplier.trim() : null,
+        category: body.category ? body.category.trim() : null,
+        amountNet: new Prisma.Decimal(body.amountNet),
+        vat: new Prisma.Decimal(body.vat),
+        total: new Prisma.Decimal(total),
+        notes: body.notes ? body.notes.trim() : null,
+      },
+    });
+    return reply.code(201).send(created);
+  });
+
+  app.get("/treasury/invoices", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const query = request.query as { start?: string; end?: string };
+    const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : null;
+    const end = query.end ? new Date(`${query.end}T23:59:59.999Z`) : null;
+
+    const [fiscalInvoices, receiptRows, expenseRows] = await Promise.all([
+      prisma.fiscalInvoice.findMany({
+        where: {
+          ...((start || end)
+            ? {
+                issuedAt: {
+                  ...(start ? { gte: start } : {}),
+                  ...(end ? { lte: end } : {}),
+                },
+              }
+            : {}),
+        },
+        include: {
+          company: { select: { name: true } },
+          lines: { select: { qty: true, unitGross: true } },
+        },
+        orderBy: { issuedAt: "desc" },
+        take: 5000,
+      }),
+      prisma.goodsReceipt.findMany({
+        where: {
+          ...((start || end)
+            ? {
+                receivedAt: {
+                  ...(start ? { gte: start } : {}),
+                  ...(end ? { lte: end } : {}),
+                },
+              }
+            : {}),
+        },
+        include: {
+          supplier: { select: { name: true } },
+          lines: { select: { qty: true, unitCost: true } },
+        },
+        orderBy: { receivedAt: "desc" },
+        take: 5000,
+      }),
+      prisma.expenseInvoice.findMany({
+        where: {
+          ...((start || end)
+            ? {
+                expenseDate: {
+                  ...(start ? { gte: start } : {}),
+                  ...(end ? { lte: end } : {}),
+                },
+              }
+            : {}),
+        },
+        orderBy: { expenseDate: "desc" },
+        take: 5000,
+      }),
+    ]);
+
+    const keys = [
+      ...fiscalInvoices.map((x) => ({ sourceType: TreasurySourceType.FISCAL_INVOICE, sourceId: x.id })),
+      ...receiptRows.map((x) => ({ sourceType: TreasurySourceType.GOODS_RECEIPT, sourceId: x.id })),
+      ...expenseRows.map((x) => ({ sourceType: TreasurySourceType.EXPENSE_INVOICE, sourceId: x.id })),
+    ];
+
+    const settlements = keys.length
+      ? await prisma.treasurySettlement.findMany({
+          where: {
+            OR: keys.map((k) => ({ sourceType: k.sourceType, sourceId: k.sourceId })),
+          },
+        })
+      : [];
+    const settlementMap = new Map(
+      settlements.map((s) => [`${s.sourceType}:${s.sourceId}`, { paid: s.paid, paidAt: s.paidAt }])
+    );
+
+    const rows: Array<any> = [];
+    for (const f of fiscalInvoices) {
+      const state = settlementMap.get(`${TreasurySourceType.FISCAL_INVOICE}:${f.id}`);
+      const total = (f.lines || []).reduce(
+        (sum, line) => sum + Number(line.unitGross || 0) * Number(line.qty || 0),
+        0
+      );
+      rows.push({
+        sourceType: TreasurySourceType.FISCAL_INVOICE,
+        sourceId: f.id,
+        date: f.issuedAt,
+        type: "Vendita",
+        invoiceNo: f.invoiceNumber,
+        counterparty: f.legalName || f.company?.name || "Cliente",
+        total,
+        status: state?.paid ? "SALDATA" : "DA_SALDARE",
+        paid: Boolean(state?.paid),
+        paidAt: state?.paidAt || null,
+      });
+    }
+    for (const r of receiptRows) {
+      const state = settlementMap.get(`${TreasurySourceType.GOODS_RECEIPT}:${r.id}`);
+      const total = (r.lines || []).reduce(
+        (sum, line) => sum + Number(line.unitCost || 0) * Number(line.qty || 0),
+        0
+      );
+      rows.push({
+        sourceType: TreasurySourceType.GOODS_RECEIPT,
+        sourceId: r.id,
+        date: r.receivedAt,
+        type: "Acquisto merce",
+        invoiceNo: r.reference || r.receiptNo,
+        counterparty: r.supplier?.name || r.supplierName || "Fornitore",
+        total,
+        status: state?.paid ? "SALDATA" : "DA_SALDARE",
+        paid: Boolean(state?.paid),
+        paidAt: state?.paidAt || null,
+      });
+    }
+    for (const e of expenseRows) {
+      const state = settlementMap.get(`${TreasurySourceType.EXPENSE_INVOICE}:${e.id}`);
+      rows.push({
+        sourceType: TreasurySourceType.EXPENSE_INVOICE,
+        sourceId: e.id,
+        date: e.expenseDate,
+        type: "Spesa",
+        invoiceNo: e.invoiceNo,
+        counterparty: e.supplier || "Fornitore",
+        total: Number(e.total || 0),
+        status: state?.paid ? "SALDATA" : "DA_SALDARE",
+        paid: Boolean(state?.paid),
+        paidAt: state?.paidAt || null,
+      });
+    }
+
+    rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return rows;
+  });
+
+  app.patch("/treasury/mark-paid", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const body = z
+      .object({
+        sourceType: z.nativeEnum(TreasurySourceType),
+        sourceId: z.string().min(1),
+        paid: z.boolean(),
+      })
+      .parse(request.body);
+    const row = await prisma.treasurySettlement.upsert({
+      where: {
+        sourceType_sourceId: {
+          sourceType: body.sourceType,
+          sourceId: body.sourceId,
+        },
+      },
+      create: {
+        sourceType: body.sourceType,
+        sourceId: body.sourceId,
+        paid: body.paid,
+        paidAt: body.paid ? new Date() : null,
+      },
+      update: {
+        paid: body.paid,
+        paidAt: body.paid ? new Date() : null,
+      },
+    });
+    return { ok: true, row };
   });
 
   app.get("/returns", async (request, reply) => {

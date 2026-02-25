@@ -652,13 +652,13 @@ export default function AdminProducts() {
           published: forcePublish ? true : edit.published,
           categoryIds: edit.categoryIds || [],
           subcategories: edit.subcategories || [],
-          stockQty: edit.stockQty !== "" ? Number(edit.stockQty) : undefined,
+          stockQty: edit.isParent ? 0 : edit.stockQty !== "" ? Number(edit.stockQty) : undefined,
           imageUrl: edit.imageUrl || undefined,
           categoryId: edit.categoryId || undefined,
           parentId: edit.parentId || undefined,
           isParent: edit.isParent,
           sellAsSingle: edit.sellAsSingle,
-          isUnavailable: edit.isUnavailable,
+          isUnavailable: edit.isParent ? false : edit.isUnavailable,
           relatedProductIds:
             edit.isParent || edit.sellAsSingle
               ? (edit.relatedProductIds || []).filter((id) => id !== selectedProduct.id)
@@ -1339,6 +1339,7 @@ export default function AdminProducts() {
           const p = row.item;
           const isChild = row.type === "child";
           const isParentRow = row.type === "parent";
+          const showUnavailableTag = !isParentRow && p.isUnavailable;
           const isChildSingle =
             Boolean(p.parentId || p.parent?.id) &&
             Boolean(p.sellAsSingle) &&
@@ -1426,11 +1427,11 @@ export default function AdminProducts() {
             <div className="name-cell">
               <span>{p.name}</span>
               {isChildSingle ? <span className="tag info">Figlio+singolo</span> : null}
-              {p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
+              {showUnavailableTag ? <span className="tag danger">Non disponibile</span> : null}
               {p.published === false ? <span className="tag warn">Draft</span> : null}
             </div>
             <div>{isParentRow && p.price == null ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
-            <div>{isParentRow && p.price == null ? dash : p.stockQty}</div>
+            <div>{isParentRow ? dash : p.stockQty}</div>
             <div>
               {isParentRow ? "Padre" : isChildSingle ? "Figlio+singolo" : p.parentId ? "Figlio" : "Singolo"}
             </div>
