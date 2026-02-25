@@ -176,3 +176,69 @@ Fix consigliato:
 
 Non usare più una sola `dist` per entrambi i domini.
 È la causa principale dei problemi visti (login sbagliato, env sbagliate, endpoint errati lato UI).
+
+## 11) Hardening definitivo Clerk (consigliato)
+
+Per evitare che il login admin torni mai più in stato "Configurazione Clerk mancante", standardizza build con env file fissi su VPS.
+
+### 11.1 Env file persistenti VPS
+
+```bash
+cat > /etc/4vape-admin-frontend.env << 'EOF'
+VITE_API_BASE=https://api.logistica4vape.it
+VITE_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsubG9naXN0aWNhNHZhcGUuaXQk
+VITE_CLERK_SIGN_IN_URL=/admin/login
+VITE_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/admin/dashboard
+VITE_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/admin/dashboard
+EOF
+
+cat > /etc/4vape-public-frontend.env << 'EOF'
+VITE_API_BASE=https://api.svapodistribuzione.it
+VITE_CLERK_PUBLISHABLE_KEY=
+EOF
+
+chmod 600 /etc/4vape-admin-frontend.env /etc/4vape-public-frontend.env
+```
+
+### 11.2 Script unico deploy frontend
+
+```bash
+cat > /usr/local/bin/deploy-4vape-frontend << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /var/www/4vape
+npm install
+
+# build admin (con Clerk)
+set -a
+source /etc/4vape-admin-frontend.env
+set +a
+npm run build -- --outDir dist-admin
+
+# build pubblico (senza Clerk)
+set -a
+source /etc/4vape-public-frontend.env
+set +a
+npm run build -- --outDir dist-public
+
+# publish
+rsync -av --delete /var/www/4vape/dist-admin/ /var/www/4vape/dist/
+rsync -av --delete /var/www/4vape/dist-public/ /var/www/svapodistribuzione/dist/
+
+nginx -t
+systemctl reload nginx
+EOF
+
+chmod +x /usr/local/bin/deploy-4vape-frontend
+```
+
+### 11.3 Uso operativo
+
+Dopo il sync codice:
+
+```bash
+/usr/local/bin/deploy-4vape-frontend
+```
+
+Questo elimina errori manuali sulle variabili build e mantiene admin/public separati in modo stabile.

@@ -95,6 +95,7 @@ model Company {
 
   users          User[]
   orders         Order[]
+  fiscalInvoices FiscalInvoice[]
   returnRequests ReturnRequest[]
   productPrices  ProductPrice[]
 }
@@ -252,6 +253,7 @@ model Product {
 
   orderItems    OrderItem[]
   companyPrices ProductPrice[]
+  fiscalLines   FiscalInvoiceLine[]
 }
 
 model TaxRate {
@@ -332,7 +334,54 @@ model Order {
   createdById String
   createdBy   User   @relation("OrderCreatedBy", fields: [createdById], references: [id])
 
-  items OrderItem[]
+  items         OrderItem[]
+  fiscalInvoice FiscalInvoice?
+}
+
+model FiscalInvoice {
+  id             String   @id @default(cuid())
+  invoiceNumber  String   @unique
+  issuedAt       DateTime
+  orderId        String?  @unique
+  companyId      String
+  exerciseNumber String?
+  cmnr           String?
+  signNumber     String?
+  legalName      String?
+  city           String?
+  province       String?
+  adminVatNumber String?
+  createdAt      DateTime @default(now())
+
+  order   Order?   @relation(fields: [orderId], references: [id])
+  company Company  @relation(fields: [companyId], references: [id])
+  lines   FiscalInvoiceLine[]
+
+  @@index([issuedAt])
+  @@index([companyId])
+}
+
+model FiscalInvoiceLine {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  productId   String?
+  sku         String
+  productName String
+  codicePl    String?
+  mlProduct   Decimal? @db.Decimal(12, 3)
+  nicotine    Decimal? @db.Decimal(12, 3)
+  qty         Int
+  unitGross   Decimal  @db.Decimal(12, 4)
+  exciseUnit  Decimal  @db.Decimal(12, 6)
+  exciseTotal Decimal  @db.Decimal(12, 6)
+  createdAt   DateTime @default(now())
+
+  invoice FiscalInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product Product?      @relation(fields: [productId], references: [id])
+
+  @@index([invoiceId])
+  @@index([productId])
+  @@index([sku])
 }
 
 model Discount {
