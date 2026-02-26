@@ -6,6 +6,8 @@ import logoUrl from "../../assets/logo.png";
 
 const money = (v) =>
   new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(Number(v || 0));
+const LEGAL_COURTESY_NOTE =
+  "Fattura di cortesia senza valenza fiscale. L'originale è disponibile nel tuo cassetto fiscale.";
 
 const fmtDate = (v) => {
   if (!v) return "-";
@@ -185,7 +187,10 @@ export default function AdminInvoices() {
       <div class="tot">
         <div class="r grand"><span>Totale fattura</span><span>${money(row.totaleFattura)}</span></div>
       </div>
-      <div class="foot">Generato da 4Vape B2B Admin.</div>
+      <div class="foot">
+        ${LEGAL_COURTESY_NOTE}<br/>
+        Generato da 4Vape B2B Admin.
+      </div>
     `;
     openPrintDocument(`Fattura ${row.numero}`, body);
   }
@@ -219,6 +224,7 @@ export default function AdminInvoices() {
         <div class="r"><span>Accisa</span><span>${money(totals.accisa)}</span></div>
         <div class="r"><span>IVA</span><span>${money(totals.iva)}</span></div>
       </div>
+      <div class="foot">${LEGAL_COURTESY_NOTE}</div>
     `;
     openPrintDocument("Registro fatture", body);
   }
@@ -289,6 +295,7 @@ export default function AdminInvoices() {
         "IVA",
         "Riferimento ordine",
         "Guadagno",
+        "Nota legale",
       ],
       visibleRows.map((r) => [
         r.numero,
@@ -302,6 +309,7 @@ export default function AdminInvoices() {
         Number(r.iva || 0).toFixed(2),
         r.riferimentoOrdine || "",
         Number(r.guadagno || 0).toFixed(2),
+        LEGAL_COURTESY_NOTE,
       ])
     );
   }
@@ -321,6 +329,7 @@ export default function AdminInvoices() {
         "IVA",
         "Riferimento ordine",
         "Guadagno",
+        "Nota legale",
       ],
       [[
         row.numero,
@@ -334,6 +343,7 @@ export default function AdminInvoices() {
         Number(row.iva || 0).toFixed(2),
         row.riferimentoOrdine || "",
         Number(row.guadagno || 0).toFixed(2),
+        LEGAL_COURTESY_NOTE,
       ]]
     );
   }
