@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Lottie from "lottie-react";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
+import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import trashAnim from "../../assets/Trash clean.json";
@@ -1076,6 +1077,141 @@ export default function AdminProducts() {
   const pagedRows = groupedRows.slice(pageStart, pageStart + effectivePageSize);
 
   const dash = <span className="cell-muted">—</span>;
+  const tableRows = useMemo(() => {
+    return pagedRows.map((row) => {
+      const p = row.item;
+      const isChild = row.type === "child";
+      const isParentRow = row.type === "parent";
+      const isChildSingle = Boolean(p.parentId || p.parent?.id) && Boolean(p.sellAsSingle) && p.price != null;
+      const categoriesLabel = Array.isArray(p.categoryIds) && p.categoryIds.length
+        ? (p.categoryIds
+            .map((id) => topCategoryOptions.find((c) => c.id === id)?.name)
+            .filter(Boolean)
+            .join(", ") || p.category || "—")
+        : (p.category || "—");
+      const subcategoriesLabel = Array.isArray(p.subcategories) && p.subcategories.length
+        ? p.subcategories.join(", ")
+        : (p.subcategory || "");
+      return {
+        id: p.id,
+        item: p,
+        rowType: row.type,
+        parentSku: row.parent?.sku || p.parent?.sku || "—",
+        categoriesLabel,
+        subcategoriesLabel,
+        isChild,
+        isParentRow,
+        isChildSingle,
+      };
+    });
+  }, [pagedRows, topCategoryOptions]);
+
+  const productTableColumns = useMemo(
+    () => [
+      {
+        id: "image",
+        header: "Immagine",
+        cell: ({ row }) => {
+          const r = row.original;
+          const p = r.item;
+          return (
+            <div className="thumb-cell">
+              {r.isParentRow ? (
+                <button
+                  type="button"
+                  className="collapse-toggle"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const next = new Set(collapsedParents);
+                    if (next.has(p.id)) next.delete(p.id);
+                    else next.add(p.id);
+                    setCollapsedParents(next);
+                  }}
+                >
+                  {collapsedParents.has(p.id) ? "+" : "−"}
+                </button>
+              ) : (
+                <span className="collapse-spacer" />
+              )}
+              {p.imageUrl ? <img className="thumb" src={withToken(p.imageUrl)} alt={p.name} /> : <div className="thumb placeholder" />}
+            </div>
+          );
+        },
+      },
+      {
+        id: "sku",
+        header: "SKU",
+        cell: ({ row }) => {
+          const p = row.original.item;
+          return bulkMode ? (
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={selectedIds.has(p.id)}
+                onChange={(e) => {
+                  const next = new Set(selectedIds);
+                  if (e.target.checked) next.add(p.id);
+                  else next.delete(p.id);
+                  setSelectedIds(next);
+                }}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span className="mono">{p.sku}</span>
+            </label>
+          ) : (
+            <span className="mono">{p.sku}</span>
+          );
+        },
+      },
+      {
+        id: "name",
+        header: "Nome",
+        cell: ({ row }) => {
+          const r = row.original;
+          const p = r.item;
+          return (
+            <div className="name-cell">
+              <span>{p.name}</span>
+              {r.isParentRow ? <span className="tag parent-tag">PADRE</span> : null}
+              {r.isChild ? <span className="tag child-tag">FIGLIO</span> : null}
+              {r.isChildSingle ? <span className="tag info">Figlio+singolo</span> : null}
+              {!r.isParentRow && p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
+              {p.published === false ? <span className="tag warn">Draft</span> : null}
+            </div>
+          );
+        },
+      },
+      { id: "price", header: "Prezzo", cell: ({ row }) => (row.original.isParentRow && row.original.item.price == null ? dash : `€ ${Number(row.original.item.price).toFixed(2)}`) },
+      { id: "stock", header: "Giacenza", cell: ({ row }) => (row.original.isParentRow ? dash : row.original.item.stockQty) },
+      { id: "type", header: "Prodotto", cell: ({ row }) => (row.original.isParentRow ? "Padre" : row.original.isChildSingle ? "Figlio+singolo" : row.original.item.parentId ? "Figlio" : "Singolo") },
+      { id: "parent", header: "Padre", cell: ({ row }) => row.original.parentSku },
+      {
+        id: "category",
+        header: "Categoria",
+        cell: ({ row }) => (
+          <div>
+            <div>{row.original.categoriesLabel}</div>
+            {row.original.subcategoriesLabel ? <div className="muted">{row.original.subcategoriesLabel}</div> : null}
+          </div>
+        ),
+      },
+      {
+        id: "excise",
+        header: "Accisa",
+        cell: ({ row }) =>
+          row.original.item.exciseRateRef?.name ||
+          (row.original.item.exciseTotal != null ? `€ ${Number(row.original.item.exciseTotal).toFixed(2)}` : dash),
+      },
+      { id: "brand", header: "Brand", cell: ({ row }) => row.original.item.brand || dash },
+    ],
+    [bulkMode, collapsedParents, dash, selectedIds]
+  );
+
+  const productTable = useReactTable({
+    data: tableRows,
+    columns: productTableColumns,
+    getCoreRowModel: getCoreRowModel(),
+  });
   const productsStats = useMemo(() => {
     const visible = filteredItems.length;
     const parentsCount = filteredItems.filter((p) => p.isParent).length;
@@ -1533,130 +1669,41 @@ export default function AdminProducts() {
 
       <div className="panel products-panel">
       {viewMode === "table" ? (
-      <div className="table wide-10">
+      <div className="table wide-10 products-tanstack">
         <div className="row header">
-          <div>Immagine</div>
-          <div>SKU</div>
-          <div>Nome</div>
-          <div>Prezzo</div>
-          <div>Giacenza</div>
-          <div>Prodotto</div>
-          <div>Padre</div>
-          <div>Categoria</div>
-          <div>Accisa</div>
-          <div>Brand</div>
+          {productTable.getHeaderGroups().map((headerGroup) =>
+            headerGroup.headers.map((header) => (
+              <div key={header.id}>
+                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+              </div>
+            ))
+          )}
         </div>
-        {pagedRows.map((row) => {
-          const p = row.item;
-          const isChild = row.type === "child";
-          const isParentRow = row.type === "parent";
-          const showUnavailableTag = !isParentRow && p.isUnavailable;
-          const isChildSingle =
-            Boolean(p.parentId || p.parent?.id) &&
-            Boolean(p.sellAsSingle) &&
-            p.price != null;
-          const categoriesLabel = Array.isArray(p.categoryIds) && p.categoryIds.length
-            ? (p.categoryIds
-                .map((id) => topCategoryOptions.find((c) => c.id === id)?.name)
-                .filter(Boolean)
-                .join(", ") || p.category || dash)
-            : (p.category || dash);
-          const subcategoriesLabel = Array.isArray(p.subcategories) && p.subcategories.length
-            ? p.subcategories.join(", ")
-            : (p.subcategory || "");
+        {productTable.getRowModel().rows.map((tr) => {
+          const original = tr.original;
+          const p = original.item;
           return (
-          <div
-            className={`row clickable ${!isParentRow && p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
-            key={p.id}
-            onClick={() => {
-              if (bulkMode) {
-                const next = new Set(selectedIds);
-                if (next.has(p.id)) next.delete(p.id);
-                else next.add(p.id);
-                setSelectedIds(next);
-                return;
-              }
-              openEdit(p);
-            }}
-          >
-            <div className="thumb-cell">
-              {isParentRow ? (
-                <button
-                  type="button"
-                  className="collapse-toggle"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const next = new Set(collapsedParents);
-                    if (next.has(p.id)) next.delete(p.id);
-                    else next.add(p.id);
-                    setCollapsedParents(next);
-                  }}
-                >
-                  {collapsedParents.has(p.id) ? "+" : "−"}
-                </button>
-              ) : (
-                <span className="collapse-spacer" />
-              )}
-              {p.imageUrl ? (
-                <img
-                  className="thumb"
-                  src={withToken(p.imageUrl)}
-                  alt={p.name}
-                  onClick={(e) => {
-                    if (!bulkMode) return;
-                    e.stopPropagation();
-                    const next = new Set(selectedIds);
-                    if (next.has(p.id)) next.delete(p.id);
-                    else next.add(p.id);
-                    setSelectedIds(next);
-                  }}
-                />
-              ) : (
-                <div className="thumb placeholder" />
-              )}
+            <div
+              key={tr.id}
+              className={`row clickable ${!original.isParentRow && p.isUnavailable ? "unavailable" : ""} ${
+                p.published === false ? "draft" : ""
+              } ${original.isChild ? "child-row" : ""} ${original.isParentRow ? "parent-row" : ""}`}
+              onClick={() => {
+                if (bulkMode) {
+                  const next = new Set(selectedIds);
+                  if (next.has(p.id)) next.delete(p.id);
+                  else next.add(p.id);
+                  setSelectedIds(next);
+                  return;
+                }
+                openEdit(p);
+              }}
+            >
+              {tr.getVisibleCells().map((cell) => (
+                <div key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>
+              ))}
             </div>
-            <div className="mono">
-              {bulkMode ? (
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(p.id)}
-                    onChange={(e) => {
-                      const next = new Set(selectedIds);
-                      if (e.target.checked) next.add(p.id);
-                      else next.delete(p.id);
-                      setSelectedIds(next);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <span>{p.sku}</span>
-                </label>
-              ) : (
-                p.sku
-              )}
-            </div>
-            <div className="name-cell">
-              <span>{p.name}</span>
-              {isChildSingle ? <span className="tag info">Figlio+singolo</span> : null}
-              {showUnavailableTag ? <span className="tag danger">Non disponibile</span> : null}
-              {p.published === false ? <span className="tag warn">Draft</span> : null}
-            </div>
-            <div>{isParentRow && p.price == null ? dash : `€ ${Number(p.price).toFixed(2)}`}</div>
-            <div>{isParentRow ? dash : p.stockQty}</div>
-            <div>
-              {isParentRow ? "Padre" : isChildSingle ? "Figlio+singolo" : p.parentId ? "Figlio" : "Singolo"}
-            </div>
-            <div>{row.parent?.sku || p.parent?.sku || dash}</div>
-            <div>
-              <div>{categoriesLabel}</div>
-              {subcategoriesLabel ? <div className="muted">{subcategoriesLabel}</div> : null}
-            </div>
-            <div className="excise-cell">
-              {p.exciseRateRef?.name || (p.exciseTotal != null ? `€ ${Number(p.exciseTotal).toFixed(2)}` : dash)}
-            </div>
-            <div>{p.brand || dash}</div>
-          </div>
-        );
+          );
         })}
       </div>
       ) : null}

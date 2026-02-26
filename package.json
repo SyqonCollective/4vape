@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.22.12",
+    "@tanstack/react-table": "^8.21.3",
     "ag-grid-community": "^35.1.0",
     "ag-grid-react": "^35.1.0",
     "echarts": "^6.0.0",

@@ -2108,6 +2108,28 @@ button {
   white-space: nowrap;
 }
 
+.tag.parent-tag {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.tag.child-tag {
+  background: #ecfeff;
+  color: #0e7490;
+  border: 1px solid #67e8f9;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
 .tag.warn {
   background: #ffedd5;
   color: #c2410c;
