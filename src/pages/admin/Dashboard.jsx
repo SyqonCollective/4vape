@@ -26,6 +26,15 @@ function calcTrend(values = []) {
   return values.map((_, x) => m * x + b);
 }
 
+function toPoints(values = [], min = 0, range = 1) {
+  return values
+    .map((v, i) => {
+      const x = (i / Math.max(values.length - 1, 1)) * 100;
+      const y = 100 - ((Number(v || 0) - min) / (range || 1)) * 100;
+      return { x, y };
+    });
+}
+
 function TrendSpark({ series = [] }) {
   if (!series.length) return null;
   const ordersValues = series.map((p) => Number(p.orders || 0));
@@ -37,28 +46,54 @@ function TrendSpark({ series = [] }) {
   const ordersRange = ordersMax - ordersMin || 1;
   const revenueRange = revenueMax - revenueMin || 1;
 
-  const points = (values, min, range) =>
-    series
-      .map((_, i) => {
-        const x = (i / Math.max(series.length - 1, 1)) * 100;
-        const y = 100 - ((Number(values[i] || 0) - min) / range) * 100;
-        return `${x.toFixed(2)},${y.toFixed(2)}`;
-      })
-      .join(" ");
+  const ordersPts = toPoints(ordersValues, ordersMin, ordersRange);
+  const revenuePts = toPoints(revenueValues, revenueMin, revenueRange);
+  const ordersPath = ordersPts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+  const revenuePath = revenuePts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+  const revenueArea = `0,100 ${revenuePath} 100,100`;
 
   const ordersTrend = calcTrend(ordersValues);
   const revenueTrend = calcTrend(revenueValues);
+  const ordersTrendPath = toPoints(ordersTrend, ordersMin, ordersRange)
+    .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+    .join(" ");
+  const revenueTrendPath = toPoints(revenueTrend, revenueMin, revenueRange)
+    .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+    .join(" ");
+  const barWidth = 100 / Math.max(series.length, 1);
 
   return (
-    <svg viewBox="0 0 100 100" className="sparkline" preserveAspectRatio="none">
+    <div className="sparkline-box">
+      <svg viewBox="0 0 100 100" className="sparkline" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="dashRevenueFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#22c55e" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#22c55e" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
       <line x1="0" y1="25" x2="100" y2="25" className="chart-gridline" />
       <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
       <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
-      <polyline points={points(ordersValues, ordersMin, ordersRange)} fill="none" stroke="#0ea5e9" strokeWidth="2.4" />
-      <polyline points={points(revenueValues, revenueMin, revenueRange)} fill="none" stroke="#22c55e" strokeWidth="2.2" />
-      <polyline points={points(ordersTrend, ordersMin, ordersRange)} fill="none" className="chart-trendline chart-trendline-orders" strokeWidth="1.8" />
-      <polyline points={points(revenueTrend, revenueMin, revenueRange)} fill="none" className="chart-trendline chart-trendline-revenue" strokeWidth="1.8" />
-    </svg>
+      {ordersPts.map((p, i) => {
+        const h = ((ordersValues[i] - ordersMin) / ordersRange) * 100;
+        const w = Math.max(barWidth - 1.6, 1);
+        const x = i * barWidth + (barWidth - w) / 2;
+        return <rect key={`bar-${i}`} x={x} y={100 - h} width={w} height={h} className="spark-bar" rx="1" />;
+      })}
+      <polygon points={revenueArea} fill="url(#dashRevenueFill)" />
+      <polyline points={revenuePath} fill="none" stroke="#22c55e" strokeWidth="2.4" />
+      <polyline points={ordersPath} fill="none" stroke="#0ea5e9" strokeWidth="1.8" opacity="0.7" />
+      <polyline points={ordersTrendPath} fill="none" className="chart-trendline chart-trendline-orders" strokeWidth="1.5" />
+      <polyline points={revenueTrendPath} fill="none" className="chart-trendline chart-trendline-revenue" strokeWidth="1.6" />
+      {revenuePts.map((p, i) => (
+        <circle key={`dot-${i}`} cx={p.x} cy={p.y} r="1.5" className="spark-dot" />
+      ))}
+      </svg>
+      <div className="spark-legend">
+        <span><i className="legend-dot revenue" /> Fatturato</span>
+        <span><i className="legend-dot orders" /> Ordini</span>
+      </div>
+    </div>
   );
 }
 

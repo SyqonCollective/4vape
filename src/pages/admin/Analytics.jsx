@@ -82,6 +82,42 @@ function TrendChart({ series = [], variant = "line" }) {
   );
 }
 
+function ComboBarLineChart({ bars = [], line = [] }) {
+  if (!bars.length) return null;
+  const max = Math.max(
+    1,
+    ...bars.map((x) => Number(x.value || 0)),
+    ...line.map((x) => Number(x.value || 0))
+  );
+  const barW = 100 / Math.max(bars.length, 1);
+  const linePts = line
+    .map((p, i) => {
+      const x = i * barW + barW / 2;
+      const y = 100 - (Number(p.value || 0) / max) * 100;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+  return (
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-combo">
+      <line x1="0" y1="25" x2="100" y2="25" className="chart-gridline" />
+      <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
+      <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
+      {bars.map((b, i) => {
+        const h = (Number(b.value || 0) / max) * 100;
+        const w = Math.max(barW - 2, 1);
+        const x = i * barW + (barW - w) / 2;
+        return <rect key={`b-${i}`} x={x} y={100 - h} width={w} height={h} className="combo-bar" rx="1.2" />;
+      })}
+      <polyline points={linePts} fill="none" className="combo-line" strokeWidth="2.2" />
+      {line.map((p, i) => {
+        const x = i * barW + barW / 2;
+        const y = 100 - (Number(p.value || 0) / max) * 100;
+        return <circle key={`p-${i}`} cx={x} cy={y} r="1.6" className="combo-dot" />;
+      })}
+    </svg>
+  );
+}
+
 function StackedChart({ series = [] }) {
   if (!series.length) return null;
   const max = Math.max(...series.map((s) => s.revenue), 1);
@@ -349,6 +385,7 @@ export default function AdminAnalytics() {
 
   const revenueSeries = data.daily.map((d) => ({ label: d.date, value: d.revenue }));
   const costSeries = data.daily.map((d) => ({ label: d.date, value: d.cost }));
+  const ordersSeries = data.daily.map((d) => ({ label: d.date, value: d.orders }));
   const regionData = buildRegionData(data.topGeo || []);
   const selectedSeries = (data.productInsights?.daily || []).map((d) => ({
     label: d.date,
@@ -475,22 +512,15 @@ export default function AdminAnalytics() {
         <div className="analytics-panel">
           <div className="panel-header">
             <div>
-              <h2>Fatturato vs Costi (trend)</h2>
-              <div className="muted">Linee + trendline</div>
+              <h2>Trend vendite (stile dashboard)</h2>
+              <div className="muted">Barre ordini + linea fatturato</div>
             </div>
           </div>
-          <div className="chart-stack">
-            <div className="chart-row">
-              <span className="chart-label revenue">Fatturato</span>
-              <div className="trend-revenue">
-                <TrendChart series={revenueSeries} variant="area" />
-              </div>
-            </div>
-            <div className="chart-row">
-              <span className="chart-label cost">Costi</span>
-              <div className="trend-cost">
-                <TrendChart series={costSeries} variant="line" />
-              </div>
+          <div className="chart-stack combo-stack">
+            <ComboBarLineChart bars={ordersSeries} line={revenueSeries} />
+            <div className="spark-legend">
+              <span><i className="legend-dot revenue" /> Fatturato</span>
+              <span><i className="legend-dot orders" /> Ordini</span>
             </div>
           </div>
         </div>
@@ -510,8 +540,8 @@ export default function AdminAnalytics() {
               <div className="muted">Vendite - spese (arrivi merce)</div>
             </div>
           </div>
-          <div className="trend-revenue">
-            <TrendChart series={cashflowSeries} variant="line" />
+          <div className="trend-cashflow">
+            <TrendChart series={cashflowSeries} variant="area" />
           </div>
         </div>
       </div>
