@@ -8,7 +8,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   Bar,
   Area,
 } from "recharts";
@@ -52,19 +51,22 @@ function TrendSpark({ series = [] }) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#d6e1ee" />
-            <XAxis dataKey="day" tick={{ fill: "#667085", fontSize: 11 }} />
-            <YAxis yAxisId="orders" orientation="left" allowDecimals={false} tick={{ fill: "#667085", fontSize: 11 }} width={30} />
-            <YAxis yAxisId="revenue" orientation="right" tick={{ fill: "#667085", fontSize: 11 }} width={62} tickFormatter={(v) => `€${Math.round(v)}`} />
+            <XAxis dataKey="day" tick={{ fill: "#667085", fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={14} />
+            <YAxis yAxisId="orders" orientation="left" allowDecimals={false} tick={{ fill: "#667085", fontSize: 11 }} width={30} tickLine={false} axisLine={false} domain={[0, "dataMax + 1"]} />
+            <YAxis yAxisId="revenue" orientation="right" tick={{ fill: "#667085", fontSize: 11 }} width={62} tickFormatter={(v) => `€${Math.round(v)}`} tickLine={false} axisLine={false} domain={[0, "dataMax + 20"]} />
             <Tooltip
               formatter={(value, name) => (name === "Fatturato" ? `€ ${Number(value || 0).toFixed(2)}` : Number(value || 0))}
               labelFormatter={(label) => `Giorno ${label}`}
               contentStyle={{ borderRadius: 12, border: "1px solid #d4dce8" }}
             />
-            <Legend />
-            <Bar yAxisId="orders" dataKey="orders" name="Ordini" fill="#0ea5e9" radius={[6, 6, 0, 0]} barSize={14} />
-            <Area yAxisId="revenue" type="monotone" dataKey="revenue" name="Fatturato" stroke="#22c55e" strokeWidth={2.6} fill="url(#dashRevenueFill)" />
+            <Bar yAxisId="orders" dataKey="orders" name="Ordini" fill="#0ea5e9" radius={[6, 6, 0, 0]} barSize={16} minPointSize={2} />
+            <Area yAxisId="revenue" type="linear" dataKey="revenue" name="Fatturato" stroke="#22c55e" strokeWidth={2.6} fill="url(#dashRevenueFill)" connectNulls />
           </ComposedChart>
         </ResponsiveContainer>
+      </div>
+      <div className="spark-legend">
+        <span><i className="legend-dot orders" /> Ordini</span>
+        <span><i className="legend-dot revenue" /> Fatturato</span>
       </div>
     </div>
   );

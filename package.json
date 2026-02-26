@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.22.12",
+    "echarts": "^6.0.0",
+    "echarts-for-react": "^3.0.6",
+    "leaflet": "^1.9.4",
     "lottie-react": "^2.4.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-leaflet": "^5.0.0",
     "react-router-dom": "^6.26.2",
     "recharts": "^3.7.0",
     "three": "^0.177.0"

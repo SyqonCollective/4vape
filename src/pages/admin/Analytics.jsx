@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
-import italyMapAsset from "../../../map.svg";
+import { MapContainer, TileLayer, CircleMarker, Tooltip as LeafletTooltip } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -138,26 +139,26 @@ function StackedChart({ series = [] }) {
 }
 
 const ITALY_REGIONS = [
-  { key: "Valle d'Aosta", x: 408, y: 192 },
-  { key: "Piemonte", x: 532, y: 286 },
-  { key: "Liguria", x: 500, y: 402 },
-  { key: "Lombardia", x: 728, y: 272 },
-  { key: "Trentino-Alto Adige", x: 882, y: 184 },
-  { key: "Veneto", x: 958, y: 288 },
-  { key: "Friuli-Venezia Giulia", x: 1108, y: 272 },
-  { key: "Emilia-Romagna", x: 820, y: 434 },
-  { key: "Toscana", x: 748, y: 604 },
-  { key: "Umbria", x: 872, y: 664 },
-  { key: "Marche", x: 986, y: 636 },
-  { key: "Lazio", x: 842, y: 824 },
-  { key: "Abruzzo", x: 996, y: 786 },
-  { key: "Molise", x: 1040, y: 898 },
-  { key: "Campania", x: 886, y: 1004 },
-  { key: "Puglia", x: 1158, y: 1018 },
-  { key: "Basilicata", x: 1024, y: 1126 },
-  { key: "Calabria", x: 1046, y: 1340 },
-  { key: "Sicilia", x: 810, y: 1732 },
-  { key: "Sardegna", x: 468, y: 1326 },
+  { key: "Valle d'Aosta", lat: 45.74, lng: 7.32 },
+  { key: "Piemonte", lat: 45.07, lng: 7.69 },
+  { key: "Liguria", lat: 44.41, lng: 8.93 },
+  { key: "Lombardia", lat: 45.46, lng: 9.19 },
+  { key: "Trentino-Alto Adige", lat: 46.50, lng: 11.35 },
+  { key: "Veneto", lat: 45.44, lng: 12.33 },
+  { key: "Friuli-Venezia Giulia", lat: 45.65, lng: 13.77 },
+  { key: "Emilia-Romagna", lat: 44.49, lng: 11.34 },
+  { key: "Toscana", lat: 43.77, lng: 11.25 },
+  { key: "Umbria", lat: 43.11, lng: 12.39 },
+  { key: "Marche", lat: 43.62, lng: 13.51 },
+  { key: "Lazio", lat: 41.90, lng: 12.50 },
+  { key: "Abruzzo", lat: 42.35, lng: 13.40 },
+  { key: "Molise", lat: 41.56, lng: 14.66 },
+  { key: "Campania", lat: 40.85, lng: 14.27 },
+  { key: "Puglia", lat: 41.12, lng: 16.87 },
+  { key: "Basilicata", lat: 40.64, lng: 15.80 },
+  { key: "Calabria", lat: 38.91, lng: 16.59 },
+  { key: "Sicilia", lat: 38.12, lng: 13.36 },
+  { key: "Sardegna", lat: 39.22, lng: 9.12 },
 ];
 
 const REGION_ALIASES = {
@@ -215,29 +216,42 @@ function ItalyMap({ data = [] }) {
   return (
     <div className="italy-map-wrap">
       <div className="italy-map-canvas">
-        <img src={italyMapAsset} className="italy-map" alt="Cartina Italia" />
-        <svg viewBox="0 0 1600 2000" className="italy-map-overlay" aria-hidden="true">
-          {data.map((region) => {
-            const intensity = Math.max(region.revenue / max, 0);
-            const radius = 18 + intensity * 34;
-            const alpha = 0.28 + intensity * 0.62;
-            const cx = region.x;
-            const cy = region.y;
-            return (
-              <g
-                key={region.key}
-                onMouseEnter={() => setActive(region)}
-                onMouseLeave={() => setActive(null)}
-                onClick={() => setActive(region)}
-                style={{ cursor: "pointer" }}
-              >
-                <circle cx={cx} cy={cy} r={radius + 7} fill={`rgba(14,165,233,${alpha * 0.24})`} />
-                <circle cx={cx} cy={cy} r={radius} fill={`rgba(14,165,233,${alpha})`} />
-                <circle cx={cx} cy={cy} r={7.5} fill="#0369a1" />
-              </g>
-            );
-          })}
-        </svg>
+        <MapContainer center={[42.5, 12.5]} zoom={5.6} minZoom={5} maxZoom={8} className="italy-leaflet-map" scrollWheelZoom={false}>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {data
+            .filter((region) => region.revenue > 0)
+            .map((region) => {
+              const intensity = Math.max(region.revenue / max, 0);
+              const radius = 6 + intensity * 16;
+              return (
+                <CircleMarker
+                  key={region.key}
+                  center={[region.lat, region.lng]}
+                  radius={radius}
+                  pathOptions={{
+                    fillColor: "#0ea5e9",
+                    color: "#0369a1",
+                    weight: 1.2,
+                    fillOpacity: 0.45 + intensity * 0.35,
+                  }}
+                  eventHandlers={{
+                    mouseover: () => setActive(region),
+                    mouseout: () => setActive(null),
+                    click: () => setActive(region),
+                  }}
+                >
+                  <LeafletTooltip direction="top" offset={[0, -4]} opacity={0.95}>
+                    <strong>{region.key}</strong><br />
+                    Ordini: {region.orders}<br />
+                    Fatturato: {formatMoney(region.revenue)}
+                  </LeafletTooltip>
+                </CircleMarker>
+              );
+            })}
+        </MapContainer>
       </div>
       <div className="italy-map-side">
         <div className="muted">Top aree nel periodo</div>
