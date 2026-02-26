@@ -34,6 +34,11 @@ export default function AdminFiscal() {
   const [endDate, setEndDate] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [companies, setCompanies] = useState([]);
+  const [activeSection, setActiveSection] = useState("quindicinale");
+  const [quindicinaleView, setQuindicinaleView] = useState("table");
+  const [mensileView, setMensileView] = useState("table");
+  const [quindicinaleQuery, setQuindicinaleQuery] = useState("");
+  const [mensileQuery, setMensileQuery] = useState("");
   const [data, setData] = useState({
     filters: {},
     quindicinale: { cards: {}, rows: [] },
@@ -97,6 +102,37 @@ export default function AdminFiscal() {
   const quindicinaleRows = useMemo(() => data?.quindicinale?.rows || [], [data]);
   const mensileRows = useMemo(() => data?.mensile?.rows || [], [data]);
 
+  const filteredQuindicinaleRows = useMemo(() => {
+    const query = quindicinaleQuery.trim().toLowerCase();
+    if (!query) return quindicinaleRows;
+    return quindicinaleRows.filter((r) =>
+      [r.sku, r.prodotto, r.codicePl]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [quindicinaleRows, quindicinaleQuery]);
+
+  const filteredMensileRows = useMemo(() => {
+    const query = mensileQuery.trim().toLowerCase();
+    if (!query) return mensileRows;
+    return mensileRows.filter((r) =>
+      [
+        r.ragioneSociale,
+        r.prodotto,
+        r.codicePl,
+        r.cfPivaAdm,
+        r.cmnr,
+        r.numeroInsegna,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [mensileRows, mensileQuery]);
+
   function exportQuindicinale() {
     const headers = [
       "SKU",
@@ -154,19 +190,43 @@ export default function AdminFiscal() {
   }
 
   return (
-    <section>
+    <section className="fiscal-page">
       <div className="page-header">
         <div>
           <h1>Gestione fiscale</h1>
-          <p>Sezione quindicinale e mensile su fatture fiscali</p>
+          <p>Monitoraggio fiscale operativo per quindicinale e mensile con export dedicati</p>
         </div>
       </div>
 
       <InlineError message={error} onClose={() => setError("")} />
       {success ? <div className="success-banner">{success}</div> : null}
 
-      <div className="panel fiscal-toolbar">
-        <div className="filters-row">
+      <div className="fiscal-toolbar-shell">
+        <div className="fiscal-toolbar-top">
+          <div className="products-view-switch">
+            <button
+              type="button"
+              className={`btn ${activeSection === "quindicinale" ? "primary" : "ghost"}`}
+              onClick={() => setActiveSection("quindicinale")}
+            >
+              Sezione 1 · Quindicinale
+            </button>
+            <button
+              type="button"
+              className={`btn ${activeSection === "mensile" ? "primary" : "ghost"}`}
+              onClick={() => setActiveSection("mensile")}
+            >
+              Sezione 2 · Mensile
+            </button>
+          </div>
+          <div className="actions fiscal-toolbar-actions">
+            <button className="btn ghost" onClick={load}>Aggiorna dati</button>
+            <button className="btn primary" onClick={syncFromOrders} disabled={syncing}>
+              {syncing ? "Sincronizzo..." : "Sincronizza da fatture fiscali"}
+            </button>
+          </div>
+        </div>
+        <div className="filters-row fiscal-toolbar-grid">
           <div className="filter-group">
             <label>Data dal</label>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
@@ -175,7 +235,7 @@ export default function AdminFiscal() {
             <label>Data al</label>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
-          <div className="filter-group" style={{ minWidth: 320 }}>
+          <div className="filter-group">
             <label>Cliente</label>
             <select className="select" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
               <option value="">Tutti i clienti</option>
@@ -186,106 +246,180 @@ export default function AdminFiscal() {
               ))}
             </select>
           </div>
-          <div className="actions">
-            <button className="btn ghost" onClick={load}>Aggiorna</button>
-            <button className="btn primary" onClick={syncFromOrders} disabled={syncing}>
-              {syncing ? "Sincronizzo..." : "Sincronizza da fatture fiscali"}
-            </button>
+          <div className="filter-group">
+            <label>Range attivo</label>
+            <div className="fiscal-range-chip">
+              {(startDate || "Inizio")} → {(endDate || "Oggi")}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="panel fiscal-section">
-        <div className="page-header">
-          <div>
-            <h3>SEZIONE 1 · Quindicinale</h3>
-            <p>Righe aggregate per SKU (somma quantità su SKU uguali, prezzo medio ivato senza accisa)</p>
-          </div>
-          <div className="actions">
-            <button className="btn ghost" onClick={exportQuindicinale}>Esporta CSV</button>
-          </div>
-        </div>
-        <div className="cards">
-          <div className="card"><div className="card-label">Fatture fiscali</div><div className="card-value">{data?.quindicinale?.cards?.fiscalInvoices || 0}</div></div>
-          <div className="card"><div className="card-label">Prodotti venduti</div><div className="card-value">{data?.quindicinale?.cards?.productsSold || 0}</div></div>
-          <div className="card"><div className="card-label">Quantità vendute</div><div className="card-value">{data?.quindicinale?.cards?.totalQty || 0}</div></div>
-          <div className="card"><div className="card-label">Accisa totale</div><div className="card-value">{money(data?.quindicinale?.cards?.totalAccisa || 0)}</div></div>
-        </div>
-        <div className="table wide-report">
-          <div className="row header">
-            <div>SKU</div>
-            <div>Prodotto</div>
-            <div>Codice PL</div>
-            <div>ML prodotto</div>
-            <div>Nicotina</div>
-            <div>Prezzo medio vendita ivato</div>
-            <div>Quantità</div>
-            <div>Accisa (categoria)</div>
-          </div>
-          {quindicinaleRows.map((r, idx) => (
-            <div className="row" key={`${r.sku}-${idx}`}>
-              <div className="mono">{r.sku || "-"}</div>
-              <div>{r.prodotto || "-"}</div>
-              <div>{r.codicePl || "-"}</div>
-              <div>{Number(r.mlProduct || 0).toFixed(3)}</div>
-              <div>{Number(r.nicotine || 0).toFixed(3)}</div>
-              <div>{money(r.avgPriceIvato || 0)}</div>
-              <div>{Number(r.qty || 0)}</div>
-              <div>{Number(r.accisa || 0).toFixed(6)}</div>
+      {activeSection === "quindicinale" ? (
+        <div className="panel fiscal-section">
+          <div className="fiscal-section-head">
+            <div>
+              <h3>SEZIONE 1 · Quindicinale</h3>
+              <p>Righe aggregate per SKU (somma quantità su SKU uguali, prezzo medio ivato senza accisa)</p>
             </div>
-          ))}
+            <div className="actions">
+              <input
+                className="fiscal-search"
+                value={quindicinaleQuery}
+                onChange={(e) => setQuindicinaleQuery(e.target.value)}
+                placeholder="Cerca SKU, prodotto, codice PL"
+              />
+              <div className="products-view-switch">
+                <button type="button" className={`btn ${quindicinaleView === "table" ? "primary" : "ghost"}`} onClick={() => setQuindicinaleView("table")}>Tabella</button>
+                <button type="button" className={`btn ${quindicinaleView === "cards" ? "primary" : "ghost"}`} onClick={() => setQuindicinaleView("cards")}>Card</button>
+              </div>
+              <button className="btn ghost" onClick={exportQuindicinale}>Esporta CSV</button>
+            </div>
+          </div>
+          <div className="cards fiscal-cards">
+            <div className="card"><div className="card-label">Fatture fiscali</div><div className="card-value">{data?.quindicinale?.cards?.fiscalInvoices || 0}</div></div>
+            <div className="card"><div className="card-label">Prodotti venduti</div><div className="card-value">{data?.quindicinale?.cards?.productsSold || 0}</div></div>
+            <div className="card"><div className="card-label">Quantità vendute</div><div className="card-value">{data?.quindicinale?.cards?.totalQty || 0}</div></div>
+            <div className="card"><div className="card-label">Accisa totale</div><div className="card-value">{money(data?.quindicinale?.cards?.totalAccisa || 0)}</div></div>
+          </div>
+          {quindicinaleView === "table" ? (
+            <div className="table fiscal-table-pro">
+              <div className="row header">
+                <div>SKU</div>
+                <div>Prodotto</div>
+                <div>Codice PL</div>
+                <div>ML prodotto</div>
+                <div>Nicotina</div>
+                <div>Prezzo medio vendita ivato</div>
+                <div>Quantità</div>
+                <div>Accisa (categoria)</div>
+              </div>
+              {filteredQuindicinaleRows.map((r, idx) => (
+                <div className="row" key={`${r.sku}-${idx}`}>
+                  <div className="mono">{r.sku || "-"}</div>
+                  <div>{r.prodotto || "-"}</div>
+                  <div>{r.codicePl || "-"}</div>
+                  <div>{Number(r.mlProduct || 0).toFixed(3)}</div>
+                  <div>{Number(r.nicotine || 0).toFixed(3)}</div>
+                  <div>{money(r.avgPriceIvato || 0)}</div>
+                  <div>{Number(r.qty || 0)}</div>
+                  <div>{Number(r.accisa || 0).toFixed(6)}</div>
+                </div>
+              ))}
+              {!filteredQuindicinaleRows.length ? <div className="inventory-empty">Nessun dato nel periodo selezionato</div> : null}
+            </div>
+          ) : (
+            <div className="fiscal-cards-grid">
+              {filteredQuindicinaleRows.map((r, idx) => (
+                <article className="fiscal-row-card" key={`${r.sku}-${idx}`}>
+                  <div className="fiscal-row-card-top">
+                    <strong className="mono">{r.sku || "-"}</strong>
+                    <span className="tag info">{r.codicePl || "-"}</span>
+                  </div>
+                  <h4>{r.prodotto || "-"}</h4>
+                  <div className="fiscal-row-grid">
+                    <span>ML: <strong>{Number(r.mlProduct || 0).toFixed(3)}</strong></span>
+                    <span>Nicotina: <strong>{Number(r.nicotine || 0).toFixed(3)}</strong></span>
+                    <span>Prezzo medio: <strong>{money(r.avgPriceIvato || 0)}</strong></span>
+                    <span>Quantità: <strong>{Number(r.qty || 0)}</strong></span>
+                    <span>Accisa: <strong>{Number(r.accisa || 0).toFixed(6)}</strong></span>
+                  </div>
+                </article>
+              ))}
+              {!filteredQuindicinaleRows.length ? <div className="inventory-empty">Nessun dato nel periodo selezionato</div> : null}
+            </div>
+          )}
         </div>
-      </div>
+      ) : null}
 
-      <div className="panel fiscal-section" style={{ marginTop: 14 }}>
-        <div className="page-header">
-          <div>
-            <h3>SEZIONE 2 · Mensile</h3>
-            <p>Righe aggregate per cliente + SKU (somma quantità su SKU uguali per cliente)</p>
-          </div>
-          <div className="actions">
-            <button className="btn ghost" onClick={exportMensile}>Esporta CSV</button>
-          </div>
-        </div>
-        <div className="cards">
-          <div className="card"><div className="card-label">Fatture fiscali</div><div className="card-value">{data?.mensile?.cards?.fiscalInvoices || 0}</div></div>
-          <div className="card"><div className="card-label">Prodotti venduti</div><div className="card-value">{data?.mensile?.cards?.productsSold || 0}</div></div>
-          <div className="card"><div className="card-label">Quantità vendute</div><div className="card-value">{data?.mensile?.cards?.totalQty || 0}</div></div>
-          <div className="card"><div className="card-label">Litri venduti</div><div className="card-value">{Number(data?.mensile?.cards?.litersSold || 0).toFixed(3)} L</div></div>
-        </div>
-        <div className="table wide-report">
-          <div className="row header">
-            <div>N. esercizio</div>
-            <div>CMNR</div>
-            <div>N. insegna</div>
-            <div>Ragione sociale</div>
-            <div>Comune</div>
-            <div>Provincia</div>
-            <div>CF/P.IVA ADM</div>
-            <div>Prodotto</div>
-            <div>Codice PL</div>
-            <div>ML prodotto</div>
-            <div>Nicotina</div>
-            <div>Quantità</div>
-          </div>
-          {mensileRows.map((r, idx) => (
-            <div className="row" key={`${r.cfPivaAdm}-${r.codicePl}-${idx}`}>
-              <div>{r.numeroEsercizio || "-"}</div>
-              <div>{r.cmnr || "-"}</div>
-              <div>{r.numeroInsegna || "-"}</div>
-              <div>{r.ragioneSociale || "-"}</div>
-              <div>{r.comune || "-"}</div>
-              <div>{r.provincia || "-"}</div>
-              <div>{r.cfPivaAdm || "-"}</div>
-              <div>{r.prodotto || "-"}</div>
-              <div>{r.codicePl || "-"}</div>
-              <div>{Number(r.mlProduct || 0).toFixed(3)}</div>
-              <div>{Number(r.nicotine || 0).toFixed(3)}</div>
-              <div>{Number(r.qty || 0)}</div>
+      {activeSection === "mensile" ? (
+        <div className="panel fiscal-section" style={{ marginTop: 14 }}>
+          <div className="fiscal-section-head">
+            <div>
+              <h3>SEZIONE 2 · Mensile</h3>
+              <p>Righe aggregate per cliente + SKU (somma quantità su SKU uguali per cliente)</p>
             </div>
-          ))}
+            <div className="actions">
+              <input
+                className="fiscal-search"
+                value={mensileQuery}
+                onChange={(e) => setMensileQuery(e.target.value)}
+                placeholder="Cerca cliente, prodotto, codice PL, CF/P.IVA ADM"
+              />
+              <div className="products-view-switch">
+                <button type="button" className={`btn ${mensileView === "table" ? "primary" : "ghost"}`} onClick={() => setMensileView("table")}>Tabella</button>
+                <button type="button" className={`btn ${mensileView === "cards" ? "primary" : "ghost"}`} onClick={() => setMensileView("cards")}>Card</button>
+              </div>
+              <button className="btn ghost" onClick={exportMensile}>Esporta CSV</button>
+            </div>
+          </div>
+          <div className="cards fiscal-cards">
+            <div className="card"><div className="card-label">Fatture fiscali</div><div className="card-value">{data?.mensile?.cards?.fiscalInvoices || 0}</div></div>
+            <div className="card"><div className="card-label">Prodotti venduti</div><div className="card-value">{data?.mensile?.cards?.productsSold || 0}</div></div>
+            <div className="card"><div className="card-label">Quantità vendute</div><div className="card-value">{data?.mensile?.cards?.totalQty || 0}</div></div>
+            <div className="card"><div className="card-label">Litri venduti</div><div className="card-value">{Number(data?.mensile?.cards?.litersSold || 0).toFixed(3)} L</div></div>
+          </div>
+          {mensileView === "table" ? (
+            <div className="table fiscal-table-pro fiscal-table-pro-monthly">
+              <div className="row header">
+                <div>N. esercizio</div>
+                <div>CMNR</div>
+                <div>N. insegna</div>
+                <div>Ragione sociale</div>
+                <div>Comune</div>
+                <div>Provincia</div>
+                <div>CF/P.IVA ADM</div>
+                <div>Prodotto</div>
+                <div>Codice PL</div>
+                <div>ML prodotto</div>
+                <div>Nicotina</div>
+                <div>Quantità</div>
+              </div>
+              {filteredMensileRows.map((r, idx) => (
+                <div className="row" key={`${r.cfPivaAdm}-${r.codicePl}-${idx}`}>
+                  <div>{r.numeroEsercizio || "-"}</div>
+                  <div>{r.cmnr || "-"}</div>
+                  <div>{r.numeroInsegna || "-"}</div>
+                  <div>{r.ragioneSociale || "-"}</div>
+                  <div>{r.comune || "-"}</div>
+                  <div>{r.provincia || "-"}</div>
+                  <div>{r.cfPivaAdm || "-"}</div>
+                  <div>{r.prodotto || "-"}</div>
+                  <div>{r.codicePl || "-"}</div>
+                  <div>{Number(r.mlProduct || 0).toFixed(3)}</div>
+                  <div>{Number(r.nicotine || 0).toFixed(3)}</div>
+                  <div>{Number(r.qty || 0)}</div>
+                </div>
+              ))}
+              {!filteredMensileRows.length ? <div className="inventory-empty">Nessun dato nel periodo selezionato</div> : null}
+            </div>
+          ) : (
+            <div className="fiscal-cards-grid">
+              {filteredMensileRows.map((r, idx) => (
+                <article className="fiscal-row-card" key={`${r.cfPivaAdm}-${r.codicePl}-${idx}`}>
+                  <div className="fiscal-row-card-top">
+                    <strong>{r.ragioneSociale || "-"}</strong>
+                    <span className="tag info">{r.codicePl || "-"}</span>
+                  </div>
+                  <div className="muted">{r.prodotto || "-"}</div>
+                  <div className="fiscal-row-grid">
+                    <span>N. esercizio: <strong>{r.numeroEsercizio || "-"}</strong></span>
+                    <span>CMNR: <strong>{r.cmnr || "-"}</strong></span>
+                    <span>N. insegna: <strong>{r.numeroInsegna || "-"}</strong></span>
+                    <span>Comune: <strong>{r.comune || "-"}</strong></span>
+                    <span>Provincia: <strong>{r.provincia || "-"}</strong></span>
+                    <span>CF/P.IVA ADM: <strong>{r.cfPivaAdm || "-"}</strong></span>
+                    <span>ML: <strong>{Number(r.mlProduct || 0).toFixed(3)}</strong></span>
+                    <span>Nicotina: <strong>{Number(r.nicotine || 0).toFixed(3)}</strong></span>
+                    <span>Quantità: <strong>{Number(r.qty || 0)}</strong></span>
+                  </div>
+                </article>
+              ))}
+              {!filteredMensileRows.length ? <div className="inventory-empty">Nessun dato nel periodo selezionato</div> : null}
+            </div>
+          )}
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
