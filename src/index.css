@@ -5441,10 +5441,20 @@ button {
 }
 
 .inventory-page .page-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 0.8rem;
   align-items: start;
+}
+
+.inventory-page .page-header > div:first-child {
+  min-width: 0;
+}
+
+.inventory-page .page-actions.inventory-actions {
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .inventory-page .cards.inventory-cards {
@@ -5516,7 +5526,6 @@ button {
   padding: 12px 14px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   min-width: 1450px;
-  width: max-content;
 }
 
 .inventory-row.header {
@@ -5527,7 +5536,6 @@ button {
   font-weight: 700;
   background: #f8fafc;
   min-width: 1450px;
-  width: max-content;
 }
 
 .inventory-row:last-child {
@@ -5962,10 +5970,6 @@ button {
 
 @media (max-width: 1200px) {
   .inventory-filters-top {
-    grid-template-columns: 1fr;
-  }
-
-  .inventory-page .page-header {
     grid-template-columns: 1fr;
   }
 }
