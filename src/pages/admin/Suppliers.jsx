@@ -55,7 +55,7 @@ export default function AdminSuppliers() {
   const [newCategoryParent, setNewCategoryParent] = useState("");
   const [editingSupplierId, setEditingSupplierId] = useState(null);
   const [editingName, setEditingName] = useState("");
-  const [productView, setProductView] = useState("table");
+  const [productView, setProductView] = useState("cards");
   const token = getToken();
   const withToken = (url) => {
     if (!url) return url;
@@ -88,8 +88,6 @@ export default function AdminSuppliers() {
   const dropStats = {
     suppliers: items.length,
     products: totalProducts,
-    imported: supplierProducts.filter((p) => p.isImported).length,
-    toImport: supplierProducts.filter((p) => !p.isImported).length,
   };
 
   useEffect(() => {
@@ -466,74 +464,80 @@ export default function AdminSuppliers() {
 
       {selected ? (
         <div className="panel" style={{ marginTop: "1.5rem" }}>
-          <div className="page-header">
-            <div>
+          <div className="drop-products-head">
+            <div className="drop-products-title">
               <h2>Prodotti fornitore</h2>
               <p>
                 {selected.name} — {totalProducts} risultati
               </p>
             </div>
-            <div className="actions">
-              <input
-                placeholder="Cerca SKU o nome"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
+            <div className="drop-products-controls">
+              <div className="drop-search-row">
+                <input
+                  placeholder="Cerca SKU o nome"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      setPage(1);
+                      viewProducts(selected, 1);
+                    }
+                  }}
+                />
+                <button
+                  className="btn"
+                  onClick={() => {
                     setPage(1);
                     viewProducts(selected, 1);
-                  }
-                }}
-              />
-              <button
-                className="btn"
-                onClick={() => {
-                  setPage(1);
-                  viewProducts(selected, 1);
-                }}
-              >
-                Cerca
-              </button>
-              <select
-                className="select"
-                value={importFilter}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setImportFilter(next);
-                  setPage(1);
-                  viewProducts(selected, 1, next);
-                }}
-              >
-                <option value="all">Tutti</option>
-                <option value="imported">Importato</option>
-                <option value="to-import">Da importare</option>
-              </select>
-              <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
-                {bulkMode ? "Selezione attiva" : "Import multiplo"}
-              </button>
-              {bulkMode ? (
-                <button className="btn ghost" onClick={toggleSelectAllPage}>
-                  Seleziona tutti in pagina
-                </button>
-              ) : null}
-              <button className="btn primary" onClick={promoteSelected} disabled={!bulkMode || selectedSkus.size === 0}>
-                Importa selezionati
-              </button>
-              {bulkMode ? (
-                <select
-                  value={bulkCategoryId}
-                  onChange={(e) => setBulkCategoryId(e.target.value)}
-                  className="select"
+                  }}
                 >
-                  <option value="">Categoria per import multiplo</option>
-                  {categoryOptions.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.label}
-                    </option>
-                  ))}
+                  Cerca
+                </button>
+              </div>
+
+              <div className="drop-actions-row">
+                <select
+                  className="select"
+                  value={importFilter}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setImportFilter(next);
+                    setPage(1);
+                    viewProducts(selected, 1, next);
+                  }}
+                >
+                  <option value="all">Tutti</option>
+                  <option value="imported">Importato</option>
+                  <option value="to-import">Da importare</option>
                 </select>
-              ) : null}
+                <button className={`btn ${bulkMode ? "primary" : "ghost"}`} onClick={() => setBulkMode(!bulkMode)}>
+                  {bulkMode ? "Selezione attiva" : "Import multiplo"}
+                </button>
+                {bulkMode ? (
+                  <button className="btn ghost" onClick={toggleSelectAllPage}>
+                    Seleziona tutti in pagina
+                  </button>
+                ) : null}
+                <button className="btn primary" onClick={promoteSelected} disabled={!bulkMode || selectedSkus.size === 0}>
+                  Importa selezionati
+                </button>
+                {bulkMode ? (
+                  <select
+                    value={bulkCategoryId}
+                    onChange={(e) => setBulkCategoryId(e.target.value)}
+                    className="select"
+                  >
+                    <option value="">Categoria import multiplo</option>
+                    {categoryOptions.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+              </div>
+
               <div className="products-view-switch">
                 <button
                   type="button"
@@ -555,8 +559,6 @@ export default function AdminSuppliers() {
           <div className="products-kpi-grid drop-kpi-grid">
             <div className="products-kpi-card"><div className="products-kpi-label">Fornitori</div><strong>{dropStats.suppliers}</strong></div>
             <div className="products-kpi-card"><div className="products-kpi-label">Prodotti trovati</div><strong>{dropStats.products}</strong></div>
-            <div className="products-kpi-card"><div className="products-kpi-label">Già importati</div><strong>{dropStats.imported}</strong></div>
-            <div className="products-kpi-card"><div className="products-kpi-label">Da importare</div><strong>{dropStats.toImport}</strong></div>
           </div>
           {productView === "table" ? (
           <div className="table wide-6">
