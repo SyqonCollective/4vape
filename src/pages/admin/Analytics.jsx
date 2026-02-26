@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
-import { MapContainer, TileLayer, CircleMarker, Tooltip as LeafletTooltip } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   ResponsiveContainer,
@@ -139,26 +139,26 @@ function StackedChart({ series = [] }) {
 }
 
 const ITALY_REGIONS = [
-  { key: "Valle d'Aosta", lat: 45.74, lng: 7.32 },
-  { key: "Piemonte", lat: 45.07, lng: 7.69 },
-  { key: "Liguria", lat: 44.41, lng: 8.93 },
-  { key: "Lombardia", lat: 45.46, lng: 9.19 },
-  { key: "Trentino-Alto Adige", lat: 46.50, lng: 11.35 },
-  { key: "Veneto", lat: 45.44, lng: 12.33 },
-  { key: "Friuli-Venezia Giulia", lat: 45.65, lng: 13.77 },
-  { key: "Emilia-Romagna", lat: 44.49, lng: 11.34 },
-  { key: "Toscana", lat: 43.77, lng: 11.25 },
-  { key: "Umbria", lat: 43.11, lng: 12.39 },
-  { key: "Marche", lat: 43.62, lng: 13.51 },
-  { key: "Lazio", lat: 41.90, lng: 12.50 },
-  { key: "Abruzzo", lat: 42.35, lng: 13.40 },
-  { key: "Molise", lat: 41.56, lng: 14.66 },
-  { key: "Campania", lat: 40.85, lng: 14.27 },
-  { key: "Puglia", lat: 41.12, lng: 16.87 },
-  { key: "Basilicata", lat: 40.64, lng: 15.80 },
-  { key: "Calabria", lat: 38.91, lng: 16.59 },
-  { key: "Sicilia", lat: 38.12, lng: 13.36 },
-  { key: "Sardegna", lat: 39.22, lng: 9.12 },
+  { key: "Valle d'Aosta" },
+  { key: "Piemonte" },
+  { key: "Liguria" },
+  { key: "Lombardia" },
+  { key: "Trentino-Alto Adige" },
+  { key: "Veneto" },
+  { key: "Friuli-Venezia Giulia" },
+  { key: "Emilia-Romagna" },
+  { key: "Toscana" },
+  { key: "Umbria" },
+  { key: "Marche" },
+  { key: "Lazio" },
+  { key: "Abruzzo" },
+  { key: "Molise" },
+  { key: "Campania" },
+  { key: "Puglia" },
+  { key: "Basilicata" },
+  { key: "Calabria" },
+  { key: "Sicilia" },
+  { key: "Sardegna" },
 ];
 
 const REGION_ALIASES = {
@@ -210,9 +210,58 @@ function buildRegionData(topGeo = []) {
   return Array.from(map.values());
 }
 
+function regionNameFromFeature(feature) {
+  const p = feature?.properties || {};
+  return (
+    p.reg_name ||
+    p.name ||
+    p.NAME_1 ||
+    p.den_reg ||
+    p.DEN_REG ||
+    p.regione ||
+    p.Regione ||
+    ""
+  );
+}
+
+function colorForRevenue(value, max) {
+  if (max <= 0 || value <= 0) return "#e2e8f0";
+  const ratio = value / max;
+  if (ratio > 0.75) return "#0ea5e9";
+  if (ratio > 0.5) return "#38bdf8";
+  if (ratio > 0.25) return "#7dd3fc";
+  return "#bae6fd";
+}
+
 function ItalyMap({ data = [] }) {
   const max = Math.max(...data.map((d) => d.revenue), 1);
   const [active, setActive] = useState(null);
+  const [geo, setGeo] = useState(null);
+  const [geoError, setGeoError] = useState("");
+  const regionMap = useMemo(() => {
+    const m = new Map();
+    data.forEach((d) => m.set(normalizeArea(d.key), d));
+    return m;
+  }, [data]);
+
+  useEffect(() => {
+    let live = true;
+    (async () => {
+      try {
+        setGeoError("");
+        const res = await fetch("https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.geojson");
+        if (!res.ok) throw new Error("GeoJSON non disponibile");
+        const json = await res.json();
+        if (live) setGeo(json);
+      } catch {
+        if (live) setGeoError("Mappa regioni non disponibile");
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, []);
+
   return (
     <div className="italy-map-wrap">
       <div className="italy-map-canvas">
@@ -221,37 +270,38 @@ function ItalyMap({ data = [] }) {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {data
-            .filter((region) => region.revenue > 0)
-            .map((region) => {
-              const intensity = Math.max(region.revenue / max, 0);
-              const radius = 6 + intensity * 16;
-              return (
-                <CircleMarker
-                  key={region.key}
-                  center={[region.lat, region.lng]}
-                  radius={radius}
-                  pathOptions={{
-                    fillColor: "#0ea5e9",
-                    color: "#0369a1",
-                    weight: 1.2,
-                    fillOpacity: 0.45 + intensity * 0.35,
-                  }}
-                  eventHandlers={{
-                    mouseover: () => setActive(region),
-                    mouseout: () => setActive(null),
-                    click: () => setActive(region),
-                  }}
-                >
-                  <LeafletTooltip direction="top" offset={[0, -4]} opacity={0.95}>
-                    <strong>{region.key}</strong><br />
-                    Ordini: {region.orders}<br />
-                    Fatturato: {formatMoney(region.revenue)}
-                  </LeafletTooltip>
-                </CircleMarker>
-              );
-            })}
+          {geo ? (
+            <GeoJSON
+              data={geo}
+              style={(feature) => {
+                const raw = regionNameFromFeature(feature);
+                const normalized = normalizeArea(raw);
+                const r = regionMap.get(normalized);
+                return {
+                  color: "#0f172a",
+                  weight: 0.8,
+                  fillColor: colorForRevenue(Number(r?.revenue || 0), max),
+                  fillOpacity: r?.revenue ? 0.78 : 0.42,
+                };
+              }}
+              onEachFeature={(feature, layer) => {
+                const raw = regionNameFromFeature(feature);
+                const normalized = normalizeArea(raw);
+                const r = regionMap.get(normalized) || { key: raw || "Regione", orders: 0, revenue: 0 };
+                layer.bindTooltip(
+                  `<div style="font-size:12px"><strong>${r.key}</strong><br/>Ordini: ${r.orders}<br/>Fatturato: ${formatMoney(r.revenue)}</div>`,
+                  { sticky: true, direction: "top", opacity: 0.95 }
+                );
+                layer.on({
+                  mouseover: () => setActive(r),
+                  mouseout: () => setActive(null),
+                  click: () => setActive(r),
+                });
+              }}
+            />
+          ) : null}
         </MapContainer>
+        {geoError ? <div className="muted" style={{ marginTop: 8 }}>{geoError}</div> : null}
       </div>
       <div className="italy-map-side">
         <div className="muted">Top aree nel periodo</div>

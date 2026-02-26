@@ -154,7 +154,7 @@ export default function AdminDashboard() {
         <div>
           <h2>Trend ordini/fatturato (14 giorni)</h2>
           <TrendSpark series={trendSeries} />
-          <div className="muted">Azzurro = ordini (scala dedicata), verde = fatturato (scala dedicata)</div>
+          <div className="muted" style={{ fontSize: "0.84rem" }}>Periodo: ultimi 14 giorni</div>
         </div>
         <div>
           <h2>Ordini recenti</h2>
