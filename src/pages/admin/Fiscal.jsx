@@ -116,7 +116,7 @@ export default function AdminFiscal() {
       Number(r.nicotine || 0).toFixed(3),
       Number(r.avgPriceIvato || 0).toFixed(2),
       Number(r.qty || 0),
-      Number(r.accisa || 0).toFixed(2),
+      Number(r.accisa || 0).toFixed(6),
     ]);
     exportCsv("gestione_fiscale_quindicinale.csv", headers, rows);
   }
@@ -199,7 +199,7 @@ export default function AdminFiscal() {
         <div className="page-header">
           <div>
             <h3>SEZIONE 1 · Quindicinale</h3>
-            <p>Righe aggregate per SKU (somma quantità su SKU uguali)</p>
+            <p>Righe aggregate per SKU (somma quantità su SKU uguali, prezzo medio ivato senza accisa)</p>
           </div>
           <div className="actions">
             <button className="btn ghost" onClick={exportQuindicinale}>Esporta CSV</button>
@@ -220,7 +220,7 @@ export default function AdminFiscal() {
             <div>Nicotina</div>
             <div>Prezzo medio vendita ivato</div>
             <div>Quantità</div>
-            <div>Accisa</div>
+            <div>Accisa (categoria)</div>
           </div>
           {quindicinaleRows.map((r, idx) => (
             <div className="row" key={`${r.sku}-${idx}`}>
@@ -231,7 +231,7 @@ export default function AdminFiscal() {
               <div>{Number(r.nicotine || 0).toFixed(3)}</div>
               <div>{money(r.avgPriceIvato || 0)}</div>
               <div>{Number(r.qty || 0)}</div>
-              <div>{money(r.accisa || 0)}</div>
+              <div>{Number(r.accisa || 0).toFixed(6)}</div>
             </div>
           ))}
         </div>

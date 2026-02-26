@@ -1355,7 +1355,7 @@ export default function AdminProducts() {
             : (p.subcategory || "");
           return (
           <div
-            className={`row clickable ${p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
+            className={`row clickable ${!isParentRow && p.isUnavailable ? "unavailable" : ""} ${p.published === false ? "draft" : ""} ${isChild ? "child-row" : ""} ${isParentRow ? "parent-row" : ""}`}
             key={p.id}
             onClick={() => {
               if (bulkMode) {

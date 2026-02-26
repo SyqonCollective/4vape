@@ -3006,7 +3006,8 @@ export async function adminRoutes(app: FastifyInstance) {
           if (!Number.isFinite(exciseUnit) || exciseUnit <= 0) return null;
           const accisa = exciseUnit * qty;
           const vatRate = Number(p.taxRate || p.taxRateRef?.rate || 0);
-          const iva = vatRate > 0 ? (imponibile + accisa) * (vatRate / 100) : 0;
+          // Requested fiscal view: IVA used for average sale price must exclude excise.
+          const iva = vatRate > 0 ? imponibile * (vatRate / 100) : 0;
           const unitGross = qty > 0 ? (imponibile + accisa + iva) / qty : 0;
           return {
             invoiceId: inv.id,
@@ -3079,6 +3080,7 @@ export async function adminRoutes(app: FastifyInstance) {
         const accisa = Number(line.exciseTotal || 0);
         const totale = Number(line.unitGross || 0) * qty;
         const imponibile = Math.max(0, totale - accisa);
+        const vatNoExcise = Number(line.vatTotal || 0);
         const ml = Number(line.mlProduct || 0);
 
         fiscalLines.push({
@@ -3101,6 +3103,7 @@ export async function adminRoutes(app: FastifyInstance) {
           qty,
           exciseUnit,
           accisa,
+          vatNoExcise,
           imponibile,
           totale,
         });
@@ -3124,12 +3127,14 @@ export async function adminRoutes(app: FastifyInstance) {
         mlProduct: l.mlProduct,
         nicotine: l.nicotine,
         qty: 0,
-        accisa: 0,
-        grossTotal: 0,
+        accisaTotal: 0,
+        accisaCategory: l.exciseUnit || 0,
+        ivatoNoExciseTotal: 0,
       };
       row.qty += l.qty;
-      row.accisa += l.accisa;
-      row.grossTotal += l.totale;
+      row.accisaTotal += l.accisa;
+      row.ivatoNoExciseTotal += l.imponibile + l.vatNoExcise;
+      if (!row.accisaCategory && l.exciseUnit) row.accisaCategory = l.exciseUnit;
       bySku.set(key, row);
     }
     const quindicinaleRows = Array.from(bySku.values())
@@ -3139,9 +3144,9 @@ export async function adminRoutes(app: FastifyInstance) {
         codicePl: r.codicePl,
         mlProduct: r.mlProduct,
         nicotine: r.nicotine,
-        avgPriceIvato: r.qty > 0 ? r.grossTotal / r.qty : 0,
+        avgPriceIvato: r.qty > 0 ? r.ivatoNoExciseTotal / r.qty : 0,
         qty: r.qty,
-        accisa: r.accisa,
+        accisa: r.accisaCategory,
       }))
       .sort((a, b) => b.qty - a.qty || String(a.sku).localeCompare(String(b.sku), "it"));
 
@@ -3394,7 +3399,7 @@ export async function adminRoutes(app: FastifyInstance) {
         const exciseUnit = Number(p.exciseTotal ?? Number(p.exciseMl || 0) + Number(p.exciseProduct || 0));
         const accisa = roundUp2(exciseUnit * qty);
         const vatRate = Number(p.taxRate || p.taxRateRef?.rate || 0);
-        const iva = vatRate > 0 ? roundUp2((imponibile + accisa) * (vatRate / 100)) : 0;
+        const iva = vatRate > 0 ? roundUp2(imponibile * (vatRate / 100)) : 0;
         const unitGross = qty > 0 ? (imponibile + accisa + iva) / qty : 0;
         return {
           invoiceId: invoice.id,
