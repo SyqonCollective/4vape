@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  Bar,
+  Area,
+} from "recharts";
 
 // CHECKLIST (admin richieste):
 // [x] Stati ordini recenti con etichette UI (non raw enum)
@@ -13,104 +24,47 @@ function statusLabel(status) {
   return "Bozza";
 }
 
-function calcTrend(values = []) {
-  if (!values.length) return [];
-  const n = values.length;
-  const sumX = ((n - 1) * n) / 2;
-  const sumX2 = ((n - 1) * n * (2 * n - 1)) / 6;
-  const sumY = values.reduce((a, b) => a + b, 0);
-  const sumXY = values.reduce((acc, y, x) => acc + x * y, 0);
-  const denom = n * sumX2 - sumX * sumX || 1;
-  const m = (n * sumXY - sumX * sumY) / denom;
-  const b = (sumY - m * sumX) / n;
-  return values.map((_, x) => m * x + b);
-}
-
-const logScale = (v) => Math.log1p(Math.max(0, Number(v || 0)));
-const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-
-function percentile(values = [], p = 0.9) {
-  if (!values.length) return 1;
-  const sorted = [...values].sort((a, b) => a - b);
-  const idx = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * p)));
-  return sorted[idx] || 1;
-}
-
-function movingAverage(values = [], windowSize = 3) {
-  if (!values.length) return [];
-  return values.map((_, i) => {
-    const from = Math.max(0, i - windowSize + 1);
-    const chunk = values.slice(from, i + 1);
-    return chunk.reduce((a, b) => a + b, 0) / chunk.length;
-  });
-}
-
-function toPoints(values = [], min = 0, range = 1) {
-  return values
-    .map((v, i) => {
-      const x = (i / Math.max(values.length - 1, 1)) * 100;
-      const y = 100 - ((Number(v || 0) - min) / (range || 1)) * 100;
-      return { x, y };
-    });
-}
+const shortDate = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso).slice(5);
+  return d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
+};
 
 function TrendSpark({ series = [] }) {
   if (!series.length) return null;
-  const ordersValues = series.map((p) => Number(p.orders || 0));
-  const revenueValues = series.map((p) => Number(p.revenue || 0));
-
-  const ordersCap = percentile(ordersValues.map(logScale), 0.92);
-  const revenueCap = percentile(revenueValues.map(logScale), 0.92);
-  const ordersScaled = ordersValues.map((v) => clamp(logScale(v), 0, ordersCap));
-  const revenueScaled = revenueValues.map((v) => clamp(logScale(v), 0, revenueCap));
-  const revenueSmooth = movingAverage(revenueScaled, 3);
-  const ordersScaledMin = 0;
-  const ordersScaledMax = Math.max(...ordersScaled, 1);
-  const revenueScaledMin = 0;
-  const revenueScaledMax = Math.max(...revenueSmooth, 1);
-  const ordersScaledRange = ordersScaledMax - ordersScaledMin || 1;
-  const revenueScaledRange = revenueScaledMax - revenueScaledMin || 1;
-
-  const ordersPts = toPoints(ordersScaled, ordersScaledMin, ordersScaledRange);
-  const revenuePts = toPoints(revenueSmooth, revenueScaledMin, revenueScaledRange);
-  const revenuePath = revenuePts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-  const revenueArea = `0,100 ${revenuePath} 100,100`;
-
-  const revenueTrend = calcTrend(revenueSmooth);
-  const revenueTrendPath = toPoints(revenueTrend, revenueScaledMin, revenueScaledRange)
-    .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-    .join(" ");
-  const barWidth = 100 / Math.max(series.length, 1);
+  const chartData = series.map((p) => ({
+    ...p,
+    day: shortDate(p.date),
+    orders: Number(p.orders || 0),
+    revenue: Number(p.revenue || 0),
+  }));
 
   return (
     <div className="sparkline-box">
-      <svg viewBox="0 0 100 100" className="sparkline" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="dashRevenueFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#22c55e" stopOpacity="0.45" />
-          <stop offset="100%" stopColor="#22c55e" stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      <line x1="0" y1="25" x2="100" y2="25" className="chart-gridline" />
-      <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
-      <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
-      {ordersPts.map((p, i) => {
-        const h = ((ordersScaled[i] - ordersScaledMin) / ordersScaledRange) * 100;
-        const w = Math.max(barWidth - 1.6, 1);
-        const x = i * barWidth + (barWidth - w) / 2;
-        const height = h > 0 ? Math.max(h, 1.2) : 0;
-        return <rect key={`bar-${i}`} x={x} y={100 - height} width={w} height={height} className="spark-bar" rx="1" />;
-      })}
-      <polygon points={revenueArea} fill="url(#dashRevenueFill)" />
-      <polyline points={revenuePath} fill="none" stroke="#22c55e" strokeWidth="2.4" />
-      <polyline points={revenueTrendPath} fill="none" className="chart-trendline chart-trendline-revenue" strokeWidth="1.6" />
-      {revenuePts.map((p, i) => (
-        <circle key={`dot-${i}`} cx={p.x} cy={p.y} r="1.5" className="spark-dot" />
-      ))}
-      </svg>
-      <div className="spark-legend">
-        <span><i className="legend-dot revenue" /> Fatturato</span>
-        <span><i className="legend-dot orders" /> Ordini</span>
+      <div className="sparkline">
+        <ResponsiveContainer width="100%" height={240}>
+          <ComposedChart data={chartData} margin={{ top: 10, right: 12, left: 8, bottom: 6 }}>
+            <defs>
+              <linearGradient id="dashRevenueFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.35} />
+                <stop offset="95%" stopColor="#22c55e" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#d6e1ee" />
+            <XAxis dataKey="day" tick={{ fill: "#667085", fontSize: 11 }} />
+            <YAxis yAxisId="orders" orientation="left" allowDecimals={false} tick={{ fill: "#667085", fontSize: 11 }} width={30} />
+            <YAxis yAxisId="revenue" orientation="right" tick={{ fill: "#667085", fontSize: 11 }} width={62} tickFormatter={(v) => `€${Math.round(v)}`} />
+            <Tooltip
+              formatter={(value, name) => (name === "Fatturato" ? `€ ${Number(value || 0).toFixed(2)}` : Number(value || 0))}
+              labelFormatter={(label) => `Giorno ${label}`}
+              contentStyle={{ borderRadius: 12, border: "1px solid #d4dce8" }}
+            />
+            <Legend />
+            <Bar yAxisId="orders" dataKey="orders" name="Ordini" fill="#0ea5e9" radius={[6, 6, 0, 0]} barSize={14} />
+            <Area yAxisId="revenue" type="monotone" dataKey="revenue" name="Fatturato" stroke="#22c55e" strokeWidth={2.6} fill="url(#dashRevenueFill)" />
+          </ComposedChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

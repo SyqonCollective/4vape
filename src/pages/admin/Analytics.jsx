@@ -2,6 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import italyMapAsset from "../../../map.svg";
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  Bar,
+  Area,
+  Line,
+  ReferenceLine,
+  BarChart,
+} from "recharts";
 
 // CHECKLIST (admin richieste):
 // [x] Accisa prima di IVA
@@ -25,174 +39,101 @@ function formatMoney(v) {
   return `€ ${Number(v || 0).toFixed(2)}`;
 }
 
-function calcTrend(series = []) {
-  if (!series.length) return [];
-  const n = series.length;
-  const xs = series.map((_, i) => i);
-  const ys = series.map((s) => Number(s.value || 0));
-  const sumX = xs.reduce((a, b) => a + b, 0);
-  const sumY = ys.reduce((a, b) => a + b, 0);
-  const sumXY = xs.reduce((acc, x, i) => acc + x * ys[i], 0);
-  const sumX2 = xs.reduce((acc, x) => acc + x * x, 0);
-  const denom = n * sumX2 - sumX * sumX || 1;
-  const m = (n * sumXY - sumX * sumY) / denom;
-  const b = (sumY - m * sumX) / n;
-  return xs.map((x) => ({ label: series[x].label, value: m * x + b }));
-}
-
-const logScale = (v) => Math.log1p(Math.max(0, Number(v || 0)));
-const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-function percentile(values = [], p = 0.9) {
-  if (!values.length) return 1;
-  const sorted = [...values].sort((a, b) => a - b);
-  const idx = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * p)));
-  return sorted[idx] || 1;
-}
-
-function movingAverage(values = [], windowSize = 3) {
-  if (!values.length) return [];
-  return values.map((_, i) => {
-    const from = Math.max(0, i - windowSize + 1);
-    const chunk = values.slice(from, i + 1);
-    return chunk.reduce((a, b) => a + b, 0) / chunk.length;
-  });
-}
-
-const signedLogScale = (v) => {
-  const n = Number(v || 0);
-  return Math.sign(n) * Math.log1p(Math.abs(n));
+const shortDate = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso).slice(5);
+  return d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
 };
 
 function TrendChart({ series = [], variant = "line" }) {
   if (!series.length) return null;
-  if (series.length === 1) {
-    return (
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-trend">
-        <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
-        <circle cx="50" cy="50" r="3.2" fill="currentColor" />
-      </svg>
-    );
-  }
-  const hasNegative = series.some((s) => Number(s.value || 0) < 0);
-  const scaled = series.map((s) => (hasNegative ? signedLogScale(s.value) : logScale(s.value)));
-  const cap = percentile(scaled.map((v) => Math.abs(v)), 0.92) || 1;
-  const clipped = scaled.map((v) => (hasNegative ? clamp(v, -cap, cap) : clamp(v, 0, cap)));
-  const smooth = movingAverage(clipped, 3);
-  const max = Math.max(...smooth, 1);
-  const min = Math.min(...smooth, hasNegative ? -1 : 0);
-  const range = max - min || 1;
-  const toPoint = (arr, useRaw = false) =>
-    arr
-      .map((s, i) => {
-        const x = (i / Math.max(arr.length - 1, 1)) * 100;
-        const val = useRaw ? Number(s.value || 0) : Number(s || 0);
-        const y = 100 - ((val - min) / range) * 100;
-        return `${x.toFixed(2)},${y.toFixed(2)}`;
-      })
-      .join(" ");
-
-  const points = toPoint(smooth);
-  const trendPoints = toPoint(movingAverage(calcTrend(series).map((s) => hasNegative ? signedLogScale(s.value) : logScale(s.value)), 2));
+  const chartData = series.map((s) => ({
+    day: shortDate(s.label),
+    value: Number(s.value || 0),
+  }));
+  const hasNegative = chartData.some((x) => x.value < 0);
 
   return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-trend">
-      <line x1="0" y1="25" x2="100" y2="25" className="chart-gridline" />
-      <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
-      <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
-      {variant === "area" ? <polygon points={`0,100 ${points} 100,100`} className="chart-area-fill" /> : null}
-      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="2.8" />
-      <polyline points={trendPoints} fill="none" className="chart-trendline" strokeWidth="2" />
-      {smooth.map((val, i) => {
-        const x = (i / Math.max(series.length - 1, 1)) * 100;
-        const y = 100 - ((val - min) / range) * 100;
-        return <circle key={`${series[i]?.label || i}-${i}`} cx={x} cy={y} r="1.3" fill="currentColor" opacity="0.72" />;
-      })}
-    </svg>
+    <div className="analytics-trend">
+      <ResponsiveContainer width="100%" height={230}>
+        <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#d6e1ee" />
+          <XAxis dataKey="day" tick={{ fill: "#667085", fontSize: 11 }} />
+          <YAxis tick={{ fill: "#667085", fontSize: 11 }} width={54} />
+          <Tooltip
+            formatter={(value) => `€ ${Number(value || 0).toFixed(2)}`}
+            contentStyle={{ borderRadius: 12, border: "1px solid #d4dce8" }}
+          />
+          {hasNegative ? <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 3" /> : null}
+          {variant === "area" ? (
+            <Area type="monotone" dataKey="value" stroke="#16a34a" strokeWidth={2.4} fill="#16a34a" fillOpacity={0.16} />
+          ) : (
+            <Line type="monotone" dataKey="value" stroke="#16a34a" strokeWidth={2.4} dot={{ r: 2 }} />
+          )}
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
 function ComboBarLineChart({ bars = [], line = [] }) {
   if (!bars.length) return null;
-  const barsScaled = bars.map((x) => logScale(x.value));
-  const lineScaledRaw = line.map((x) => logScale(x.value));
-  const barCap = percentile(barsScaled, 0.92);
-  const lineCap = percentile(lineScaledRaw, 0.92);
-  const barsClipped = barsScaled.map((v) => clamp(v, 0, barCap));
-  const lineScaled = movingAverage(lineScaledRaw.map((v) => clamp(v, 0, lineCap)), 3);
-  const max = Math.max(1, ...barsClipped, ...lineScaled);
-  const barW = 100 / Math.max(bars.length, 1);
-  const linePts = lineScaled
-    .map((v, i) => {
-      const x = i * barW + barW / 2;
-      const y = 100 - (v / max) * 100;
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(" ");
+  const chartData = bars.map((b, i) => ({
+    day: shortDate(b.label),
+    orders: Number(b.value || 0),
+    revenue: Number(line[i]?.value || 0),
+  }));
   return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-combo">
-      <line x1="0" y1="25" x2="100" y2="25" className="chart-gridline" />
-      <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
-      <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
-      {bars.map((b, i) => {
-        const h = (barsClipped[i] / max) * 100;
-        const w = Math.max(barW - 2, 1);
-        const x = i * barW + (barW - w) / 2;
-        const height = h > 0 ? Math.max(h, 1.2) : 0;
-        return <rect key={`b-${i}`} x={x} y={100 - height} width={w} height={height} className="combo-bar" rx="1.2" />;
-      })}
-      <polyline points={linePts} fill="none" className="combo-line" strokeWidth="2.2" />
-      {lineScaled.map((v, i) => {
-        const x = i * barW + barW / 2;
-        const y = 100 - (v / max) * 100;
-        return <circle key={`p-${i}`} cx={x} cy={y} r="1.6" className="combo-dot" />;
-      })}
-    </svg>
+    <div className="analytics-combo">
+      <ResponsiveContainer width="100%" height={240}>
+        <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#d6e1ee" />
+          <XAxis dataKey="day" tick={{ fill: "#667085", fontSize: 11 }} />
+          <YAxis yAxisId="orders" allowDecimals={false} tick={{ fill: "#667085", fontSize: 11 }} width={30} />
+          <YAxis yAxisId="revenue" orientation="right" tick={{ fill: "#667085", fontSize: 11 }} width={62} tickFormatter={(v) => `€${Math.round(v)}`} />
+          <Tooltip
+            formatter={(value, name) => (name === "Fatturato" ? `€ ${Number(value || 0).toFixed(2)}` : Number(value || 0))}
+            contentStyle={{ borderRadius: 12, border: "1px solid #d4dce8" }}
+          />
+          <Legend />
+          <Bar yAxisId="orders" dataKey="orders" name="Ordini" fill="#0ea5e9" radius={[5, 5, 0, 0]} barSize={12} />
+          <Line yAxisId="revenue" type="monotone" dataKey="revenue" name="Fatturato" stroke="#16a34a" strokeWidth={2.4} dot={{ r: 2 }} />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
 function StackedChart({ series = [] }) {
   if (!series.length) return null;
-  const max = Math.max(...series.map((s) => s.revenue), 1);
-  const barWidth = 100 / Math.max(series.length, 1);
+  const chartData = series.map((s) => ({
+    day: shortDate(s.date),
+    cost: Number(s.cost || 0),
+    vat: Number(s.vat || 0),
+    excise: Number(s.excise || 0),
+    margin: Number(s.margin || 0),
+  }));
 
   return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-stacked">
-      {series.map((s, i) => {
-        const x = i * barWidth;
-        const total = max || 1;
-        const costH = (s.cost / total) * 100;
-        const vatH = (s.vat / total) * 100;
-        const exciseH = (s.excise / total) * 100;
-        const marginH = (s.margin / total) * 100;
-        const width = Math.max(barWidth - 2, 0.6);
-        const left = x + (barWidth - width) / 2;
-
-        let y = 100;
-        const rects = [];
-        const pushRect = (h, cls) => {
-          if (h <= 0) return;
-          const hh = Math.max(h, 1.2);
-          y -= hh;
-          rects.push(
-            <rect
-              key={`${s.date}-${cls}`}
-              x={left}
-              y={y}
-              width={width}
-              height={hh}
-              className={cls}
-              rx={1.4}
-              ry={1.4}
-            />
-          );
-        };
-        pushRect(costH, "stack-cost");
-        pushRect(vatH, "stack-vat");
-        pushRect(exciseH, "stack-excise");
-        pushRect(marginH, "stack-margin");
-        return rects;
-      })}
-    </svg>
+    <div className="analytics-stacked">
+      <ResponsiveContainer width="100%" height={240}>
+        <BarChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#d6e1ee" />
+          <XAxis dataKey="day" tick={{ fill: "#667085", fontSize: 11 }} />
+          <YAxis tick={{ fill: "#667085", fontSize: 11 }} width={62} />
+          <Tooltip
+            formatter={(value) => `€ ${Number(value || 0).toFixed(2)}`}
+            contentStyle={{ borderRadius: 12, border: "1px solid #d4dce8" }}
+          />
+          <Legend />
+          <Bar dataKey="cost" stackId="tot" name="Costo" fill="#f97316" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="vat" stackId="tot" name="IVA" fill="#3b82f6" />
+          <Bar dataKey="excise" stackId="tot" name="Accisa" fill="#a855f7" />
+          <Bar dataKey="margin" stackId="tot" name="Margine" fill="#10b981" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
