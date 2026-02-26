@@ -6,7 +6,7 @@ export default function AdminBrands() {
   const [items, setItems] = useState([]);
   const [name, setName] = useState("");
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState("table");
+  const [viewMode, setViewMode] = useState("cards");
   const [sortBy, setSortBy] = useState("count-desc");
   const [onlyActive, setOnlyActive] = useState(false);
   const [editing, setEditing] = useState("");
