@@ -36,12 +36,13 @@ export default function AdminInventory() {
   const [excises, setExcises] = useState([]);
   const [q, setQ] = useState("");
   const [asOfDate, setAsOfDate] = useState("");
-  const [brandFilter, setBrandFilter] = useState([]);
-  const [categoryFilter, setCategoryFilter] = useState([]);
-  const [subcategoryFilter, setSubcategoryFilter] = useState([]);
+  const [brandFilter, setBrandFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [subcategoryFilter, setSubcategoryFilter] = useState("");
   const [exciseFilter, setExciseFilter] = useState("");
   const [mlFilter, setMlFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [viewMode, setViewMode] = useState("table");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
@@ -135,9 +136,9 @@ export default function AdminInventory() {
     () =>
       items.filter(
         (i) =>
-          (!brandFilter.length || brandFilter.includes(i.brand || "")) &&
-          (!categoryFilter.length || categoryFilter.includes(i.category || "")) &&
-          (!subcategoryFilter.length || subcategoryFilter.includes(i.subcategory || ""))
+          (!brandFilter || brandFilter === (i.brand || "")) &&
+          (!categoryFilter || categoryFilter === (i.category || "")) &&
+          (!subcategoryFilter || subcategoryFilter === (i.subcategory || ""))
       ),
     [items, brandFilter, categoryFilter, subcategoryFilter]
   );
@@ -294,46 +295,82 @@ export default function AdminInventory() {
         <div className="card"><div className="card-label">IVA stimata</div><div className="card-value">{money(stats.totalVat)}</div></div>
       </div>
 
-      <div className="filters-row">
-        <div className="filter-group" style={{ minWidth: 280 }}>
+      <div className="inventory-filters-pro">
+        <div className="inventory-filters-top">
+          <div className="filter-group" style={{ minWidth: 280 }}>
           <label>Cerca</label>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="SKU, nome, brand, categoria"
           />
+          </div>
+          <div className="products-view-switch">
+            <button
+              type="button"
+              className={`btn ${viewMode === "table" ? "primary" : "ghost"}`}
+              onClick={() => setViewMode("table")}
+            >
+              Tabella
+            </button>
+            <button
+              type="button"
+              className={`btn ${viewMode === "cards" ? "primary" : "ghost"}`}
+              onClick={() => setViewMode("cards")}
+            >
+              Card
+            </button>
+          </div>
+          <button
+            className="btn ghost"
+            onClick={() => {
+              setQ("");
+              setAsOfDate("");
+              setBrandFilter("");
+              setCategoryFilter("");
+              setSubcategoryFilter("");
+              setExciseFilter("");
+              setMlFilter("");
+            }}
+          >
+            Reset filtri
+          </button>
         </div>
-        <div className="filter-group">
+        <div className="inventory-filters-grid">
+          <div className="filter-group">
           <label>Data giacenza</label>
           <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} />
-        </div>
-        <div className="filter-group">
+          </div>
+          <div className="filter-group">
           <label>Brand</label>
-          <select multiple className="select" value={brandFilter} onChange={(e) => setBrandFilter(Array.from(e.target.selectedOptions).map((o) => o.value))}>
+          <select className="select" value={brandFilter} onChange={(e) => setBrandFilter(e.target.value)}>
+            <option value="">Tutti</option>
             {brandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
-        </div>
-        <div className="filter-group">
+          </div>
+          <div className="filter-group">
           <label>Categoria</label>
-          <select multiple className="select" value={categoryFilter} onChange={(e) => setCategoryFilter(Array.from(e.target.selectedOptions).map((o) => o.value))}>
+          <select className="select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+            <option value="">Tutte</option>
             {categoryOptions.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
-        </div>
-        <div className="filter-group">
+          </div>
+          <div className="filter-group">
           <label>Sottocategoria</label>
-          <select multiple className="select" value={subcategoryFilter} onChange={(e) => setSubcategoryFilter(Array.from(e.target.selectedOptions).map((o) => o.value))}>
+          <select className="select" value={subcategoryFilter} onChange={(e) => setSubcategoryFilter(e.target.value)}>
+            <option value="">Tutte</option>
             {subcategoryOptions.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
-        </div>
-        <div className="filter-group">
+          </div>
+          <div className="filter-group">
           <label>Accisa</label>
           <select className="select" value={exciseFilter} onChange={(e) => setExciseFilter(e.target.value)}>
             <option value="">Tutte</option>
             <option value="with">Con accisa</option>
             <option value="without">Senza accisa</option>
           </select>
-        </div>
-        <div className="filter-group">
+          </div>
+          <div className="filter-group">
           <label>ML prodotto</label>
           <input
             type="number"
@@ -342,9 +379,11 @@ export default function AdminInventory() {
             onChange={(e) => setMlFilter(e.target.value)}
             placeholder="es. 10"
           />
+          </div>
         </div>
       </div>
 
+      {viewMode === "table" ? (
       <div className="inventory-table">
         <div className="inventory-row header">
           <div><input type="checkbox" checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length} onChange={(e) => setSelectedIds(e.target.checked ? new Set(filteredItems.map((x) => x.id)) : new Set())} /></div>
@@ -384,6 +423,41 @@ export default function AdminInventory() {
             ))
           : null}
       </div>
+      ) : (
+        <div className="inventory-cards-grid">
+          {filteredItems.map((item) => (
+            <article key={item.id} className="inventory-card">
+              <div className="inventory-card-top">
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(item.id)}
+                    onChange={(e) =>
+                      setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        if (e.target.checked) next.add(item.id);
+                        else next.delete(item.id);
+                        return next;
+                      })
+                    }
+                  />
+                  <span className="mono">{item.sku}</span>
+                </label>
+                <button className="btn ghost small" onClick={() => openEdit(item)}>Modifica</button>
+              </div>
+              <strong>{item.name}</strong>
+              <div className="muted">{item.brand || "-"} · {item.category || "-"} · {item.subcategory || "-"}</div>
+              <div className="inventory-card-grid">
+                <span>Giacenza: <strong>{item.stockQty}</strong></span>
+                <span>Costo: <strong>{item.purchasePrice != null ? money(item.purchasePrice) : "-"}</strong></span>
+                <span>Prezzo: <strong>{item.price != null ? money(item.price) : "-"}</strong></span>
+                <span>Accisa: <strong>{item.exciseRateRef?.name || "-"}</strong></span>
+                <span>ML: <strong>{item.mlProduct ?? "-"}</strong></span>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
 
       {showEditModal ? (
         <Portal>
