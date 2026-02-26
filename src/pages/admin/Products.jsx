@@ -2962,7 +2962,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, name: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={false}
                         />
                         <input
                           type="number"
@@ -2973,7 +2973,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, price: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={row.isParent || !isDraftRow}
+                          disabled={row.isParent}
                         />
                         <input
                           type="number"
@@ -2984,7 +2984,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, listPrice: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={false}
                         />
                         <input
                           type="number"
@@ -2995,7 +2995,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, purchasePrice: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={false}
                         />
                         <input
                           type="number"
@@ -3006,7 +3006,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, discountPrice: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={false}
                         />
                         <input
                           type="number"
@@ -3017,7 +3017,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, discountQty: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={false}
                         />
                         <input
                           type="number"
@@ -3028,7 +3028,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, stockQty: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={row.isParent || !isDraftRow}
+                          disabled={row.isParent}
                         />
                         <input
                           type="number"
@@ -3039,7 +3039,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, nicotine: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={false}
                         />
                         <select
                           value={row.categoryId}
@@ -3048,7 +3048,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, categoryId: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={false}
                         >
                           <option value="">-</option>
                           {categoryOptions.map((c) => (
@@ -3064,7 +3064,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, taxRateId: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={false}
                         >
                           <option value="">-</option>
                           {taxes.map((t) => (
@@ -3080,7 +3080,7 @@ export default function AdminProducts() {
                             next[idx] = { ...row, exciseRateId: e.target.value };
                             setBulkRows(next);
                           }}
-                          disabled={!isDraftRow}
+                          disabled={false}
                         >
                           <option value="">-</option>
                           {excises.map((e) => (
@@ -3111,7 +3111,7 @@ export default function AdminProducts() {
                               next[idx] = { ...row, isUnavailable: e.target.checked };
                               setBulkRows(next);
                             }}
-                            disabled={!isDraftRow}
+                            disabled={false}
                           />
                           <span />
                         </label>
