@@ -85,6 +85,46 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
   );
 }
 
+function ProductsTanstackTable({ rows, columns, onRowClick }) {
+  const table = useReactTable({
+    data: rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
+  });
+
+  return (
+    <div className="table wide-10 products-tanstack">
+      <div className="row header">
+        {table.getHeaderGroups().map((headerGroup) =>
+          headerGroup.headers.map((header) => (
+            <div key={header.id}>
+              {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+            </div>
+          ))
+        )}
+      </div>
+      {table.getRowModel().rows.map((tr) => {
+        const original = tr.original;
+        const p = original.item;
+        return (
+          <div
+            key={tr.id}
+            className={`row clickable ${!original.isParentRow && p.isUnavailable ? "unavailable" : ""} ${
+              p.published === false ? "draft" : ""
+            } ${original.isChild ? "child-row" : ""} ${original.isParentRow ? "parent-row" : ""}`}
+            onClick={() => onRowClick(p)}
+          >
+            {tr.getVisibleCells().map((cell) => (
+              <div key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AdminProducts() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
@@ -1207,12 +1247,6 @@ export default function AdminProducts() {
     [bulkMode, collapsedParents, selectedIds]
   );
 
-  const productTable = useReactTable({
-    data: tableRows,
-    columns: productTableColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (row) => row.id,
-  });
   const productsStats = useMemo(() => {
     const visible = filteredItems.length;
     const parentsCount = filteredItems.filter((p) => p.isParent).length;
@@ -1670,43 +1704,20 @@ export default function AdminProducts() {
 
       <div className="panel products-panel">
       {viewMode === "table" ? (
-      <div className="table wide-10 products-tanstack">
-        <div className="row header">
-          {productTable.getHeaderGroups().map((headerGroup) =>
-            headerGroup.headers.map((header) => (
-              <div key={header.id}>
-                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-              </div>
-            ))
-          )}
-        </div>
-        {productTable.getRowModel().rows.map((tr) => {
-          const original = tr.original;
-          const p = original.item;
-          return (
-            <div
-              key={tr.id}
-              className={`row clickable ${!original.isParentRow && p.isUnavailable ? "unavailable" : ""} ${
-                p.published === false ? "draft" : ""
-              } ${original.isChild ? "child-row" : ""} ${original.isParentRow ? "parent-row" : ""}`}
-              onClick={() => {
-                if (bulkMode) {
-                  const next = new Set(selectedIds);
-                  if (next.has(p.id)) next.delete(p.id);
-                  else next.add(p.id);
-                  setSelectedIds(next);
-                  return;
-                }
-                openEdit(p);
-              }}
-            >
-              {tr.getVisibleCells().map((cell) => (
-                <div key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
+      <ProductsTanstackTable
+        rows={tableRows}
+        columns={productTableColumns}
+        onRowClick={(p) => {
+          if (bulkMode) {
+            const next = new Set(selectedIds);
+            if (next.has(p.id)) next.delete(p.id);
+            else next.add(p.id);
+            setSelectedIds(next);
+            return;
+          }
+          openEdit(p);
+        }}
+      />
       ) : null}
       {viewMode === "cards" ? (
         <div className="products-card-grid">
