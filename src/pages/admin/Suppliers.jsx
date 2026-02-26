@@ -55,6 +55,7 @@ export default function AdminSuppliers() {
   const [newCategoryParent, setNewCategoryParent] = useState("");
   const [editingSupplierId, setEditingSupplierId] = useState(null);
   const [editingName, setEditingName] = useState("");
+  const [productView, setProductView] = useState("table");
   const token = getToken();
   const withToken = (url) => {
     if (!url) return url;
@@ -84,6 +85,12 @@ export default function AdminSuppliers() {
     if (totalPages > 1) push(totalPages);
     return items;
   })();
+  const dropStats = {
+    suppliers: items.length,
+    products: totalProducts,
+    imported: supplierProducts.filter((p) => p.isImported).length,
+    toImport: supplierProducts.filter((p) => !p.isImported).length,
+  };
 
   useEffect(() => {
     const open = Boolean(selectedProduct || showSuccess);
@@ -527,8 +534,31 @@ export default function AdminSuppliers() {
                   ))}
                 </select>
               ) : null}
+              <div className="products-view-switch">
+                <button
+                  type="button"
+                  className={`btn ${productView === "table" ? "primary" : "ghost"}`}
+                  onClick={() => setProductView("table")}
+                >
+                  Tabella
+                </button>
+                <button
+                  type="button"
+                  className={`btn ${productView === "cards" ? "primary" : "ghost"}`}
+                  onClick={() => setProductView("cards")}
+                >
+                  Card
+                </button>
+              </div>
             </div>
           </div>
+          <div className="products-kpi-grid drop-kpi-grid">
+            <div className="products-kpi-card"><div className="products-kpi-label">Fornitori</div><strong>{dropStats.suppliers}</strong></div>
+            <div className="products-kpi-card"><div className="products-kpi-label">Prodotti trovati</div><strong>{dropStats.products}</strong></div>
+            <div className="products-kpi-card"><div className="products-kpi-label">Già importati</div><strong>{dropStats.imported}</strong></div>
+            <div className="products-kpi-card"><div className="products-kpi-label">Da importare</div><strong>{dropStats.toImport}</strong></div>
+          </div>
+          {productView === "table" ? (
           <div className="table wide-6">
             <div className="row header">
               <div>Immagine</div>
@@ -605,6 +635,70 @@ export default function AdminSuppliers() {
               </div>
             ))}
           </div>
+          ) : (
+            <div className="drop-products-cards">
+              {supplierProducts.map((p) => (
+                <div
+                  key={p.id}
+                  className={`drop-product-card ${p.isImported ? "imported" : ""}`}
+                  onClick={() => {
+                    if (bulkMode) {
+                      if (p.isImported) return;
+                      const next = new Set(selectedSkus);
+                      if (next.has(p.supplierSku)) next.delete(p.supplierSku);
+                      else next.add(p.supplierSku);
+                      setSelectedSkus(next);
+                      return;
+                    }
+                    setSelectedProduct(p);
+                  }}
+                >
+                  <div className="drop-product-media">
+                    {p.imageUrl ? <img src={withToken(p.imageUrl)} alt={p.name || p.supplierSku} /> : <div className="thumb placeholder large" />}
+                  </div>
+                  <div className="drop-product-body">
+                    <div className="mono">{p.supplierSku}</div>
+                    <strong>{p.name || "-"}</strong>
+                    <div className="muted">{p.brand || "Senza brand"}</div>
+                    <div className="drop-product-stats">
+                      <span>{p.price ? `€ ${Number(p.price).toFixed(2)}` : "-"}</span>
+                      <span>Q.tà: {p.stockQty ?? "-"}</span>
+                    </div>
+                    <div className="drop-product-actions">
+                      {bulkMode ? (
+                        <label className={`check ${p.isImported ? "disabled" : ""}`}>
+                          <input
+                            type="checkbox"
+                            disabled={p.isImported}
+                            checked={selectedSkus.has(p.supplierSku)}
+                            onChange={(e) => {
+                              const next = new Set(selectedSkus);
+                              if (e.target.checked) next.add(p.supplierSku);
+                              else next.delete(p.supplierSku);
+                              setSelectedSkus(next);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <span>{p.isImported ? "Già importato" : "Seleziona"}</span>
+                        </label>
+                      ) : (
+                        <button
+                          type="button"
+                          className={`btn ${p.isImported ? "ghost" : "primary"} small`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!p.isImported) setSelectedProduct(p);
+                          }}
+                        >
+                          {p.isImported ? "Dettaglio" : "Importa"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="pagination">
             <button
               className="page-btn ghost"
