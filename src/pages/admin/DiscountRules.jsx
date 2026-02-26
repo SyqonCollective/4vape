@@ -225,6 +225,10 @@ export default function AdminDiscountRules() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [openDiscounts, setOpenDiscounts] = useState(true);
   const [openRules, setOpenRules] = useState(true);
+  const [discountQuery, setDiscountQuery] = useState("");
+  const [ruleQuery, setRuleQuery] = useState("");
+  const [onlyActiveDiscounts, setOnlyActiveDiscounts] = useState(false);
+  const [onlyActiveRules, setOnlyActiveRules] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -418,6 +422,44 @@ export default function AdminDiscountRules() {
   }
 
   const summary = useMemo(() => buildSummary(draft), [draft]);
+  const discountStats = useMemo(() => {
+    const active = discounts.filter((d) => d.active).length;
+    return {
+      total: discounts.length,
+      active,
+      inactive: discounts.length - active,
+      withCode: discounts.filter((d) => d.code).length,
+    };
+  }, [discounts]);
+  const ruleStats = useMemo(() => {
+    const active = rules.filter((r) => r.active).length;
+    return {
+      total: rules.length,
+      active,
+      inactive: rules.length - active,
+      stackable: rules.filter((r) => r.stackable).length,
+    };
+  }, [rules]);
+  const filteredDiscounts = useMemo(() => {
+    const q = discountQuery.trim().toLowerCase();
+    return discounts.filter((d) => {
+      if (onlyActiveDiscounts && !d.active) return false;
+      if (!q) return true;
+      return `${d.name || ""} ${d.code || ""} ${scopeLabel(d.scope || "ORDER")}`
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [discounts, discountQuery, onlyActiveDiscounts]);
+  const filteredRules = useMemo(() => {
+    const q = ruleQuery.trim().toLowerCase();
+    return rules.filter((r) => {
+      if (onlyActiveRules && !r.active) return false;
+      if (!q) return true;
+      return `${r.name || ""} ${scopeLabel(r.scope || "ORDER")} ${r.target || ""}`
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [rules, ruleQuery, onlyActiveRules]);
 
   return (
     <section>
@@ -428,6 +470,28 @@ export default function AdminDiscountRules() {
         </div>
       </div>
       <InlineError message={error} onClose={() => setError("")} />
+      <div className="rules-overview">
+        <div className="rules-overview-card">
+          <span>Sconti</span>
+          <strong>{discountStats.total}</strong>
+          <small>{discountStats.active} attivi</small>
+        </div>
+        <div className="rules-overview-card">
+          <span>Regole</span>
+          <strong>{ruleStats.total}</strong>
+          <small>{ruleStats.active} attive</small>
+        </div>
+        <div className="rules-overview-card">
+          <span>Codici sconto</span>
+          <strong>{discountStats.withCode}</strong>
+          <small>su {discountStats.total}</small>
+        </div>
+        <div className="rules-overview-card">
+          <span>Regole stack</span>
+          <strong>{ruleStats.stackable}</strong>
+          <small>compatibili</small>
+        </div>
+      </div>
 
       <div className="rules-layout">
         <div className="rules-card">
@@ -453,7 +517,23 @@ export default function AdminDiscountRules() {
                 </button>
               </div>
             </div>
-            {openDiscounts ? <div className="rules-table">
+            <div className="rules-toolbar">
+              <input
+                value={discountQuery}
+                onChange={(e) => setDiscountQuery(e.target.value)}
+                placeholder="Cerca sconto per nome, codice o ambito"
+              />
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={onlyActiveDiscounts}
+                  onChange={(e) => setOnlyActiveDiscounts(e.target.checked)}
+                />
+                <span>Solo attivi</span>
+              </label>
+              <span className="tag">{filteredDiscounts.length} visibili</span>
+            </div>
+            {openDiscounts ? <div className="rules-table rules-table-discounts">
                 <div className="row header">
                   <div>Nome</div>
                   <div>Ambito</div>
@@ -461,7 +541,7 @@ export default function AdminDiscountRules() {
                   <div>Validità</div>
                   <div>Azioni</div>
                 </div>
-              {discounts.map((r) => (
+              {filteredDiscounts.map((r) => (
                 <div className="row" key={r.id}>
                   <div>
                     <strong>{r.name}</strong>
@@ -648,7 +728,23 @@ export default function AdminDiscountRules() {
                 </button>
               </div>
             </div>
-            {openRules ? <div className="rules-table">
+            <div className="rules-toolbar">
+              <input
+                value={ruleQuery}
+                onChange={(e) => setRuleQuery(e.target.value)}
+                placeholder="Cerca regola per nome, target o ambito"
+              />
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={onlyActiveRules}
+                  onChange={(e) => setOnlyActiveRules(e.target.checked)}
+                />
+                <span>Solo attive</span>
+              </label>
+              <span className="tag">{filteredRules.length} visibili</span>
+            </div>
+            {openRules ? <div className="rules-table rules-table-rules">
               <div className="row header">
                 <div>Nome</div>
                 <div>Ambito</div>
@@ -657,7 +753,7 @@ export default function AdminDiscountRules() {
                 <div>Priorità</div>
                 <div>Azioni</div>
               </div>
-              {rules.map((r) => (
+              {filteredRules.map((r) => (
                 <div className="row" key={r.id}>
                   <div>
                     <strong>{r.name}</strong>
