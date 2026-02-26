@@ -5444,6 +5444,7 @@ button {
   border-radius: 16px;
   padding: 0.85rem;
   margin: 0.85rem 0;
+  max-width: 100%;
 }
 
 .inventory-filters-top {
@@ -5473,7 +5474,9 @@ button {
   background: #fff;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.22);
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
 }
 
 .inventory-row {
@@ -5483,7 +5486,8 @@ button {
   align-items: center;
   padding: 12px 14px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1680px;
+  min-width: 1560px;
+  width: max-content;
 }
 
 .inventory-row.header {
@@ -5493,7 +5497,8 @@ button {
   color: #64748b;
   font-weight: 700;
   background: #f8fafc;
-  min-width: 1680px;
+  min-width: 1560px;
+  width: max-content;
 }
 
 .inventory-row:last-child {
@@ -5514,6 +5519,7 @@ button {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 0.85rem;
   margin-top: 0.85rem;
+  max-width: 100%;
 }
 
 .inventory-card {
@@ -5864,6 +5870,29 @@ button {
 
   .returns-table .row {
     grid-template-columns: 130px 120px 1fr;
+  }
+}
+
+@media (max-width: 1400px) {
+  .inventory-filters-grid {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+
+  .inventory-row,
+  .inventory-row.header {
+    min-width: 1380px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .inventory-filters-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .inventory-filters-grid {
+    grid-template-columns: 1fr;
   }
 }
 
