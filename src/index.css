@@ -5875,8 +5875,14 @@ button {
   min-width: 0;
 }
 
+.treasury-page,
+.bundles-page {
+  min-width: 0;
+}
+
 .warehouse-filters-shell,
-.expenses-filters-shell {
+.expenses-filters-shell,
+.treasury-filters-shell {
   display: grid;
   gap: 0.7rem;
   background: linear-gradient(180deg, #ffffff, #f8fbff);
@@ -5887,7 +5893,8 @@ button {
 }
 
 .warehouse-filters-top,
-.expenses-filters-top {
+.expenses-filters-top,
+.treasury-filters-top {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) auto auto;
   gap: 0.65rem;
@@ -5895,12 +5902,14 @@ button {
 }
 
 .warehouse-filters-top input,
-.expenses-filters-top input {
+.expenses-filters-top input,
+.treasury-filters-top input {
   min-height: 44px;
 }
 
 .warehouse-filters-grid,
-.expenses-filters-grid {
+.expenses-filters-grid,
+.treasury-filters-grid {
   margin-top: 0 !important;
   display: grid;
   grid-template-columns: repeat(4, minmax(150px, 1fr));
@@ -5908,11 +5917,17 @@ button {
 }
 
 .warehouse-filters-grid .filter-group,
-.expenses-filters-grid .filter-group {
+.expenses-filters-grid .filter-group,
+.treasury-filters-grid .filter-group {
   margin: 0;
 }
 
 .warehouse-cards {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  margin-bottom: 0.7rem;
+}
+
+.treasury-cards {
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   margin-bottom: 0.7rem;
 }
@@ -5929,14 +5944,16 @@ button {
 }
 
 .warehouse-cards-grid,
-.expenses-cards-grid {
+.expenses-cards-grid,
+.treasury-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 0.85rem;
 }
 
 .warehouse-card,
-.expenses-card {
+.expenses-card,
+.treasury-card {
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 16px;
   background: #fff;
@@ -5947,7 +5964,8 @@ button {
 }
 
 .warehouse-card-top,
-.expenses-card-top {
+.expenses-card-top,
+.treasury-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5961,6 +5979,18 @@ button {
   gap: 0.35rem 0.75rem;
 }
 
+.treasury-card-total {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.treasury-table-pro .row,
+.treasury-table-pro .row.header {
+  grid-template-columns: 110px 130px 140px minmax(260px, 1.5fr) 120px 120px 170px;
+  min-width: 1180px;
+}
+
 .expenses-form-panel {
   margin-top: 0.75rem;
   border: 1px solid rgba(148, 163, 184, 0.24);
@@ -5972,6 +6002,117 @@ button {
 .expenses-table-pro .row.header {
   grid-template-columns: 120px 140px minmax(220px, 1.3fr) minmax(160px, 1fr) 120px 120px 120px;
   min-width: 1100px;
+}
+
+.bundles-cards {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  margin-bottom: 0.8rem;
+}
+
+.bundles-layout {
+  display: grid;
+  grid-template-columns: minmax(340px, 0.95fr) minmax(0, 1.45fr);
+  gap: 0.9rem;
+}
+
+.bundles-builder,
+.bundles-list-panel {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fff, #f8fbff);
+}
+
+.bundles-builder-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+}
+
+.bundles-builder-head h3 {
+  margin: 0;
+}
+
+.bundles-builder-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 0.65rem;
+}
+
+.bundles-picker-search {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+}
+
+.bundles-picker-list {
+  margin-top: 0.45rem;
+  max-height: 210px;
+  overflow: auto;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 12px;
+  padding: 0.4rem;
+}
+
+.bundles-items-table {
+  margin-top: 0.7rem;
+}
+
+.bundles-items-table .row,
+.bundles-items-table .row.header {
+  grid-template-columns: 130px minmax(180px, 1.4fr) 90px 100px;
+  min-width: 560px;
+}
+
+.bundles-list-head {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.bundles-list-head input {
+  min-height: 44px;
+}
+
+.bundles-table-pro .row,
+.bundles-table-pro .row.header {
+  grid-template-columns: minmax(200px, 1fr) 120px 110px minmax(260px, 1.6fr) 160px;
+  min-width: 980px;
+}
+
+.bundles-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.bundle-card {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 14px;
+  background: #fff;
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.45rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.bundle-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.bundle-card-price {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.bundle-card-items {
+  color: #475569;
+  font-size: 0.9rem;
 }
 
 .goods-receipt-modal {
@@ -6135,13 +6276,27 @@ button {
   }
 
   .warehouse-filters-top,
-  .expenses-filters-top {
+  .expenses-filters-top,
+  .treasury-filters-top {
     grid-template-columns: 1fr;
   }
 
   .warehouse-filters-grid,
-  .expenses-filters-grid {
+  .expenses-filters-grid,
+  .treasury-filters-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .bundles-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .bundles-builder-form {
+    grid-template-columns: 1fr;
+  }
+
+  .bundles-list-head {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -6167,7 +6322,8 @@ button {
   }
 
   .warehouse-filters-grid,
-  .expenses-filters-grid {
+  .expenses-filters-grid,
+  .treasury-filters-grid {
     grid-template-columns: 1fr;
   }
 
