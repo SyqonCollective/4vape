@@ -5430,6 +5430,9 @@ button {
 .inventory-actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
 }
 
 .inventory-cards .card-value {
@@ -5474,9 +5477,15 @@ button {
   background: #fff;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.22);
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.inventory-table-scroll {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  max-width: 100%;
 }
 
 .inventory-row {
@@ -5486,7 +5495,7 @@ button {
   align-items: center;
   padding: 12px 14px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1560px;
+  min-width: 1450px;
   width: max-content;
 }
 
@@ -5497,7 +5506,7 @@ button {
   color: #64748b;
   font-weight: 700;
   background: #f8fafc;
-  min-width: 1560px;
+  min-width: 1450px;
   width: max-content;
 }
 
@@ -5927,7 +5936,7 @@ button {
 
   .inventory-row,
   .inventory-row.header {
-    min-width: 1380px;
+    min-width: 1320px;
   }
 }
 

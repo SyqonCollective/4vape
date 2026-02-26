@@ -411,43 +411,45 @@ export default function AdminInventory() {
 
       {viewMode === "table" ? (
       <div className="inventory-table">
-        <div className="inventory-row header">
-          <div><input type="checkbox" checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length} onChange={(e) => setSelectedIds(e.target.checked ? new Set(filteredItems.map((x) => x.id)) : new Set())} /></div>
-          <div>SKU</div><div>Nome</div><div>Brand</div><div>Categoria</div><div>Sottocategoria</div><div>Giacenza</div><div>Costo</div><div>Prezzo</div><div>Accisa</div><div>ML Prodotto</div><div></div>
-        </div>
-        {loading ? <div className="inventory-empty">Caricamento...</div> : null}
-        {!loading && !items.length ? <div className="inventory-empty">Nessun articolo</div> : null}
-        {!loading
-          ? filteredItems.map((item) => (
-              <div key={item.id} className="inventory-row">
-                <div>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(item.id)}
-                    onChange={(e) =>
-                      setSelectedIds((prev) => {
-                        const next = new Set(prev);
-                        if (e.target.checked) next.add(item.id);
-                        else next.delete(item.id);
-                        return next;
-                      })
-                    }
-                  />
+        <div className="inventory-table-scroll">
+          <div className="inventory-row header">
+            <div><input type="checkbox" checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length} onChange={(e) => setSelectedIds(e.target.checked ? new Set(filteredItems.map((x) => x.id)) : new Set())} /></div>
+            <div>SKU</div><div>Nome</div><div>Brand</div><div>Categoria</div><div>Sottocategoria</div><div>Giacenza</div><div>Costo</div><div>Prezzo</div><div>Accisa</div><div>ML Prodotto</div><div></div>
+          </div>
+          {loading ? <div className="inventory-empty">Caricamento...</div> : null}
+          {!loading && !items.length ? <div className="inventory-empty">Nessun articolo</div> : null}
+          {!loading
+            ? filteredItems.map((item) => (
+                <div key={item.id} className="inventory-row">
+                  <div>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={(e) =>
+                        setSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          if (e.target.checked) next.add(item.id);
+                          else next.delete(item.id);
+                          return next;
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="mono">{item.sku}</div>
+                  <div>{item.name}</div>
+                  <div>{item.brand || "-"}</div>
+                  <div>{item.category || "-"}</div>
+                  <div>{item.subcategory || "-"}</div>
+                  <div>{item.stockQty}</div>
+                  <div>{item.purchasePrice != null ? money(item.purchasePrice) : "-"}</div>
+                  <div>{item.price != null ? money(item.price) : "-"}</div>
+                  <div>{item.exciseRateRef?.name || "-"}</div>
+                  <div>{item.mlProduct ?? "-"}</div>
+                  <div><button className="btn ghost small" onClick={() => openEdit(item)}>Modifica</button></div>
                 </div>
-                <div className="mono">{item.sku}</div>
-                <div>{item.name}</div>
-                <div>{item.brand || "-"}</div>
-                <div>{item.category || "-"}</div>
-                <div>{item.subcategory || "-"}</div>
-                <div>{item.stockQty}</div>
-                <div>{item.purchasePrice != null ? money(item.purchasePrice) : "-"}</div>
-                <div>{item.price != null ? money(item.price) : "-"}</div>
-                <div>{item.exciseRateRef?.name || "-"}</div>
-                <div>{item.mlProduct ?? "-"}</div>
-                <div><button className="btn ghost small" onClick={() => openEdit(item)}>Modifica</button></div>
-              </div>
-            ))
-          : null}
+              ))
+            : null}
+        </div>
       </div>
       ) : (
         <div className="inventory-cards-grid">
