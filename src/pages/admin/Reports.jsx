@@ -31,6 +31,7 @@ export default function AdminReports() {
   const [products, setProducts] = useState([]);
   const [companyQuery, setCompanyQuery] = useState("");
   const [productQuery, setProductQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
   const [data, setData] = useState({
     totals: {
       rows: 0,
@@ -133,17 +134,17 @@ export default function AdminReports() {
   }, []);
 
   return (
-    <section>
+    <section className="reports-modern">
       <div className="page-header">
         <div>
           <h1>Report</h1>
-          <p>Storico vendite per controlli fiscali, cliente e prodotto</p>
+          <p>Controllo vendite, marginalita e storico fiscale</p>
         </div>
       </div>
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="analytics-toolbar">
+      <div className="analytics-toolbar reports-toolbar-modern">
         <div className="analytics-filters">
           <label>
             Da
@@ -198,7 +199,24 @@ export default function AdminReports() {
         </div>
       </div>
 
-      <div className="cards analytics-cards">
+      <div className="reports-tabs">
+        <button
+          type="button"
+          className={`reports-tab ${activeTab === "overview" ? "active" : ""}`}
+          onClick={() => setActiveTab("overview")}
+        >
+          Overview
+        </button>
+        <button
+          type="button"
+          className={`reports-tab ${activeTab === "details" ? "active" : ""}`}
+          onClick={() => setActiveTab("details")}
+        >
+          Dettaglio vendite
+        </button>
+      </div>
+
+      <div className="cards analytics-cards reports-cards-modern">
         <div className="card"><div className="card-label">Righe vendita</div><div className="card-value">{data.totals.rows}</div><div className="card-sub">Movimenti nel periodo</div></div>
         <div className="card"><div className="card-label">Ordini</div><div className="card-value">{data.totals.orders}</div><div className="card-sub">Univoci</div></div>
         <div className="card"><div className="card-label">Pezzi</div><div className="card-value">{data.totals.qty}</div><div className="card-sub">Totale quantità</div></div>
@@ -209,73 +227,77 @@ export default function AdminReports() {
         <div className="card"><div className="card-label">Margine netto-costo</div><div className="card-value">{formatMoney(data.totals.margin)}</div><div className="card-sub">Imponibile - costo prodotti</div></div>
       </div>
 
-      <div className="panel analytics-grid">
-        <div className="analytics-panel">
-          <div className="panel-header"><div><h2>Top prodotti</h2><div className="muted">Per totale lordo</div></div></div>
-          <div className="table compact">
-            <div className="row header"><div>Prodotto</div><div>Pezzi</div><div>Totale</div></div>
-            {data.topProducts.map((p) => (
-              <div className="row" key={p.id}>
-                <div>{p.sku} · {p.name}</div>
-                <div>{p.qty}</div>
-                <div>{formatMoney(p.revenueGross)}</div>
-              </div>
-            ))}
+      {activeTab === "overview" ? (
+        <div className="panel analytics-grid reports-overview-grid">
+          <div className="analytics-panel analytics-panel-feature">
+            <div className="panel-header"><div><h2>Top prodotti</h2><div className="muted">Per totale lordo</div></div></div>
+            <div className="table compact">
+              <div className="row header"><div>Prodotto</div><div>Pezzi</div><div>Totale</div></div>
+              {data.topProducts.map((p) => (
+                <div className="row" key={p.id}>
+                  <div>{p.sku} · {p.name}</div>
+                  <div>{p.qty}</div>
+                  <div>{formatMoney(p.revenueGross)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="analytics-panel analytics-panel-feature">
+            <div className="panel-header"><div><h2>Top clienti</h2><div className="muted">Per totale lordo</div></div></div>
+            <div className="table compact">
+              <div className="row header"><div>Cliente</div><div>Ordini</div><div>Totale</div></div>
+              {data.topClients.map((c) => (
+                <div className="row" key={c.id}>
+                  <div>{c.name}</div>
+                  <div>{c.orders}</div>
+                  <div>{formatMoney(c.revenueGross)}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="analytics-panel">
-          <div className="panel-header"><div><h2>Top clienti</h2><div className="muted">Per totale lordo</div></div></div>
-          <div className="table compact">
-            <div className="row header"><div>Cliente</div><div>Ordini</div><div>Totale</div></div>
-            {data.topClients.map((c) => (
-              <div className="row" key={c.id}>
-                <div>{c.name}</div>
-                <div>{c.orders}</div>
-                <div>{formatMoney(c.revenueGross)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      ) : null}
 
-      <div className="panel">
-        <div className="panel-header">
-          <div>
-            <h2>Dettaglio vendite</h2>
-            <div className="muted">
-              Righe: {data.pagination.total} · Pagina {data.pagination.page}/{data.pagination.totalPages}
+      {activeTab === "details" ? (
+        <div className="panel reports-detail-panel">
+          <div className="panel-header">
+            <div>
+              <h2>Dettaglio vendite</h2>
+              <div className="muted">
+                Righe: {data.pagination.total} · Pagina {data.pagination.page}/{data.pagination.totalPages}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="table wide-report">
-          <div className="row header">
-            <div>Data</div>
-            <div>Ordine</div>
-            <div>Cliente</div>
-            <div>SKU</div>
-            <div>Prodotto</div>
-            <div>Q.tà</div>
-            <div>Imponibile</div>
-            <div>Accisa</div>
-            <div>IVA</div>
-            <div>Totale lordo</div>
-          </div>
-          {data.lines.map((r) => (
-            <div className="row" key={r.id}>
-              <div>{new Date(r.createdAt).toLocaleDateString("it-IT")}</div>
-              <div className="mono">{r.orderNumber || r.orderId.slice(-8).toUpperCase()}</div>
-              <div>{r.companyName}</div>
-              <div className="mono">{r.sku}</div>
-              <div>{r.productName}</div>
-              <div>{r.qty}</div>
-              <div>{formatMoney(r.lineNet)}</div>
-              <div>{formatMoney(r.excise)}</div>
-              <div>{formatMoney(r.vat)}</div>
-              <div>{formatMoney(r.lineGross)}</div>
+          <div className="table wide-report report-table-modern">
+            <div className="row header">
+              <div>Data</div>
+              <div>Ordine</div>
+              <div>Cliente</div>
+              <div>SKU</div>
+              <div>Prodotto</div>
+              <div>Q.tà</div>
+              <div>Imponibile</div>
+              <div>Accisa</div>
+              <div>IVA</div>
+              <div>Totale lordo</div>
             </div>
-          ))}
+            {data.lines.map((r) => (
+              <div className="row" key={r.id}>
+                <div>{new Date(r.createdAt).toLocaleDateString("it-IT")}</div>
+                <div className="mono">{r.orderNumber || r.orderId.slice(-8).toUpperCase()}</div>
+                <div>{r.companyName}</div>
+                <div className="mono">{r.sku}</div>
+                <div>{r.productName}</div>
+                <div>{r.qty}</div>
+                <div>{formatMoney(r.lineNet)}</div>
+                <div>{formatMoney(r.excise)}</div>
+                <div>{formatMoney(r.vat)}</div>
+                <div>{formatMoney(r.lineGross)}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
