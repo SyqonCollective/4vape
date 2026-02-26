@@ -801,8 +801,21 @@ export default function AdminGoodsReceipts() {
     }
   }
 
+  const receiptStats = useMemo(() => {
+    return receipts.reduce(
+      (acc, r) => {
+        acc.count += 1;
+        acc.net += Number(r.totalNet || 0);
+        acc.vat += Number(r.totalVat || 0);
+        acc.gross += Number(r.totalGross || 0);
+        return acc;
+      },
+      { count: 0, net: 0, vat: 0, gross: 0 }
+    );
+  }, [receipts]);
+
   return (
-    <section>
+    <section className="goods-page">
       <div className="page-header">
         <div>
           <h1>Arrivo merci</h1>
@@ -818,7 +831,21 @@ export default function AdminGoodsReceipts() {
       <InlineError message={error} onClose={() => setError("")} />
       {success ? <div className="success-banner">{success}</div> : null}
 
-      <div className="filters-row">
+      <div className="goods-filters-shell">
+        <div className="goods-filters-top">
+          <span className="tag">{receipts.length} registrazioni</span>
+          <button
+            className="btn ghost"
+            onClick={() => {
+              setFilterFromDate("");
+              setFilterToDate("");
+              setFilterSupplierId("");
+            }}
+          >
+            Reset filtri
+          </button>
+        </div>
+      <div className="goods-filters-grid">
         <div className="filter-group">
           <label>Data dal</label>
           <input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)} />
@@ -837,8 +864,16 @@ export default function AdminGoodsReceipts() {
           </select>
         </div>
       </div>
+      </div>
 
-      <div className="table">
+      <div className="cards goods-cards">
+        <div className="card"><div className="card-label">Arrivi</div><div className="card-value">{receiptStats.count}</div></div>
+        <div className="card"><div className="card-label">Imponibile</div><div className="card-value">{money(receiptStats.net)}</div></div>
+        <div className="card"><div className="card-label">IVA</div><div className="card-value">{money(receiptStats.vat)}</div></div>
+        <div className="card"><div className="card-label">Totale</div><div className="card-value">{money(receiptStats.gross)}</div></div>
+      </div>
+
+      <div className="table goods-receipts-table">
         <div className="row header">
           <div>Data</div>
           <div>N. progressivo</div>

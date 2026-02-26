@@ -5808,6 +5808,68 @@ button {
   align-items: start;
 }
 
+.goods-page {
+  min-width: 0;
+}
+
+.goods-filters-shell {
+  display: grid;
+  gap: 0.7rem;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 16px;
+  padding: 0.85rem;
+  margin: 0.85rem 0 0.75rem;
+}
+
+.goods-filters-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.goods-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(170px, 1fr));
+  gap: 0.65rem;
+}
+
+.goods-filters-grid .filter-group {
+  margin: 0;
+}
+
+.goods-filters-grid .filter-group input,
+.goods-filters-grid .filter-group select {
+  min-height: 44px;
+}
+
+.goods-cards {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 0.8rem;
+}
+
+.goods-receipts-table .row {
+  grid-template-columns: 110px 120px minmax(200px, 1.3fr) minmax(180px, 1.2fr) 120px 120px 110px 100px 110px 170px;
+  min-width: 1320px;
+}
+
+.goods-receipts-table .row.header {
+  grid-template-columns: 110px 120px minmax(200px, 1.3fr) minmax(180px, 1.2fr) 120px 120px 110px 100px 110px 170px;
+  min-width: 1320px;
+}
+
+.goods-receipts-table .row:not(.header):hover {
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.goods-receipts-table .row > div:nth-child(3),
+.goods-receipts-table .row > div:nth-child(4) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .goods-receipt-modal {
   position: fixed;
   top: 50%;
@@ -5847,6 +5909,7 @@ button {
 
 .goods-receipt-modal .order-form {
   gap: 14px;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
 }
 
 .goods-receipt-modal .order-form input,
@@ -5859,6 +5922,7 @@ button {
 .goods-main {
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 
 .goods-paste {
@@ -5894,6 +5958,17 @@ button {
   align-items: center;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   min-width: 1310px;
+}
+
+.goods-row > div:last-child {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.goods-side {
+  position: sticky;
+  top: 0;
 }
 
 .goods-row.header {
@@ -5945,6 +6020,14 @@ button {
 
   .goods-layout {
     grid-template-columns: 1fr;
+  }
+
+  .goods-filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .goods-side {
+    position: static;
   }
 }
 
