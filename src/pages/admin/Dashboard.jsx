@@ -23,6 +23,14 @@ function statusLabel(status) {
   return "Bozza";
 }
 
+function statusTone(status) {
+  if (status === "SUBMITTED") return "pending";
+  if (status === "APPROVED") return "processing";
+  if (status === "FULFILLED") return "done";
+  if (status === "CANCELLED") return "failed";
+  return "draft";
+}
+
 const shortDate = (iso) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -115,48 +123,67 @@ export default function AdminDashboard() {
       })),
     [daily]
   );
+  const completionRate = useMemo(() => {
+    const completed = recent.filter((o) => o.status === "FULFILLED").length;
+    return recent.length ? Math.round((completed / recent.length) * 100) : 0;
+  }, [recent]);
 
   return (
-    <section>
+    <section className="dashboard-modern">
       <div className="page-header">
         <div>
           <h1>Dashboard</h1>
-          <p>Panoramica veloce dell'attività</p>
+          <p>Panoramica operativa in tempo reale</p>
         </div>
       </div>
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="cards">
-        <div className="card">
+      <div className="dash-strip">
+        <div className="dash-strip-item">
+          <div className="dash-strip-label">Ordini oggi</div>
+          <strong>{stats.ordersToday}</strong>
+        </div>
+        <div className="dash-strip-item">
+          <div className="dash-strip-label">Tasso completamento</div>
+          <strong>{completionRate}%</strong>
+        </div>
+        <div className="dash-strip-item">
+          <div className="dash-strip-label">Richieste da approvare</div>
+          <strong>{stats.pendingCompanies + stats.pendingUsers}</strong>
+        </div>
+      </div>
+
+      <div className="cards dash-cards">
+        <div className="card dash-card">
           <div className="card-label">Prodotti attivi</div>
           <div className="card-value">{stats.products}</div>
-          <div className="card-sub">Nel catalogo</div>
+          <div className="card-sub">Catalogo pubblicato</div>
         </div>
-        <div className="card">
+        <div className="card dash-card">
           <div className="card-label">Ordini totali</div>
           <div className="card-value">{stats.orders}</div>
-          <div className="card-sub">Oggi: {stats.ordersToday}</div>
+          <div className="card-sub">Storico complessivo</div>
         </div>
-        <div className="card">
+        <div className="card dash-card">
           <div className="card-label">Richieste B2B</div>
           <div className="card-value">{stats.pendingCompanies}</div>
           <div className="card-sub">Utenti in attesa: {stats.pendingUsers}</div>
         </div>
-        <div className="card">
+        <div className="card dash-card dash-card-revenue">
           <div className="card-label">Fatturato</div>
           <div className="card-value">€ {Number(stats.revenue || 0).toFixed(2)}</div>
           <div className="card-sub">Da ordini confermati</div>
         </div>
       </div>
 
-      <div className="panel grid-2">
-        <div>
+      <div className="panel grid-2 dash-main-panels">
+        <div className="dash-chart-panel">
           <h2>Trend ordini/fatturato (14 giorni)</h2>
           <TrendSpark series={trendSeries} />
           <div className="muted" style={{ fontSize: "0.84rem" }}>Periodo: ultimi 14 giorni</div>
         </div>
-        <div>
+        <div className="dash-recent-panel">
           <h2>Ordini recenti</h2>
           <div className="table compact">
             <div className="row header">
@@ -167,7 +194,9 @@ export default function AdminDashboard() {
             {recent.map((o) => (
               <div className="row" key={o.id}>
                 <div>{o.company}</div>
-                <div className="mono">{statusLabel(o.status)}</div>
+                <div>
+                  <span className={`status-pill ${statusTone(o.status)}`}>{statusLabel(o.status)}</span>
+                </div>
                 <div>€ {Number(o.total).toFixed(2)}</div>
               </div>
             ))}
