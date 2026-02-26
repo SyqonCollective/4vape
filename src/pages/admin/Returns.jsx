@@ -11,6 +11,8 @@ const STATUS_META = {
 export default function AdminReturns() {
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("PENDING");
+  const [q, setQ] = useState("");
+  const [viewMode, setViewMode] = useState("table");
   const [error, setError] = useState("");
   const [detail, setDetail] = useState(null);
   const [confirmHandle, setConfirmHandle] = useState(null);
@@ -29,10 +31,23 @@ export default function AdminReturns() {
     loadReturns();
   }, []);
 
-  const filteredItems = useMemo(
-    () => items.filter((x) => (status === "ALL" ? true : x.status === status)),
-    [items, status]
-  );
+  const filteredItems = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return items.filter((x) => {
+      if (status !== "ALL" && x.status !== status) return false;
+      if (!query) return true;
+      return [
+        x.orderNumber,
+        x.customerName,
+        x.productName,
+        x.problemDescription,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+    });
+  }, [items, q, status]);
 
   const stats = useMemo(() => {
     const pending = items.filter((x) => x.status === "PENDING").length;
@@ -77,7 +92,7 @@ export default function AdminReturns() {
   const formatDate = (value) => new Date(value).toLocaleString("it-IT");
 
   return (
-    <section>
+    <section className="returns-page">
       <div className="page-header">
         <div>
           <h1>Resi</h1>
@@ -102,46 +117,90 @@ export default function AdminReturns() {
         </div>
       </div>
 
-      <div className="filters-row">
-        <div className="filter-group">
-          <label>Filtro</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="PENDING">Da gestire</option>
-            <option value="HANDLED">Gestiti</option>
-            <option value="ALL">Tutti</option>
-          </select>
+      <div className="returns-filters-shell">
+        <div className="returns-filters-top">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Cerca per ordine, cliente, prodotto, descrizione..."
+          />
+          <div className="products-view-switch">
+            <button type="button" className={`btn ${viewMode === "table" ? "primary" : "ghost"}`} onClick={() => setViewMode("table")}>Tabella</button>
+            <button type="button" className={`btn ${viewMode === "cards" ? "primary" : "ghost"}`} onClick={() => setViewMode("cards")}>Card</button>
+          </div>
+          <button
+            className="btn ghost"
+            onClick={() => {
+              setStatus("PENDING");
+              setQ("");
+            }}
+          >
+            Reset filtri
+          </button>
+        </div>
+        <div className="filters-row returns-filters-grid">
+          <div className="filter-group">
+            <label>Stato</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="PENDING">Da gestire</option>
+              <option value="HANDLED">Gestiti</option>
+              <option value="ALL">Tutti</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div className="orders-table returns-table">
-        <div className="row header">
-          <div>Data</div>
-          <div>Ordine</div>
-          <div>Cliente</div>
-          <div>Prodotto</div>
-          <div>Stato</div>
-          <div></div>
-        </div>
-        {filteredItems.map((r) => (
-          <div key={r.id} className="row">
-            <div>{formatDate(r.createdAt)}</div>
-            <div>{r.orderNumber}</div>
-            <div>{r.customerName || "Cliente demo area privata"}</div>
-            <div>{r.productName}</div>
-            <div>
-              <span className={`tag ${STATUS_META[r.status]?.cls || "info"}`}>
-                {STATUS_META[r.status]?.label || r.status}
-              </span>
-            </div>
-            <div>
-              <button className="btn ghost small" onClick={() => openDetail(r.id)}>
-                Dettagli
-              </button>
-            </div>
+      {viewMode === "table" ? (
+        <div className="orders-table returns-table returns-table-pro">
+          <div className="row header">
+            <div>Data</div>
+            <div>Ordine</div>
+            <div>Cliente</div>
+            <div>Prodotto</div>
+            <div>Stato</div>
+            <div>Azioni</div>
           </div>
-        ))}
-        {!filteredItems.length ? <div className="inventory-empty">Nessun reso</div> : null}
-      </div>
+          {filteredItems.map((r) => (
+            <div key={r.id} className="row">
+              <div>{formatDate(r.createdAt)}</div>
+              <div className="mono">{r.orderNumber}</div>
+              <div>{r.customerName || "Cliente demo area privata"}</div>
+              <div>{r.productName}</div>
+              <div>
+                <span className={`tag ${STATUS_META[r.status]?.cls || "info"}`}>
+                  {STATUS_META[r.status]?.label || r.status}
+                </span>
+              </div>
+              <div>
+                <button className="btn ghost small" onClick={() => openDetail(r.id)}>
+                  Dettagli
+                </button>
+              </div>
+            </div>
+          ))}
+          {!filteredItems.length ? <div className="inventory-empty">Nessun reso</div> : null}
+        </div>
+      ) : (
+        <div className="returns-cards-grid">
+          {filteredItems.map((r) => (
+            <article className="returns-card" key={r.id}>
+              <div className="returns-card-top">
+                <strong className="mono">{r.orderNumber}</strong>
+                <span className={`tag ${STATUS_META[r.status]?.cls || "info"}`}>
+                  {STATUS_META[r.status]?.label || r.status}
+                </span>
+              </div>
+              <strong>{r.customerName || "Cliente demo area privata"}</strong>
+              <div className="muted">{r.productName}</div>
+              <div className="muted">{formatDate(r.createdAt)}</div>
+              <button className="btn ghost" onClick={() => openDetail(r.id)}>
+                Apri dettaglio
+              </button>
+            </article>
+          ))}
+          {!filteredItems.length ? <div className="inventory-empty">Nessun reso</div> : null}
+        </div>
+      )}
 
       {detail ? (
         <Portal>

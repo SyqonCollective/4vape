@@ -5871,7 +5871,10 @@ button {
 }
 
 .warehouse-page,
-.expenses-page {
+.expenses-page,
+.logistics-page,
+.returns-page,
+.companies-page {
   min-width: 0;
 }
 
@@ -5882,7 +5885,10 @@ button {
 
 .warehouse-filters-shell,
 .expenses-filters-shell,
-.treasury-filters-shell {
+.treasury-filters-shell,
+.logistics-filters-shell,
+.returns-filters-shell,
+.companies-filters-shell {
   display: grid;
   gap: 0.7rem;
   background: linear-gradient(180deg, #ffffff, #f8fbff);
@@ -5894,7 +5900,10 @@ button {
 
 .warehouse-filters-top,
 .expenses-filters-top,
-.treasury-filters-top {
+.treasury-filters-top,
+.logistics-filters-top,
+.returns-filters-top,
+.companies-filters-top {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) auto auto;
   gap: 0.65rem;
@@ -5903,13 +5912,19 @@ button {
 
 .warehouse-filters-top input,
 .expenses-filters-top input,
-.treasury-filters-top input {
+.treasury-filters-top input,
+.logistics-filters-top input,
+.returns-filters-top input,
+.companies-filters-top input {
   min-height: 44px;
 }
 
 .warehouse-filters-grid,
 .expenses-filters-grid,
-.treasury-filters-grid {
+.treasury-filters-grid,
+.logistics-filters-grid,
+.returns-filters-grid,
+.companies-filters-grid {
   margin-top: 0 !important;
   display: grid;
   grid-template-columns: repeat(4, minmax(150px, 1fr));
@@ -5918,7 +5933,10 @@ button {
 
 .warehouse-filters-grid .filter-group,
 .expenses-filters-grid .filter-group,
-.treasury-filters-grid .filter-group {
+.treasury-filters-grid .filter-group,
+.logistics-filters-grid .filter-group,
+.returns-filters-grid .filter-group,
+.companies-filters-grid .filter-group {
   margin: 0;
 }
 
@@ -5927,9 +5945,98 @@ button {
   margin-bottom: 0.7rem;
 }
 
+.logistics-cards,
+.companies-cards {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  margin-bottom: 0.7rem;
+}
+
 .treasury-cards {
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   margin-bottom: 0.7rem;
+}
+
+.panel-header-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+
+.panel-header-compact h3 {
+  margin: 0;
+}
+
+.logistics-create-panel {
+  margin-top: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+
+.logistics-create-grid {
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.logistics-table-pro .row,
+.logistics-table-pro .row.header {
+  grid-template-columns: 110px 100px minmax(190px, 1.2fr) 140px minmax(190px, 1.1fr) 130px 110px 110px 180px;
+  min-width: 1260px;
+}
+
+.logistics-table-pro .row:not(.header):hover,
+.returns-table-pro .row:not(.header):hover,
+.companies-table-pro .row:not(.header):hover {
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.logistics-cards-grid,
+.returns-cards-grid,
+.companies-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.85rem;
+}
+
+.logistics-card,
+.returns-card,
+.companies-card {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 16px;
+  background: #fff;
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.45rem;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.returns-card-top,
+.companies-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.companies-card-top h4 {
+  margin: 0;
+}
+
+.companies-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+}
+
+.companies-table-pro .row,
+.companies-table-pro .row.header {
+  grid-template-columns: minmax(220px, 1.3fr) 120px 180px minmax(200px, 1fr) 150px 130px 80px 120px 120px 170px;
+  min-width: 1500px;
+}
+
+.returns-table-pro .row,
+.returns-table-pro .row.header {
+  grid-template-columns: 165px 110px minmax(220px, 1fr) minmax(220px, 1fr) 120px 110px;
+  min-width: 980px;
 }
 
 .warehouse-table-pro .row,
@@ -6277,13 +6384,23 @@ button {
 
   .warehouse-filters-top,
   .expenses-filters-top,
-  .treasury-filters-top {
+  .treasury-filters-top,
+  .logistics-filters-top,
+  .returns-filters-top,
+  .companies-filters-top {
     grid-template-columns: 1fr;
   }
 
   .warehouse-filters-grid,
   .expenses-filters-grid,
-  .treasury-filters-grid {
+  .treasury-filters-grid,
+  .logistics-filters-grid,
+  .returns-filters-grid,
+  .companies-filters-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .logistics-create-grid {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -6323,12 +6440,19 @@ button {
 
   .warehouse-filters-grid,
   .expenses-filters-grid,
-  .treasury-filters-grid {
+  .treasury-filters-grid,
+  .logistics-filters-grid,
+  .returns-filters-grid,
+  .companies-filters-grid {
     grid-template-columns: 1fr;
   }
 
   .returns-table .row {
     grid-template-columns: 130px 120px 1fr;
+  }
+
+  .logistics-create-grid {
+    grid-template-columns: 1fr;
   }
 }
 
