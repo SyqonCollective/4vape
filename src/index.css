@@ -174,12 +174,12 @@ button {
 .admin-sidebar {
   padding: 2rem 1.5rem;
   background:
-    radial-gradient(120% 80% at 15% 0%, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0) 52%),
-    radial-gradient(90% 70% at 100% 100%, rgba(52, 211, 153, 0.18) 0%, rgba(52, 211, 153, 0) 58%),
-    linear-gradient(160deg, rgba(15, 23, 42, 0.94), rgba(8, 30, 52, 0.9) 55%, rgba(5, 31, 43, 0.88));
-  border: 1px solid rgba(125, 211, 252, 0.16);
+    radial-gradient(110% 70% at 12% 0%, rgba(14, 165, 233, 0.16) 0%, rgba(14, 165, 233, 0) 52%),
+    radial-gradient(90% 75% at 100% 100%, rgba(52, 211, 153, 0.14) 0%, rgba(52, 211, 153, 0) 62%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.97), rgba(246, 250, 255, 0.96));
+  border: 1px solid rgba(14, 165, 233, 0.14);
   border-radius: 28px;
-  box-shadow: 0 24px 46px rgba(2, 6, 23, 0.32);
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.12);
   backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
@@ -197,8 +197,8 @@ button {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 22%),
-    linear-gradient(120deg, rgba(14, 165, 233, 0.08), rgba(16, 185, 129, 0.08));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 26%),
+    linear-gradient(120deg, rgba(14, 165, 233, 0.06), rgba(16, 185, 129, 0.06));
   z-index: -1;
 }
 
@@ -210,7 +210,7 @@ button {
   width: 220px;
   height: 220px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(34, 211, 238, 0.34), rgba(34, 211, 238, 0));
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.2), rgba(34, 211, 238, 0));
   filter: blur(8px);
   pointer-events: none;
   z-index: -1;
@@ -414,7 +414,7 @@ button {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 245, 249, 0.88));
   display: grid;
   place-items: center;
-  box-shadow: 0 14px 24px rgba(2, 6, 23, 0.32);
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.14);
   border: 1px solid rgba(125, 211, 252, 0.36);
 }
 .brand-logo {
@@ -441,7 +441,7 @@ button {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #dbeafe;
+  color: #334155;
 }
 
 .brand-greeting strong {
@@ -488,7 +488,7 @@ button {
 }
 
 .admin-nav::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(14, 165, 233, 0.65), rgba(52, 211, 153, 0.6));
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.45), rgba(52, 211, 153, 0.42));
   border-radius: 999px;
 }
 
@@ -500,9 +500,9 @@ button {
   position: relative;
   padding: 0.8rem 1rem 0.8rem 1.1rem;
   border-radius: 16px;
-  color: rgba(226, 232, 240, 0.86);
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
-  border: 1px solid rgba(125, 211, 252, 0.08);
+  color: #475569;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.2));
+  border: 1px solid rgba(14, 165, 233, 0.08);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -513,7 +513,7 @@ button {
   cursor: grabbing;
 }
 .nav-grip {
-  color: rgba(125, 211, 252, 0.55);
+  color: rgba(100, 116, 139, 0.66);
   font-weight: 700;
   letter-spacing: -0.06em;
 }
@@ -540,21 +540,21 @@ button {
 }
 
 .nav-item:hover {
-  background: linear-gradient(120deg, rgba(14, 165, 233, 0.2), rgba(52, 211, 153, 0.14));
-  color: #f8fafc;
-  border-color: rgba(125, 211, 252, 0.2);
+  background: linear-gradient(120deg, rgba(14, 165, 233, 0.13), rgba(52, 211, 153, 0.11));
+  color: #0f172a;
+  border-color: rgba(14, 165, 233, 0.2);
   transform: translateX(2px);
 }
 
 .nav-item.active {
-  background: linear-gradient(120deg, rgba(14, 165, 233, 0.32), rgba(52, 211, 153, 0.28));
-  color: #ffffff;
-  border: 1px solid rgba(125, 211, 252, 0.34);
-  box-shadow: 0 10px 22px rgba(14, 165, 233, 0.24);
+  background: linear-gradient(120deg, rgba(14, 165, 233, 0.2), rgba(52, 211, 153, 0.2));
+  color: #0f172a;
+  border: 1px solid rgba(14, 165, 233, 0.28);
+  box-shadow: 0 10px 22px rgba(14, 165, 233, 0.14);
 }
 
 .nav-item.active::before {
-  background: #ffffff;
+  background: #0ea5e9;
 }
 
 .page-header {
