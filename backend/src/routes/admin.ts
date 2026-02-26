@@ -3058,7 +3058,15 @@ export async function adminRoutes(app: FastifyInstance) {
       },
       include: {
         company: { select: { id: true, name: true, legalName: true, city: true, province: true, vatNumber: true } },
-        lines: true,
+        lines: {
+          include: {
+            product: {
+              include: {
+                exciseRateRef: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { issuedAt: "desc" },
       take: 20000,
@@ -3082,6 +3090,12 @@ export async function adminRoutes(app: FastifyInstance) {
         const imponibile = Math.max(0, totale - accisa);
         const vatNoExcise = Number(line.vatTotal || 0);
         const ml = Number(line.mlProduct || 0);
+        const exciseRateAmount = Number(line.product?.exciseRateRef?.amount || 0);
+        const exciseCategoryRate = exciseRateAmount > 0
+          ? exciseRateAmount
+          : ml > 0
+            ? Number(line.exciseUnit || 0) / ml
+            : Number(line.exciseUnit || 0);
 
         fiscalLines.push({
           invoiceId: inv.id,
@@ -3102,6 +3116,7 @@ export async function adminRoutes(app: FastifyInstance) {
           nicotine: Number(line.nicotine || 0),
           qty,
           exciseUnit,
+          exciseCategoryRate,
           accisa,
           vatNoExcise,
           imponibile,
@@ -3128,13 +3143,13 @@ export async function adminRoutes(app: FastifyInstance) {
         nicotine: l.nicotine,
         qty: 0,
         accisaTotal: 0,
-        accisaCategory: l.exciseUnit || 0,
+        accisaCategory: l.exciseCategoryRate || 0,
         ivatoNoExciseTotal: 0,
       };
       row.qty += l.qty;
       row.accisaTotal += l.accisa;
       row.ivatoNoExciseTotal += l.imponibile + l.vatNoExcise;
-      if (!row.accisaCategory && l.exciseUnit) row.accisaCategory = l.exciseUnit;
+      if (!row.accisaCategory && l.exciseCategoryRate) row.accisaCategory = l.exciseCategoryRate;
       bySku.set(key, row);
     }
     const quindicinaleRows = Array.from(bySku.values())
