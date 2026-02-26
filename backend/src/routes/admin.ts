@@ -5981,6 +5981,15 @@ export async function adminRoutes(app: FastifyInstance) {
       }),
     ]);
 
+    const orderStatusLabel = (status: string) => {
+      if (status === "FULFILLED") return "Completato";
+      if (status === "APPROVED") return "In elaborazione";
+      if (status === "SUBMITTED") return "In attesa pagamento";
+      if (status === "DRAFT") return "Bozza";
+      if (status === "CANCELLED") return "Fallito";
+      return status;
+    };
+
     const items = [
       ...returns.map((r) => ({
         id: `return:${r.id}`,
@@ -5997,7 +6006,7 @@ export async function adminRoutes(app: FastifyInstance) {
           type: "ORDER_PAID_OR_COMPLETED",
           createdAt: o.createdAt,
           title: o.status === "FULFILLED" ? "Ordine completato" : "Ordine pagato",
-          message: `${o.company?.name || "Azienda"} · Stato ${o.status}`,
+          message: `${o.company?.name || "Azienda"} · Stato ${orderStatusLabel(o.status)}`,
           href: "/admin/orders",
         })),
       ...companies.map((c) => ({

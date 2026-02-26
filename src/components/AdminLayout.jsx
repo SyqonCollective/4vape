@@ -149,6 +149,16 @@ export default function AdminLayout() {
     const effectiveSeenAt = Math.max(now, latestCreatedAt + 1000);
     setSeenAt(effectiveSeenAt);
     localStorage.setItem(NOTIF_SEEN_KEY, String(effectiveSeenAt));
+
+    // Read notifications are permanently hidden from the bell list.
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      for (const n of notifications) {
+        if (new Date(n.createdAt).getTime() <= effectiveSeenAt) next.add(n.id);
+      }
+      localStorage.setItem(NOTIF_DISMISSED_KEY, JSON.stringify(Array.from(next)));
+      return next;
+    });
   }
 
   function markAllNotificationsAsReadAndHide() {
