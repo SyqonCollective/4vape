@@ -5435,6 +5435,24 @@ button {
   max-width: 100%;
 }
 
+.inventory-page {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.inventory-page .page-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.inventory-page .cards.inventory-cards {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  width: 100%;
+  max-width: 100%;
+}
+
 .inventory-cards .card-value {
   font-size: 1.5rem;
 }
@@ -5448,6 +5466,7 @@ button {
   padding: 0.85rem;
   margin: 0.85rem 0;
   max-width: 100%;
+  min-width: 0;
 }
 
 .inventory-filters-top {
@@ -5479,6 +5498,7 @@ button {
   border: 1px solid rgba(148, 163, 184, 0.22);
   overflow: hidden;
   max-width: 100%;
+  min-width: 0;
 }
 
 .inventory-table-scroll {
@@ -5942,6 +5962,10 @@ button {
 
 @media (max-width: 1200px) {
   .inventory-filters-top {
+    grid-template-columns: 1fr;
+  }
+
+  .inventory-page .page-header {
     grid-template-columns: 1fr;
   }
 }

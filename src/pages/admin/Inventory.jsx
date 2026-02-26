@@ -296,7 +296,7 @@ export default function AdminInventory() {
   }, [items, qtySearch]);
 
   return (
-    <section>
+    <section className="inventory-page">
       <div className="page-header">
         <div>
           <h1>Inventario</h1>
