@@ -225,6 +225,8 @@ export default function AdminDiscountRules() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [openDiscounts, setOpenDiscounts] = useState(true);
   const [openRules, setOpenRules] = useState(true);
+  const [expandDiscounts, setExpandDiscounts] = useState(false);
+  const [expandRules, setExpandRules] = useState(false);
   const [discountQuery, setDiscountQuery] = useState("");
   const [ruleQuery, setRuleQuery] = useState("");
   const [onlyActiveDiscounts, setOnlyActiveDiscounts] = useState(false);
@@ -502,6 +504,12 @@ export default function AdminDiscountRules() {
                 <div className="muted">{discounts.length} sconti configurati</div>
               </div>
               <div className="actions">
+                <button
+                  className="btn ghost"
+                  onClick={() => setExpandDiscounts((v) => !v)}
+                >
+                  {expandDiscounts ? "Minimizza lista" : "Estendi lista"}
+                </button>
                 <button className="btn ghost" onClick={() => setOpenDiscounts((v) => !v)}>
                   {openDiscounts ? "Nascondi" : "Mostra"}
                 </button>
@@ -533,7 +541,7 @@ export default function AdminDiscountRules() {
               </label>
               <span className="tag">{filteredDiscounts.length} visibili</span>
             </div>
-            {openDiscounts ? <div className="rules-table rules-table-discounts">
+            {openDiscounts ? <div className={`rules-table rules-table-discounts ${expandDiscounts ? "expanded" : "compact"}`}>
                 <div className="row header">
                   <div>Nome</div>
                   <div>Ambito</div>
@@ -713,6 +721,12 @@ export default function AdminDiscountRules() {
                 <div className="muted">{rules.length} regole configurate</div>
               </div>
               <div className="actions">
+                <button
+                  className="btn ghost"
+                  onClick={() => setExpandRules((v) => !v)}
+                >
+                  {expandRules ? "Minimizza lista" : "Estendi lista"}
+                </button>
                 <button className="btn ghost" onClick={() => setOpenRules((v) => !v)}>
                   {openRules ? "Nascondi" : "Mostra"}
                 </button>
@@ -744,7 +758,7 @@ export default function AdminDiscountRules() {
               </label>
               <span className="tag">{filteredRules.length} visibili</span>
             </div>
-            {openRules ? <div className="rules-table rules-table-rules">
+            {openRules ? <div className={`rules-table rules-table-rules ${expandRules ? "expanded" : "compact"}`}>
               <div className="row header">
                 <div>Nome</div>
                 <div>Ambito</div>

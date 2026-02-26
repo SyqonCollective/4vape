@@ -1682,6 +1682,22 @@ button {
   grid-template-columns: 1.6fr 0.7fr 0.8fr 1fr 0.6fr 0.8fr;
   min-width: 1080px;
 }
+.rules-table.compact {
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+.rules-table.expanded {
+  max-height: none;
+  overflow: visible;
+}
+.rules-table.compact::-webkit-scrollbar {
+  width: 8px;
+}
+.rules-table.compact::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
 .rules-table .row > div:first-child strong {
   display: inline-block;
   margin-right: 0.45rem;
