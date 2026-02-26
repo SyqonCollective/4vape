@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
+import logoUrl from "../../assets/logo.png";
 
 const money = (v) =>
   new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(Number(v || 0));
@@ -18,10 +19,10 @@ function toDateInput(d) {
 function exportCsv(filename, headers, rows) {
   const esc = (v) => {
     const s = String(v ?? "");
-    if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
+    if (s.includes(";") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
     return s;
   };
-  const csv = [headers, ...rows].map((r) => r.map(esc).join(",")).join("\n");
+  const csv = [headers, ...rows].map((r) => r.map(esc).join(";")).join("\n");
   const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -44,6 +45,8 @@ export default function AdminInvoices() {
   const [companyId, setCompanyId] = useState("");
   const [showManual, setShowManual] = useState(false);
   const [savingManual, setSavingManual] = useState(false);
+  const [query, setQuery] = useState("");
+  const [viewMode, setViewMode] = useState("table");
   const [manual, setManual] = useState({
     invoiceNumber: "",
     issuedAt: today,
@@ -99,6 +102,126 @@ export default function AdminInvoices() {
       ),
     [rows]
   );
+  const companyById = useMemo(
+    () => new Map(companies.map((c) => [c.id, c])),
+    [companies]
+  );
+  const visibleRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) =>
+      `${r.numero || ""} ${r.cliente || ""} ${r.riferimentoOrdine || ""}`.toLowerCase().includes(q)
+    );
+  }, [rows, query]);
+
+  function openPrintDocument(title, htmlBody) {
+    const w = window.open("", "_blank", "width=1200,height=860");
+    if (!w) {
+      setError("Popup bloccato: abilita i popup per stampare.");
+      return;
+    }
+    w.document.write(`
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${title}</title>
+          <style>
+            body{font-family:Arial,sans-serif;color:#0f172a;padding:22px}
+            .head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid #e2e8f0;padding-bottom:14px;margin-bottom:16px}
+            .logo{height:56px;object-fit:contain}
+            .company{font-size:13px;line-height:1.45;text-align:right;color:#334155}
+            h1{margin:0 0 8px;font-size:26px}
+            .meta{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:10px;margin:0 0 14px}
+            .meta .box{border:1px solid #cbd5e1;border-radius:9px;padding:8px 10px}
+            .meta .k{font-size:11px;text-transform:uppercase;color:#64748b}
+            .meta .v{font-weight:700;margin-top:4px}
+            table{width:100%;border-collapse:collapse;margin:14px 0}
+            th,td{border:1px solid #cbd5e1;padding:8px 9px;text-align:left;font-size:13px}
+            th{background:#f8fafc;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:#475569}
+            .right{text-align:right}
+            .tot{margin-left:auto;max-width:340px;display:grid;gap:5px;margin-top:14px}
+            .tot .r{display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding:4px 0}
+            .tot .grand{font-weight:800;font-size:16px}
+            .foot{margin-top:22px;color:#64748b;font-size:12px}
+          </style>
+        </head>
+        <body>${htmlBody}<script>window.onload=()=>{window.print();window.close();};</script></body>
+      </html>
+    `);
+    w.document.close();
+  }
+
+  function printInvoice(row) {
+    const c = companyById.get(row.companyId);
+    const clientAddress = [c?.address, c?.cap, c?.city, c?.province].filter(Boolean).join(", ") || "-";
+    const body = `
+      <div class="head">
+        <img class="logo" src="${logoUrl}" alt="4Vape" />
+        <div class="company">
+          <strong>4Vape B2B</strong><br/>
+          Documento fattura commerciale<br/>
+          Data stampa: ${new Date().toLocaleString("it-IT")}
+        </div>
+      </div>
+      <h1>Fattura ${row.numero || "-"}</h1>
+      <div class="meta">
+        <div class="box"><div class="k">Data</div><div class="v">${fmtDate(row.data)}</div></div>
+        <div class="box"><div class="k">Stato</div><div class="v">${row.stato === "SALDATA" ? "Saldata" : "Da saldare"}</div></div>
+        <div class="box"><div class="k">Pagamento</div><div class="v">${row.pagamento || "-"}</div></div>
+        <div class="box"><div class="k">Ordine</div><div class="v">${row.riferimentoOrdine || "-"}</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Intestatario</th><th>P.IVA</th><th>Indirizzo</th></tr></thead>
+        <tbody><tr><td>${row.cliente || "-"}</td><td>${c?.vatNumber || c?.adminVatNumber || "-"}</td><td>${clientAddress}</td></tr></tbody>
+      </table>
+      <table>
+        <thead><tr><th>Voce</th><th class="right">Importo</th></tr></thead>
+        <tbody>
+          <tr><td>Imponibile prodotti</td><td class="right">${money(row.imponibileProdotti)}</td></tr>
+          <tr><td>Accisa</td><td class="right">${money(row.accisa)}</td></tr>
+          <tr><td>IVA</td><td class="right">${money(row.iva)}</td></tr>
+        </tbody>
+      </table>
+      <div class="tot">
+        <div class="r grand"><span>Totale fattura</span><span>${money(row.totaleFattura)}</span></div>
+      </div>
+      <div class="foot">Generato da 4Vape B2B Admin.</div>
+    `;
+    openPrintDocument(`Fattura ${row.numero}`, body);
+  }
+
+  function printRegister() {
+    const bodyRows = visibleRows
+      .map(
+        (r) => `<tr>
+          <td>${r.numero || "-"}</td>
+          <td>${fmtDate(r.data)}</td>
+          <td>${r.cliente || "-"}</td>
+          <td>${r.stato === "SALDATA" ? "Saldata" : "Da saldare"}</td>
+          <td>${r.pagamento || "-"}</td>
+          <td class="right">${money(r.totaleFattura)}</td>
+        </tr>`
+      )
+      .join("");
+    const body = `
+      <div class="head">
+        <img class="logo" src="${logoUrl}" alt="4Vape" />
+        <div class="company"><strong>Registro Fatture</strong><br/>Periodo: ${fmtDate(startDate)} - ${fmtDate(endDate)}</div>
+      </div>
+      <h1>Registro fatture</h1>
+      <table>
+        <thead><tr><th>Numero</th><th>Data</th><th>Cliente</th><th>Stato</th><th>Pagamento</th><th class="right">Totale</th></tr></thead>
+        <tbody>${bodyRows || '<tr><td colspan="6">Nessuna fattura nel filtro selezionato</td></tr>'}</tbody>
+      </table>
+      <div class="tot">
+        <div class="r"><span>Totale fatture</span><span>${money(totals.total)}</span></div>
+        <div class="r"><span>Imponibile</span><span>${money(totals.imponibile)}</span></div>
+        <div class="r"><span>Accisa</span><span>${money(totals.accisa)}</span></div>
+        <div class="r"><span>IVA</span><span>${money(totals.iva)}</span></div>
+      </div>
+    `;
+    openPrintDocument("Registro fatture", body);
+  }
 
   async function togglePaid(row) {
     try {
@@ -167,7 +290,7 @@ export default function AdminInvoices() {
         "Riferimento ordine",
         "Guadagno",
       ],
-      rows.map((r) => [
+      visibleRows.map((r) => [
         r.numero,
         fmtDate(r.data),
         r.cliente,
@@ -226,6 +349,19 @@ export default function AdminInvoices() {
 
       <InlineError message={error} onClose={() => setError("")} />
 
+      <div className="invoices-toolbar">
+        <div className="invoices-toolbar-top">
+          <input
+            className="invoices-search"
+            placeholder="Cerca numero, cliente o riferimento ordine"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <div className="products-view-switch">
+            <button type="button" className={`btn ${viewMode === "table" ? "primary" : "ghost"}`} onClick={() => setViewMode("table")}>Tabella</button>
+            <button type="button" className={`btn ${viewMode === "cards" ? "primary" : "ghost"}`} onClick={() => setViewMode("cards")}>Card</button>
+          </div>
+        </div>
       <div className="filters-row">
         <div className="filter-group">
           <label>Data dal</label>
@@ -255,10 +391,11 @@ export default function AdminInvoices() {
           </select>
         </div>
         <div className="actions">
-          <button className="btn ghost" onClick={exportCurrentCsv}>Scarica Excel (CSV)</button>
-          <button className="btn ghost" onClick={() => window.print()}>Stampa</button>
+          <button className="btn ghost" onClick={exportCurrentCsv}>Esporta CSV</button>
+          <button className="btn ghost" onClick={printRegister}>Stampa registro</button>
           <button className="btn primary" onClick={() => setShowManual(true)}>Fattura manuale</button>
         </div>
+      </div>
       </div>
 
       <div className="cards">
@@ -269,7 +406,8 @@ export default function AdminInvoices() {
         <div className="card"><div className="card-label">IVA</div><div className="card-value">{money(totals.iva)}</div></div>
       </div>
 
-      <div className="table wide-report">
+      {viewMode === "table" ? (
+      <div className="table wide-report invoices-table-pro">
         <div className="row header">
           <div>Numero</div>
           <div>Data</div>
@@ -284,7 +422,7 @@ export default function AdminInvoices() {
           <div>Guadagno</div>
           <div>Azioni</div>
         </div>
-        {rows.map((r) => (
+        {visibleRows.map((r) => (
           <div className="row" key={r.id}>
             <div className="mono">{r.numero}</div>
             <div>{fmtDate(r.data)}</div>
@@ -302,7 +440,7 @@ export default function AdminInvoices() {
                 {r.stato === "SALDATA" ? "Segna da saldare" : "Segna saldata"}
               </button>
               <button className="btn ghost small" onClick={() => exportSingleInvoice(r)}>Excel</button>
-              <button className="btn ghost small" onClick={() => window.print()}>Stampa</button>
+              <button className="btn ghost small" onClick={() => printInvoice(r)}>Stampa</button>
               <a
                 className="btn ghost small"
                 href={`mailto:?subject=Fattura%20${encodeURIComponent(r.numero)}&body=${encodeURIComponent(`Fattura ${r.numero} - Totale ${money(r.totaleFattura)}`)}`}
@@ -313,6 +451,31 @@ export default function AdminInvoices() {
           </div>
         ))}
       </div>
+      ) : (
+        <div className="invoices-cards">
+          {visibleRows.map((r) => (
+            <article key={r.id} className="invoices-card">
+              <div className="invoices-card-top">
+                <strong className="mono">{r.numero}</strong>
+                <span className={`tag ${r.stato === "SALDATA" ? "success" : "warn"}`}>{r.stato === "SALDATA" ? "Saldata" : "Da saldare"}</span>
+              </div>
+              <div><strong>{r.cliente || "-"}</strong></div>
+              <div className="muted">{fmtDate(r.data)} · {r.pagamento || "-"}</div>
+              <div className="invoices-card-totals">
+                <span>{money(r.totaleFattura)}</span>
+                <span>Ordine {r.riferimentoOrdine || "-"}</span>
+              </div>
+              <div className="actions">
+                <button className="btn ghost small" onClick={() => togglePaid(r)}>
+                  {r.stato === "SALDATA" ? "Da saldare" : "Saldata"}
+                </button>
+                <button className="btn ghost small" onClick={() => exportSingleInvoice(r)}>CSV</button>
+                <button className="btn ghost small" onClick={() => printInvoice(r)}>Stampa</button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
 
       {showManual ? (
         <Portal>
