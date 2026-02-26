@@ -173,11 +173,14 @@ button {
 
 .admin-sidebar {
   padding: 2rem 1.5rem;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid var(--stroke);
+  background:
+    radial-gradient(120% 80% at 15% 0%, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0) 52%),
+    radial-gradient(90% 70% at 100% 100%, rgba(52, 211, 153, 0.18) 0%, rgba(52, 211, 153, 0) 58%),
+    linear-gradient(160deg, rgba(15, 23, 42, 0.94), rgba(8, 30, 52, 0.9) 55%, rgba(5, 31, 43, 0.88));
+  border: 1px solid rgba(125, 211, 252, 0.16);
   border-radius: 28px;
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(12px);
+  box-shadow: 0 24px 46px rgba(2, 6, 23, 0.32);
+  backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -185,6 +188,32 @@ button {
   top: 1.5rem;
   height: calc(100vh - 3rem);
   overflow: hidden;
+  isolation: isolate;
+}
+
+.admin-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 22%),
+    linear-gradient(120deg, rgba(14, 165, 233, 0.08), rgba(16, 185, 129, 0.08));
+  z-index: -1;
+}
+
+.admin-sidebar::after {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.34), rgba(34, 211, 238, 0));
+  filter: blur(8px);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .admin-main {
@@ -382,11 +411,11 @@ button {
   width: 54px;
   height: 54px;
   border-radius: 18px;
-  background: #fff;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 245, 249, 0.88));
   display: grid;
   place-items: center;
-  box-shadow: 0 16px 26px rgba(15, 23, 42, 0.18);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 14px 24px rgba(2, 6, 23, 0.32);
+  border: 1px solid rgba(125, 211, 252, 0.36);
 }
 .brand-logo {
   width: 36px;
@@ -412,7 +441,7 @@ button {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #0f172a;
+  color: #dbeafe;
 }
 
 .brand-greeting strong {
@@ -459,7 +488,7 @@ button {
 }
 
 .admin-nav::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.45);
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.65), rgba(52, 211, 153, 0.6));
   border-radius: 999px;
 }
 
@@ -471,9 +500,9 @@ button {
   position: relative;
   padding: 0.8rem 1rem 0.8rem 1.1rem;
   border-radius: 16px;
-  color: var(--muted);
-  background: transparent;
-  border: 1px solid transparent;
+  color: rgba(226, 232, 240, 0.86);
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(125, 211, 252, 0.08);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -484,7 +513,7 @@ button {
   cursor: grabbing;
 }
 .nav-grip {
-  color: rgba(148, 163, 184, 0.9);
+  color: rgba(125, 211, 252, 0.55);
   font-weight: 700;
   letter-spacing: -0.06em;
 }
@@ -511,18 +540,21 @@ button {
 }
 
 .nav-item:hover {
-  background: rgba(14, 165, 233, 0.08);
-  color: var(--ink);
+  background: linear-gradient(120deg, rgba(14, 165, 233, 0.2), rgba(52, 211, 153, 0.14));
+  color: #f8fafc;
+  border-color: rgba(125, 211, 252, 0.2);
+  transform: translateX(2px);
 }
 
 .nav-item.active {
-  background: linear-gradient(120deg, rgba(14, 165, 233, 0.18), rgba(52, 211, 153, 0.18));
-  color: var(--ink);
-  border: 1px solid rgba(14, 165, 233, 0.25);
+  background: linear-gradient(120deg, rgba(14, 165, 233, 0.32), rgba(52, 211, 153, 0.28));
+  color: #ffffff;
+  border: 1px solid rgba(125, 211, 252, 0.34);
+  box-shadow: 0 10px 22px rgba(14, 165, 233, 0.24);
 }
 
 .nav-item.active::before {
-  background: var(--brand);
+  background: #ffffff;
 }
 
 .page-header {
