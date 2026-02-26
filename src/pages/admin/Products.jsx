@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Lottie from "lottie-react";
 import trashAnim from "../../assets/Trash clean.json";
 import { api, getToken } from "../../lib/api.js";
@@ -147,6 +147,7 @@ export default function AdminProducts() {
   const [showCreateManual, setShowCreateManual] = useState(false);
   const [importingCsv, setImportingCsv] = useState(false);
   const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [viewMode, setViewMode] = useState("table");
   const [importFile, setImportFile] = useState(null);
   const [importSummary, setImportSummary] = useState(null);
   const [parentDraft, setParentDraft] = useState({ name: "", sku: "", categoryId: "" });
@@ -1067,6 +1068,32 @@ export default function AdminProducts() {
   const pagedRows = groupedRows.slice(pageStart, pageStart + effectivePageSize);
 
   const dash = <span className="cell-muted">—</span>;
+  const productsStats = useMemo(() => {
+    const visible = filteredItems.length;
+    const parentsCount = filteredItems.filter((p) => p.isParent).length;
+    const unavailable = filteredItems.filter((p) => !p.isParent && p.isUnavailable).length;
+    const lowStock = filteredItems.filter((p) => !p.isParent && Number(p.stockQty || 0) > 0 && Number(p.stockQty || 0) <= 5).length;
+    const stockValue = filteredItems.reduce(
+      (acc, p) => acc + (p.isParent ? 0 : Number(p.stockQty || 0) * Number(p.purchasePrice || 0)),
+      0
+    );
+    return { visible, parentsCount, unavailable, lowStock, stockValue };
+  }, [filteredItems]);
+  const byBrand = useMemo(() => {
+    const map = new Map();
+    for (const p of filteredItems) {
+      const key = p.brand || "Senza brand";
+      const row = map.get(key) || { name: key, count: 0, stock: 0, value: 0, sample: [] };
+      row.count += 1;
+      if (!p.isParent) {
+        row.stock += Number(p.stockQty || 0);
+        row.value += Number(p.stockQty || 0) * Number(p.purchasePrice || 0);
+      }
+      if (row.sample.length < 4) row.sample.push(p);
+      map.set(key, row);
+    }
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [filteredItems]);
 
   function toggleSelectAllPage() {
     const ids = Array.from(new Set(pagedRows.map((row) => row.item.id)));
@@ -1321,7 +1348,55 @@ export default function AdminProducts() {
 
       <InlineError message={error} onClose={() => setError("")} />
 
+      <div className="products-kpi-strip">
+        <div className="products-kpi-card">
+          <div className="products-kpi-label">Prodotti visibili</div>
+          <strong>{productsStats.visible}</strong>
+        </div>
+        <div className="products-kpi-card">
+          <div className="products-kpi-label">Padri</div>
+          <strong>{productsStats.parentsCount}</strong>
+        </div>
+        <div className="products-kpi-card">
+          <div className="products-kpi-label">Stock basso (≤5)</div>
+          <strong>{productsStats.lowStock}</strong>
+        </div>
+        <div className="products-kpi-card">
+          <div className="products-kpi-label">Non disponibili</div>
+          <strong>{productsStats.unavailable}</strong>
+        </div>
+        <div className="products-kpi-card">
+          <div className="products-kpi-label">Valore stock (costo)</div>
+          <strong>€ {productsStats.stockValue.toFixed(2)}</strong>
+        </div>
+      </div>
+
+      <div className="products-view-switch">
+        <button
+          type="button"
+          className={`btn ${viewMode === "table" ? "primary" : "ghost"}`}
+          onClick={() => setViewMode("table")}
+        >
+          Tabella
+        </button>
+        <button
+          type="button"
+          className={`btn ${viewMode === "cards" ? "primary" : "ghost"}`}
+          onClick={() => setViewMode("cards")}
+        >
+          Card
+        </button>
+        <button
+          type="button"
+          className={`btn ${viewMode === "brands" ? "primary" : "ghost"}`}
+          onClick={() => setViewMode("brands")}
+        >
+          Brand board
+        </button>
+      </div>
+
       <div className="panel products-panel">
+      {viewMode === "table" ? (
       <div className="table wide-10">
         <div className="row header">
           <div>Immagine</div>
@@ -1448,6 +1523,61 @@ export default function AdminProducts() {
         );
         })}
       </div>
+      ) : null}
+      {viewMode === "cards" ? (
+        <div className="products-card-grid">
+          {pagedRows.map((row) => {
+            const p = row.item;
+            const typeLabel = p.isParent ? "Padre" : (p.parentId ? "Figlio" : "Singolo");
+            return (
+              <button key={p.id} type="button" className="product-card" onClick={() => openEdit(p)}>
+                <div className="product-card-top">
+                  {p.imageUrl ? <img className="product-card-thumb" src={withToken(p.imageUrl)} alt={p.name} /> : <div className="product-card-thumb placeholder" />}
+                  <div className="product-card-meta">
+                    <div className="mono">{p.sku}</div>
+                    <strong>{p.name}</strong>
+                    <div className="muted">{p.brand || "Senza brand"}</div>
+                  </div>
+                </div>
+                <div className="product-card-chips">
+                  <span className="tag info">{typeLabel}</span>
+                  {p.published === false ? <span className="tag warn">Draft</span> : null}
+                  {!p.isParent && p.isUnavailable ? <span className="tag danger">Non disponibile</span> : null}
+                </div>
+                <div className="product-card-stats">
+                  <div><span>Prezzo</span><strong>{p.isParent ? "—" : `€ ${Number(p.price || 0).toFixed(2)}`}</strong></div>
+                  <div><span>Giacenza</span><strong>{p.isParent ? "—" : Number(p.stockQty || 0)}</strong></div>
+                  <div><span>Categoria</span><strong>{p.category || "—"}</strong></div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+      {viewMode === "brands" ? (
+        <div className="products-brand-board">
+          {byBrand.map((b) => (
+            <div key={b.name} className="brand-board-col">
+              <div className="brand-board-head">
+                <strong>{b.name}</strong>
+                <span>{b.count} prodotti</span>
+              </div>
+              <div className="brand-board-sub">
+                <span>Stock: {b.stock}</span>
+                <span>Valore: € {b.value.toFixed(2)}</span>
+              </div>
+              <div className="brand-board-list">
+                {b.sample.map((p) => (
+                  <button key={p.id} type="button" className="brand-board-item" onClick={() => openEdit(p)}>
+                    <span className="mono">{p.sku}</span>
+                    <span>{p.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
       </div>
       <div className="pagination">
         <button
