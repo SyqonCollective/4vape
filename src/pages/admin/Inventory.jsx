@@ -48,6 +48,7 @@ export default function AdminInventory() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showQtyModal, setShowQtyModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [qtySearch, setQtySearch] = useState("");
   const [form, setForm] = useState(initialForm);
   const [qtyDraft, setQtyDraft] = useState({});
 
@@ -200,6 +201,7 @@ export default function AdminInventory() {
     const draft = {};
     for (const item of items) draft[item.id] = String(Number(item.stockQty || 0));
     setQtyDraft(draft);
+    setQtySearch("");
     setShowQtyModal(true);
   }
 
@@ -248,6 +250,22 @@ export default function AdminInventory() {
     }
   }
 
+  async function deleteItem() {
+    if (!form.id) return;
+    const ok = window.confirm("Eliminare questo articolo inventario?");
+    if (!ok) return;
+    setSaving(true);
+    try {
+      await api(`/admin/inventory/items/${form.id}`, { method: "DELETE" });
+      setShowEditModal(false);
+      await loadInventory();
+    } catch {
+      setError("Impossibile eliminare articolo inventario");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function saveQuickQty() {
     const changes = items
       .map((item) => ({ id: item.id, stockQty: Number(qtyDraft[item.id]) }))
@@ -268,6 +286,14 @@ export default function AdminInventory() {
       setSaving(false);
     }
   }
+
+  const quickQtyItems = useMemo(() => {
+    const t = qtySearch.trim().toLowerCase();
+    if (!t) return items;
+    return items.filter((item) =>
+      `${item.sku || ""} ${item.name || ""} ${item.brand || ""}`.toLowerCase().includes(t)
+    );
+  }, [items, qtySearch]);
 
   return (
     <section>
@@ -490,6 +516,7 @@ export default function AdminInventory() {
                 </div>
                 <div className="actions">
                   <button className="btn ghost" onClick={() => setShowEditModal(false)}>Annulla</button>
+                  {form.id ? <button className="btn danger" onClick={deleteItem} disabled={saving}>Elimina</button> : null}
                   <button className="btn primary" onClick={saveItem} disabled={saving}>{saving ? "Salvataggio..." : "Salva"}</button>
                 </div>
               </div>
@@ -507,9 +534,17 @@ export default function AdminInventory() {
                 <button className="btn ghost" onClick={() => setShowQtyModal(false)}>Chiudi</button>
               </div>
               <div className="modal-body modal-body-single inventory-modal-body">
+                <div className="inventory-qty-toolbar">
+                  <input
+                    placeholder="Cerca SKU o nome per quantità rapida"
+                    value={qtySearch}
+                    onChange={(e) => setQtySearch(e.target.value)}
+                  />
+                  <span className="tag">{quickQtyItems.length} righe</span>
+                </div>
                 <div className="inventory-qty-list">
                   <div className="inventory-qty-row header"><div>SKU</div><div>Prodotto</div><div>Qta</div></div>
-                  {items.map((item) => (
+                  {quickQtyItems.map((item) => (
                     <div key={item.id} className="inventory-qty-row">
                       <div className="mono">{item.sku}</div>
                       <div>{item.name}</div>

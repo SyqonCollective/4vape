@@ -5552,13 +5552,13 @@ button {
 }
 
 .inventory-edit-modal {
-  width: min(1100px, 96vw);
+  width: min(1180px, 96vw);
   max-height: calc(100vh - 48px);
 }
 
 .inventory-edit-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
   gap: 12px;
 }
 
@@ -5609,6 +5609,53 @@ button {
 .inventory-modal-body .actions {
   margin-top: 14px;
   justify-content: flex-end;
+}
+
+.inventory-modal-body {
+  max-height: 75vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.inventory-edit-grid > div {
+  background: rgba(248, 250, 252, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 12px;
+  padding: 0.6rem 0.7rem;
+}
+
+.inventory-edit-grid > .full {
+  padding: 0.7rem 0.75rem;
+}
+
+.inventory-edit-grid > div label {
+  margin-bottom: 4px;
+  display: block;
+}
+
+.inventory-edit-grid > div input,
+.inventory-edit-grid > div select,
+.inventory-edit-grid > div textarea {
+  min-height: 42px;
+}
+
+.inventory-qty-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.inventory-qty-toolbar input {
+  min-height: 44px;
+  flex: 1;
+}
+
+.inventory-qty-list .inventory-qty-row.header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .returns-table .row {

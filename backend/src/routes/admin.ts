@@ -4656,6 +4656,14 @@ export async function adminRoutes(app: FastifyInstance) {
     return updated;
   });
 
+  app.delete("/inventory/items/:id", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    await prisma.internalInventoryItem.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
   app.patch("/inventory/quick-qty", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
