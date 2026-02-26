@@ -161,8 +161,7 @@ export default function AdminInvoices() {
         <img class="logo" src="${logoUrl}" alt="4Vape" />
         <div class="company">
           <strong>4Vape B2B</strong><br/>
-          Documento fattura commerciale<br/>
-          Data stampa: ${new Date().toLocaleString("it-IT")}
+          Documento fattura commerciale
         </div>
       </div>
       <h1>Fattura ${row.numero || "-"}</h1>
@@ -187,10 +186,7 @@ export default function AdminInvoices() {
       <div class="tot">
         <div class="r grand"><span>Totale fattura</span><span>${money(row.totaleFattura)}</span></div>
       </div>
-      <div class="foot">
-        ${LEGAL_COURTESY_NOTE}<br/>
-        Generato da 4Vape B2B Admin.
-      </div>
+      <div class="foot">${LEGAL_COURTESY_NOTE}</div>
     `;
     openPrintDocument(`Fattura ${row.numero}`, body);
   }
