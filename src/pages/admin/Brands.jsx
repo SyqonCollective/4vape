@@ -210,29 +210,53 @@ export default function AdminBrands() {
           <div className="brands-cards-grid">
             {filtered.map((b) => {
               const ratio = stats.totalProducts > 0 ? (Number(b.productsCount || 0) / stats.totalProducts) * 100 : 0;
+              const isEditingCard = editing === b.name;
               return (
                 <div className="brand-card-pro" key={b.name}>
                   <div className="brand-card-top">
-                    <strong>{b.name}</strong>
+                    {isEditingCard ? (
+                      <input value={editingValue} onChange={(e) => setEditingValue(e.target.value)} />
+                    ) : (
+                      <strong>{b.name}</strong>
+                    )}
                     <span>{b.productsCount || 0} prodotti</span>
                   </div>
                   <div className="brands-ratio-bar"><i style={{ width: `${Math.max(4, Math.min(100, ratio))}%` }} /></div>
                   <small>Incidenza catalogo: {ratio.toFixed(1)}%</small>
                   <div className="actions">
-                    <button
-                      type="button"
-                      className="btn ghost"
-                      onClick={() => {
-                        setEditing(b.name);
-                        setEditingValue(b.name);
-                        setViewMode("table");
-                      }}
-                    >
-                      Modifica
-                    </button>
-                    <button type="button" className="btn danger" onClick={() => deleteBrand(b.name)}>
-                      Elimina
-                    </button>
+                    {isEditingCard ? (
+                      <>
+                        <button type="button" className="btn ghost" onClick={() => saveRename(b.name)}>
+                          Salva
+                        </button>
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          onClick={() => {
+                            setEditing("");
+                            setEditingValue("");
+                          }}
+                        >
+                          Annulla
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          onClick={() => {
+                            setEditing(b.name);
+                            setEditingValue(b.name);
+                          }}
+                        >
+                          Modifica
+                        </button>
+                        <button type="button" className="btn danger" onClick={() => deleteBrand(b.name)}>
+                          Elimina
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               );
