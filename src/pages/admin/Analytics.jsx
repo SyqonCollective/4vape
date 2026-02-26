@@ -341,6 +341,7 @@ export default function AdminAnalytics() {
   const [endDate, setEndDate] = useState(toDateInput(defaultRange.end));
   const [selectedProductId, setSelectedProductId] = useState("");
   const [productSkuSearch, setProductSkuSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
   const [productOptions, setProductOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -468,17 +469,17 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <section>
+    <section className="analytics-modern">
       <div className="page-header">
         <div>
           <h1>Analytics</h1>
-          <p>Fatturato, costi e tassazione per periodo</p>
+          <p>Controllo vendite, marginalita e geografia commerciale</p>
         </div>
       </div>
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="analytics-toolbar">
+      <div className="analytics-toolbar analytics-toolbar-modern">
         <div className="analytics-filters">
           <label>
             Da
@@ -536,7 +537,25 @@ export default function AdminAnalytics() {
         </div>
       </div>
 
-      <div className="cards analytics-cards">
+      <div className="analytics-tabs">
+        {[
+          { id: "overview", label: "Overview" },
+          { id: "geo", label: "Mappa" },
+          { id: "performance", label: "Performance" },
+          { id: "product", label: "Prodotto" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={`analytics-tab ${activeTab === tab.id ? "active" : ""}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="cards analytics-cards analytics-cards-modern">
         <div className="card"><div className="card-label">Fatturato</div><div className="card-value">{formatMoney(data.totals.revenue)}</div><div className="card-sub">Ordini nel periodo</div></div>
         <div className="card"><div className="card-label">Costo prodotti</div><div className="card-value">{formatMoney(data.totals.cost)}</div><div className="card-sub">Costo fornitore stimato</div></div>
         <div className="card"><div className="card-label">Margine netto</div><div className="card-value">{formatMoney(data.totals.grossMargin)}</div><div className="card-sub">Imponibile - costo prodotti</div></div>
@@ -546,114 +565,122 @@ export default function AdminAnalytics() {
         <div className="card"><div className="card-label">Flusso cassa netto</div><div className="card-value">{formatMoney(data.totals.cashflow)}</div><div className="card-sub">Vendite - arrivi merce</div></div>
       </div>
 
-      <div className="panel analytics-grid">
-        <div className="analytics-panel">
-          <div className="panel-header">
-            <div>
-              <h2>Trend vendite (stile dashboard)</h2>
-              <div className="muted">Barre ordini + linea fatturato</div>
+      {activeTab === "overview" ? (
+        <div className="panel analytics-grid analytics-grid-overview">
+          <div className="analytics-panel analytics-panel-feature">
+            <div className="panel-header">
+              <div>
+                <h2>Trend vendite</h2>
+                <div className="muted">Barre ordini + linea fatturato</div>
+              </div>
+            </div>
+            <div className="chart-stack combo-stack">
+              <ComboBarLineChart bars={ordersSeries} line={revenueSeries} />
+              <div className="spark-legend">
+                <span><i className="legend-dot revenue" /> Fatturato</span>
+                <span><i className="legend-dot orders" /> Ordini</span>
+              </div>
             </div>
           </div>
-          <div className="chart-stack combo-stack">
-            <ComboBarLineChart bars={ordersSeries} line={revenueSeries} />
-            <div className="spark-legend">
-              <span><i className="legend-dot revenue" /> Fatturato</span>
-              <span><i className="legend-dot orders" /> Ordini</span>
+          <div className="analytics-panel">
+            <div className="panel-header">
+              <div>
+                <h2>Composizione margine</h2>
+                <div className="muted">Costi, IVA, accise, margine netto</div>
+              </div>
+            </div>
+            <StackedChart series={stackedSeries} />
+          </div>
+          <div className="analytics-panel">
+            <div className="panel-header">
+              <div>
+                <h2>Flusso cassa</h2>
+                <div className="muted">Vendite - spese (arrivi merce)</div>
+              </div>
+            </div>
+            <div className="trend-cashflow">
+              <TrendChart series={cashflowSeries} variant="area" />
             </div>
           </div>
         </div>
-        <div className="analytics-panel">
-          <div className="panel-header">
-            <div>
-              <h2>Composizione margine</h2>
-              <div className="muted">Costi, IVA, accise, margine netto</div>
-            </div>
-          </div>
-          <StackedChart series={stackedSeries} />
-        </div>
-        <div className="analytics-panel">
-          <div className="panel-header">
-            <div>
-              <h2>Flusso cassa</h2>
-              <div className="muted">Vendite - spese (arrivi merce)</div>
-            </div>
-          </div>
-          <div className="trend-cashflow">
-            <TrendChart series={cashflowSeries} variant="area" />
-          </div>
-        </div>
-      </div>
+      ) : null}
 
-      <div className="panel analytics-grid">
-        <div className="analytics-panel">
-          <div className="panel-header">
-            <div>
-              <h2>Cartina Italia interattiva</h2>
-              <div className="muted">Aree con più vendite nel periodo selezionato</div>
+      {activeTab === "geo" ? (
+        <div className="panel analytics-grid analytics-grid-single">
+          <div className="analytics-panel analytics-panel-feature">
+            <div className="panel-header">
+              <div>
+                <h2>Cartina Italia interattiva</h2>
+                <div className="muted">Passa con il mouse sulla regione per vedere vendite e ordini</div>
+              </div>
+            </div>
+            <ItalyMap data={regionData} />
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "performance" ? (
+        <div className="panel analytics-grid analytics-grid-performance">
+          <div className="analytics-panel">
+            <div className="panel-header"><div><h2>Prodotti top</h2><div className="muted">Per fatturato</div></div></div>
+            <div className="table compact">
+              <div className="row header"><div>Prodotto</div><div>SKU</div><div>Fatturato</div><div>Q.tà</div></div>
+              {data.topProducts.map((p) => (
+                <div className="row" key={p.id}><div>{p.name}</div><div className="mono">{p.sku}</div><div>{formatMoney(p.revenue)}</div><div>{p.qty}</div></div>
+              ))}
             </div>
           </div>
-          <ItalyMap data={regionData} />
-        </div>
-      </div>
-
-      <div className="panel analytics-grid">
-        <div className="analytics-panel">
-          <div className="panel-header"><div><h2>Prodotti top</h2><div className="muted">Per fatturato</div></div></div>
-          <div className="table compact">
-            <div className="row header"><div>Prodotto</div><div>SKU</div><div>Fatturato</div><div>Q.tà</div></div>
-            {data.topProducts.map((p) => (
-              <div className="row" key={p.id}><div>{p.name}</div><div className="mono">{p.sku}</div><div>{formatMoney(p.revenue)}</div><div>{p.qty}</div></div>
-            ))}
-          </div>
-        </div>
-        <div className="analytics-panel">
-          <div className="panel-header"><div><h2>Migliori clienti</h2><div className="muted">Per fatturato nel periodo</div></div></div>
-          <div className="table compact">
-            <div className="row header"><div>Cliente</div><div>Ordini</div><div>Fatturato</div></div>
-            {(data.topClients || []).map((c) => (
-              <div className="row" key={c.id}><div>{c.name}</div><div>{c.orders}</div><div>{formatMoney(c.revenue)}</div></div>
-            ))}
-          </div>
-        </div>
-        <div className="analytics-panel">
-          <div className="panel-header"><div><h2>Categorie top</h2><div className="muted">Fatturato per categoria</div></div></div>
-          <div className="table compact">
-            <div className="row header"><div>Categoria</div><div>Fatturato</div><div>Articoli</div></div>
-            {data.topCategories.map((c) => (
-              <div className="row" key={c.name}><div>{c.name}</div><div>{formatMoney(c.revenue)}</div><div>{c.qty}</div></div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="panel analytics-grid analytics-grid-single">
-        <div className="analytics-panel">
-          <div className="panel-header">
-            <div>
-              <h2>Analisi singolo prodotto</h2>
-              <div className="muted">Seleziona un prodotto nel filtro per vedere dettaglio</div>
+          <div className="analytics-panel">
+            <div className="panel-header"><div><h2>Migliori clienti</h2><div className="muted">Per fatturato nel periodo</div></div></div>
+            <div className="table compact">
+              <div className="row header"><div>Cliente</div><div>Ordini</div><div>Fatturato</div></div>
+              {(data.topClients || []).map((c) => (
+                <div className="row" key={c.id}><div>{c.name}</div><div>{c.orders}</div><div>{formatMoney(c.revenue)}</div></div>
+              ))}
             </div>
           </div>
-          {selectedProductId ? (
-            data.productInsights?.product ? (
-              <>
-                <div className="cards" style={{ marginBottom: "12px" }}>
-                  <div className="card"><div className="card-label">Prodotto</div><div className="card-sub">{data.productInsights.product.sku}</div><div className="card-value" style={{ fontSize: "1.05rem" }}>{data.productInsights.product.name}</div></div>
-                  <div className="card"><div className="card-label">Fatturato</div><div className="card-value">{formatMoney(data.productInsights.totals.revenue)}</div><div className="card-sub">Nel periodo</div></div>
-                  <div className="card"><div className="card-label">Ordini / Pezzi</div><div className="card-value">{data.productInsights.totals.orders}</div><div className="card-sub">{data.productInsights.totals.items} pezzi</div></div>
-                </div>
-                <div className="trend-revenue">
-                  <TrendChart series={selectedSeries} variant="area" />
-                </div>
-              </>
+          <div className="analytics-panel">
+            <div className="panel-header"><div><h2>Categorie top</h2><div className="muted">Fatturato per categoria</div></div></div>
+            <div className="table compact">
+              <div className="row header"><div>Categoria</div><div>Fatturato</div><div>Articoli</div></div>
+              {data.topCategories.map((c) => (
+                <div className="row" key={c.name}><div>{c.name}</div><div>{formatMoney(c.revenue)}</div><div>{c.qty}</div></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "product" ? (
+        <div className="panel analytics-grid analytics-grid-single">
+          <div className="analytics-panel analytics-panel-feature">
+            <div className="panel-header">
+              <div>
+                <h2>Analisi singolo prodotto</h2>
+                <div className="muted">Seleziona un prodotto nel filtro per vedere dettaglio</div>
+              </div>
+            </div>
+            {selectedProductId ? (
+              data.productInsights?.product ? (
+                <>
+                  <div className="cards" style={{ marginBottom: "12px" }}>
+                    <div className="card"><div className="card-label">Prodotto</div><div className="card-sub">{data.productInsights.product.sku}</div><div className="card-value" style={{ fontSize: "1.05rem" }}>{data.productInsights.product.name}</div></div>
+                    <div className="card"><div className="card-label">Fatturato</div><div className="card-value">{formatMoney(data.productInsights.totals.revenue)}</div><div className="card-sub">Nel periodo</div></div>
+                    <div className="card"><div className="card-label">Ordini / Pezzi</div><div className="card-value">{data.productInsights.totals.orders}</div><div className="card-sub">{data.productInsights.totals.items} pezzi</div></div>
+                  </div>
+                  <div className="trend-revenue">
+                    <TrendChart series={selectedSeries} variant="area" />
+                  </div>
+                </>
+              ) : (
+                <div className="muted">Nessuna vendita per il prodotto selezionato nel periodo.</div>
+              )
             ) : (
-              <div className="muted">Nessuna vendita per il prodotto selezionato nel periodo.</div>
-            )
-          ) : (
-            <div className="muted">Cerca SKU in alto e seleziona il prodotto.</div>
-          )}
+              <div className="muted">Cerca SKU in alto e seleziona il prodotto.</div>
+            )}
+          </div>
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
