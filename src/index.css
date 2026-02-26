@@ -5450,11 +5450,13 @@ button {
 
 .inventory-page .page-header > div:first-child {
   min-width: 0;
+  flex: 1 1 320px;
 }
 
 .inventory-page .page-actions.inventory-actions {
-  width: 100%;
-  justify-content: flex-start;
+  width: auto;
+  flex: 1 1 480px;
+  justify-content: flex-end;
 }
 
 .inventory-page .cards.inventory-cards {
@@ -5520,12 +5522,12 @@ button {
 
 .inventory-row {
   display: grid;
-  grid-template-columns: 48px 130px minmax(280px, 1.6fr) minmax(140px, 0.9fr) minmax(140px, 0.9fr) minmax(140px, 0.9fr) 100px 130px 130px minmax(130px, 1fr) 110px 120px;
+  grid-template-columns: 48px 110px minmax(220px, 1.4fr) 120px 120px 120px 90px 110px 110px minmax(120px, 0.9fr) 95px 100px;
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1450px;
+  min-width: 1280px;
 }
 
 .inventory-row.header {
@@ -5535,7 +5537,22 @@ button {
   color: #64748b;
   font-weight: 700;
   background: #f8fafc;
-  min-width: 1450px;
+  min-width: 1280px;
+}
+
+.inventory-row > div {
+  min-width: 0;
+}
+
+.inventory-row > div:nth-child(3),
+.inventory-row > div:nth-child(4),
+.inventory-row > div:nth-child(5),
+.inventory-row > div:nth-child(6),
+.inventory-row > div:nth-child(10),
+.inventory-row > div:nth-child(11) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .inventory-row:last-child {
@@ -5964,13 +5981,17 @@ button {
 
   .inventory-row,
   .inventory-row.header {
-    min-width: 1320px;
+    min-width: 1200px;
   }
 }
 
 @media (max-width: 1200px) {
   .inventory-filters-top {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-page .page-actions.inventory-actions {
+    justify-content: flex-start;
   }
 }
 
