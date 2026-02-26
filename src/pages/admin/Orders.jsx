@@ -70,6 +70,7 @@ export default function AdminOrders() {
   const [companyId, setCompanyId] = useState("");
   const [orderStatus, setOrderStatus] = useState("SUBMITTED");
   const [searchQuery, setSearchQuery] = useState("");
+  const [quickQuery, setQuickQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [lineItems, setLineItems] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -84,6 +85,7 @@ export default function AdminOrders() {
   const [editSearchQuery, setEditSearchQuery] = useState("");
   const [editSearchResults, setEditSearchResults] = useState([]);
   const [confirmCompleteOrder, setConfirmCompleteOrder] = useState(null);
+  const [orderView, setOrderView] = useState("table");
 
   async function loadOrders() {
     try {
@@ -252,6 +254,21 @@ export default function AdminOrders() {
   }, [items]);
 
   const selectedCount = useMemo(() => new Set(selectedIds).size, [selectedIds]);
+  const visibleItems = useMemo(() => {
+    const q = quickQuery.trim().toLowerCase();
+    if (!q) return orderedItems;
+    return orderedItems.filter((o) => {
+      const companyName = o.company?.name || "";
+      const referent = `${o.company?.contactFirstName || ""} ${o.company?.contactLastName || ""}`.trim();
+      return `${o.orderNumber || ""} ${companyName} ${referent} ${o.company?.email || ""}`
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [orderedItems, quickQuery]);
+  const selectedVisibleCount = useMemo(
+    () => visibleItems.filter((o) => selectedIds.includes(o.id)).length,
+    [visibleItems, selectedIds]
+  );
 
   function addItem(product) {
     setLineItems((prev) => {
@@ -583,58 +600,98 @@ export default function AdminOrders() {
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="filters-row">
-        <div className="filter-group">
-          <label>Stato</label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="ALL">Tutti</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+      <div className="orders-filter-shell">
+        <div className="orders-filter-top">
+          <input
+            className="orders-search"
+            placeholder="Cerca ordine, cliente o referente"
+            value={quickQuery}
+            onChange={(e) => setQuickQuery(e.target.value)}
+          />
+          <div className="products-view-switch">
+            <button
+              type="button"
+              className={`btn ${orderView === "table" ? "primary" : "ghost"}`}
+              onClick={() => setOrderView("table")}
+            >
+              Tabella
+            </button>
+            <button
+              type="button"
+              className={`btn ${orderView === "cards" ? "primary" : "ghost"}`}
+              onClick={() => setOrderView("cards")}
+            >
+              Card
+            </button>
+          </div>
+          <button
+            className="btn ghost"
+            onClick={() => {
+              setStatusFilter("ALL");
+              setPaymentFilter("ALL");
+              setCompanyFilter("");
+              setGroupFilter("ALL");
+              setStartDate("");
+              setEndDate("");
+              setQuickQuery("");
+            }}
+          >
+            Reset filtri
+          </button>
         </div>
-        <div className="filter-group">
-          <label>Pagamento</label>
-          <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
-            <option value="ALL">Tutti</option>
-            {PAYMENT_OPTIONS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="filter-group">
-          <label>Cliente</label>
-          <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
-            <option value="">Tutti</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="filter-group">
-          <label>Gruppo cliente</label>
-          <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)}>
-            <option value="ALL">Tutti</option>
-            {companyGroups.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="filter-group">
-          <label>Da</label>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-        </div>
-        <div className="filter-group">
-          <label>A</label>
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        <div className="orders-filter-grid">
+          <div className="filter-group">
+            <label>Stato</label>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="ALL">Tutti</option>
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Pagamento</label>
+            <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
+              <option value="ALL">Tutti</option>
+              {PAYMENT_OPTIONS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Cliente</label>
+            <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
+              <option value="">Tutti</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Gruppo cliente</label>
+            <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)}>
+              <option value="ALL">Tutti</option>
+              {companyGroups.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Da</label>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </div>
+          <div className="filter-group">
+            <label>A</label>
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          </div>
         </div>
       </div>
 
@@ -642,10 +699,15 @@ export default function AdminOrders() {
         {orderedStats.map((s) => {
           const meta = statusMeta(s.status);
           return (
-            <div key={s.status} className={`orders-stat-card ${meta.cls}`}>
+            <button
+              key={s.status}
+              type="button"
+              className={`orders-stat-card ${meta.cls} ${statusFilter === s.status ? "active" : ""}`}
+              onClick={() => setStatusFilter((prev) => (prev === s.status ? "ALL" : s.status))}
+            >
               <span>{meta.label}</span>
               <strong>{s.count}</strong>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -661,16 +723,24 @@ export default function AdminOrders() {
         <button className="btn ghost" onClick={updateBatchStatus} disabled={!selectedCount}>
           Modifica selezionati ({selectedCount})
         </button>
+        <span className="muted">{visibleItems.length} ordini visibili</span>
       </div>
 
-      <div className="orders-table">
+      {orderView === "table" ? (
+      <div className="orders-table orders-table-pro">
         <div className="row header">
           <div>
             <input
               type="checkbox"
-              checked={orderedItems.length > 0 && selectedCount === orderedItems.length}
+              checked={visibleItems.length > 0 && selectedVisibleCount === visibleItems.length}
               onChange={(e) =>
-                setSelectedIds(e.target.checked ? orderedItems.map((o) => o.id) : [])
+                setSelectedIds((prev) => {
+                  if (e.target.checked) {
+                    return Array.from(new Set([...prev, ...visibleItems.map((o) => o.id)]));
+                  }
+                  const visibleSet = new Set(visibleItems.map((o) => o.id));
+                  return prev.filter((id) => !visibleSet.has(id));
+                })
               }
             />
           </div>
@@ -683,7 +753,7 @@ export default function AdminOrders() {
           <div>Creato</div>
           <div></div>
         </div>
-        {orderedItems.map((o) => (
+        {visibleItems.map((o) => (
           <div className="row" key={o.id} onClick={() => setSummaryOrder(o)}>
             <div>
               <input
@@ -770,6 +840,55 @@ export default function AdminOrders() {
           </div>
         ))}
       </div>
+      ) : (
+        <div className="orders-cards">
+          {visibleItems.map((o) => {
+            const meta = statusMeta(o.status);
+            return (
+              <article key={o.id} className="orders-card" onClick={() => setSummaryOrder(o)}>
+                <div className="orders-card-top">
+                  <label className="check" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(o.id)}
+                      onChange={(e) =>
+                        setSelectedIds((prev) =>
+                          e.target.checked ? Array.from(new Set([...prev, o.id])) : prev.filter((id) => id !== o.id)
+                        )
+                      }
+                    />
+                    <span className="mono">#{o.orderNumber || "-"}</span>
+                  </label>
+                  <span className={meta.cls}>{meta.label}</span>
+                </div>
+                <strong>{o.company?.name || "-"}</strong>
+                <div className="muted">{paymentLabel(o.paymentMethod)}</div>
+                <div className="orders-card-meta">
+                  <span>{formatCurrency(o.total)}</span>
+                  <span>{new Date(o.createdAt).toLocaleString()}</span>
+                </div>
+                <div className="orders-card-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="btn ghost small" onClick={() => updateStatus(o.id, "APPROVED")} disabled={Boolean(o.fiscalInvoice)}>
+                    In elaborazione
+                  </button>
+                  <button className="btn ghost small" onClick={() => setConfirmCompleteOrder(o)} disabled={Boolean(o.fiscalInvoice)}>
+                    Completato
+                  </button>
+                  {o.fiscalInvoice ? (
+                    <button className="btn ghost small" onClick={() => navigate("/admin/invoices")}>
+                      Vedi fattura
+                    </button>
+                  ) : (
+                    <button className="btn primary small" onClick={() => createInvoiceFromOrder(o.id)}>
+                      Fattura
+                    </button>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
       {confirmCompleteOrder ? (
         <Portal>
