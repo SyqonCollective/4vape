@@ -1618,7 +1618,13 @@ export default function AdminProducts() {
           <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
             <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Modifica prodotto</h3>
+              <div className="product-modal-head">
+                <h3>Scheda prodotto</h3>
+                <div className="product-modal-subhead">
+                  <span className="mono">{selectedProduct.sku}</span>
+                  <span>{selectedProduct.name}</span>
+                </div>
+              </div>
               <button className="btn ghost" onClick={() => setSelectedProduct(null)}>Chiudi</button>
             </div>
             <div className="modal-body">
@@ -1703,11 +1709,24 @@ export default function AdminProducts() {
                     Imposta i dettagli
                   </div>
                 ) : null}
-                <div><strong>SKU:</strong> {selectedProduct.sku}</div>
-                <div><strong>Fornitore:</strong> {selectedProduct.sourceSupplier?.name || (selectedProduct.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</div>
-                {selectedProduct.isParent ? (
-                  <div><strong>Figli:</strong> {selectedProduct.children?.length || 0}</div>
-                ) : null}
+                <div className="product-quick-grid">
+                  <div className="product-quick-card">
+                    <span>SKU</span>
+                    <strong className="mono">{selectedProduct.sku}</strong>
+                  </div>
+                  <div className="product-quick-card">
+                    <span>Fornitore</span>
+                    <strong>{selectedProduct.sourceSupplier?.name || (selectedProduct.source === "SUPPLIER" ? "Fornitore" : "Manuale")}</strong>
+                  </div>
+                  <div className="product-quick-card">
+                    <span>Tipo</span>
+                    <strong>{selectedProduct.isParent ? "Padre" : selectedProduct.parentId ? "Figlio" : "Singolo"}</strong>
+                  </div>
+                  <div className="product-quick-card">
+                    <span>Figli</span>
+                    <strong>{selectedProduct.children?.length || 0}</strong>
+                  </div>
+                </div>
                 <div className="customer-price-panel">
                   <div className="customer-price-header">
                     <div className="card-title" style={{ marginBottom: 0 }}>Prezzo dedicato per cliente</div>
@@ -1763,8 +1782,9 @@ export default function AdminProducts() {
                     ) : null}
                   </div>
                 </div>
-                <div className="form-grid">
-                  <label>
+                <div className="section-title">Anagrafica e prezzi</div>
+                <div className="form-grid product-form-grid">
+                  <label className="full product-name-field">
                     Nome
                     <input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
                   </label>
@@ -2139,7 +2159,8 @@ export default function AdminProducts() {
                     <input value={edit.imageUrl} onChange={(e) => setEdit({ ...edit, imageUrl: e.target.value })} />
                   </label>
                 </div>
-                <label className="full">
+                <div className="section-title">Contenuti</div>
+                <label className="full product-desc-field">
                   Breve descrizione
                   <RichTextEditor
                     value={edit.shortDescription}
@@ -2147,14 +2168,14 @@ export default function AdminProducts() {
                     placeholder="Breve descrizione prodotto..."
                   />
                 </label>
-                <label>
+                <label className="full product-desc-field">
                   Descrizione
                   <RichTextEditor
                     value={edit.description}
                     onChange={(next) => setEdit({ ...edit, description: next })}
                   />
                 </label>
-                <div className="actions">
+                <div className="actions product-actions-sticky">
                   {selectedProduct.published === false ? (
                     <button
                       className="btn primary"
