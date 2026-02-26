@@ -40,6 +40,29 @@ function calcTrend(series = []) {
   return xs.map((x) => ({ label: series[x].label, value: m * x + b }));
 }
 
+const logScale = (v) => Math.log1p(Math.max(0, Number(v || 0)));
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+function percentile(values = [], p = 0.9) {
+  if (!values.length) return 1;
+  const sorted = [...values].sort((a, b) => a - b);
+  const idx = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * p)));
+  return sorted[idx] || 1;
+}
+
+function movingAverage(values = [], windowSize = 3) {
+  if (!values.length) return [];
+  return values.map((_, i) => {
+    const from = Math.max(0, i - windowSize + 1);
+    const chunk = values.slice(from, i + 1);
+    return chunk.reduce((a, b) => a + b, 0) / chunk.length;
+  });
+}
+
+const signedLogScale = (v) => {
+  const n = Number(v || 0);
+  return Math.sign(n) * Math.log1p(Math.abs(n));
+};
+
 function TrendChart({ series = [], variant = "line" }) {
   if (!series.length) return null;
   if (series.length === 1) {
@@ -50,20 +73,26 @@ function TrendChart({ series = [], variant = "line" }) {
       </svg>
     );
   }
-  const max = Math.max(...series.map((s) => s.value), 1);
-  const min = Math.min(...series.map((s) => s.value), 0);
+  const hasNegative = series.some((s) => Number(s.value || 0) < 0);
+  const scaled = series.map((s) => (hasNegative ? signedLogScale(s.value) : logScale(s.value)));
+  const cap = percentile(scaled.map((v) => Math.abs(v)), 0.92) || 1;
+  const clipped = scaled.map((v) => (hasNegative ? clamp(v, -cap, cap) : clamp(v, 0, cap)));
+  const smooth = movingAverage(clipped, 3);
+  const max = Math.max(...smooth, 1);
+  const min = Math.min(...smooth, hasNegative ? -1 : 0);
   const range = max - min || 1;
-  const toPoint = (arr) =>
+  const toPoint = (arr, useRaw = false) =>
     arr
       .map((s, i) => {
         const x = (i / Math.max(arr.length - 1, 1)) * 100;
-        const y = 100 - ((s.value - min) / range) * 100;
+        const val = useRaw ? Number(s.value || 0) : Number(s || 0);
+        const y = 100 - ((val - min) / range) * 100;
         return `${x.toFixed(2)},${y.toFixed(2)}`;
       })
       .join(" ");
 
-  const points = toPoint(series);
-  const trendPoints = toPoint(calcTrend(series));
+  const points = toPoint(smooth);
+  const trendPoints = toPoint(movingAverage(calcTrend(series).map((s) => hasNegative ? signedLogScale(s.value) : logScale(s.value)), 2));
 
   return (
     <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="analytics-trend">
@@ -73,10 +102,10 @@ function TrendChart({ series = [], variant = "line" }) {
       {variant === "area" ? <polygon points={`0,100 ${points} 100,100`} className="chart-area-fill" /> : null}
       <polyline points={points} fill="none" stroke="currentColor" strokeWidth="2.8" />
       <polyline points={trendPoints} fill="none" className="chart-trendline" strokeWidth="2" />
-      {series.map((s, i) => {
+      {smooth.map((val, i) => {
         const x = (i / Math.max(series.length - 1, 1)) * 100;
-        const y = 100 - ((s.value - min) / range) * 100;
-        return <circle key={`${s.label}-${i}`} cx={x} cy={y} r="1.7" fill="currentColor" opacity="0.75" />;
+        const y = 100 - ((val - min) / range) * 100;
+        return <circle key={`${series[i]?.label || i}-${i}`} cx={x} cy={y} r="1.3" fill="currentColor" opacity="0.72" />;
       })}
     </svg>
   );
@@ -84,16 +113,18 @@ function TrendChart({ series = [], variant = "line" }) {
 
 function ComboBarLineChart({ bars = [], line = [] }) {
   if (!bars.length) return null;
-  const max = Math.max(
-    1,
-    ...bars.map((x) => Number(x.value || 0)),
-    ...line.map((x) => Number(x.value || 0))
-  );
+  const barsScaled = bars.map((x) => logScale(x.value));
+  const lineScaledRaw = line.map((x) => logScale(x.value));
+  const barCap = percentile(barsScaled, 0.92);
+  const lineCap = percentile(lineScaledRaw, 0.92);
+  const barsClipped = barsScaled.map((v) => clamp(v, 0, barCap));
+  const lineScaled = movingAverage(lineScaledRaw.map((v) => clamp(v, 0, lineCap)), 3);
+  const max = Math.max(1, ...barsClipped, ...lineScaled);
   const barW = 100 / Math.max(bars.length, 1);
-  const linePts = line
-    .map((p, i) => {
+  const linePts = lineScaled
+    .map((v, i) => {
       const x = i * barW + barW / 2;
-      const y = 100 - (Number(p.value || 0) / max) * 100;
+      const y = 100 - (v / max) * 100;
       return `${x.toFixed(2)},${y.toFixed(2)}`;
     })
     .join(" ");
@@ -103,15 +134,16 @@ function ComboBarLineChart({ bars = [], line = [] }) {
       <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
       <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
       {bars.map((b, i) => {
-        const h = (Number(b.value || 0) / max) * 100;
+        const h = (barsClipped[i] / max) * 100;
         const w = Math.max(barW - 2, 1);
         const x = i * barW + (barW - w) / 2;
-        return <rect key={`b-${i}`} x={x} y={100 - h} width={w} height={h} className="combo-bar" rx="1.2" />;
+        const height = h > 0 ? Math.max(h, 1.2) : 0;
+        return <rect key={`b-${i}`} x={x} y={100 - height} width={w} height={height} className="combo-bar" rx="1.2" />;
       })}
       <polyline points={linePts} fill="none" className="combo-line" strokeWidth="2.2" />
-      {line.map((p, i) => {
+      {lineScaled.map((v, i) => {
         const x = i * barW + barW / 2;
-        const y = 100 - (Number(p.value || 0) / max) * 100;
+        const y = 100 - (v / max) * 100;
         return <circle key={`p-${i}`} cx={x} cy={y} r="1.6" className="combo-dot" />;
       })}
     </svg>
@@ -139,14 +171,15 @@ function StackedChart({ series = [] }) {
         const rects = [];
         const pushRect = (h, cls) => {
           if (h <= 0) return;
-          y -= h;
+          const hh = Math.max(h, 1.2);
+          y -= hh;
           rects.push(
             <rect
               key={`${s.date}-${cls}`}
               x={left}
               y={y}
               width={width}
-              height={h}
+              height={hh}
               className={cls}
               rx={1.4}
               ry={1.4}

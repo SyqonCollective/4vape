@@ -26,6 +26,25 @@ function calcTrend(values = []) {
   return values.map((_, x) => m * x + b);
 }
 
+const logScale = (v) => Math.log1p(Math.max(0, Number(v || 0)));
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+function percentile(values = [], p = 0.9) {
+  if (!values.length) return 1;
+  const sorted = [...values].sort((a, b) => a - b);
+  const idx = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * p)));
+  return sorted[idx] || 1;
+}
+
+function movingAverage(values = [], windowSize = 3) {
+  if (!values.length) return [];
+  return values.map((_, i) => {
+    const from = Math.max(0, i - windowSize + 1);
+    const chunk = values.slice(from, i + 1);
+    return chunk.reduce((a, b) => a + b, 0) / chunk.length;
+  });
+}
+
 function toPoints(values = [], min = 0, range = 1) {
   return values
     .map((v, i) => {
@@ -39,25 +58,26 @@ function TrendSpark({ series = [] }) {
   if (!series.length) return null;
   const ordersValues = series.map((p) => Number(p.orders || 0));
   const revenueValues = series.map((p) => Number(p.revenue || 0));
-  const ordersMin = Math.min(...ordersValues);
-  const ordersMax = Math.max(...ordersValues, 1);
-  const revenueMin = Math.min(...revenueValues);
-  const revenueMax = Math.max(...revenueValues, 1);
-  const ordersRange = ordersMax - ordersMin || 1;
-  const revenueRange = revenueMax - revenueMin || 1;
 
-  const ordersPts = toPoints(ordersValues, ordersMin, ordersRange);
-  const revenuePts = toPoints(revenueValues, revenueMin, revenueRange);
-  const ordersPath = ordersPts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+  const ordersCap = percentile(ordersValues.map(logScale), 0.92);
+  const revenueCap = percentile(revenueValues.map(logScale), 0.92);
+  const ordersScaled = ordersValues.map((v) => clamp(logScale(v), 0, ordersCap));
+  const revenueScaled = revenueValues.map((v) => clamp(logScale(v), 0, revenueCap));
+  const revenueSmooth = movingAverage(revenueScaled, 3);
+  const ordersScaledMin = 0;
+  const ordersScaledMax = Math.max(...ordersScaled, 1);
+  const revenueScaledMin = 0;
+  const revenueScaledMax = Math.max(...revenueSmooth, 1);
+  const ordersScaledRange = ordersScaledMax - ordersScaledMin || 1;
+  const revenueScaledRange = revenueScaledMax - revenueScaledMin || 1;
+
+  const ordersPts = toPoints(ordersScaled, ordersScaledMin, ordersScaledRange);
+  const revenuePts = toPoints(revenueSmooth, revenueScaledMin, revenueScaledRange);
   const revenuePath = revenuePts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
   const revenueArea = `0,100 ${revenuePath} 100,100`;
 
-  const ordersTrend = calcTrend(ordersValues);
-  const revenueTrend = calcTrend(revenueValues);
-  const ordersTrendPath = toPoints(ordersTrend, ordersMin, ordersRange)
-    .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-    .join(" ");
-  const revenueTrendPath = toPoints(revenueTrend, revenueMin, revenueRange)
+  const revenueTrend = calcTrend(revenueSmooth);
+  const revenueTrendPath = toPoints(revenueTrend, revenueScaledMin, revenueScaledRange)
     .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
     .join(" ");
   const barWidth = 100 / Math.max(series.length, 1);
@@ -75,15 +95,14 @@ function TrendSpark({ series = [] }) {
       <line x1="0" y1="50" x2="100" y2="50" className="chart-gridline" />
       <line x1="0" y1="75" x2="100" y2="75" className="chart-gridline" />
       {ordersPts.map((p, i) => {
-        const h = ((ordersValues[i] - ordersMin) / ordersRange) * 100;
+        const h = ((ordersScaled[i] - ordersScaledMin) / ordersScaledRange) * 100;
         const w = Math.max(barWidth - 1.6, 1);
         const x = i * barWidth + (barWidth - w) / 2;
-        return <rect key={`bar-${i}`} x={x} y={100 - h} width={w} height={h} className="spark-bar" rx="1" />;
+        const height = h > 0 ? Math.max(h, 1.2) : 0;
+        return <rect key={`bar-${i}`} x={x} y={100 - height} width={w} height={height} className="spark-bar" rx="1" />;
       })}
       <polygon points={revenueArea} fill="url(#dashRevenueFill)" />
       <polyline points={revenuePath} fill="none" stroke="#22c55e" strokeWidth="2.4" />
-      <polyline points={ordersPath} fill="none" stroke="#0ea5e9" strokeWidth="1.8" opacity="0.7" />
-      <polyline points={ordersTrendPath} fill="none" className="chart-trendline chart-trendline-orders" strokeWidth="1.5" />
       <polyline points={revenueTrendPath} fill="none" className="chart-trendline chart-trendline-revenue" strokeWidth="1.6" />
       {revenuePts.map((p, i) => (
         <circle key={`dot-${i}`} cx={p.x} cy={p.y} r="1.5" className="spark-dot" />
