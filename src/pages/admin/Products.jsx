@@ -1094,6 +1094,15 @@ export default function AdminProducts() {
     }
     return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [filteredItems]);
+  const bulkStats = useMemo(() => {
+    const total = bulkRows.length;
+    const parents = bulkRows.filter((r) => r.isParent).length;
+    const children = bulkRows.filter((r) => !r.isParent && r.parentId).length;
+    const singles = bulkRows.filter((r) => !r.isParent && !r.parentId).length;
+    const drafts = bulkRows.filter((r) => r.isDraftRow).length;
+    const editable = bulkRows.filter((r) => r.isDraftRow && !r.isParent).length;
+    return { total, parents, children, singles, drafts, editable };
+  }, [bulkRows]);
 
   function toggleSelectAllPage() {
     const ids = Array.from(new Set(pagedRows.map((row) => row.item.id)));
@@ -2793,13 +2802,46 @@ export default function AdminProducts() {
           <div className="modal-backdrop" onClick={() => setShowBulkEditor(false)}>
             <div className="modal bulk-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h3>Modifica in bulk</h3>
+                <div className="bulk-head">
+                  <h3>Modifica in bulk</h3>
+                  <div className="bulk-subtitle muted">
+                    Editor tabellare avanzato: drag & drop figli, aggiornamento massivo campi e publish rapido.
+                  </div>
+                </div>
                 <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
                   Chiudi
                 </button>
               </div>
-              <div className="bulk-subtitle muted">
-                {bulkRows.length} prodotti — modifica stile Excel
+              <div className="bulk-kpis">
+                <div className="bulk-kpi-card">
+                  <span>Totale</span>
+                  <strong>{bulkStats.total}</strong>
+                </div>
+                <div className="bulk-kpi-card">
+                  <span>Padri</span>
+                  <strong>{bulkStats.parents}</strong>
+                </div>
+                <div className="bulk-kpi-card">
+                  <span>Figli</span>
+                  <strong>{bulkStats.children}</strong>
+                </div>
+                <div className="bulk-kpi-card">
+                  <span>Singoli</span>
+                  <strong>{bulkStats.singles}</strong>
+                </div>
+                <div className="bulk-kpi-card">
+                  <span>Bozze</span>
+                  <strong>{bulkStats.drafts}</strong>
+                </div>
+                <div className="bulk-kpi-card">
+                  <span>Campi editabili</span>
+                  <strong>{bulkStats.editable}</strong>
+                </div>
+              </div>
+              <div className="bulk-hints">
+                <span className="hint-chip">Trascina una riga su un padre per assegnarla</span>
+                <span className="hint-chip">Trascina tra figli dello stesso padre per riordinare</span>
+                <span className="hint-chip">Le bozze sono evidenziate in arancione</span>
               </div>
               <div className="bulk-table">
                 <div className="bulk-row header">
@@ -3131,16 +3173,16 @@ export default function AdminProducts() {
                   });
                 })()}
               </div>
-                <div className="actions">
+                <div className="actions bulk-actions-sticky">
                   <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
                     Annulla
                   </button>
                   {productFilter === "draft" ? (
-                    <button className="btn primary" onClick={() => saveBulk(true)} disabled={bulkSaving}>
+                    <button className="btn primary bulk-save-btn" onClick={() => saveBulk(true)} disabled={bulkSaving}>
                       {bulkSaving ? "Salvataggio..." : "Salva e pubblica"}
                     </button>
                   ) : (
-                    <button className="btn primary" onClick={saveBulk} disabled={bulkSaving}>
+                    <button className="btn primary bulk-save-btn" onClick={saveBulk} disabled={bulkSaving}>
                       {bulkSaving ? "Salvataggio..." : "Salva modifiche"}
                     </button>
                   )}

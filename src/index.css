@@ -3900,18 +3900,93 @@ button {
   max-height: 92vh;
   display: flex;
   flex-direction: column;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 34px 80px rgba(15, 23, 42, 0.26);
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(14, 165, 233, 0.09), rgba(14, 165, 233, 0) 44%),
+    radial-gradient(120% 120% at 0% 100%, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0) 44%),
+    #fff;
+}
+
+.bulk-modal .modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  margin: -1.6rem -2rem 0;
+  padding: 1rem 2rem 0.9rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.88));
+  backdrop-filter: blur(8px);
+}
+
+.bulk-head {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.bulk-head h3 {
+  margin: 0;
+  font-size: 1.5rem;
 }
 
 .bulk-subtitle {
-  margin-top: 0.4rem;
+  margin-top: 0;
+}
+
+.bulk-kpis {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(110px, 1fr));
+  gap: 0.6rem;
+}
+
+.bulk-kpi-card {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 13px;
+  padding: 0.6rem 0.7rem;
+  background: linear-gradient(180deg, #fff, #f8fafc);
+  display: grid;
+  gap: 0.2rem;
+}
+
+.bulk-kpi-card span {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.bulk-kpi-card strong {
+  font-size: 1.04rem;
+  color: #0f172a;
+}
+
+.bulk-hints {
+  margin-top: 0.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hint-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  color: #475569;
+  background: rgba(248, 250, 252, 0.95);
 }
 
 .bulk-table {
-  margin-top: 1rem;
-  border: 1px solid var(--stroke);
-  border-radius: 16px;
+  margin-top: 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 18px;
   overflow: auto;
   max-height: 60vh;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 14px 28px rgba(15, 23, 42, 0.08);
 }
 
 .bulk-row {
@@ -3931,15 +4006,15 @@ button {
   gap: 0.6rem;
   align-items: center;
   padding: 0.6rem 0.8rem;
-  border-bottom: 1px solid var(--stroke);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.82);
   background: #fff;
 }
 
 .bulk-row.header {
   position: sticky;
   top: 0;
-  z-index: 1;
-  background: #f8fafc;
+  z-index: 2;
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -3950,11 +4025,18 @@ button {
 .bulk-row input,
 .bulk-row select {
   width: 100%;
-  padding: 0.4rem 0.55rem;
+  padding: 0.46rem 0.58rem;
   border-radius: 10px;
-  border: 1px solid var(--stroke);
+  border: 1px solid rgba(148, 163, 184, 0.36);
   background: #fff;
   font-size: 0.85rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bulk-row input:focus,
+.bulk-row select:focus {
+  border-color: rgba(14, 165, 233, 0.55);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
 }
 
 .bulk-row .mono {
@@ -4016,9 +4098,28 @@ button {
     width: 94vw;
   }
 
+  .bulk-modal .modal-header {
+    margin: -1.6rem -2rem 0;
+    padding: 0.9rem 1.2rem 0.8rem;
+  }
+
+  .bulk-kpis {
+    grid-template-columns: repeat(2, minmax(110px, 1fr));
+  }
+
   .bulk-row {
     grid-template-columns: 120px 1fr;
     grid-auto-rows: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .bulk-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .bulk-hints {
+    display: none;
   }
 }
 
@@ -4059,7 +4160,7 @@ button {
 }
 
 .bulk-row.parent-row {
-  background: #f8fafc;
+  background: linear-gradient(90deg, rgba(239, 246, 255, 0.92), rgba(248, 250, 252, 0.95));
   border-left: 4px solid rgba(59, 130, 246, 0.45);
 }
 
@@ -4070,7 +4171,22 @@ button {
 
 .bulk-row.draft-row {
   border-left-color: rgba(251, 146, 60, 0.6);
-  background: rgba(255, 247, 237, 0.9);
+  background: linear-gradient(90deg, rgba(255, 247, 237, 0.9), rgba(255, 255, 255, 0.95));
+}
+
+.bulk-actions-sticky {
+  margin-top: 0.8rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.24);
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), #fff 45%);
+  backdrop-filter: blur(8px);
+}
+
+.bulk-save-btn {
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
 }
 
 .orders-table {
