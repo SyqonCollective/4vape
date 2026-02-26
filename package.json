@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.22.12",
+    "ag-grid-community": "^35.1.0",
+    "ag-grid-react": "^35.1.0",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.6",
     "leaflet": "^1.9.4",

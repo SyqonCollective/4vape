@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Lottie from "lottie-react";
+import { AgGridReact } from "ag-grid-react";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-quartz.css";
 import trashAnim from "../../assets/Trash clean.json";
 import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
@@ -133,6 +136,7 @@ export default function AdminProducts() {
   const [showBulkEditor, setShowBulkEditor] = useState(false);
   const [bulkRows, setBulkRows] = useState([]);
   const [bulkSaving, setBulkSaving] = useState(false);
+  const bulkGridRef = useRef(null);
   const [collapsedParents, setCollapsedParents] = useState(new Set());
   const [bulkCollapsedParents, setBulkCollapsedParents] = useState(new Set());
   const [bulkDragOver, setBulkDragOver] = useState("");
@@ -1103,6 +1107,114 @@ export default function AdminProducts() {
     const editable = bulkRows.filter((r) => r.isDraftRow && !r.isParent).length;
     return { total, parents, children, singles, drafts, editable };
   }, [bulkRows]);
+  const categoryLabelById = useMemo(() => new Map(categoryOptions.map((c) => [c.id, c.label])), [categoryOptions]);
+  const taxLabelById = useMemo(
+    () => new Map(taxes.map((t) => [t.id, `${t.name} (${Number(t.rate).toFixed(2)}%)`])),
+    [taxes]
+  );
+  const exciseLabelById = useMemo(
+    () =>
+      new Map(
+        excises.map((e) => [e.id, `${e.name} (${Number(e.amount).toFixed(6)}${e.type === "ML" ? "/ml" : ""})`])
+      ),
+    [excises]
+  );
+  const bulkParentOptions = useMemo(
+    () => bulkRows.filter((r) => r.isParent).map((r) => ({ id: r.id, label: `${r.name} (${r.sku})` })),
+    [bulkRows]
+  );
+  const bulkParentById = useMemo(() => new Map(bulkParentOptions.map((p) => [p.id, p.label])), [bulkParentOptions]);
+  const bulkColumnDefs = useMemo(
+    () => [
+      { field: "sku", headerName: "SKU", minWidth: 130, pinned: "left", editable: false, rowDrag: true, cellClass: "bulk-cell-mono" },
+      { field: "name", headerName: "Nome", minWidth: 260, editable: true, pinned: "left" },
+      { field: "price", headerName: "Prezzo", minWidth: 120, editable: (p) => !p.data?.isParent, valueParser: (p) => (p.newValue === "" ? "" : Number(p.newValue)) },
+      { field: "listPrice", headerName: "Prezzo cons.", minWidth: 140, editable: true, valueParser: (p) => (p.newValue === "" ? "" : Number(p.newValue)) },
+      { field: "purchasePrice", headerName: "Acquisto", minWidth: 120, editable: true, valueParser: (p) => (p.newValue === "" ? "" : Number(p.newValue)) },
+      { field: "discountPrice", headerName: "Sconto", minWidth: 120, editable: true, valueParser: (p) => (p.newValue === "" ? "" : Number(p.newValue)) },
+      { field: "discountQty", headerName: "Q.tà sconto", minWidth: 120, editable: true, valueParser: (p) => (p.newValue === "" ? "" : Number(p.newValue)) },
+      { field: "stockQty", headerName: "Giacenza", minWidth: 120, editable: (p) => !p.data?.isParent, valueParser: (p) => (p.newValue === "" ? "" : Number(p.newValue)) },
+      { field: "nicotine", headerName: "Nicotina", minWidth: 120, editable: true, valueParser: (p) => (p.newValue === "" ? "" : Number(p.newValue)) },
+      {
+        field: "categoryId",
+        headerName: "Categoria",
+        minWidth: 190,
+        editable: true,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: { values: ["", ...categoryOptions.map((c) => c.id)] },
+        valueFormatter: (p) => (p.value ? categoryLabelById.get(p.value) || p.value : "—"),
+      },
+      {
+        field: "taxRateId",
+        headerName: "IVA",
+        minWidth: 160,
+        editable: true,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: { values: ["", ...taxes.map((t) => t.id)] },
+        valueFormatter: (p) => (p.value ? taxLabelById.get(p.value) || p.value : "—"),
+      },
+      {
+        field: "exciseRateId",
+        headerName: "Accisa",
+        minWidth: 180,
+        editable: true,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: { values: ["", ...excises.map((e) => e.id)] },
+        valueFormatter: (p) => (p.value ? exciseLabelById.get(p.value) || p.value : "—"),
+      },
+      { field: "published", headerName: "Pubblicato", minWidth: 120, editable: true, cellDataType: "boolean" },
+      { field: "isUnavailable", headerName: "Non disp.", minWidth: 120, editable: true, cellDataType: "boolean" },
+      { field: "isParent", headerName: "Padre?", minWidth: 100, editable: true, cellDataType: "boolean" },
+      { field: "sellAsSingle", headerName: "Figlio+singolo?", minWidth: 140, editable: (p) => !p.data?.isParent, cellDataType: "boolean" },
+      {
+        field: "parentId",
+        headerName: "Padre",
+        minWidth: 220,
+        editable: (p) => !p.data?.isParent,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: () => ({ values: ["", ...bulkParentOptions.map((p) => p.id)] }),
+        valueFormatter: (p) => (p.value ? bulkParentById.get(p.value) || p.value : "Nessun padre"),
+      },
+    ],
+    [bulkParentById, bulkParentOptions, categoryLabelById, categoryOptions, exciseLabelById, excises, taxLabelById, taxes]
+  );
+
+  function onBulkCellValueChanged(params) {
+    const updated = params.data;
+    if (!updated) return;
+    setBulkRows((prev) => prev.map((r) => (r.id === updated.id ? { ...updated } : r)));
+  }
+
+  function onBulkRowDragEnd(event) {
+    const dragged = event.node?.data;
+    if (!dragged) return;
+    const over = event.overNode?.data;
+    const ordered = [];
+    event.api.forEachNodeAfterFilterAndSort((node) => {
+      if (node.data) ordered.push({ ...node.data });
+    });
+    if (!ordered.length) return;
+    let next = ordered;
+    if (over && over.id !== dragged.id) {
+      const draggedIndex = next.findIndex((r) => r.id === dragged.id);
+      const overRow = next.find((r) => r.id === over.id);
+      if (draggedIndex !== -1 && overRow && !next[draggedIndex].isParent) {
+        if (overRow.isParent) {
+          next[draggedIndex] = { ...next[draggedIndex], parentId: overRow.id };
+        } else {
+          next[draggedIndex] = { ...next[draggedIndex], parentId: overRow.parentId || "" };
+        }
+      }
+    }
+    const sortCounter = new Map();
+    next = next.map((r) => {
+      if (!r.parentId) return { ...r, parentSort: 0 };
+      const current = sortCounter.get(r.parentId) || 0;
+      sortCounter.set(r.parentId, current + 1);
+      return { ...r, parentSort: current };
+    });
+    setBulkRows(next);
+  }
 
   function toggleSelectAllPage() {
     const ids = Array.from(new Set(pagedRows.map((row) => row.item.id)));
@@ -2844,334 +2956,32 @@ export default function AdminProducts() {
                 <span className="hint-chip">Le bozze sono evidenziate in arancione</span>
               </div>
               <div className="bulk-table">
-                <div className="bulk-row header">
-                  <div>SKU</div>
-                  <div>Nome</div>
-                  <div>Prezzo</div>
-                          <div>Prezzo consigliato</div>
-                  <div>Acquisto</div>
-                  <div>Sconto</div>
-                  <div>Q.tà Sconto</div>
-                  <div>Giacenza</div>
-                  <div>Nicotina</div>
-                  <div>Categoria</div>
-                  <div>IVA</div>
-                  <div>Accisa</div>
-                  <div>Pubblicato</div>
-                  <div>Non disp.</div>
-                  <div>Padre?</div>
-                  <div>Figlio+singolo?</div>
-                  <div>Padre</div>
+                <div className="ag-theme-quartz bulk-ag-grid">
+                  <AgGridReact
+                    ref={bulkGridRef}
+                    rowData={bulkRows}
+                    columnDefs={bulkColumnDefs}
+                    defaultColDef={{
+                      sortable: true,
+                      filter: true,
+                      resizable: true,
+                      editable: true,
+                    }}
+                    getRowId={(p) => p.data.id}
+                    stopEditingWhenCellsLoseFocus
+                    rowSelection="multiple"
+                    suppressRowClickSelection={false}
+                    rowDragManaged
+                    animateRows
+                    onCellValueChanged={onBulkCellValueChanged}
+                    onRowDragEnd={onBulkRowDragEnd}
+                    rowClassRules={{
+                      "bulk-row-parent": (p) => Boolean(p.data?.isParent),
+                      "bulk-row-child": (p) => Boolean(!p.data?.isParent && p.data?.parentId),
+                      "bulk-row-draft": (p) => Boolean(p.data?.isDraftRow),
+                    }}
+                  />
                 </div>
-                {(() => {
-                  const byParent = new Map();
-                  const parents = bulkRows.filter((r) => r.isParent);
-                  for (const parent of parents) byParent.set(parent.id, []);
-                  const singles = [];
-                  for (const row of bulkRows) {
-                    if (row.isParent) continue;
-                    if (row.parentId && byParent.has(row.parentId)) {
-                      byParent.get(row.parentId).push(row);
-                    } else {
-                      singles.push(row);
-                    }
-                  }
-                  const ordered = [];
-                  for (const parent of parents) {
-                    ordered.push({ type: "parent", row: parent });
-                    if (!bulkCollapsedParents.has(parent.id)) {
-                      for (const child of byParent.get(parent.id) || []) {
-                        ordered.push({ type: "child", row: child, parent });
-                      }
-                    }
-                  }
-                  for (const single of singles) ordered.push({ type: "single", row: single });
-                  const bulkParentOptions = parents.map((p) => ({ id: p.id, name: p.name, sku: p.sku }));
-                  return ordered.map(({ row, type, parent }) => {
-                    const idx = bulkRows.findIndex((r) => r.id === row.id);
-                    const isChild = type === "child";
-                    const isParent = type === "parent";
-                    const isDraftRow = row.isDraftRow;
-                    const moveRow = (draggedId, targetId) => {
-                      if (!draggedId || draggedId === targetId) return;
-                      const current = [...bulkRows];
-                      const fromIndex = current.findIndex((r) => r.id === draggedId);
-                      const toIndex = current.findIndex((r) => r.id === targetId);
-                      if (fromIndex === -1 || toIndex === -1) return;
-                      const [moved] = current.splice(fromIndex, 1);
-                      current.splice(toIndex, 0, moved);
-                      setBulkRows(current);
-                    };
-                    return (
-                      <div
-                        className={`bulk-row ${isChild ? "child-row" : ""} ${isParent ? "parent-row" : ""} ${
-                          bulkDragOver === row.id ? "drag-over" : ""
-                        } ${isDraftRow ? "draft-row" : ""}`}
-                        key={row.id}
-                        draggable={!isParent}
-                        onDragStart={(e) => {
-                          if (isParent) return;
-                          e.dataTransfer.setData("text/plain", row.id);
-                        }}
-                        onDragOver={(e) => {
-                          if (!isParent && !isChild) return;
-                          e.preventDefault();
-                          setBulkDragOver(row.id);
-                        }}
-                        onDragLeave={() => setBulkDragOver("")}
-                        onDrop={(e) => {
-                          if (!isParent && !isChild) return;
-                          e.preventDefault();
-                          const draggedId = e.dataTransfer.getData("text/plain");
-                          if (!draggedId || draggedId === row.id) return;
-                          if (isParent) {
-                            const next = bulkRows.map((r) =>
-                              r.id === draggedId ? { ...r, parentId: row.id } : r
-                            );
-                            setBulkRows(next);
-                          } else if (isChild) {
-                            const dragged = bulkRows.find((r) => r.id === draggedId);
-                            if (dragged?.parentId === row.parentId) {
-                              moveRow(draggedId, row.id);
-                            }
-                          }
-                          setBulkDragOver("");
-                        }}
-                      >
-                        <div className="mono">
-                          {isParent ? (
-                            <button
-                              type="button"
-                              className="collapse-toggle"
-                              onClick={() => {
-                                const next = new Set(bulkCollapsedParents);
-                                if (next.has(row.id)) next.delete(row.id);
-                                else next.add(row.id);
-                                setBulkCollapsedParents(next);
-                              }}
-                            >
-                              {bulkCollapsedParents.has(row.id) ? "+" : "−"}
-                            </button>
-                          ) : null}
-                          {row.sku}
-                        </div>
-                        <input
-                          value={row.name}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, name: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={false}
-                        />
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={row.price}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, price: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={row.isParent}
-                        />
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={row.listPrice}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, listPrice: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={false}
-                        />
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={row.purchasePrice}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, purchasePrice: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={false}
-                        />
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={row.discountPrice}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, discountPrice: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={false}
-                        />
-                        <input
-                          type="number"
-                          step="1"
-                          value={row.discountQty}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, discountQty: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={false}
-                        />
-                        <input
-                          type="number"
-                          step="1"
-                          value={row.stockQty}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, stockQty: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={row.isParent}
-                        />
-                        <input
-                          type="number"
-                          step="0.001"
-                          value={row.nicotine}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, nicotine: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={false}
-                        />
-                        <select
-                          value={row.categoryId}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, categoryId: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={false}
-                        >
-                          <option value="">-</option>
-                          {categoryOptions.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.label}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          value={row.taxRateId}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, taxRateId: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={false}
-                        >
-                          <option value="">-</option>
-                          {taxes.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.name}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          value={row.exciseRateId}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, exciseRateId: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={false}
-                        >
-                          <option value="">-</option>
-                          {excises.map((e) => (
-                            <option key={e.id} value={e.id}>
-                              {e.name}
-                            </option>
-                          ))}
-                        </select>
-                        <label className="switch">
-                          <input
-                            type="checkbox"
-                            checked={row.published}
-                            onChange={(e) => {
-                              const next = [...bulkRows];
-                              next[idx] = { ...row, published: e.target.checked };
-                              setBulkRows(next);
-                            }}
-                          disabled={!isDraftRow}
-                          />
-                          <span />
-                        </label>
-                        <label className="switch danger">
-                          <input
-                            type="checkbox"
-                            checked={row.isUnavailable}
-                            onChange={(e) => {
-                              const next = [...bulkRows];
-                              next[idx] = { ...row, isUnavailable: e.target.checked };
-                              setBulkRows(next);
-                            }}
-                            disabled={false}
-                          />
-                          <span />
-                        </label>
-                        <label className="switch">
-                          <input
-                            type="checkbox"
-                            checked={row.isParent}
-                            onChange={(e) => {
-                              const next = [...bulkRows];
-                              next[idx] = {
-                                ...row,
-                                isParent: e.target.checked,
-                                sellAsSingle: e.target.checked ? false : row.sellAsSingle,
-                                parentId: e.target.checked ? "" : row.parentId,
-                              };
-                              setBulkRows(next);
-                            }}
-                            disabled={false}
-                          />
-                          <span />
-                        </label>
-                        <label className="switch">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(row.sellAsSingle)}
-                            onChange={(e) => {
-                              const next = [...bulkRows];
-                              next[idx] = { ...row, sellAsSingle: e.target.checked };
-                              setBulkRows(next);
-                            }}
-                            disabled={row.isParent}
-                          />
-                          <span />
-                        </label>
-                        <select
-                          value={row.parentId}
-                          onChange={(e) => {
-                            const next = [...bulkRows];
-                            next[idx] = { ...row, parentId: e.target.value };
-                            setBulkRows(next);
-                          }}
-                          disabled={row.isParent}
-                        >
-                          <option value="">Nessun padre</option>
-                          {(productFilter === "draft"
-                            ? bulkParentOptions.filter((p) => {
-                                const row = bulkRows.find((r) => r.id === p.id);
-                                return row?.isDraftRow;
-                              })
-                            : bulkParentOptions
-                          ).map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name} ({p.sku})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    );
-                  });
-                })()}
               </div>
                 <div className="actions bulk-actions-sticky">
                   <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
