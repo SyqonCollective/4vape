@@ -2161,7 +2161,7 @@ export default function AdminProducts() {
                 </div>
                 <div className="section-title">Contenuti</div>
                 <label className="full product-desc-field">
-                  Breve descrizione
+                  Descrizione breve
                   <RichTextEditor
                     value={edit.shortDescription}
                     onChange={(next) => setEdit({ ...edit, shortDescription: next })}
@@ -2169,7 +2169,7 @@ export default function AdminProducts() {
                   />
                 </label>
                 <label className="full product-desc-field">
-                  Descrizione
+                  Descrizione estesa
                   <RichTextEditor
                     value={edit.description}
                     onChange={(next) => setEdit({ ...edit, description: next })}
@@ -2412,7 +2412,13 @@ export default function AdminProducts() {
           <div className="modal-backdrop" onClick={() => setShowCreateManual(false)}>
             <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h3>Crea prodotto manuale</h3>
+                <div className="product-modal-head">
+                  <h3>Crea prodotto manuale</h3>
+                  <div className="product-modal-subhead">
+                    <span className="mono">{manualDraft.sku || "SKU in generazione"}</span>
+                    <span>{manualDraft.name || "Nuovo prodotto"}</span>
+                  </div>
+                </div>
                 <button className="btn ghost" onClick={() => setShowCreateManual(false)}>
                   Chiudi
                 </button>
@@ -2467,8 +2473,27 @@ export default function AdminProducts() {
                   </div>
                 </div>
                 <div className="modal-info">
-                  <div className="form-grid">
-                    <label>
+                  <div className="product-quick-grid">
+                    <div className="product-quick-card">
+                      <span>Canale</span>
+                      <strong>Manuale</strong>
+                    </div>
+                    <div className="product-quick-card">
+                      <span>Categoria</span>
+                      <strong>{topCategoryOptions.find((c) => c.id === manualDraft.categoryId)?.name || "Nessuna"}</strong>
+                    </div>
+                    <div className="product-quick-card">
+                      <span>Prezzo vendita</span>
+                      <strong>{manualDraft.price ? `€ ${Number(manualDraft.price).toFixed(2)}` : "—"}</strong>
+                    </div>
+                    <div className="product-quick-card">
+                      <span>Giacenza</span>
+                      <strong>{manualDraft.stockQty || "0"}</strong>
+                    </div>
+                  </div>
+                  <div className="section-title">Anagrafica e prezzi</div>
+                  <div className="form-grid product-form-grid">
+                    <label className="full product-name-field">
                       Nome
                       <input
                         value={manualDraft.name}
@@ -2657,23 +2682,23 @@ export default function AdminProducts() {
                         onChange={(e) => setManualDraft({ ...manualDraft, barcode: e.target.value })}
                       />
                     </label>
-                    <label className="full">
-                      Breve descrizione
+                    <label className="full product-desc-field">
+                      Descrizione breve
                       <RichTextEditor
                         value={manualDraft.shortDescription}
                         onChange={(next) => setManualDraft({ ...manualDraft, shortDescription: next })}
                         placeholder="Breve descrizione prodotto..."
                       />
                     </label>
-                    <label className="full">
-                      Descrizione
+                    <label className="full product-desc-field">
+                      Descrizione estesa
                       <RichTextEditor
                         value={manualDraft.description}
                         onChange={(next) => setManualDraft({ ...manualDraft, description: next })}
                       />
                     </label>
                   </div>
-                  <div className="actions">
+                  <div className="actions product-actions-sticky">
                     <button className="btn ghost" onClick={() => setShowCreateManual(false)}>
                       Annulla
                     </button>
