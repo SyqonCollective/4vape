@@ -1076,8 +1076,8 @@ export default function AdminProducts() {
   const pageStart = (safePage - 1) * effectivePageSize;
   const pagedRows = groupedRows.slice(pageStart, pageStart + effectivePageSize);
 
-  const dash = <span className="cell-muted">—</span>;
   const tableRows = useMemo(() => {
+    if (viewMode !== "table") return [];
     return pagedRows.map((row) => {
       const p = row.item;
       const isChild = row.type === "child";
@@ -1104,7 +1104,7 @@ export default function AdminProducts() {
         isChildSingle,
       };
     });
-  }, [pagedRows, topCategoryOptions]);
+  }, [pagedRows, topCategoryOptions, viewMode]);
 
   const productTableColumns = useMemo(
     () => [
@@ -1181,8 +1181,8 @@ export default function AdminProducts() {
           );
         },
       },
-      { id: "price", header: "Prezzo", cell: ({ row }) => (row.original.isParentRow && row.original.item.price == null ? dash : `€ ${Number(row.original.item.price).toFixed(2)}`) },
-      { id: "stock", header: "Giacenza", cell: ({ row }) => (row.original.isParentRow ? dash : row.original.item.stockQty) },
+      { id: "price", header: "Prezzo", cell: ({ row }) => (row.original.isParentRow && row.original.item.price == null ? <span className="cell-muted">—</span> : `€ ${Number(row.original.item.price).toFixed(2)}`) },
+      { id: "stock", header: "Giacenza", cell: ({ row }) => (row.original.isParentRow ? <span className="cell-muted">—</span> : row.original.item.stockQty) },
       { id: "type", header: "Prodotto", cell: ({ row }) => (row.original.isParentRow ? "Padre" : row.original.isChildSingle ? "Figlio+singolo" : row.original.item.parentId ? "Figlio" : "Singolo") },
       { id: "parent", header: "Padre", cell: ({ row }) => row.original.parentSku },
       {
@@ -1200,17 +1200,18 @@ export default function AdminProducts() {
         header: "Accisa",
         cell: ({ row }) =>
           row.original.item.exciseRateRef?.name ||
-          (row.original.item.exciseTotal != null ? `€ ${Number(row.original.item.exciseTotal).toFixed(2)}` : dash),
+          (row.original.item.exciseTotal != null ? `€ ${Number(row.original.item.exciseTotal).toFixed(2)}` : <span className="cell-muted">—</span>),
       },
-      { id: "brand", header: "Brand", cell: ({ row }) => row.original.item.brand || dash },
+      { id: "brand", header: "Brand", cell: ({ row }) => row.original.item.brand || <span className="cell-muted">—</span> },
     ],
-    [bulkMode, collapsedParents, dash, selectedIds]
+    [bulkMode, collapsedParents, selectedIds]
   );
 
   const productTable = useReactTable({
     data: tableRows,
     columns: productTableColumns,
     getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
   });
   const productsStats = useMemo(() => {
     const visible = filteredItems.length;
