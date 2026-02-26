@@ -33,10 +33,12 @@ export default function AdminCompanies() {
   const [cmnr, setCmnr] = useState("");
   const [signNumber, setSignNumber] = useState("");
   const [adminVatNumber, setAdminVatNumber] = useState("");
+  const [groupName, setGroupName] = useState("");
   const [companySearch, setCompanySearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table");
   const [showPending, setShowPending] = useState(true);
+  const GROUP_OPTIONS = ["NEGOZIO", "TABACCHERIA"];
 
   async function load() {
     try {
@@ -101,6 +103,35 @@ export default function AdminCompanies() {
     return new Date(value).toLocaleString("it-IT");
   }
 
+  function exportCompaniesCsv() {
+    const headers = ["Ragione sociale", "P.IVA", "Gruppo", "Referente", "Email", "Stato", "Ordini", "Fatturato"];
+    const rows = visibleCompanies.map((c) => [
+      c.legalName || c.name || "",
+      c.vatNumber || "",
+      c.groupName || "",
+      `${c.contactFirstName || ""} ${c.contactLastName || ""}`.trim(),
+      c.email || "",
+      c.status || "",
+      c?.stats?.orders ?? 0,
+      Number(c?.stats?.revenue ?? 0).toFixed(2),
+    ]);
+    const esc = (v) => {
+      const s = String(v ?? "");
+      if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const csv = [headers, ...rows].map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `clienti_aziende_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
   async function approveUser(id) {
     try {
       await api(`/admin/users/${id}/approve`, { method: "PATCH" });
@@ -151,6 +182,7 @@ export default function AdminCompanies() {
         cmnr: editingCompany.cmnr || null,
         signNumber: editingCompany.signNumber || null,
         adminVatNumber: editingCompany.adminVatNumber || null,
+        groupName: editingCompany.groupName || null,
         status: editingCompany.status || "ACTIVE",
       };
       await api(`/admin/companies/${editingCompany.id}`, {
@@ -231,6 +263,7 @@ export default function AdminCompanies() {
           cmnr: cmnr.trim() || undefined,
           signNumber: signNumber.trim() || undefined,
           adminVatNumber: adminVatNumber.trim() || undefined,
+          groupName: groupName.trim() || undefined,
           status: "ACTIVE",
         }),
       });
@@ -252,6 +285,7 @@ export default function AdminCompanies() {
       setCmnr("");
       setSignNumber("");
       setAdminVatNumber("");
+      setGroupName("");
       setShowCompanyModal(false);
       load();
     } catch {
@@ -340,6 +374,7 @@ export default function AdminCompanies() {
       <div className="panel">
         <div className="panel-header-compact">
           <h3>Aziende</h3>
+          <button className="btn ghost" onClick={exportCompaniesCsv}>Export</button>
         </div>
         <div className="companies-filters-shell">
           <div className="companies-filters-top">
@@ -378,6 +413,7 @@ export default function AdminCompanies() {
             <div className="row header">
               <div>Ragione sociale</div>
               <div>P.IVA</div>
+              <div>Gruppo</div>
               <div>Referente</div>
               <div>Email</div>
               <div>Ultimo accesso</div>
@@ -399,12 +435,14 @@ export default function AdminCompanies() {
                 <div />
                 <div />
                 <div />
+                <div />
               </div>
             ) : (
               visibleCompanies.map((c) => (
                 <div className="row" key={c.id} onClick={() => openEditCompany(c)} style={{ cursor: "pointer" }}>
                   <div>{c.legalName || c.name}</div>
                   <div>{c.vatNumber || "—"}</div>
+                  <div>{c.groupName || "—"}</div>
                   <div>
                     {(c.contactFirstName || "") + " " + (c.contactLastName || "")}
                   </div>
@@ -459,6 +497,7 @@ export default function AdminCompanies() {
                   </span>
                 </div>
                 <div className="muted">P.IVA: {c.vatNumber || "—"}</div>
+                <div className="muted">Gruppo: {c.groupName || "—"}</div>
                 <div className="muted">Referente: {(c.contactFirstName || "") + " " + (c.contactLastName || "")}</div>
                 <div className="muted">Email: {c.email || "—"}</div>
                 <div className="companies-card-grid">
@@ -646,6 +685,15 @@ export default function AdminCompanies() {
                   <input value={email} onChange={(e) => setEmail(e.target.value)} />
                 </label>
                 <label>
+                  Gruppo cliente
+                  <select className="select" value={groupName} onChange={(e) => setGroupName(e.target.value)}>
+                    <option value="">Seleziona</option>
+                    {GROUP_OPTIONS.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
                   Codice cliente (opzionale)
                   <input value={customerCode} onChange={(e) => setCustomerCode(e.target.value)} />
                 </label>
@@ -744,6 +792,15 @@ export default function AdminCompanies() {
                 <label>
                   Email
                   <input value={editingCompany.email || ""} onChange={(e) => setEditingCompany({ ...editingCompany, email: e.target.value })} />
+                </label>
+                <label>
+                  Gruppo cliente
+                  <select className="select" value={editingCompany.groupName || ""} onChange={(e) => setEditingCompany({ ...editingCompany, groupName: e.target.value })}>
+                    <option value="">Seleziona</option>
+                    {GROUP_OPTIONS.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   Codice cliente

@@ -31,6 +31,7 @@ const formatCurrency = (value) =>
   new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(
     Number(value || 0)
   );
+const roundUp2 = (value) => Math.ceil((Number(value || 0) + Number.EPSILON) * 100) / 100;
 
 function computeOrderTotals(order) {
   return (order?.items || []).reduce(
@@ -42,8 +43,8 @@ function computeOrderTotals(order) {
       const exciseUnit = Number(
         product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
       );
-      const excise = exciseUnit * qty;
-      const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
+      const excise = roundUp2(exciseUnit * qty);
+      const vat = rate > 0 ? roundUp2((lineTotal + excise) * (rate / 100)) : 0;
       acc.revenue += lineTotal;
       acc.vat += vat;
       acc.excise += excise;
@@ -78,14 +79,17 @@ export default function AdminOrders() {
   const [orderStats, setOrderStats] = useState([]);
   const [saving, setSaving] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
+  const [shippingCost, setShippingCost] = useState(0);
   const [editCompanyId, setEditCompanyId] = useState("");
   const [editStatus, setEditStatus] = useState("SUBMITTED");
   const [editPaymentMethod, setEditPaymentMethod] = useState("BANK_TRANSFER");
+  const [editShippingCost, setEditShippingCost] = useState(0);
   const [editLineItems, setEditLineItems] = useState([]);
   const [editSearchQuery, setEditSearchQuery] = useState("");
   const [editSearchResults, setEditSearchResults] = useState([]);
   const [confirmCompleteOrder, setConfirmCompleteOrder] = useState(null);
   const [orderView, setOrderView] = useState("table");
+  const [invoicePreview, setInvoicePreview] = useState(null);
 
   async function loadOrders() {
     try {
@@ -138,6 +142,7 @@ export default function AdminOrders() {
       setEditCompanyId(editingOrder.companyId || "");
       setEditStatus(editingOrder.status || "SUBMITTED");
       setEditPaymentMethod(editingOrder.paymentMethod || "BANK_TRANSFER");
+      setEditShippingCost(0);
       setEditLineItems(
         (editingOrder.items || []).map((i) => ({
           productId: i.productId,
@@ -208,8 +213,8 @@ export default function AdminOrders() {
         const exciseUnit = Number(
           item.exciseTotal ?? (Number(item.exciseMl || 0) + Number(item.exciseProduct || 0))
         );
-        const excise = exciseUnit * Number(item.qty || 0);
-        const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
+        const excise = roundUp2(exciseUnit * Number(item.qty || 0));
+        const vat = rate > 0 ? roundUp2((lineTotal + excise) * (rate / 100)) : 0;
         return {
           subtotal: sum.subtotal + lineTotal,
           vat: sum.vat + vat,
@@ -218,8 +223,8 @@ export default function AdminOrders() {
       },
       { subtotal: 0, vat: 0, excise: 0 }
     );
-    return { ...base, total: base.subtotal + base.vat + base.excise };
-  }, [lineItems]);
+    return { ...base, shipping: Number(shippingCost || 0), total: base.subtotal + base.vat + base.excise + Number(shippingCost || 0) };
+  }, [lineItems, shippingCost]);
 
   const editTotals = useMemo(() => {
     const base = editLineItems.reduce(
@@ -229,8 +234,8 @@ export default function AdminOrders() {
         const exciseUnit = Number(
           item.exciseTotal ?? (Number(item.exciseMl || 0) + Number(item.exciseProduct || 0))
         );
-        const excise = exciseUnit * Number(item.qty || 0);
-        const vat = rate > 0 ? (lineTotal + excise) * (rate / 100) : 0;
+        const excise = roundUp2(exciseUnit * Number(item.qty || 0));
+        const vat = rate > 0 ? roundUp2((lineTotal + excise) * (rate / 100)) : 0;
         return {
           subtotal: sum.subtotal + lineTotal,
           vat: sum.vat + vat,
@@ -239,8 +244,8 @@ export default function AdminOrders() {
       },
       { subtotal: 0, vat: 0, excise: 0 }
     );
-    return { ...base, total: base.subtotal + base.vat + base.excise };
-  }, [editLineItems]);
+    return { ...base, shipping: Number(editShippingCost || 0), total: base.subtotal + base.vat + base.excise + Number(editShippingCost || 0) };
+  }, [editLineItems, editShippingCost]);
 
   const orderedStats = useMemo(() => {
     const byStatus = new Map((orderStats || []).map((s) => [s.status, Number(s.count || 0)]));
@@ -353,6 +358,7 @@ export default function AdminOrders() {
           companyId,
           status: orderStatus,
           paymentMethod,
+          shippingCost: Number(shippingCost || 0),
           items: lineItems.map((i) => ({
             productId: i.productId,
             qty: Number(i.qty || 1),
@@ -363,6 +369,7 @@ export default function AdminOrders() {
       setShowCreate(false);
       setLineItems([]);
       setSearchQuery("");
+      setShippingCost(0);
       await loadOrders();
       await loadOrderStats();
     } catch (err) {
@@ -394,6 +401,20 @@ export default function AdminOrders() {
     }
   }
 
+  async function openInvoicePreview(invoiceId) {
+    try {
+      const rows = await api("/admin/invoices");
+      const row = (rows || []).find((r) => r.id === invoiceId);
+      if (!row) {
+        setError("Fattura non trovata");
+        return;
+      }
+      setInvoicePreview(row);
+    } catch {
+      setError("Impossibile aprire la fattura");
+    }
+  }
+
   async function updateBatchStatus() {
     if (!selectedIds.length) return;
     try {
@@ -418,6 +439,7 @@ export default function AdminOrders() {
           companyId: editCompanyId,
           status: editStatus,
           paymentMethod: editPaymentMethod,
+          shippingCost: Number(editShippingCost || 0),
           items: editLineItems.map((i) => ({
             productId: i.productId,
             qty: Number(i.qty || 1),
@@ -461,6 +483,46 @@ export default function AdminOrders() {
 
   function paymentLabel(value) {
     return PAYMENT_OPTIONS.find((p) => p.value === value)?.label || value || "-";
+  }
+
+  function exportOrdersCsv() {
+    const headers = [
+      "Ordine #",
+      "Data",
+      "Cliente",
+      "Referente",
+      "Stato",
+      "Pagamento",
+      "Totale",
+      "Fatturato",
+    ];
+    const rows = visibleItems.map((o) => [
+      o.orderNumber || "",
+      new Date(o.createdAt).toLocaleString("it-IT"),
+      o.company?.name || "",
+      (o.company?.contactFirstName || o.company?.contactLastName)
+        ? `${o.company?.contactFirstName || ""} ${o.company?.contactLastName || ""}`.trim()
+        : (o.company?.email || ""),
+      statusMeta(o.status).label,
+      paymentLabel(o.paymentMethod),
+      Number(o.total || 0).toFixed(2),
+      o.fiscalInvoice ? "SI" : "NO",
+    ]);
+    const csvEscape = (v) => {
+      const s = String(v ?? "");
+      if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const csv = [headers, ...rows].map((r) => r.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ordini_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   function printSummary(order) {
@@ -608,6 +670,9 @@ export default function AdminOrders() {
             value={quickQuery}
             onChange={(e) => setQuickQuery(e.target.value)}
           />
+          <button className="btn ghost" onClick={exportOrdersCsv}>
+            Export
+          </button>
           <div className="products-view-switch">
             <button
               type="button"
@@ -757,6 +822,7 @@ export default function AdminOrders() {
           <div className="row" key={o.id} onClick={() => setSummaryOrder(o)}>
             <div>
               <input
+                className="order-row-check"
                 type="checkbox"
                 checked={selectedIds.includes(o.id)}
                 onClick={(e) => e.stopPropagation()}
@@ -783,7 +849,7 @@ export default function AdminOrders() {
             <div>{paymentLabel(o.paymentMethod)}</div>
             <div>{formatCurrency(o.total)}</div>
             <div>{new Date(o.createdAt).toLocaleString()}</div>
-            <div>
+            <div className="order-row-actions">
               {o.fiscalInvoice ? <span className="tag success">Fatturato</span> : null}
               <button
                 className="btn ghost"
@@ -820,7 +886,7 @@ export default function AdminOrders() {
                   className="btn ghost"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate("/admin/invoices");
+                    openInvoicePreview(o.fiscalInvoice.id);
                   }}
                 >
                   Vedi fattura
@@ -875,7 +941,7 @@ export default function AdminOrders() {
                     Completato
                   </button>
                   {o.fiscalInvoice ? (
-                    <button className="btn ghost small" onClick={() => navigate("/admin/invoices")}>
+                    <button className="btn ghost small" onClick={() => openInvoicePreview(o.fiscalInvoice.id)}>
                       Vedi fattura
                     </button>
                   ) : (
@@ -968,6 +1034,17 @@ export default function AdminOrders() {
                       ))}
                     </select>
                   </div>
+                  <div className="field">
+                    <label>Spese spedizione (placeholder)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={shippingCost}
+                      onWheel={(e) => e.currentTarget.blur()}
+                      onChange={(e) => setShippingCost(Number(e.target.value || 0))}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -992,6 +1069,7 @@ export default function AdminOrders() {
                               type="number"
                               step="0.01"
                               value={item.unitPrice}
+                              onWheel={(e) => e.currentTarget.blur()}
                               onChange={(e) =>
                                 updateItem(item.productId, { unitPrice: Number(e.target.value) })
                               }
@@ -1002,6 +1080,7 @@ export default function AdminOrders() {
                               type="number"
                               min="1"
                               value={item.qty}
+                              onWheel={(e) => e.currentTarget.blur()}
                               onChange={(e) =>
                                 updateItem(item.productId, { qty: Number(e.target.value) })
                               }
@@ -1067,6 +1146,10 @@ export default function AdminOrders() {
                     <div className="summary-row">
                       <span>Accise</span>
                       <strong>{formatCurrency(totals.excise)}</strong>
+                    </div>
+                    <div className="summary-row">
+                      <span>Spedizione</span>
+                      <strong>{formatCurrency(totals.shipping)}</strong>
                     </div>
                     <div className="summary-row">
                       <span>IVA</span>
@@ -1207,6 +1290,40 @@ export default function AdminOrders() {
           </div>
         </Portal>
       ) : null}
+      {invoicePreview ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setInvoicePreview(null)}>
+            <div className="modal modal-compact" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">Fattura #{invoicePreview.numero}</div>
+                  <div className="modal-subtitle">
+                    {new Date(invoicePreview.data).toLocaleDateString("it-IT")} · {invoicePreview.cliente}
+                  </div>
+                </div>
+                <button className="btn ghost" onClick={() => setInvoicePreview(null)}>Chiudi</button>
+              </div>
+              <div className="modal-body modal-body-single">
+                <div className="summary-grid">
+                  <div><strong>Stato</strong><div>{invoicePreview.stato === "SALDATA" ? "Saldata" : "Da saldare"}</div></div>
+                  <div><strong>Pagamento</strong><div>{paymentLabel(invoicePreview.pagamento)}</div></div>
+                  <div><strong>Totale</strong><div>{formatCurrency(invoicePreview.totaleFattura)}</div></div>
+                  <div><strong>Imponibile prodotti</strong><div>{formatCurrency(invoicePreview.imponibileProdotti)}</div></div>
+                  <div><strong>Accisa</strong><div>{formatCurrency(invoicePreview.accisa)}</div></div>
+                  <div><strong>IVA</strong><div>{formatCurrency(invoicePreview.iva)}</div></div>
+                  <div><strong>Guadagno</strong><div>{formatCurrency(invoicePreview.guadagno)}</div></div>
+                  <div><strong>Rif. ordine</strong><div>{invoicePreview.riferimentoOrdine || "-"}</div></div>
+                </div>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => navigate("/admin/invoices")}>
+                    Apri elenco fatture
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
       {editingOrder ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setEditingOrder(null)}>
@@ -1256,8 +1373,19 @@ export default function AdminOrders() {
                               <option key={p.value} value={p.value}>
                                 {p.label}
                               </option>
-                            ))}
+                              ))}
                           </select>
+                        </div>
+                        <div className="field">
+                          <label>Spese spedizione (placeholder)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editShippingCost}
+                            onWheel={(e) => e.currentTarget.blur()}
+                            onChange={(e) => setEditShippingCost(Number(e.target.value || 0))}
+                          />
                         </div>
                       </div>
                     </div>
@@ -1279,24 +1407,26 @@ export default function AdminOrders() {
                               <div className="line-meta mono">{item.sku}</div>
                             </div>
                             <div>
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={item.unitPrice}
-                                onChange={(e) =>
-                                  updateEditItem(item.productId, { unitPrice: Number(e.target.value) })
-                                }
-                              />
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.unitPrice}
+                              onWheel={(e) => e.currentTarget.blur()}
+                              onChange={(e) =>
+                                updateEditItem(item.productId, { unitPrice: Number(e.target.value) })
+                              }
+                            />
                             </div>
                             <div>
-                              <input
-                                type="number"
-                                min="1"
-                                value={item.qty}
-                                onChange={(e) =>
-                                  updateEditItem(item.productId, { qty: Number(e.target.value) })
-                                }
-                              />
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.qty}
+                              onWheel={(e) => e.currentTarget.blur()}
+                              onChange={(e) =>
+                                updateEditItem(item.productId, { qty: Number(e.target.value) })
+                              }
+                            />
                             </div>
                             <div>
                               {formatCurrency(Number(item.unitPrice || 0) * Number(item.qty || 0))}
@@ -1366,6 +1496,10 @@ export default function AdminOrders() {
                         <strong>{formatCurrency(editTotals.excise)}</strong>
                       </div>
                       <div className="summary-row">
+                        <span>Spedizione</span>
+                        <strong>{formatCurrency(editTotals.shipping)}</strong>
+                      </div>
+                      <div className="summary-row">
                         <span>IVA</span>
                         <strong>{formatCurrency(editTotals.vat)}</strong>
                       </div>
@@ -1374,10 +1508,10 @@ export default function AdminOrders() {
                         <strong>{formatCurrency(editTotals.total)}</strong>
                       </div>
                       <div className="summary-actions">
-                        <button className="btn ghost" onClick={() => setEditingOrder(null)}>
+                        <button className="btn warning" onClick={() => setEditingOrder(null)}>
                           Annulla
                         </button>
-                        <button className="btn ghost" onClick={deleteOrder} disabled={saving}>
+                        <button className="btn danger" onClick={deleteOrder} disabled={saving}>
                           Elimina
                         </button>
                         <button className="btn primary" onClick={saveEdit} disabled={saving}>

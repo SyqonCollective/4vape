@@ -151,6 +151,12 @@ button {
   border-color: transparent;
 }
 
+.btn.warning {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  border-color: transparent;
+  color: #fff;
+}
+
 .btn:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -4942,7 +4948,7 @@ button {
 
 .orders-filter-top {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) auto auto;
+  grid-template-columns: minmax(280px, 1fr) auto auto auto;
   align-items: center;
   gap: 0.65rem;
 }
@@ -4984,15 +4990,21 @@ button {
   background: rgba(241, 245, 249, 0.9);
 }
 
-.orders-table .row > div:last-child {
+.orders-table .row > div:last-child,
+.order-row-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   justify-content: flex-start;
   align-items: center;
-  white-space: normal;
+  white-space: nowrap;
   overflow: visible;
   text-overflow: clip;
+}
+
+.order-row-check {
+  width: 20px;
+  height: 20px;
 }
 
 .orders-table .row.header {
@@ -6156,8 +6168,8 @@ button {
 
 .companies-table-pro .row,
 .companies-table-pro .row.header {
-  grid-template-columns: minmax(220px, 1.3fr) 120px 180px minmax(200px, 1fr) 150px 130px 80px 120px 120px 170px;
-  min-width: 1500px;
+  grid-template-columns: minmax(220px, 1.3fr) 120px 130px 170px minmax(200px, 1fr) 150px 130px 80px 120px 120px 170px;
+  min-width: 1630px;
 }
 
 .returns-table-pro .row,

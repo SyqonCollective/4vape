@@ -40,6 +40,15 @@ function formatMoney(v) {
   return `€ ${Number(v || 0).toFixed(2)}`;
 }
 
+function svgToDataUri(svgElement) {
+  if (!svgElement) return "";
+  const raw = svgElement.outerHTML
+    .replace(/\n/g, "")
+    .replace(/\t/g, "")
+    .replace(/#/g, "%23");
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(raw)}`;
+}
+
 const shortDate = (iso) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -468,6 +477,70 @@ export default function AdminAnalytics() {
     URL.revokeObjectURL(url);
   }
 
+  function exportPdfReport() {
+    const chartSvgs = Array.from(
+      document.querySelectorAll(".analytics-modern .recharts-wrapper svg")
+    ).slice(0, 4);
+    const chartImages = chartSvgs.map((svg) => svgToDataUri(svg));
+
+    const html = `
+      <html>
+        <head>
+          <title>Report Analytics ${startDate} - ${endDate}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color:#0f172a; padding:22px; }
+            h1 { margin:0 0 8px; font-size:24px; }
+            .sub { color:#475569; margin-bottom:14px; }
+            .kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+            .kpi { border:1px solid #cbd5e1; border-radius:10px; padding:10px; background:#f8fafc; }
+            .kpi label { display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#64748b; margin-bottom:5px; }
+            .kpi strong { font-size:20px; }
+            .section { margin:16px 0; }
+            .section h2 { margin:0 0 10px; font-size:18px; }
+            .chart { border:1px solid #cbd5e1; border-radius:12px; padding:8px; margin-bottom:10px; background:#fff; }
+            .chart img { width:100%; max-height:320px; object-fit:contain; display:block; }
+            table { width:100%; border-collapse:collapse; margin-top:10px; }
+            th, td { border:1px solid #cbd5e1; padding:8px; font-size:12px; text-align:left; }
+            th { background:#f1f5f9; text-transform:uppercase; letter-spacing:.06em; font-size:11px; }
+          </style>
+        </head>
+        <body>
+          <h1>Report Analytics</h1>
+          <div class="sub">Periodo: ${startDate} → ${endDate}</div>
+          <div class="kpis">
+            <div class="kpi"><label>Vendite</label><strong>${formatMoney(data.totals.revenue)}</strong></div>
+            <div class="kpi"><label>Costo prodotti</label><strong>${formatMoney(data.totals.cost)}</strong></div>
+            <div class="kpi"><label>Margine netto</label><strong>${formatMoney(data.totals.grossMargin)}</strong></div>
+            <div class="kpi"><label>Accise</label><strong>${formatMoney(data.totals.excise)}</strong></div>
+            <div class="kpi"><label>IVA</label><strong>${formatMoney(data.totals.vat)}</strong></div>
+            <div class="kpi"><label>Flusso cassa</label><strong>${formatMoney(data.totals.cashflow)}</strong></div>
+          </div>
+          <div class="section">
+            <h2>Grafici</h2>
+            ${chartImages.map((img) => `<div class="chart"><img src="${img}" /></div>`).join("")}
+          </div>
+          <div class="section">
+            <h2>Top clienti</h2>
+            <table>
+              <thead><tr><th>Cliente</th><th>Ordini</th><th>Fatturato</th></tr></thead>
+              <tbody>
+                ${(data.topClients || []).map((c) => `<tr><td>${c.name}</td><td>${c.orders}</td><td>${formatMoney(c.revenue)}</td></tr>`).join("")}
+              </tbody>
+            </table>
+          </div>
+          <script>window.onload = () => window.print();</script>
+        </body>
+      </html>
+    `;
+    const w = window.open("", "_blank", "width=1200,height=900");
+    if (!w) {
+      setError("Popup bloccato: abilita i popup per esportare il PDF");
+      return;
+    }
+    w.document.write(html);
+    w.document.close();
+  }
+
   return (
     <section className="analytics-modern">
       <div className="page-header">
@@ -532,8 +605,8 @@ export default function AdminAnalytics() {
           }}>90 giorni</button>
         </div>
         <div className="analytics-export">
-          <button className="btn ghost" onClick={() => exportData("csv")}>Export CSV</button>
-          <button className="btn ghost" onClick={() => exportData("xls")}>Export Excel</button>
+          <button className="btn ghost" onClick={exportPdfReport}>Export PDF</button>
+          <button className="btn ghost" onClick={() => exportData("xls")}>Export Excel dati</button>
         </div>
       </div>
 
@@ -556,13 +629,13 @@ export default function AdminAnalytics() {
       </div>
 
       <div className="cards analytics-cards analytics-cards-modern">
-        <div className="card"><div className="card-label">Fatturato</div><div className="card-value">{formatMoney(data.totals.revenue)}</div><div className="card-sub">Ordini nel periodo</div></div>
+        <div className="card"><div className="card-label">Vendite</div><div className="card-value">{formatMoney(data.totals.revenue)}</div><div className="card-sub">Ordini nel periodo</div></div>
         <div className="card"><div className="card-label">Costo prodotti</div><div className="card-value">{formatMoney(data.totals.cost)}</div><div className="card-sub">Costo fornitore stimato</div></div>
         <div className="card"><div className="card-label">Margine netto</div><div className="card-value">{formatMoney(data.totals.grossMargin)}</div><div className="card-sub">Imponibile - costo prodotti</div></div>
         <div className="card"><div className="card-label">Accise</div><div className="card-value">{formatMoney(data.totals.excise)}</div><div className="card-sub">Totale accise</div></div>
         <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Calcolata sul prezzo</div></div>
         <div className="card"><div className="card-label">Ordini / Pezzi</div><div className="card-value">{data.totals.orders}</div><div className="card-sub">{data.totals.items} articoli</div></div>
-        <div className="card"><div className="card-label">Flusso cassa netto</div><div className="card-value">{formatMoney(data.totals.cashflow)}</div><div className="card-sub">Vendite - arrivi merce</div></div>
+        <div className="card"><div className="card-label">Flusso cassa netto</div><div className="card-value">{formatMoney(data.totals.cashflow)}</div><div className="card-sub">Fatture - (arrivi merce + spese)</div></div>
       </div>
 
       {activeTab === "overview" ? (
@@ -595,7 +668,7 @@ export default function AdminAnalytics() {
             <div className="panel-header">
               <div>
                 <h2>Flusso cassa</h2>
-                <div className="muted">Vendite - spese (arrivi merce)</div>
+                <div className="muted">Entrate - uscite: fatture - (arrivi merce + spese)</div>
               </div>
             </div>
             <div className="trend-cashflow">

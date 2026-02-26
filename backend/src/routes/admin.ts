@@ -2326,6 +2326,18 @@ export async function adminRoutes(app: FastifyInstance) {
         },
       },
     });
+    const expenseInvoices = await prisma.expenseInvoice.findMany({
+      where: {
+        expenseDate: {
+          gte: start,
+          lte: end,
+        },
+      },
+      select: {
+        expenseDate: true,
+        total: true,
+      },
+    });
     for (const line of receiptLines) {
       const key = line.receipt.receivedAt.toISOString().slice(0, 10);
       const idx = dayIndex.get(key);
@@ -2333,6 +2345,15 @@ export async function adminRoutes(app: FastifyInstance) {
       expenses += lineExpense;
       if (idx != null) {
         days[idx].expenses += lineExpense;
+      }
+    }
+    for (const expense of expenseInvoices) {
+      const key = expense.expenseDate.toISOString().slice(0, 10);
+      const idx = dayIndex.get(key);
+      const value = Number(expense.total || 0);
+      expenses += value;
+      if (idx != null) {
+        days[idx].expenses += value;
       }
     }
 
