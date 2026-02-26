@@ -3917,19 +3917,25 @@ button {
   height: 100dvh;
   max-height: 100dvh;
   border-radius: 22px 22px 0 0;
-  padding: 1rem 1.6rem 1rem;
+  padding: calc(env(safe-area-inset-top, 0px) + 1.4rem) 1.6rem 1rem;
   animation: bulk-sheet-up 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .bulk-modal .modal-header {
   position: sticky;
-  top: 0;
+  top: 8px;
   z-index: 6;
   margin: -1.6rem -2rem 0;
   padding: 1rem 2rem 0.9rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.25);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.88));
   backdrop-filter: blur(8px);
+}
+
+.bulk-sheet .modal-header {
+  margin: 0 0 0.55rem;
+  padding: 0.25rem 0.1rem 0.75rem;
+  border-radius: 12px;
 }
 
 .bulk-close-x {
@@ -4169,8 +4175,8 @@ button {
   }
 
   .bulk-modal .modal-header {
-    margin: -1.6rem -2rem 0;
-    padding: 0.9rem 1.2rem 0.8rem;
+    margin: 0 0 0.5rem;
+    padding: 0.2rem 0.1rem 0.65rem;
   }
 
   .bulk-kpis {
@@ -4204,12 +4210,12 @@ button {
 
   .bulk-sheet {
     border-radius: 16px 16px 0 0;
-    padding: 0.8rem;
+    padding: calc(env(safe-area-inset-top, 0px) + 0.9rem) 0.8rem 0.8rem;
   }
 
   .bulk-modal .modal-header {
-    margin: -0.8rem -0.8rem 0;
-    padding: 0.8rem;
+    margin: 0 0 0.45rem;
+    padding: 0.2rem 0.05rem 0.6rem;
   }
 }
 
