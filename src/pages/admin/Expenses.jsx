@@ -13,6 +13,8 @@ export default function AdminExpenses() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [supplierFilter, setSupplierFilter] = useState("");
+  const [query, setQuery] = useState("");
+  const [viewMode, setViewMode] = useState("table");
   const [draft, setDraft] = useState({
     invoiceNo: "",
     expenseDate: "",
@@ -99,15 +101,25 @@ export default function AdminExpenses() {
     }
   }
 
-  const totals = useMemo(() => rows.reduce((acc, r) => {
+  const filteredRows = useMemo(() => {
+    const key = query.trim().toLowerCase();
+    if (!key) return rows;
+    return rows.filter((r) =>
+      `${r.invoiceNo || ""} ${r.supplier || ""} ${r.category || ""} ${r.notes || ""}`
+        .toLowerCase()
+        .includes(key)
+    );
+  }, [rows, query]);
+
+  const totals = useMemo(() => filteredRows.reduce((acc, r) => {
     acc.net += Number(r.amountNet || 0);
     acc.vat += Number(r.vat || 0);
     acc.total += Number(r.total || 0);
     return acc;
-  }, { net: 0, vat: 0, total: 0 }), [rows]);
+  }, { net: 0, vat: 0, total: 0 }), [filteredRows]);
 
   return (
-    <section>
+    <section className="expenses-page">
       <div className="page-header"><div><h1>Registro fatture spese</h1><p>Corrente, internet, affitto e altre spese aziendali</p></div></div>
       <InlineError message={error} onClose={() => setError("")} />
 
@@ -117,7 +129,7 @@ export default function AdminExpenses() {
         <div className="card"><div className="card-label">Totale spese</div><div className="card-value">{money(totals.total)}</div></div>
       </div>
 
-      <div className="panel form-grid">
+      <div className="panel form-grid expenses-form-panel">
         <label>Numero fattura<input value={draft.invoiceNo} onChange={(e) => setDraft({ ...draft, invoiceNo: e.target.value })} /></label>
         <label>Data fattura<input type="date" value={draft.expenseDate} onChange={(e) => setDraft({ ...draft, expenseDate: e.target.value })} /></label>
         <label>
@@ -154,7 +166,26 @@ export default function AdminExpenses() {
         <div className="actions"><button className="btn primary" onClick={createExpense}>Registra spesa</button></div>
       </div>
 
-      <div className="filters-row">
+      <div className="expenses-filters-shell">
+        <div className="expenses-filters-top">
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cerca numero, fornitore, categoria..." />
+          <div className="products-view-switch">
+            <button type="button" className={`btn ${viewMode === "table" ? "primary" : "ghost"}`} onClick={() => setViewMode("table")}>Tabella</button>
+            <button type="button" className={`btn ${viewMode === "cards" ? "primary" : "ghost"}`} onClick={() => setViewMode("cards")}>Card</button>
+          </div>
+          <button
+            className="btn ghost"
+            onClick={() => {
+              setStartDate("");
+              setEndDate("");
+              setSupplierFilter("");
+              setQuery("");
+            }}
+          >
+            Reset filtri
+          </button>
+        </div>
+      <div className="filters-row expenses-filters-grid">
         <div className="filter-group"><label>Data dal</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
         <div className="filter-group"><label>Data al</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
         <div className="filter-group">
@@ -169,10 +200,12 @@ export default function AdminExpenses() {
           </select>
         </div>
       </div>
+      </div>
 
-      <div className="table">
+      {viewMode === "table" ? (
+      <div className="table expenses-table-pro">
         <div className="row header"><div>Data</div><div>N. fattura</div><div>Fornitore</div><div>Categoria</div><div>Imponibile</div><div>IVA</div><div>Totale</div></div>
-        {rows.map((r) => (
+        {filteredRows.map((r) => (
           <div className="row" key={r.id}>
             <div>{new Date(r.expenseDate).toLocaleDateString("it-IT")}</div>
             <div className="mono">{r.invoiceNo}</div>
@@ -184,6 +217,25 @@ export default function AdminExpenses() {
           </div>
         ))}
       </div>
+      ) : (
+        <div className="expenses-cards-grid">
+          {filteredRows.map((r) => (
+            <article key={r.id} className="expenses-card">
+              <div className="expenses-card-top">
+                <strong className="mono">{r.invoiceNo}</strong>
+                <span>{new Date(r.expenseDate).toLocaleDateString("it-IT")}</span>
+              </div>
+              <strong>{r.supplier || "-"}</strong>
+              <div className="muted">{r.category || "-"}</div>
+              <div className="expenses-card-grid">
+                <span>Imponibile: <strong>{money(r.amountNet)}</strong></span>
+                <span>IVA: <strong>{money(r.vat)}</strong></span>
+                <span>Totale: <strong>{money(r.total)}</strong></span>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
