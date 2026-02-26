@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Lottie from "lottie-react";
+import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -7,6 +8,8 @@ import trashAnim from "../../assets/Trash clean.json";
 import { api, getToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 // CHECKLIST (admin richieste):
 // [x] Import CSV giacenza (alias quantità supportati lato API)
@@ -136,6 +139,7 @@ export default function AdminProducts() {
   const [showBulkEditor, setShowBulkEditor] = useState(false);
   const [bulkRows, setBulkRows] = useState([]);
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkSnapshot, setBulkSnapshot] = useState("");
   const bulkGridRef = useRef(null);
   const [collapsedParents, setCollapsedParents] = useState(new Set());
   const [bulkCollapsedParents, setBulkCollapsedParents] = useState(new Set());
@@ -1104,9 +1108,10 @@ export default function AdminProducts() {
     const children = bulkRows.filter((r) => !r.isParent && r.parentId).length;
     const singles = bulkRows.filter((r) => !r.isParent && !r.parentId).length;
     const drafts = bulkRows.filter((r) => r.isDraftRow).length;
-    const editable = bulkRows.filter((r) => r.isDraftRow && !r.isParent).length;
+    const editable = bulkRows.filter((r) => !r.isParent).length;
     return { total, parents, children, singles, drafts, editable };
   }, [bulkRows]);
+  const bulkDirty = useMemo(() => (bulkSnapshot ? JSON.stringify(bulkRows) !== bulkSnapshot : false), [bulkRows, bulkSnapshot]);
   const categoryLabelById = useMemo(() => new Map(categoryOptions.map((c) => [c.id, c.label])), [categoryOptions]);
   const taxLabelById = useMemo(
     () => new Map(taxes.map((t) => [t.id, `${t.name} (${Number(t.rate).toFixed(2)}%)`])),
@@ -1216,6 +1221,14 @@ export default function AdminProducts() {
     setBulkRows(next);
   }
 
+  function closeBulkEditor() {
+    if (bulkDirty) {
+      const ok = window.confirm("Hai modifiche non salvate. Vuoi chiudere e perdere le modifiche?");
+      if (!ok) return;
+    }
+    setShowBulkEditor(false);
+  }
+
   function toggleSelectAllPage() {
     const ids = Array.from(new Set(pagedRows.map((row) => row.item.id)));
     const allSelected = ids.every((id) => selectedIds.has(id));
@@ -1258,6 +1271,7 @@ export default function AdminProducts() {
       parentSort: p.parentSort ?? 0,
     }));
     setBulkRows(rows);
+    setBulkSnapshot(JSON.stringify(rows));
     setShowBulkEditor(true);
   }
 
@@ -1318,6 +1332,7 @@ export default function AdminProducts() {
         }),
       });
       setShowBulkEditor(false);
+      setBulkSnapshot("");
       const res = await api("/admin/products");
       setItems(res);
     } catch (err) {
@@ -2911,8 +2926,8 @@ export default function AdminProducts() {
 
       {showBulkEditor ? (
         <Portal>
-          <div className="modal-backdrop" onClick={() => setShowBulkEditor(false)}>
-            <div className="modal bulk-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-backdrop" onClick={closeBulkEditor}>
+            <div className="modal bulk-modal bulk-sheet" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="bulk-head">
                   <h3>Modifica in bulk</h3>
@@ -2920,8 +2935,8 @@ export default function AdminProducts() {
                     Editor tabellare avanzato: drag & drop figli, aggiornamento massivo campi e publish rapido.
                   </div>
                 </div>
-                <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
-                  Chiudi
+                <button className="btn ghost bulk-close-x" onClick={closeBulkEditor} aria-label="Chiudi">
+                  ×
                 </button>
               </div>
               <div className="bulk-kpis">
@@ -2984,7 +2999,7 @@ export default function AdminProducts() {
                 </div>
               </div>
                 <div className="actions bulk-actions-sticky">
-                  <button className="btn ghost" onClick={() => setShowBulkEditor(false)}>
+                  <button className="btn ghost" onClick={closeBulkEditor}>
                     Annulla
                   </button>
                   {productFilter === "draft" ? (
