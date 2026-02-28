@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api, getToken } from "../../lib/api.js";
+import { api, getAuthToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 
 // CHECKLIST (admin richieste):
@@ -72,7 +72,7 @@ export default function AdminReports() {
   }
 
   async function exportCsv() {
-    const token = getToken();
+    const token = await getAuthToken();
     const params = new URLSearchParams({
       start: startDate,
       end: endDate,

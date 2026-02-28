@@ -10,6 +10,11 @@ export default function AdminWarehouseMovements() {
   const [q, setQ] = useState("");
   const [movementType, setMovementType] = useState("");
   const [viewMode, setViewMode] = useState("table");
+  const [filterCounterparty, setFilterCounterparty] = useState("");
+  const [filterSku, setFilterSku] = useState("");
+  const [filterName, setFilterName] = useState("");
+  const [filterMl, setFilterMl] = useState("");
+  const [filterExcise, setFilterExcise] = useState("");
 
   async function load() {
     try {
@@ -28,17 +33,24 @@ export default function AdminWarehouseMovements() {
     load();
   }, [startDate, endDate, movementType]);
 
+  const counterpartyOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.counterparty).filter(Boolean))).sort((a, b) => a.localeCompare(b, "it")), [rows]);
+  const skuOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.sku).filter(Boolean))).sort((a, b) => a.localeCompare(b, "it")), [rows]);
+  const nameOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.name).filter(Boolean))).sort((a, b) => a.localeCompare(b, "it")), [rows]);
+  const mlOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.mlProduct != null ? String(r.mlProduct) : null).filter(Boolean))).sort((a, b) => Number(a) - Number(b)), [rows]);
+  const exciseOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.excise).filter(Boolean))).sort((a, b) => a.localeCompare(b, "it")), [rows]);
+
   const filtered = useMemo(() => {
     const key = q.trim().toLowerCase();
-    if (!key) return rows;
-    return rows.filter((r) =>
-      [r.invoiceNo, r.counterparty, r.sku, r.name, r.codicePl, r.type]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(key)
-    );
-  }, [rows, q]);
+    return rows.filter((r) => {
+      if (key && ![r.invoiceNo, r.counterparty, r.sku, r.name, r.codicePl, r.type].filter(Boolean).join(" ").toLowerCase().includes(key)) return false;
+      if (filterCounterparty && r.counterparty !== filterCounterparty) return false;
+      if (filterSku && r.sku !== filterSku) return false;
+      if (filterName && r.name !== filterName) return false;
+      if (filterMl && String(r.mlProduct) !== filterMl) return false;
+      if (filterExcise && r.excise !== filterExcise) return false;
+      return true;
+    });
+  }, [rows, q, filterCounterparty, filterSku, filterName, filterMl, filterExcise]);
 
   const stats = useMemo(() => {
     return filtered.reduce(
@@ -79,6 +91,11 @@ export default function AdminWarehouseMovements() {
               setEndDate("");
               setQ("");
               setMovementType("");
+              setFilterCounterparty("");
+              setFilterSku("");
+              setFilterName("");
+              setFilterMl("");
+              setFilterExcise("");
             }}
           >
             Reset filtri
@@ -103,6 +120,41 @@ export default function AdminWarehouseMovements() {
             <option value="">Tutti</option>
             <option value="CARICO">Solo carichi</option>
             <option value="SCARICO">Solo scarichi</option>
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>Cliente/Fornitore</label>
+          <select className="select" value={filterCounterparty} onChange={(e) => setFilterCounterparty(e.target.value)}>
+            <option value="">Tutti</option>
+            {counterpartyOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>SKU</label>
+          <select className="select" value={filterSku} onChange={(e) => setFilterSku(e.target.value)}>
+            <option value="">Tutti</option>
+            {skuOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>Nome prodotto</label>
+          <select className="select" value={filterName} onChange={(e) => setFilterName(e.target.value)}>
+            <option value="">Tutti</option>
+            {nameOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>ML prodotto</label>
+          <select className="select" value={filterMl} onChange={(e) => setFilterMl(e.target.value)}>
+            <option value="">Tutti</option>
+            {mlOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label>Accisa</label>
+          <select className="select" value={filterExcise} onChange={(e) => setFilterExcise(e.target.value)}>
+            <option value="">Tutte</option>
+            {exciseOptions.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
         </div>
       </div>

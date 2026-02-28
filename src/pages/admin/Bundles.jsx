@@ -102,6 +102,18 @@ export default function AdminBundles() {
     }
   }
 
+  async function createProductFromBundle(b) {
+    try {
+      await api("/admin/bundles/create-product", {
+        method: "POST",
+        body: JSON.stringify({ bundleId: b.id }),
+      });
+      await load();
+    } catch {
+      setError("Impossibile creare prodotto da bundle");
+    }
+  }
+
   function editBundle(row) {
     setEditingId(row.id);
     setDraft({
@@ -195,6 +207,7 @@ export default function AdminBundles() {
                   <div>{(b.items || []).map((i) => `${i.product?.sku || "?"} x${i.qty}`).join(" · ") || "-"}</div>
                   <div className="actions">
                     <button className="btn ghost small" onClick={() => editBundle(b)}>Modifica</button>
+                    <button className="btn ghost small" onClick={() => createProductFromBundle(b)}>Crea prodotto</button>
                     <button className="btn danger small" onClick={() => removeBundle(b.id)}>Elimina</button>
                   </div>
                 </div>
@@ -212,6 +225,7 @@ export default function AdminBundles() {
                   <div className="bundle-card-items">{(b.items || []).map((i) => `${i.product?.sku || "?"} x${i.qty}`).join(" · ") || "-"}</div>
                   <div className="actions">
                     <button className="btn ghost small" onClick={() => editBundle(b)}>Modifica</button>
+                    <button className="btn ghost small" onClick={() => createProductFromBundle(b)}>Crea prodotto</button>
                     <button className="btn danger small" onClick={() => removeBundle(b.id)}>Elimina</button>
                   </div>
                 </article>

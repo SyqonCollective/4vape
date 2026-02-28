@@ -801,6 +801,29 @@ export default function AdminGoodsReceipts() {
     }
   }
 
+  const editStats = useMemo(() => {
+    const validRows = editRows.filter((r) => r.sku.trim() && Number(r.qty || 0) > 0);
+    return validRows.reduce(
+      (acc, row) => {
+        const qty = Number(row.qty || 0);
+        const baseUnitCost = Number(row.unitCost || 0);
+        const discountPct = Math.max(0, Math.min(100, Number(row.discount || 0)));
+        const unitCost = baseUnitCost * (1 - discountPct / 100);
+        const rowNet = qty * unitCost;
+        const tax = taxes.find((t) => t.id === row.taxRateId);
+        const taxRate = Number(tax?.rate || 0);
+        const vatUnit = taxRate > 0 ? unitCost * (taxRate / 100) : 0;
+        acc.lines += 1;
+        acc.qty += qty;
+        acc.cost += rowNet;
+        acc.subtotal += rowNet;
+        acc.vat += qty * vatUnit;
+        return acc;
+      },
+      { lines: 0, qty: 0, cost: 0, subtotal: 0, vat: 0 }
+    );
+  }, [editRows, taxes]);
+
   const receiptStats = useMemo(() => {
     return receipts.reduce(
       (acc, r) => {
@@ -968,16 +991,7 @@ export default function AdminGoodsReceipts() {
                     </div>
 
                     <div className="order-card">
-                      <div className="card-title">Incolla da Excel/CSV</div>
-                      <p className="field-hint">
-                        Ordine colonne: SKU, Nome, CodicePL, Qta, PrezzoNetto, Sconto, Brand, Categoria, Sottocategoria, Barcode, Nicotina, ML
-                      </p>
-                      <textarea
-                        className="goods-paste"
-                        value={pasteText}
-                        onChange={(e) => setPasteText(e.target.value)}
-                        placeholder="SKU123\tProdotto A\tPL123\t12\t3.50\t0"
-                      />
+                      <div className="card-title">Importa da file</div>
                       <div className="actions">
                         <button className="btn ghost" onClick={downloadTemplateCsv}>
                           Scarica template CSV
@@ -985,7 +999,7 @@ export default function AdminGoodsReceipts() {
                         <button className="btn ghost" onClick={() => fileInputRef.current?.click()}>
                           Importa CSV
                         </button>
-                        <button className="btn ghost" onClick={applyPaste}>Applica incolla</button>
+                        <button className="btn ghost" onClick={applyPaste} disabled={!pasteText.trim()}>Applica incolla</button>
                       </div>
                       <input
                         ref={fileInputRef}
@@ -1252,6 +1266,17 @@ export default function AdminGoodsReceipts() {
                   <button className="btn primary" onClick={saveEditedReceipt} disabled={saving}>
                     {saving ? "Salvataggio..." : "Salva modifiche"}
                   </button>
+                </div>
+                <div className="order-summary-card order-card" style={{ marginTop: 16 }}>
+                  <div className="card-title">Riepilogo</div>
+                  <div className="summary-grid">
+                    <div><strong>Righe valide</strong><div>{editStats.lines}</div></div>
+                    <div><strong>Quantità totale</strong><div>{editStats.qty}</div></div>
+                    <div><strong>Valore a costo</strong><div>{money(editStats.cost)}</div></div>
+                    <div><strong>Subtotale (imponibile)</strong><div>{money(editStats.subtotal)}</div></div>
+                    <div><strong>IVA stimata</strong><div>{money(editStats.vat)}</div></div>
+                    <div><strong>Totale stimato</strong><div>{money(editStats.subtotal + editStats.vat)}</div></div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -283,14 +283,6 @@ export default function AdminCategories() {
             Nome categoria
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </label>
-          <label className="field-description">
-            Descrizione
-            <RichTextEditor
-              value={form.description}
-              onChange={(next) => setForm({ ...form, description: next })}
-              placeholder="Descrizione categoria"
-            />
-          </label>
           <label className="field-parent">
             Sottocategoria di
             <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} className="select">
@@ -302,7 +294,7 @@ export default function AdminCategories() {
           </label>
           <label className="field-search">
             Cerca
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome o descrizione" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca nome" />
           </label>
           <div className="actions form-actions">
             <button className="btn primary" type="submit">Crea categoria</button>
@@ -318,7 +310,7 @@ export default function AdminCategories() {
           <div className="brands-kpi"><span>Top categoria</span><strong>{stats.top?.name || "—"}</strong><small>{stats.top ? `${stats.top._count?.products || 0} prodotti` : ""}</small></div>
         </div>
         <div className="brands-toolbar brands-toolbar-pro">
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca nome / descrizione" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca nome" />
           <select className="select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
             <option value="count-desc">Più prodotti</option>
             <option value="count-asc">Meno prodotti</option>
@@ -341,7 +333,6 @@ export default function AdminCategories() {
         <div className="row header">
           <div>Categoria</div>
           <div>Tipo</div>
-          <div>Descrizione</div>
           <div>Prodotti</div>
           <div>Azioni</div>
         </div>
@@ -352,7 +343,6 @@ export default function AdminCategories() {
               {c.parentId ? <div className="muted">Parent: {parentNameById.get(c.parentId) || "-"}</div> : null}
             </div>
             <div className="muted">{c.parentId ? "Sottocategoria" : "Principale"}</div>
-            <div>{stripHtml(c.description) || "—"}</div>
             <div>{c._count?.products || 0}</div>
             <div className="actions">
               <button className="btn ghost small" onClick={() => setEditing({ ...c })}>Modifica</button>
@@ -374,7 +364,6 @@ export default function AdminCategories() {
                 <span>{c._count?.products || 0} prodotti</span>
               </div>
               <small>{c.parentId ? "Sottocategoria" : "Categoria principale"}</small>
-              <p className="muted">{stripHtml(c.description) || "Nessuna descrizione"}</p>
               <div className="actions">
                 <button className="btn ghost small" onClick={() => setEditing({ ...c })}>Modifica</button>
                 <button className="btn ghost small" onClick={() => moveCategory(c.id, "up")}>↑</button>

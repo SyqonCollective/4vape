@@ -299,8 +299,8 @@ export default function AdminFiscal() {
                   <div className="mono">{r.sku || "-"}</div>
                   <div>{r.prodotto || "-"}</div>
                   <div>{r.codicePl || "-"}</div>
-                  <div>{Number(r.mlProduct || 0).toFixed(3)}</div>
-                  <div>{Number(r.nicotine || 0).toFixed(3)}</div>
+                  <div>{parseFloat(Number(r.mlProduct || 0).toFixed(3))}</div>
+                  <div>{parseFloat(Number(r.nicotine || 0).toFixed(3))}</div>
                   <div>{money(r.avgPriceIvato || 0)}</div>
                   <div>{Number(r.qty || 0)}</div>
                   <div>{Number(r.accisa || 0).toFixed(6)}</div>
@@ -318,8 +318,8 @@ export default function AdminFiscal() {
                   </div>
                   <h4>{r.prodotto || "-"}</h4>
                   <div className="fiscal-row-grid">
-                    <span>ML: <strong>{Number(r.mlProduct || 0).toFixed(3)}</strong></span>
-                    <span>Nicotina: <strong>{Number(r.nicotine || 0).toFixed(3)}</strong></span>
+                    <span>ML: <strong>{parseFloat(Number(r.mlProduct || 0).toFixed(3))}</strong></span>
+                    <span>Nicotina: <strong>{parseFloat(Number(r.nicotine || 0).toFixed(3))}</strong></span>
                     <span>Prezzo medio: <strong>{money(r.avgPriceIvato || 0)}</strong></span>
                     <span>Quantità: <strong>{Number(r.qty || 0)}</strong></span>
                     <span>Accisa: <strong>{Number(r.accisa || 0).toFixed(6)}</strong></span>
@@ -386,8 +386,8 @@ export default function AdminFiscal() {
                   <div>{r.cfPivaAdm || "-"}</div>
                   <div>{r.prodotto || "-"}</div>
                   <div>{r.codicePl || "-"}</div>
-                  <div>{Number(r.mlProduct || 0).toFixed(3)}</div>
-                  <div>{Number(r.nicotine || 0).toFixed(3)}</div>
+                  <div>{parseFloat(Number(r.mlProduct || 0).toFixed(3))}</div>
+                  <div>{parseFloat(Number(r.nicotine || 0).toFixed(3))}</div>
                   <div>{Number(r.qty || 0)}</div>
                 </div>
               ))}
@@ -409,8 +409,8 @@ export default function AdminFiscal() {
                     <span>Comune: <strong>{r.comune || "-"}</strong></span>
                     <span>Provincia: <strong>{r.provincia || "-"}</strong></span>
                     <span>CF/P.IVA ADM: <strong>{r.cfPivaAdm || "-"}</strong></span>
-                    <span>ML: <strong>{Number(r.mlProduct || 0).toFixed(3)}</strong></span>
-                    <span>Nicotina: <strong>{Number(r.nicotine || 0).toFixed(3)}</strong></span>
+                    <span>ML: <strong>{parseFloat(Number(r.mlProduct || 0).toFixed(3))}</strong></span>
+                    <span>Nicotina: <strong>{parseFloat(Number(r.nicotine || 0).toFixed(3))}</strong></span>
                     <span>Quantità: <strong>{Number(r.qty || 0)}</strong></span>
                   </div>
                 </article>

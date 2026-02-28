@@ -133,6 +133,10 @@ export default function AdminInventory() {
     () => Array.from(new Set(items.map((i) => i.subcategory).filter(Boolean))).sort((a, b) => a.localeCompare(b, "it")),
     [items]
   );
+  const exciseNameOptions = useMemo(
+    () => Array.from(new Set(items.map((i) => i.exciseRateRef?.name).filter(Boolean))).sort((a, b) => a.localeCompare(b, "it")),
+    [items]
+  );
   const filteredItems = useMemo(
     () =>
       items.filter(
@@ -392,8 +396,7 @@ export default function AdminInventory() {
           <label>Accisa</label>
           <select className="select" value={exciseFilter} onChange={(e) => setExciseFilter(e.target.value)}>
             <option value="">Tutte</option>
-            <option value="with">Con accisa</option>
-            <option value="without">Senza accisa</option>
+            {exciseNameOptions.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
           </div>
           <div className="filter-group">
@@ -414,7 +417,7 @@ export default function AdminInventory() {
         <div className="inventory-table-scroll">
           <div className="inventory-row header">
             <div><input type="checkbox" checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length} onChange={(e) => setSelectedIds(e.target.checked ? new Set(filteredItems.map((x) => x.id)) : new Set())} /></div>
-            <div>SKU</div><div>Nome</div><div>Brand</div><div>Categoria</div><div>Sottocategoria</div><div>Giacenza</div><div>Costo</div><div>Prezzo</div><div>Accisa</div><div>ML Prodotto</div><div></div>
+            <div>SKU</div><div>Nome</div><div>Brand</div><div>Categoria</div><div>Sottocategoria</div><div>Giacenza</div><div>Costo</div><div>Prezzo</div><div>Accisa</div><div>ML Prodotto</div><div>Nicotina</div><div></div>
           </div>
           {loading ? <div className="inventory-empty">Caricamento...</div> : null}
           {!loading && !items.length ? <div className="inventory-empty">Nessun articolo</div> : null}
@@ -445,6 +448,7 @@ export default function AdminInventory() {
                   <div>{item.price != null ? money(item.price) : "-"}</div>
                   <div>{item.exciseRateRef?.name || "-"}</div>
                   <div>{item.mlProduct ?? "-"}</div>
+                  <div>{item.nicotine != null ? parseFloat(Number(item.nicotine).toFixed(3)) : "-"}</div>
                   <div><button className="btn ghost small" onClick={() => openEdit(item)}>Modifica</button></div>
                 </div>
               ))
@@ -481,6 +485,7 @@ export default function AdminInventory() {
                 <span>Prezzo: <strong>{item.price != null ? money(item.price) : "-"}</strong></span>
                 <span>Accisa: <strong>{item.exciseRateRef?.name || "-"}</strong></span>
                 <span>ML: <strong>{item.mlProduct ?? "-"}</strong></span>
+                <span>Nicotina: <strong>{item.nicotine != null ? parseFloat(Number(item.nicotine).toFixed(3)) : "-"}</strong></span>
               </div>
             </article>
           ))}

@@ -37,6 +37,7 @@ export default function AdminSupplierRegistry() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
+  const [showForm, setShowForm] = useState(false);
 
   async function load() {
     try {
@@ -72,6 +73,7 @@ export default function AdminSupplierRegistry() {
 
   function openCreate() {
     setDraft({ ...emptyDraft, code: "" });
+    setShowForm(true);
   }
 
   function openEdit(row) {
@@ -92,6 +94,7 @@ export default function AdminSupplierRegistry() {
       phone: row.phone || "",
       email: row.email || "",
     });
+    setShowForm(true);
   }
 
   async function saveSupplier() {
@@ -144,6 +147,7 @@ export default function AdminSupplierRegistry() {
         });
       }
       setDraft(emptyDraft);
+      setShowForm(false);
       await load();
     } catch {
       setError("Impossibile salvare fornitore");
@@ -204,7 +208,7 @@ export default function AdminSupplierRegistry() {
         </div>
       </div>
 
-      {draft.id || draft.name || draft.code ? (
+      {showForm ? (
         <div className="panel" style={{ marginTop: 14 }}>
           <h3>{draft.id ? "Modifica fornitore" : "Nuovo fornitore"}</h3>
           <div className="form-grid">
@@ -222,7 +226,7 @@ export default function AdminSupplierRegistry() {
             <label>Città<input value={draft.city} onChange={(e) => setDraft((p) => ({ ...p, city: e.target.value }))} /></label>
             <label>Provincia<input value={draft.province} onChange={(e) => setDraft((p) => ({ ...p, province: e.target.value }))} /></label>
             <div className="actions">
-              <button className="btn ghost" onClick={() => setDraft(emptyDraft)}>Annulla</button>
+              <button className="btn ghost" onClick={() => { setDraft(emptyDraft); setShowForm(false); }}>Annulla</button>
               <button className="btn primary" onClick={saveSupplier} disabled={saving}>
                 {saving ? "Salvataggio..." : "Salva"}
               </button>

@@ -17,6 +17,15 @@ export default function AdminReturns() {
   const [detail, setDetail] = useState(null);
   const [confirmHandle, setConfirmHandle] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [showManual, setShowManual] = useState(false);
+  const [savingManual, setSavingManual] = useState(false);
+  const [manualDraft, setManualDraft] = useState({
+    orderNumber: "",
+    productName: "",
+    problemDescription: "",
+    contactName: "",
+    contactEmail: "",
+  });
 
   async function loadReturns() {
     try {
@@ -89,6 +98,27 @@ export default function AdminReturns() {
     }
   }
 
+  async function createManualReturn() {
+    if (!manualDraft.orderNumber || !manualDraft.productName || !manualDraft.problemDescription) {
+      setError("Compila tutti i campi obbligatori");
+      return;
+    }
+    setSavingManual(true);
+    try {
+      await api("/admin/returns/manual", {
+        method: "POST",
+        body: JSON.stringify(manualDraft),
+      });
+      setShowManual(false);
+      setManualDraft({ orderNumber: "", productName: "", problemDescription: "", contactName: "", contactEmail: "" });
+      await loadReturns();
+    } catch {
+      setError("Impossibile creare reso manuale");
+    } finally {
+      setSavingManual(false);
+    }
+  }
+
   const formatDate = (value) => new Date(value).toLocaleString("it-IT");
 
   return (
@@ -137,6 +167,7 @@ export default function AdminReturns() {
           >
             Reset filtri
           </button>
+          <button className="btn primary" onClick={() => setShowManual(true)}>Reso manuale</button>
         </div>
         <div className="filters-row returns-filters-grid">
           <div className="filter-group">
@@ -305,6 +336,32 @@ export default function AdminReturns() {
           </div>
         </Portal>
       ) : null}
+
+      {showManual && (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowManual(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Nuovo reso manuale</h3>
+                <button className="btn ghost" onClick={() => setShowManual(false)}>Chiudi</button>
+              </div>
+              <div className="modal-body modal-body-single">
+                <div className="form-grid">
+                  <label>Numero ordine *<input value={manualDraft.orderNumber} onChange={(e) => setManualDraft((p) => ({ ...p, orderNumber: e.target.value }))} /></label>
+                  <label>Nome prodotto *<input value={manualDraft.productName} onChange={(e) => setManualDraft((p) => ({ ...p, productName: e.target.value }))} /></label>
+                  <label>Nome contatto<input value={manualDraft.contactName} onChange={(e) => setManualDraft((p) => ({ ...p, contactName: e.target.value }))} /></label>
+                  <label>Email contatto<input type="email" value={manualDraft.contactEmail} onChange={(e) => setManualDraft((p) => ({ ...p, contactEmail: e.target.value }))} /></label>
+                  <label style={{ gridColumn: "1 / -1" }}>Descrizione problema *<textarea rows={4} value={manualDraft.problemDescription} onChange={(e) => setManualDraft((p) => ({ ...p, problemDescription: e.target.value }))} /></label>
+                </div>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => setShowManual(false)}>Annulla</button>
+                  <button className="btn primary" onClick={createManualReturn} disabled={savingManual}>{savingManual ? "Salvataggio..." : "Crea reso"}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
     </section>
   );
 }

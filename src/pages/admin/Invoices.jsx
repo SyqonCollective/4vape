@@ -9,6 +9,15 @@ const money = (v) =>
 const LEGAL_COURTESY_NOTE =
   "Fattura di cortesia senza valenza fiscale. L'originale è disponibile nel tuo cassetto fiscale.";
 
+const PAYMENT_LABELS = {
+  BANK_TRANSFER: "Bonifico",
+  CARD: "Carta",
+  COD: "Contrassegno",
+  CASH: "Contanti",
+  OTHER: "Altro",
+};
+const payLabel = (v) => PAYMENT_LABELS[v] || v || "-";
+
 const fmtDate = (v) => {
   if (!v) return "-";
   return new Date(v).toLocaleDateString("it-IT");
@@ -59,6 +68,10 @@ export default function AdminInvoices() {
     iva: "",
     costoProdotti: "",
   });
+  const [detail, setDetail] = useState(null);
+  const [editRow, setEditRow] = useState(null);
+  const [editDraft, setEditDraft] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   async function load() {
     try {
@@ -168,7 +181,7 @@ export default function AdminInvoices() {
       <div class="meta">
         <div class="box"><div class="k">Data</div><div class="v">${fmtDate(row.data)}</div></div>
         <div class="box"><div class="k">Stato</div><div class="v">${row.stato === "SALDATA" ? "Saldata" : "Da saldare"}</div></div>
-        <div class="box"><div class="k">Pagamento</div><div class="v">${row.pagamento || "-"}</div></div>
+        <div class="box"><div class="k">Pagamento</div><div class="v">${payLabel(row.pagamento)}</div></div>
         <div class="box"><div class="k">Ordine</div><div class="v">${row.riferimentoOrdine || "-"}</div></div>
       </div>
       <table>
@@ -199,7 +212,7 @@ export default function AdminInvoices() {
           <td>${fmtDate(r.data)}</td>
           <td>${r.cliente || "-"}</td>
           <td>${r.stato === "SALDATA" ? "Saldata" : "Da saldare"}</td>
-          <td>${r.pagamento || "-"}</td>
+          <td>${r.pagamento ? payLabel(r.pagamento) : "-"}</td>
           <td class="right">${money(r.totaleFattura)}</td>
         </tr>`
       )
@@ -274,6 +287,60 @@ export default function AdminInvoices() {
     } finally {
       setSavingManual(false);
     }
+  }
+
+  async function deleteInvoice(row) {
+    if (!confirm(`Eliminare la fattura ${row.numero}?`)) return;
+    try {
+      await api(`/admin/invoices/${row.id}`, { method: "DELETE" });
+      setDetail(null);
+      await load();
+    } catch {
+      setError("Impossibile eliminare fattura");
+    }
+  }
+
+  function openEdit(row) {
+    setEditRow(row);
+    setEditDraft({
+      invoiceNumber: row.numero || "",
+      issuedAt: toDateInput(row.data),
+      imponibileProdotti: String(Number(row.imponibileProdotti || 0).toFixed(2)),
+      accisa: String(Number(row.accisa || 0).toFixed(2)),
+      iva: String(Number(row.iva || 0).toFixed(2)),
+    });
+  }
+
+  async function saveEdit() {
+    if (!editRow || !editDraft) return;
+    setSavingEdit(true);
+    try {
+      await api(`/admin/invoices/${editRow.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          invoiceNumber: editDraft.invoiceNumber,
+          issuedAt: editDraft.issuedAt,
+          imponibileProdotti: Number(editDraft.imponibileProdotti || 0),
+          accisa: Number(editDraft.accisa || 0),
+          iva: Number(editDraft.iva || 0),
+        }),
+      });
+      setEditRow(null);
+      setEditDraft(null);
+      await load();
+    } catch {
+      setError("Impossibile aggiornare fattura");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  function sendInvoiceEmail(row) {
+    const c = companyById.get(row.companyId);
+    const email = c?.pec || c?.email || "";
+    const subject = encodeURIComponent(`Fattura ${row.numero} — 4Vape`);
+    const body = encodeURIComponent(`Gentile ${row.cliente || "Cliente"},\n\nIn allegato la fattura n. ${row.numero} del ${fmtDate(row.data)}.\nTotale fattura: ${money(row.totaleFattura)}\n\nCordiali saluti,\n4Vape`);
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, "_self");
   }
 
   function exportCurrentCsv() {
@@ -429,30 +496,27 @@ export default function AdminInvoices() {
           <div>Azioni</div>
         </div>
         {visibleRows.map((r) => (
-          <div className="row" key={r.id}>
+          <div className="row" key={r.id} onClick={() => setDetail(r)} style={{ cursor: "pointer" }}>
             <div className="mono">{r.numero}</div>
             <div>{fmtDate(r.data)}</div>
             <div>{r.cliente || "-"}</div>
             <div><span className={`tag ${r.stato === "SALDATA" ? "success" : "warn"}`}>{r.stato === "SALDATA" ? "Saldata" : "Da saldare"}</span></div>
-            <div>{r.pagamento || "-"}</div>
+            <div>{payLabel(r.pagamento)}</div>
             <div>{money(r.totaleFattura)}</div>
             <div>{money(r.imponibileProdotti)}</div>
             <div>{money(r.accisa)}</div>
             <div>{money(r.iva)}</div>
             <div>{r.riferimentoOrdine || "-"}</div>
             <div>{money(r.guadagno)}</div>
-            <div className="actions">
+            <div className="actions" onClick={(e) => e.stopPropagation()}>
               <button className="btn ghost small" onClick={() => togglePaid(r)}>
-                {r.stato === "SALDATA" ? "Segna da saldare" : "Segna saldata"}
+                {r.stato === "SALDATA" ? "Da saldare" : "Saldata"}
               </button>
+              <button className="btn ghost small" onClick={() => openEdit(r)}>Modifica</button>
               <button className="btn ghost small" onClick={() => exportSingleInvoice(r)}>Excel</button>
               <button className="btn ghost small" onClick={() => printInvoice(r)}>Stampa</button>
-              <a
-                className="btn ghost small"
-                href={`mailto:?subject=Fattura%20${encodeURIComponent(r.numero)}&body=${encodeURIComponent(`Fattura ${r.numero} - Totale ${money(r.totaleFattura)}`)}`}
-              >
-                Invia mail
-              </a>
+              <button className="btn ghost small" onClick={() => sendInvoiceEmail(r)}>Invia mail</button>
+              <button className="btn ghost small danger" onClick={() => deleteInvoice(r)}>Elimina</button>
             </div>
           </div>
         ))}
@@ -460,23 +524,25 @@ export default function AdminInvoices() {
       ) : (
         <div className="invoices-cards">
           {visibleRows.map((r) => (
-            <article key={r.id} className="invoices-card">
+            <article key={r.id} className="invoices-card" onClick={() => setDetail(r)} style={{ cursor: "pointer" }}>
               <div className="invoices-card-top">
                 <strong className="mono">{r.numero}</strong>
                 <span className={`tag ${r.stato === "SALDATA" ? "success" : "warn"}`}>{r.stato === "SALDATA" ? "Saldata" : "Da saldare"}</span>
               </div>
               <div><strong>{r.cliente || "-"}</strong></div>
-              <div className="muted">{fmtDate(r.data)} · {r.pagamento || "-"}</div>
+              <div className="muted">{fmtDate(r.data)} · {payLabel(r.pagamento)}</div>
               <div className="invoices-card-totals">
                 <span>{money(r.totaleFattura)}</span>
                 <span>Ordine {r.riferimentoOrdine || "-"}</span>
               </div>
-              <div className="actions">
+              <div className="actions" onClick={(e) => e.stopPropagation()}>
                 <button className="btn ghost small" onClick={() => togglePaid(r)}>
                   {r.stato === "SALDATA" ? "Da saldare" : "Saldata"}
                 </button>
+                <button className="btn ghost small" onClick={() => openEdit(r)}>Modifica</button>
                 <button className="btn ghost small" onClick={() => exportSingleInvoice(r)}>CSV</button>
                 <button className="btn ghost small" onClick={() => printInvoice(r)}>Stampa</button>
+                <button className="btn ghost small danger" onClick={() => deleteInvoice(r)}>Elimina</button>
               </div>
             </article>
           ))}
@@ -511,6 +577,68 @@ export default function AdminInvoices() {
           </div>
         </Portal>
       ) : null}
+
+      {detail && (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setDetail(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640 }}>
+              <div className="modal-header">
+                <div className="modal-title"><h3>Fattura {detail.numero}</h3></div>
+                <button className="btn ghost" onClick={() => setDetail(null)}>Chiudi</button>
+              </div>
+              <div className="modal-body modal-body-single">
+                <div className="summary-grid">
+                  <div><strong>Numero</strong><div className="mono">{detail.numero}</div></div>
+                  <div><strong>Data</strong><div>{fmtDate(detail.data)}</div></div>
+                  <div><strong>Cliente</strong><div>{detail.cliente || "-"}</div></div>
+                  <div><strong>Pagamento</strong><div>{payLabel(detail.pagamento)}</div></div>
+                  <div><strong>Stato</strong><div><span className={`tag ${detail.stato === "SALDATA" ? "success" : "warn"}`}>{detail.stato === "SALDATA" ? "Saldata" : "Da saldare"}</span></div></div>
+                  <div><strong>Ordine rif.</strong><div>{detail.riferimentoOrdine || "-"}</div></div>
+                  <div><strong>Imponibile prodotti</strong><div>{money(detail.imponibileProdotti)}</div></div>
+                  <div><strong>Accisa</strong><div>{money(detail.accisa)}</div></div>
+                  <div><strong>IVA</strong><div>{money(detail.iva)}</div></div>
+                  <div><strong>Totale fattura</strong><div style={{ fontWeight: 800, fontSize: 18 }}>{money(detail.totaleFattura)}</div></div>
+                  <div><strong>Guadagno</strong><div>{money(detail.guadagno)}</div></div>
+                </div>
+                <div className="actions" style={{ marginTop: 16 }}>
+                  <button className="btn ghost" onClick={() => { togglePaid(detail); setDetail(null); }}>{detail.stato === "SALDATA" ? "Segna da saldare" : "Segna saldata"}</button>
+                  <button className="btn ghost" onClick={() => { openEdit(detail); setDetail(null); }}>Modifica</button>
+                  <button className="btn ghost" onClick={() => printInvoice(detail)}>Stampa</button>
+                  <button className="btn ghost" onClick={() => exportSingleInvoice(detail)}>CSV</button>
+                  <button className="btn ghost" onClick={() => sendInvoiceEmail(detail)}>Invia mail</button>
+                  <button className="btn ghost danger" onClick={() => deleteInvoice(detail)}>Elimina</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {editRow && editDraft && (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => { setEditRow(null); setEditDraft(null); }}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Modifica fattura {editRow.numero}</h3>
+                <button className="btn ghost" onClick={() => { setEditRow(null); setEditDraft(null); }}>Chiudi</button>
+              </div>
+              <div className="modal-body modal-body-single">
+                <div className="form-grid">
+                  <label>Numero fattura<input value={editDraft.invoiceNumber} onChange={(e) => setEditDraft((p) => ({ ...p, invoiceNumber: e.target.value }))} /></label>
+                  <label>Data<input type="date" value={editDraft.issuedAt} onChange={(e) => setEditDraft((p) => ({ ...p, issuedAt: e.target.value }))} /></label>
+                  <label>Imponibile prodotti<input type="number" step="0.01" value={editDraft.imponibileProdotti} onChange={(e) => setEditDraft((p) => ({ ...p, imponibileProdotti: e.target.value }))} /></label>
+                  <label>Accisa<input type="number" step="0.01" value={editDraft.accisa} onChange={(e) => setEditDraft((p) => ({ ...p, accisa: e.target.value }))} /></label>
+                  <label>IVA<input type="number" step="0.01" value={editDraft.iva} onChange={(e) => setEditDraft((p) => ({ ...p, iva: e.target.value }))} /></label>
+                </div>
+                <div className="actions">
+                  <button className="btn ghost" onClick={() => { setEditRow(null); setEditDraft(null); }}>Annulla</button>
+                  <button className="btn primary" onClick={saveEdit} disabled={savingEdit}>{savingEdit ? "Salvataggio..." : "Salva modifiche"}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
     </section>
   );
 }
