@@ -36,6 +36,7 @@ export default function AdminCompanies() {
   const [groupName, setGroupName] = useState("");
   const [companySearch, setCompanySearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [groupFilter, setGroupFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table");
   const [showPending, setShowPending] = useState(true);
   const GROUP_OPTIONS = ["NEGOZIO", "TABACCHERIA"];
@@ -62,6 +63,9 @@ export default function AdminCompanies() {
     if (statusFilter !== "all") {
       list = list.filter((c) => String(c.status || "").toUpperCase() === statusFilter);
     }
+    if (groupFilter !== "all") {
+      list = list.filter((c) => String(c.groupName || "").toUpperCase() === groupFilter);
+    }
     const q = companySearch.trim().toLowerCase();
     if (q) {
       list = list.filter((c) =>
@@ -81,7 +85,19 @@ export default function AdminCompanies() {
       );
     }
     return list;
-  }, [companies, companySearch, statusFilter]);
+  }, [companies, companySearch, statusFilter, groupFilter]);
+
+  const availableGroups = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [...GROUP_OPTIONS, ...companies.map((c) => String(c.groupName || "").trim().toUpperCase())].filter(
+            Boolean
+          )
+        )
+      ).sort((a, b) => a.localeCompare(b, "it")),
+    [companies]
+  );
 
   const companyStats = useMemo(() => {
     const active = companies.filter((c) => c.status === "ACTIVE").length;
@@ -104,16 +120,61 @@ export default function AdminCompanies() {
   }
 
   function exportCompaniesCsv() {
-    const headers = ["Ragione sociale", "P.IVA", "Gruppo", "Referente", "Email", "Stato", "Ordini", "Fatturato"];
+    const headers = [
+      "ID",
+      "Nome azienda",
+      "Ragione sociale",
+      "Gruppo",
+      "Stato",
+      "Partita IVA",
+      "P.IVA ADM",
+      "Codice SDI",
+      "PEC",
+      "Codice cliente",
+      "Licenza",
+      "CMNR",
+      "N. insegna",
+      "Referente nome",
+      "Referente cognome",
+      "Telefono",
+      "Email",
+      "Indirizzo",
+      "CAP",
+      "Citta",
+      "Provincia",
+      "Registrazione",
+      "Ultimo accesso",
+      "Ordini",
+      "Fatturato",
+      "Media ordine",
+    ];
     const rows = visibleCompanies.map((c) => [
-      c.legalName || c.name || "",
-      c.vatNumber || "",
+      c.id || "",
+      c.name || "",
+      c.legalName || "",
       c.groupName || "",
-      `${c.contactFirstName || ""} ${c.contactLastName || ""}`.trim(),
-      c.email || "",
       c.status || "",
+      c.vatNumber || "",
+      c.adminVatNumber || "",
+      c.sdiCode || "",
+      c.pec || "",
+      c.customerCode || "",
+      c.licenseNumber || "",
+      c.cmnr || "",
+      c.signNumber || "",
+      c.contactFirstName || "",
+      c.contactLastName || "",
+      c.phone || "",
+      c.email || "",
+      c.address || "",
+      c.cap || "",
+      c.city || "",
+      c.province || "",
+      formatDate(c?.stats?.registeredAt || c.createdAt),
+      formatDate(c?.stats?.lastAccessAt),
       c?.stats?.orders ?? 0,
       Number(c?.stats?.revenue ?? 0).toFixed(2),
+      Number(c?.stats?.averageOrderValue ?? 0).toFixed(2),
     ]);
     const esc = (v) => {
       const s = String(v ?? "");
@@ -390,6 +451,7 @@ export default function AdminCompanies() {
             <button className="btn ghost" onClick={() => {
               setCompanySearch("");
               setStatusFilter("all");
+              setGroupFilter("all");
             }}>Reset</button>
           </div>
           <div className="filters-row companies-filters-grid">
@@ -404,6 +466,21 @@ export default function AdminCompanies() {
                 <option value="ACTIVE">Attivi</option>
                 <option value="PENDING">In attesa</option>
                 <option value="SUSPENDED">Revocati</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Gruppo</label>
+              <select
+                className="select"
+                value={groupFilter}
+                onChange={(e) => setGroupFilter(e.target.value)}
+              >
+                <option value="all">Tutti</option>
+                {availableGroups.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

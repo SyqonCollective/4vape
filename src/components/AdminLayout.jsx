@@ -13,33 +13,34 @@ import generalMp3 from "../assets/general.mp3";
 // [x] "Segna tutto come letto" campanella notifiche
 
 const links = [
-  { to: "/admin/dashboard", label: "Dashboard" },
-  { to: "/admin/analytics", label: "Analytics" },
-  { to: "/admin/reports", label: "Report" },
-  { to: "/admin/mail-marketing", label: "Mail marketing" },
-  { to: "/admin/products", label: "Prodotti" },
-  { to: "/admin/supplier-registry", label: "Fornitori" },
-  { to: "/admin/brands", label: "Brand" },
-  { to: "/admin/categories", label: "Categorie" },
-  { to: "/admin/suppliers", label: "Drop" },
-  { to: "/admin/discounts", label: "Sconti e Regole" },
-  { to: "/admin/settings", label: "Impostazioni" },
-  { to: "/admin/orders", label: "Ordini" },
-  { to: "/admin/invoices", label: "Fatture" },
-  { to: "/admin/inventory", label: "Inventario" },
-  { to: "/admin/goods-receipts", label: "Arrivo merci" },
-  { to: "/admin/warehouse-movements", label: "Movimenti magazzino" },
-  { to: "/admin/expenses", label: "Registro spese" },
-  { to: "/admin/treasury", label: "Tesoreria" },
-  { to: "/admin/fiscal", label: "Gestione fiscale" },
-  { to: "/admin/bundles", label: "Bundle prodotto" },
-  { to: "/admin/logistics", label: "Logistica" },
-  { to: "/admin/returns", label: "Resi" },
-  { to: "/admin/companies", label: "Clienti/Aziende" },
-  { to: "/admin/users", label: "Utenti admin" },
+  { to: "/admin/dashboard", label: "Dashboard", icon: "DB" },
+  { to: "/admin/analytics", label: "Analytics", icon: "AN" },
+  { to: "/admin/reports", label: "Report", icon: "RP" },
+  { to: "/admin/mail-marketing", label: "Mail marketing", icon: "MM" },
+  { to: "/admin/products", label: "Prodotti", icon: "PR" },
+  { to: "/admin/supplier-registry", label: "Fornitori", icon: "FO" },
+  { to: "/admin/brands", label: "Brand", icon: "BR" },
+  { to: "/admin/categories", label: "Categorie", icon: "CA" },
+  { to: "/admin/suppliers", label: "Drop", icon: "DR" },
+  { to: "/admin/discounts", label: "Sconti e Regole", icon: "SC" },
+  { to: "/admin/settings", label: "Impostazioni", icon: "IM" },
+  { to: "/admin/orders", label: "Ordini", icon: "OR" },
+  { to: "/admin/invoices", label: "Fatture", icon: "FA" },
+  { to: "/admin/inventory", label: "Inventario", icon: "IN" },
+  { to: "/admin/goods-receipts", label: "Arrivo merci", icon: "AM" },
+  { to: "/admin/warehouse-movements", label: "Movimenti magazzino", icon: "MV" },
+  { to: "/admin/expenses", label: "Registro spese", icon: "RS" },
+  { to: "/admin/treasury", label: "Tesoreria", icon: "TS" },
+  { to: "/admin/fiscal", label: "Gestione fiscale", icon: "GF" },
+  { to: "/admin/bundles", label: "Bundle prodotto", icon: "BD" },
+  { to: "/admin/logistics", label: "Logistica", icon: "LG" },
+  { to: "/admin/returns", label: "Resi", icon: "RE" },
+  { to: "/admin/companies", label: "Clienti/Aziende", icon: "CL" },
+  { to: "/admin/users", label: "Utenti admin", icon: "UA" },
 ];
 
 const ORDER_KEY = "admin_sidebar_order";
+const SIDEBAR_COLLAPSED_KEY = "admin_sidebar_collapsed";
 const NOTIF_SEEN_KEY = "admin_notifications_seen_at";
 const NOTIF_DISMISSED_KEY = "admin_notifications_dismissed";
 
@@ -124,6 +125,9 @@ export default function AdminLayout() {
   }, []);
 
   const [order, setOrder] = useState(orderedLinks);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1"
+  );
 
   const unreadCount = useMemo(
     () =>
@@ -308,8 +312,16 @@ export default function AdminLayout() {
     baseOrderRef.current = null;
   }
 
+  function toggleSidebarCollapsed() {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+      return next;
+    });
+  }
+
   return (
-    <div className="admin-shell">
+    <div className={`admin-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <aside className="admin-sidebar">
         <div className="brand">
           <div className="brand-mark">
@@ -321,6 +333,15 @@ export default function AdminLayout() {
               <strong>{adminName}</strong>
             </div>
           </div>
+          <button
+            type="button"
+            className="sidebar-toggle-btn"
+            onClick={toggleSidebarCollapsed}
+            title={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
+            aria-label={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
+          >
+            {sidebarCollapsed ? ">>" : "<<"}
+          </button>
         </div>
 
         <nav className="admin-nav">
@@ -345,9 +366,11 @@ export default function AdminLayout() {
                 if (dragging === l.to) classes.push("dragging");
                 return classes.join(" ");
               }}
+              title={sidebarCollapsed ? l.label : undefined}
             >
               <span className="nav-grip" aria-hidden="true">⋮⋮</span>
-              {l.label}
+              <span className="nav-icon" aria-hidden="true">{l.icon}</span>
+              <span className="nav-label">{l.label}</span>
             </NavLink>
           ))}
         </nav>
