@@ -85,7 +85,7 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi contenuto email
 export default function AdminMailMarketing() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [status, setStatus] = useState({ configured: false, from: null, host: null });
+  const [status, setStatus] = useState({ configured: false, wsUsername: null, listId: null });
   const [types, setTypes] = useState([]);
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState({ subject: "", html: "", active: true });
@@ -104,7 +104,7 @@ export default function AdminMailMarketing() {
         api("/admin/mail-marketing/status"),
         api("/admin/mail-marketing/types"),
       ]);
-      setStatus(statusRes || { configured: false, from: null, host: null });
+      setStatus(statusRes || { configured: false, wsUsername: null, listId: null });
       setTypes(typesRes || []);
     } catch {
       setError("Impossibile caricare Mail Marketing");
@@ -253,7 +253,7 @@ export default function AdminMailMarketing() {
       <div className="page-header">
         <div>
           <h1>Mail Marketing</h1>
-          <p>Email transazionali automatiche con template personalizzabili</p>
+          <p>Email transazionali automatiche via MailUp con template personalizzabili</p>
         </div>
       </div>
 
@@ -264,16 +264,15 @@ export default function AdminMailMarketing() {
         </div>
       )}
 
-      {/* SMTP Status */}
       <div className="panel">
         <div className="actions" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
           <div>
-            <strong>Stato SMTP: </strong>
+            <strong>Stato MailUp: </strong>
             <span style={{ color: status.configured ? "#15803d" : "#dc2626", fontWeight: 700 }}>
               {status.configured ? "Configurato" : "Non configurato"}
             </span>
-            {status.host ? <span className="muted"> &middot; Host: {status.host}</span> : null}
-            {status.from ? <span className="muted"> &middot; From: {status.from}</span> : null}
+            {status.wsUsername ? <span className="muted"> &middot; Account: {status.wsUsername}</span> : null}
+            {status.listId ? <span className="muted"> &middot; Lista: {status.listId}</span> : null}
           </div>
           <div className="actions">
             <button className="btn ghost" onClick={loadAll}>Ricarica</button>
@@ -286,11 +285,11 @@ export default function AdminMailMarketing() {
         {!status.configured && (
           <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
             Per attivare le email, aggiungi nel file <code>.env</code> del backend:<br />
-            <code>SMTP_HOST=smtp.tuoserver.it</code><br />
-            <code>SMTP_PORT=587</code><br />
-            <code>SMTP_USER=tua@email.it</code><br />
-            <code>SMTP_PASS=password</code><br />
-            <code>{"SMTP_FROM=\"4Vape B2B <noreply@4vape.it>\""}</code>
+            <code>MAILUP_CLIENT_ID=tuo_client_id</code><br />
+            <code>MAILUP_CLIENT_SECRET=tuo_client_secret</code><br />
+            <code>MAILUP_USERNAME=tuo_username</code><br />
+            <code>MAILUP_PASSWORD=tua_password</code><br />
+            <code>MAILUP_DEFAULT_LIST_ID=1</code>
           </div>
         )}
       </div>
