@@ -432,56 +432,120 @@ button {
   position: relative;
 }
 
+@keyframes toggle-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0), 6px 8px 24px rgba(15, 23, 42, 0.12); }
+  50%       { box-shadow: 0 0 12px 3px rgba(14, 165, 233, 0.18), 6px 8px 24px rgba(15, 23, 42, 0.12); }
+}
+
+@keyframes toggle-ripple {
+  0%   { transform: translateY(-50%) scale(1); opacity: 0.5; }
+  60%  { transform: translateY(-50%) scale(1.45); opacity: 0; }
+  100% { transform: translateY(-50%) scale(1.45); opacity: 0; }
+}
+
 .sidebar-toggle-btn {
   position: absolute;
   top: 50%;
-  right: -18px;
+  right: -20px;
   transform: translateY(-50%);
-  width: 30px;
-  height: 128px;
-  border-radius: 0 16px 16px 0;
-  border: 1px solid rgba(14, 165, 233, 0.42);
+  width: 26px;
+  height: 72px;
+  border-radius: 0 14px 14px 0;
+  border: 1px solid rgba(14, 165, 233, 0.28);
   border-left: none;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 1),
-    rgba(219, 244, 255, 0.98) 45%,
-    rgba(209, 250, 229, 0.97)
-  );
-  color: #0369a1;
+  background:
+    linear-gradient(165deg,
+      rgba(255,255,255,0.92) 0%,
+      rgba(224,242,254,0.88) 40%,
+      rgba(186,230,253,0.82) 100%);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  color: #0284c7;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.85),
-    10px 14px 28px rgba(15, 23, 42, 0.18);
   cursor: pointer;
   z-index: 4;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+  animation: toggle-breathe 3.5s ease-in-out infinite;
+  transition:
+    width 0.4s cubic-bezier(.4,0,.2,1),
+    height 0.4s cubic-bezier(.4,0,.2,1),
+    right 0.4s cubic-bezier(.4,0,.2,1),
+    border-radius 0.4s cubic-bezier(.4,0,.2,1),
+    background 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.3s cubic-bezier(.4,0,.2,1);
 }
 
-.sidebar-toggle-btn:hover {
-  transform: translateY(-50%) translateX(1px);
-  box-shadow:
-    0 0 0 1px rgba(186, 230, 253, 0.95),
-    12px 16px 32px rgba(14, 116, 144, 0.24);
-}
-
+/* inner glass highlight */
 .sidebar-toggle-btn::before {
   content: "";
   position: absolute;
-  inset: 8px 6px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(224, 242, 254, 0.95), rgba(186, 230, 253, 0.5));
-  border: 1px solid rgba(125, 211, 252, 0.65);
+  inset: 4px 3px;
+  border-radius: 0 11px 11px 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.75) 0%,
+    rgba(224,242,254,0.35) 60%,
+    transparent 100%);
+  pointer-events: none;
+  transition: inset 0.35s ease, opacity 0.35s ease;
 }
 
+/* ripple ring on click */
+.sidebar-toggle-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border-radius: 50%;
+  border: 2px solid rgba(14, 165, 233, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) scale(0.6);
+  transition: none;
+}
+
+.sidebar-toggle-btn:active::after {
+  animation: toggle-ripple 0.55s ease-out;
+}
+
+/* hover state */
+.sidebar-toggle-btn:hover {
+  transform: translateY(-50%) translateX(3px);
+  background:
+    linear-gradient(165deg,
+      rgba(255,255,255,1) 0%,
+      rgba(186,230,253,0.95) 50%,
+      rgba(125,211,252,0.85) 100%);
+  box-shadow:
+    0 0 18px 4px rgba(14, 165, 233, 0.22),
+    8px 12px 28px rgba(15, 23, 42, 0.16);
+  animation: none;
+}
+
+.sidebar-toggle-btn:hover::before {
+  opacity: 0.9;
+}
+
+/* svg icon */
 .sidebar-toggle-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   position: relative;
   z-index: 1;
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7));
+  color: #0284c7;
+  filter: drop-shadow(0 1px 2px rgba(14, 165, 233, 0.3));
+  transition: transform 0.45s cubic-bezier(.4,0,.2,1), color 0.3s ease;
+}
+
+.sidebar-toggle-btn:hover svg {
+  color: #0369a1;
+  transform: scale(1.15);
 }
 
 .brand-mark {
@@ -666,7 +730,29 @@ button {
 }
 
 .admin-shell.sidebar-collapsed .sidebar-toggle-btn {
-  right: -16px;
+  right: -22px;
+  width: 28px;
+  height: 56px;
+  border-radius: 0 50% 50% 0;
+  background:
+    linear-gradient(165deg,
+      rgba(255,255,255,0.95) 0%,
+      rgba(240,249,255,0.9) 50%,
+      rgba(224,242,254,0.85) 100%);
+  border-color: rgba(14, 165, 233, 0.22);
+}
+
+.admin-shell.sidebar-collapsed .sidebar-toggle-btn:hover {
+  transform: translateY(-50%) translateX(4px);
+  border-radius: 0 50% 50% 0;
+}
+
+.admin-shell.sidebar-collapsed .sidebar-toggle-btn svg {
+  transform: rotate(180deg);
+}
+
+.admin-shell.sidebar-collapsed .sidebar-toggle-btn:hover svg {
+  transform: rotate(180deg) scale(1.15);
 }
 
 .admin-shell.sidebar-collapsed .brand {
