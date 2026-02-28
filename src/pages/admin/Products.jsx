@@ -32,55 +32,16 @@ const EMOJI_LIST = [
 ];
 
 const QUILL_MODULES = {
-  toolbar: {
-    container: [
-      [{ header: [1, 2, 3, 4, false] }],
-      [{ size: ["small", false, "large", "huge"] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ align: [] }],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link", "image"],
-      [{ color: [] }, { background: [] }],
-      ["emoji"],
-      ["clean"],
-    ],
-    handlers: {
-      emoji: function () {
-        const editor = this.quill;
-        const container = editor.container.closest(".rte");
-        if (!container) return;
-        let picker = container.querySelector(".rte-emoji-picker");
-        if (picker) {
-          picker.remove();
-          return;
-        }
-        picker = document.createElement("div");
-        picker.className = "rte-emoji-picker";
-        EMOJI_LIST.forEach((emoji) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "rte-emoji-item";
-          btn.textContent = emoji;
-          btn.addEventListener("click", () => {
-            const range = editor.getSelection(true);
-            editor.insertText(range.index, emoji);
-            editor.setSelection(range.index + emoji.length);
-            picker.remove();
-          });
-          picker.appendChild(btn);
-        });
-        const toolbar = container.querySelector(".ql-toolbar");
-        if (toolbar) toolbar.appendChild(picker);
-        const close = (e) => {
-          if (!picker.contains(e.target)) {
-            picker.remove();
-            document.removeEventListener("mousedown", close);
-          }
-        };
-        setTimeout(() => document.addEventListener("mousedown", close), 0);
-      },
-    },
-  },
+  toolbar: [
+    [{ header: [1, 2, 3, 4, false] }],
+    [{ size: ["small", false, "large", "huge"] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ align: [] }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link", "image"],
+    [{ color: [] }, { background: [] }],
+    ["clean"],
+  ],
 };
 
 const QUILL_FORMATS = [
@@ -93,9 +54,22 @@ const QUILL_FORMATS = [
 ];
 
 function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione..." }) {
+  const quillRef = useRef(null);
+  const [showEmoji, setShowEmoji] = useState(false);
+
+  function insertEmoji(emoji) {
+    const editor = quillRef.current?.getEditor?.();
+    if (!editor) return;
+    const range = editor.getSelection(true);
+    editor.insertText(range.index, emoji);
+    editor.setSelection(range.index + emoji.length);
+    setShowEmoji(false);
+  }
+
   return (
     <div className="rte">
       <ReactQuill
+        ref={quillRef}
         theme="snow"
         value={value || ""}
         onChange={onChange}
@@ -103,6 +77,20 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
         modules={QUILL_MODULES}
         formats={QUILL_FORMATS}
       />
+      <div className="rte-emoji-bar">
+        <button type="button" className="rte-emoji-btn" onClick={() => setShowEmoji((v) => !v)}>
+          😊 Emoji
+        </button>
+        {showEmoji && (
+          <div className="rte-emoji-picker">
+            {EMOJI_LIST.map((e) => (
+              <button key={e} type="button" className="rte-emoji-item" onClick={() => insertEmoji(e)}>
+                {e}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

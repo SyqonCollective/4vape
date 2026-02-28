@@ -4274,15 +4274,31 @@ button {
   border-radius: 8px;
 }
 
-.rte .ql-toolbar .ql-emoji::after {
-  content: "😊";
-  font-size: 16px;
+.rte-emoji-bar {
+  position: relative;
+  padding: 4px 8px;
+  border-top: 1px solid var(--stroke);
+}
+
+.rte-emoji-btn {
+  border: none;
+  background: none;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: background 0.15s;
+}
+
+.rte-emoji-btn:hover {
+  background: #eff6ff;
 }
 
 .rte-emoji-picker {
   position: absolute;
-  right: 0;
-  top: 100%;
+  left: 0;
+  bottom: 100%;
   z-index: 100;
   display: grid;
   grid-template-columns: repeat(10, 1fr);
