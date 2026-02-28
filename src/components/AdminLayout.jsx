@@ -386,6 +386,7 @@ export default function AdminLayout() {
                   if (dragging === l.to) classes.push("dragging");
                   return classes.join(" ");
                 }}
+                data-label={l.label}
                 title={sidebarCollapsed ? l.label : undefined}
               >
                 <span className="nav-grip" aria-hidden="true">⋮⋮</span>

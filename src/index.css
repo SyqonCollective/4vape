@@ -198,7 +198,8 @@ button {
   position: sticky;
   top: 1.5rem;
   height: calc(100vh - 3rem);
-  overflow: visible;
+  overflow-x: visible;
+  overflow-y: hidden;
   isolation: isolate;
   border-right: 1px solid rgba(14, 165, 233, 0.12);
   transition: padding 0.36s cubic-bezier(0.22, 0.74, 0.2, 1),
@@ -637,6 +638,7 @@ button {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 6px;
 }
 
@@ -663,6 +665,10 @@ button {
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   gap: 0.6rem;
   cursor: grab;
   transition: all 0.34s cubic-bezier(0.22, 0.74, 0.2, 1),
@@ -828,10 +834,12 @@ button {
 
 .admin-shell.sidebar-collapsed .admin-sidebar {
   padding: 1.2rem 0.65rem;
+  overflow-x: clip;
 }
 
 .admin-shell.sidebar-collapsed .admin-nav {
   padding-right: 0;
+  overflow-x: hidden;
 }
 
 .admin-shell.sidebar-collapsed .nav-item {
@@ -841,6 +849,34 @@ button {
 
 .admin-shell.sidebar-collapsed .nav-icon {
   display: inline-flex;
+}
+
+.admin-shell.sidebar-collapsed .nav-item::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 30;
+  padding: 0.35rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+  transition: opacity 0.18s ease, transform 0.22s ease;
+}
+
+.admin-shell.sidebar-collapsed .nav-item:hover::after,
+.admin-shell.sidebar-collapsed .nav-item:focus-visible::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
 }
 
 .page-header {
