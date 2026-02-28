@@ -336,6 +336,8 @@ export default function AdminOrders() {
   }
 
   function removeItem(id) {
+    const ok = window.confirm("Vuoi eliminare questa riga prodotto dall'ordine?");
+    if (!ok) return;
     setLineItems((prev) => prev.filter((i) => i.productId !== id));
   }
 
@@ -371,6 +373,8 @@ export default function AdminOrders() {
   }
 
   function removeEditItem(id) {
+    const ok = window.confirm("Vuoi eliminare questa riga prodotto dall'ordine?");
+    if (!ok) return;
     setEditLineItems((prev) => prev.filter((i) => i.productId !== id));
   }
 
@@ -490,7 +494,9 @@ export default function AdminOrders() {
 
   async function deleteOrder() {
     if (!editingOrder) return;
-    const ok = window.confirm("Vuoi eliminare questo ordine?");
+    const ok = window.confirm(
+      `Vuoi eliminare l'ordine #${editingOrder.orderNumber || editingOrder.id}?`
+    );
     if (!ok) return;
     setSaving(true);
     try {
@@ -506,7 +512,10 @@ export default function AdminOrders() {
   }
 
   async function deleteOrderById(orderId) {
-    const ok = window.confirm("Vuoi eliminare questo ordine?");
+    const order = items.find((o) => o.id === orderId);
+    const ok = window.confirm(
+      `Vuoi eliminare l'ordine #${order?.orderNumber || orderId}?`
+    );
     if (!ok) return;
     try {
       await api(`/admin/orders/${orderId}`, { method: "DELETE" });

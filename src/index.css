@@ -5312,16 +5312,18 @@ button {
 .order-lines {
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .order-lines-header,
 .order-line {
   display: grid;
-  grid-template-columns: minmax(360px, 2.8fr) 140px 120px 140px 130px;
+  grid-template-columns: minmax(240px, 1fr) 110px 90px 120px 96px;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
+  min-width: 700px;
 }
 
 .summary-grid {
@@ -5399,7 +5401,7 @@ button {
 
 .order-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.9fr);
   gap: 18px;
   align-items: start;
 }
@@ -5471,6 +5473,7 @@ button {
 
 .order-line .btn.ghost {
   padding: 6px 12px;
+  white-space: nowrap;
 }
 
 .order-modal .ghost,
