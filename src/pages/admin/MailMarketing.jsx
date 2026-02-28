@@ -1,51 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
-
-const DEFAULT_CAMPAIGN_FORM = {
-  id: "",
-  name: "",
-  subject: "",
-  html: "",
-  templateId: "",
-  listId: "",
-  groupId: "",
-  audienceType: "ALL_ACTIVE",
-  audienceCompanyIds: [],
-  scheduledAt: "",
-};
-
-const DEFAULT_TEMPLATE_FORM = {
-  id: "",
-  name: "",
-  subject: "",
-  html: "",
-  active: true,
-};
-
-function parseApiError(err, fallback) {
-  const raw = err?.message || "";
-  try {
-    const parsed = JSON.parse(raw);
-    if (parsed?.error) return parsed.error;
-    return fallback;
-  } catch {
-    return raw || fallback;
-  }
-}
-
-function campaignStatusLabel(status) {
-  switch (status) {
-    case "SENT":
-      return "Inviata";
-    case "FAILED":
-      return "Errore";
-    case "SCHEDULED":
-      return "Programm.";
-    default:
-      return "Bozza";
-  }
-}
+import Portal from "../../components/Portal.jsx";
 
 function RichTextEditor({ value, onChange, placeholder = "Scrivi contenuto email..." }) {
   const editorRef = useRef(null);
@@ -101,50 +57,19 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi contenuto email
   return (
     <div className="rte">
       <div className="rte-toolbar">
-        <button type="button" className="rte-btn" onClick={() => run("bold")} title="Grassetto">
-          B
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("italic")} title="Corsivo">
-          I
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("underline")} title="Sottolineato">
-          U
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("formatBlock", "<h2>")} title="Titolo">
-          H2
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("insertUnorderedList")} title="Elenco puntato">
-          • List
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("insertOrderedList")} title="Elenco numerato">
-          1. List
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("justifyLeft")} title="Allinea a sinistra">
-          Left
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("justifyCenter")} title="Centra">
-          Center
-        </button>
-        <button type="button" className="rte-btn" onClick={addLink} title="Aggiungi link">
-          Link
-        </button>
-        <button type="button" className="rte-btn" onClick={addImageByUrl} title="Immagine da URL">
-          Img URL
-        </button>
-        <button type="button" className="rte-btn" onClick={() => imageInputRef.current?.click()} title="Carica immagine">
-          Upload Img
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("removeFormat")} title="Rimuovi formattazione">
-          Clear
-        </button>
+        <button type="button" className="rte-btn" onClick={() => run("bold")} title="Grassetto">B</button>
+        <button type="button" className="rte-btn" onClick={() => run("italic")} title="Corsivo">I</button>
+        <button type="button" className="rte-btn" onClick={() => run("underline")} title="Sottolineato">U</button>
+        <button type="button" className="rte-btn" onClick={() => run("formatBlock", "<h2>")} title="Titolo">H2</button>
+        <button type="button" className="rte-btn" onClick={() => run("insertUnorderedList")} title="Elenco">• List</button>
+        <button type="button" className="rte-btn" onClick={() => run("justifyLeft")} title="Sinistra">Left</button>
+        <button type="button" className="rte-btn" onClick={() => run("justifyCenter")} title="Centra">Center</button>
+        <button type="button" className="rte-btn" onClick={addLink} title="Link">Link</button>
+        <button type="button" className="rte-btn" onClick={addImageByUrl} title="Immagine URL">Img URL</button>
+        <button type="button" className="rte-btn" onClick={() => imageInputRef.current?.click()} title="Upload immagine">Upload</button>
+        <button type="button" className="rte-btn" onClick={() => run("removeFormat")} title="Pulisci">Clear</button>
       </div>
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={addImageFromFile}
-      />
+      <input ref={imageInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={addImageFromFile} />
       <div
         ref={editorRef}
         className="rte-editor"
@@ -159,447 +84,196 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi contenuto email
 
 export default function AdminMailMarketing() {
   const [error, setError] = useState("");
-  const [status, setStatus] = useState({ configured: false, wsUsername: null });
-  const [lists, setLists] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [fields, setFields] = useState([]);
-  const [companies, setCompanies] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
+  const [success, setSuccess] = useState("");
+  const [status, setStatus] = useState({ configured: false, from: null, host: null });
+  const [types, setTypes] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [draft, setDraft] = useState({ subject: "", html: "", active: true });
+  const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [savingTemplate, setSavingTemplate] = useState(false);
-  const [savingCampaign, setSavingCampaign] = useState(false);
-  const [sendingCampaignId, setSendingCampaignId] = useState("");
   const [testResult, setTestResult] = useState("");
-  const [syncSummary, setSyncSummary] = useState(null);
-  const [selectedListId, setSelectedListId] = useState(1);
-  const [selectedGroupId, setSelectedGroupId] = useState("");
-  const [templateForm, setTemplateForm] = useState(DEFAULT_TEMPLATE_FORM);
-  const [campaignForm, setCampaignForm] = useState(DEFAULT_CAMPAIGN_FORM);
-  const [companySearch, setCompanySearch] = useState("");
-  const [previewCampaign, setPreviewCampaign] = useState(null);
-  const [previewHistoryMail, setPreviewHistoryMail] = useState(null);
-  const [fieldsOpen, setFieldsOpen] = useState(false);
-  const [mailupHistory, setMailupHistory] = useState([]);
-
-  const filteredCompanies = useMemo(() => {
-    const active = companies.filter((c) => c.status === "ACTIVE" && c.email);
-    if (!companySearch.trim()) return active;
-    const query = companySearch.trim().toLowerCase();
-    return active.filter((c) =>
-      [c.name, c.legalName, c.email, c.vatNumber, c.customerCode]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(query)
-    );
-  }, [companies, companySearch]);
-
-  async function loadGroups(listId) {
-    if (!listId) {
-      setGroups([]);
-      return;
-    }
-    try {
-      const groupsRes = await api(`/admin/mail-marketing/groups?listId=${listId}`);
-      setGroups(groupsRes?.items || []);
-    } catch {
-      setGroups([]);
-    }
-  }
+  const [sendTestOpen, setSendTestOpen] = useState(null);
+  const [sendTestEmail, setSendTestEmail] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
+  const [previewType, setPreviewType] = useState(null);
 
   async function loadAll() {
     setError("");
     try {
-      const [statusRes, metaRes, listRes, fieldRes, companyRes, templateRes, campaignRes] =
-        await Promise.all([
-          api("/admin/mail-marketing/status"),
-          api("/admin/mail-marketing/meta"),
-          api("/admin/mail-marketing/lists"),
-          api("/admin/mail-marketing/fields"),
-          api("/admin/companies"),
-          api("/admin/mail-marketing/templates"),
-          api("/admin/mail-marketing/campaigns"),
-        ]);
-      setStatus(statusRes || { configured: false, wsUsername: null });
-      const mergedLists = (listRes?.items || []).length ? listRes.items : metaRes?.lists || [];
-      setLists(mergedLists);
-      setFields((fieldRes?.items || []).length ? fieldRes.items : metaRes?.fields || []);
-      setCompanies(companyRes || []);
-      setTemplates(templateRes || []);
-      setCampaigns(campaignRes || []);
-
-      const nextListId = Number(
-        campaignForm.listId || selectedListId || mergedLists?.[0]?.id || mergedLists?.[0]?.IdList || 1
-      );
-      setSelectedListId(nextListId);
-      if (!campaignForm.listId) {
-        setCampaignForm((prev) => ({ ...prev, listId: String(nextListId) }));
-      }
-      await loadGroups(nextListId);
-      try {
-        const historyRes = await api(`/admin/mail-marketing/history?listId=${nextListId}`);
-        setMailupHistory(historyRes?.items || []);
-      } catch {
-        setMailupHistory([]);
-      }
+      const [statusRes, typesRes] = await Promise.all([
+        api("/admin/mail-marketing/status"),
+        api("/admin/mail-marketing/types"),
+      ]);
+      setStatus(statusRes || { configured: false, from: null, host: null });
+      setTypes(typesRes || []);
     } catch {
       setError("Impossibile caricare Mail Marketing");
     }
-  }
-
-  async function testConnection() {
-    setTesting(true);
-    setTestResult("");
-    try {
-      const res = await api("/admin/mail-marketing/test", { method: "POST" });
-      setTestResult(res?.ok ? "Connessione MailUp OK" : "Connessione non valida");
-    } catch (err) {
-      setTestResult(parseApiError(err, "Connessione non valida"));
-    } finally {
-      setTesting(false);
-    }
-  }
-
-  async function syncCompanies() {
-    setSyncing(true);
-    setError("");
-    setSyncSummary(null);
-    try {
-      const res = await api("/admin/mail-marketing/sync/companies", {
-        method: "POST",
-        body: JSON.stringify({
-          listId: Number(selectedListId),
-          groupId: selectedGroupId ? Number(selectedGroupId) : undefined,
-        }),
-      });
-      setSyncSummary(res);
-    } catch (err) {
-      setError(parseApiError(err, "Errore sincronizzazione aziende su MailUp"));
-    } finally {
-      setSyncing(false);
-    }
-  }
-
-  async function saveTemplate(e) {
-    e.preventDefault();
-    if (!templateForm.name || !templateForm.subject || !templateForm.html) {
-      setError("Compila nome, oggetto e contenuto template");
-      return;
-    }
-    setSavingTemplate(true);
-    setError("");
-    try {
-      const payload = {
-        name: templateForm.name.trim(),
-        subject: templateForm.subject.trim(),
-        html: templateForm.html,
-        active: Boolean(templateForm.active),
-      };
-      if (templateForm.id) {
-        await api(`/admin/mail-marketing/templates/${templateForm.id}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
-      } else {
-        await api("/admin/mail-marketing/templates", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-      }
-      setTemplateForm(DEFAULT_TEMPLATE_FORM);
-      await loadAll();
-    } catch (err) {
-      setError(parseApiError(err, "Errore salvataggio template"));
-    } finally {
-      setSavingTemplate(false);
-    }
-  }
-
-  async function deleteTemplate(id) {
-    if (!window.confirm("Eliminare template?")) return;
-    try {
-      await api(`/admin/mail-marketing/templates/${id}`, { method: "DELETE" });
-      if (templateForm.id === id) setTemplateForm(DEFAULT_TEMPLATE_FORM);
-      await loadAll();
-    } catch (err) {
-      setError(parseApiError(err, "Impossibile eliminare template"));
-    }
-  }
-
-  async function saveCampaign(e) {
-    e.preventDefault();
-    if (!campaignForm.name || !campaignForm.subject || !campaignForm.html || !campaignForm.listId) {
-      setError("Compila nome, oggetto, contenuto e lista");
-      return;
-    }
-    if (campaignForm.audienceType === "SELECTED_COMPANIES" && !campaignForm.audienceCompanyIds.length) {
-      setError("Seleziona almeno un'azienda per il pubblico selezionato");
-      return;
-    }
-    setSavingCampaign(true);
-    setError("");
-    try {
-      const payload = {
-        name: campaignForm.name.trim(),
-        subject: campaignForm.subject.trim(),
-        html: campaignForm.html,
-        templateId: campaignForm.templateId || undefined,
-        listId: Number(campaignForm.listId),
-        groupId: campaignForm.groupId ? Number(campaignForm.groupId) : undefined,
-        audienceType: campaignForm.audienceType,
-        audienceCompanyIds:
-          campaignForm.audienceType === "SELECTED_COMPANIES" ? campaignForm.audienceCompanyIds : [],
-        scheduledAt: campaignForm.scheduledAt || undefined,
-      };
-      if (campaignForm.id) {
-        await api(`/admin/mail-marketing/campaigns/${campaignForm.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({
-            ...payload,
-            groupId: campaignForm.groupId ? Number(campaignForm.groupId) : null,
-            scheduledAt: campaignForm.scheduledAt || null,
-          }),
-        });
-      } else {
-        await api("/admin/mail-marketing/campaigns", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-      }
-      setCampaignForm((prev) => ({ ...DEFAULT_CAMPAIGN_FORM, listId: prev.listId }));
-      await loadAll();
-    } catch (err) {
-      setError(parseApiError(err, "Errore salvataggio campagna"));
-    } finally {
-      setSavingCampaign(false);
-    }
-  }
-
-  async function deleteCampaign(id) {
-    if (!window.confirm("Eliminare campagna?")) return;
-    try {
-      await api(`/admin/mail-marketing/campaigns/${id}`, { method: "DELETE" });
-      if (campaignForm.id === id) {
-        setCampaignForm((prev) => ({ ...DEFAULT_CAMPAIGN_FORM, listId: prev.listId }));
-      }
-      await loadAll();
-    } catch (err) {
-      setError(parseApiError(err, "Impossibile eliminare campagna"));
-    }
-  }
-
-  async function sendCampaignNow(campaignId) {
-    if (!window.confirm("Inviare ora questa campagna?")) return;
-    setSendingCampaignId(campaignId);
-    setError("");
-    try {
-      await api(`/admin/mail-marketing/campaigns/${campaignId}/send`, { method: "POST" });
-      await loadAll();
-    } catch (err) {
-      setError(parseApiError(err, "Invio campagna fallito"));
-    } finally {
-      setSendingCampaignId("");
-    }
-  }
-
-  async function duplicateTemplate(template) {
-    try {
-      await api("/admin/mail-marketing/templates", {
-        method: "POST",
-        body: JSON.stringify({
-          name: `${template.name} (copia)`,
-          subject: template.subject,
-          html: template.html,
-          active: Boolean(template.active),
-        }),
-      });
-      await loadAll();
-    } catch (err) {
-      setError(parseApiError(err, "Duplicazione template fallita"));
-    }
-  }
-
-  async function duplicateCampaign(campaign) {
-    try {
-      await api("/admin/mail-marketing/campaigns", {
-        method: "POST",
-        body: JSON.stringify({
-          name: `${campaign.name} (copia)`,
-          subject: campaign.subject,
-          html: campaign.html,
-          templateId: campaign.templateId || undefined,
-          listId: Number(campaign.listId),
-          groupId: campaign.groupId || undefined,
-          audienceType: campaign.audienceType || "ALL_ACTIVE",
-          audienceCompanyIds: Array.isArray(campaign.audienceCompanyIds) ? campaign.audienceCompanyIds : [],
-        }),
-      });
-      await loadAll();
-    } catch (err) {
-      setError(parseApiError(err, "Duplicazione campagna fallita"));
-    }
-  }
-
-  async function openHistoryMail(item) {
-    const rawId = item?.Id || item?.id || item?.EmailID || item?.MessageID || item?.MessageId || null;
-    const emailId = Number(rawId);
-    const fallbackHtml = item?.ContentHTML || item?.HtmlBody || item?.Body || item?.Content || "";
-    const fallbackSubject = item?.Subject || item?.subject || "-";
-    const fallbackName = item?.Name || item?.name || (rawId ? `Mail ${rawId}` : "Mail storica");
-    try {
-      if (!emailId) {
-        setPreviewHistoryMail({
-          id: rawId || "-",
-          subject: fallbackSubject,
-          name: fallbackName,
-          html: fallbackHtml,
-          raw: item,
-        });
-        return;
-      }
-      const res = await api(`/admin/mail-marketing/history/${emailId}?listId=${selectedListId}`);
-      const detail = res?.item || null;
-      const html =
-        detail?.ContentHTML ||
-        detail?.HtmlBody ||
-        detail?.Body ||
-        detail?.Content ||
-        fallbackHtml ||
-        "";
-      const subject = detail?.Subject || detail?.subject || fallbackSubject;
-      const name = detail?.Name || detail?.name || fallbackName;
-      setPreviewHistoryMail({ id: emailId, subject, name, html, raw: detail || item });
-    } catch (err) {
-      setPreviewHistoryMail({
-        id: rawId || "-",
-        subject: fallbackSubject,
-        name: fallbackName,
-        html: fallbackHtml,
-        raw: item,
-      });
-    }
-  }
-
-  async function duplicateFromHistory(item) {
-    const rawId = item?.Id || item?.id || item?.EmailID || item?.MessageID || item?.MessageId || null;
-    const emailId = Number(rawId);
-    const fallbackHtml = item?.ContentHTML || item?.HtmlBody || item?.Body || item?.Content || "";
-    const fallbackSubject = item?.Subject || item?.subject || "";
-    const fallbackName = item?.Name || item?.name || (rawId ? `Mail ${rawId}` : "Mail storica");
-    try {
-      let detail = {};
-      if (emailId) {
-        const res = await api(`/admin/mail-marketing/history/${emailId}?listId=${selectedListId}`);
-        detail = res?.item || {};
-      }
-      const html =
-        detail?.ContentHTML ||
-        detail?.HtmlBody ||
-        detail?.Body ||
-        detail?.Content ||
-        fallbackHtml ||
-        "";
-      const subject = detail?.Subject || detail?.subject || fallbackSubject;
-      const name = detail?.Name || detail?.name || fallbackName;
-      setCampaignForm((prev) => ({
-        ...prev,
-        id: "",
-        name: `${name} (copia)`,
-        subject: subject || prev.subject,
-        html: html || prev.html,
-        listId: String(selectedListId || prev.listId || 1),
-      }));
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      setCampaignForm((prev) => ({
-        ...prev,
-        id: "",
-        name: `${fallbackName} (copia)`,
-        subject: fallbackSubject || prev.subject,
-        html: fallbackHtml || prev.html,
-        listId: String(selectedListId || prev.listId || 1),
-      }));
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }
-
-  function loadTemplateIntoForm(template) {
-    setTemplateForm({
-      id: template.id,
-      name: template.name || "",
-      subject: template.subject || "",
-      html: template.html || "",
-      active: Boolean(template.active),
-    });
-  }
-
-  function loadCampaignIntoForm(campaign) {
-    const ids = Array.isArray(campaign.audienceCompanyIds) ? campaign.audienceCompanyIds : [];
-    const listId = String(campaign.listId || selectedListId || 1);
-    setCampaignForm({
-      id: campaign.id,
-      name: campaign.name || "",
-      subject: campaign.subject || "",
-      html: campaign.html || "",
-      templateId: campaign.templateId || "",
-      listId,
-      groupId: campaign.groupId ? String(campaign.groupId) : "",
-      audienceType: campaign.audienceType || "ALL_ACTIVE",
-      audienceCompanyIds: ids,
-      scheduledAt: campaign.scheduledAt ? new Date(campaign.scheduledAt).toISOString().slice(0, 16) : "",
-    });
-    setSelectedListId(Number(listId));
-    loadGroups(Number(listId));
-  }
-
-  function applyTemplateToCampaign(templateId) {
-    const template = templates.find((t) => t.id === templateId);
-    setCampaignForm((prev) => ({
-      ...prev,
-      templateId,
-      subject: template?.subject || prev.subject,
-      html: template?.html || prev.html,
-      name: template && !prev.name ? template.name : prev.name,
-    }));
-  }
-
-  function toggleCompanyTarget(companyId) {
-    setCampaignForm((prev) => {
-      const has = prev.audienceCompanyIds.includes(companyId);
-      return {
-        ...prev,
-        audienceCompanyIds: has
-          ? prev.audienceCompanyIds.filter((id) => id !== companyId)
-          : [...prev.audienceCompanyIds, companyId],
-      };
-    });
   }
 
   useEffect(() => {
     loadAll();
   }, []);
 
+  async function testConnection() {
+    setTesting(true);
+    setTestResult("");
+    try {
+      const res = await api("/admin/mail-marketing/test-connection", { method: "POST" });
+      setTestResult(res?.ok ? "Connessione SMTP OK" : "Connessione fallita");
+    } catch (err) {
+      const msg = err?.message || "";
+      try {
+        const p = JSON.parse(msg);
+        setTestResult(p?.error || "Connessione SMTP fallita");
+      } catch {
+        setTestResult(msg || "Connessione SMTP fallita");
+      }
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  function openEdit(typeObj) {
+    setEditing(typeObj.type);
+    setDraft({
+      subject: typeObj.subject || "",
+      html: typeObj.html || "",
+      active: typeObj.active ?? true,
+    });
+  }
+
+  function cancelEdit() {
+    setEditing(null);
+    setDraft({ subject: "", html: "", active: true });
+  }
+
+  async function saveTemplate() {
+    if (!editing) return;
+    setSaving(true);
+    setError("");
+    try {
+      await api(`/admin/mail-marketing/types/${editing}`, {
+        method: "PATCH",
+        body: JSON.stringify(draft),
+      });
+      setSuccess("Template salvato");
+      setTimeout(() => setSuccess(""), 3000);
+      cancelEdit();
+      await loadAll();
+    } catch {
+      setError("Errore salvataggio template");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function openSendTest(typeObj) {
+    setSendTestOpen(typeObj.type);
+    setSendTestEmail("");
+  }
+
+  async function doSendTest() {
+    if (!sendTestOpen || !sendTestEmail) return;
+    setSendingTest(true);
+    setError("");
+    try {
+      await api("/admin/mail-marketing/send-test", {
+        method: "POST",
+        body: JSON.stringify({ type: sendTestOpen, recipientEmail: sendTestEmail }),
+      });
+      setSuccess(`Email di test inviata a ${sendTestEmail}`);
+      setTimeout(() => setSuccess(""), 4000);
+      setSendTestOpen(null);
+    } catch (err) {
+      const msg = err?.message || "";
+      try {
+        const p = JSON.parse(msg);
+        setError(p?.error || "Invio test fallito");
+      } catch {
+        setError(msg || "Invio test fallito");
+      }
+    } finally {
+      setSendingTest(false);
+    }
+  }
+
+  async function toggleActive(typeObj) {
+    try {
+      await api(`/admin/mail-marketing/types/${typeObj.type}`, {
+        method: "PATCH",
+        body: JSON.stringify({ active: !typeObj.active }),
+      });
+      await loadAll();
+    } catch {
+      setError("Errore aggiornamento stato");
+    }
+  }
+
+  function insertTag(tag) {
+    setDraft((prev) => ({ ...prev, html: prev.html + tag }));
+  }
+
+  const editingType = types.find((t) => t.type === editing);
+
+  const SAMPLE_DATA = {
+    "{{customer_name}}": "Mario Rossi",
+    "{{company_name}}": "Tabaccheria Rossi S.r.l.",
+    "{{order_number}}": "ORD-2025-0042",
+    "{{order_date}}": new Date().toLocaleDateString("it-IT"),
+    "{{order_total}}": "\u20AC 1.250,00",
+    "{{order_items}}":
+      "<tr><td>Liquido Menta 10ml</td><td>LIQ-MENTA-10</td><td>50</td><td>\u20AC 3,50</td><td>\u20AC 175,00</td></tr>" +
+      "<tr><td>Resistenza X-Pro 0.8ohm</td><td>RES-XPRO-08</td><td>100</td><td>\u20AC 2,80</td><td>\u20AC 280,00</td></tr>",
+    "{{payment_method}}": "Bonifico",
+    "{{shipping_date}}": new Date().toLocaleDateString("it-IT"),
+    "{{tracking_number}}": "BRT-1234567890",
+    "{{carrier}}": "BRT",
+    "{{invoice_number}}": "FT-2025/042",
+    "{{invoice_date}}": new Date().toLocaleDateString("it-IT"),
+    "{{invoice_total}}": "\u20AC 1.525,00",
+    "{{cart_total}}": "\u20AC 890,00",
+    "{{cart_items}}":
+      '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">' +
+      "<tr><td>Liquido Menta 10ml x 30</td><td>\u20AC 105,00</td></tr></table>",
+    "{{payment_amount}}": "\u20AC 1.250,00",
+    "{{payment_date}}": new Date().toLocaleDateString("it-IT"),
+  };
+
+  function previewHtml(typeObj) {
+    let html = typeObj.html || "";
+    for (const [tag, val] of Object.entries(SAMPLE_DATA)) {
+      html = html.replaceAll(tag, val);
+    }
+    return html;
+  }
+
   return (
     <section>
       <div className="page-header">
         <div>
           <h1>Mail Marketing</h1>
-          <p>Crea template, gestisci pubblico, invia e traccia campagne MailUp</p>
+          <p>Email transazionali automatiche con template personalizzabili</p>
         </div>
       </div>
 
       <InlineError message={error} onClose={() => setError("")} />
+      {success && (
+        <div style={{ background: "#dcfce7", color: "#166534", padding: "10px 16px", borderRadius: 8, marginBottom: 14, fontWeight: 600 }}>
+          {success}
+        </div>
+      )}
 
+      {/* SMTP Status */}
       <div className="panel">
-        <div className="actions" style={{ justifyContent: "space-between" }}>
-          <div className="muted">
-            Stato integrazione:{" "}
-            <strong style={{ color: status.configured ? "#15803d" : "#dc2626" }}>
-              {status.configured ? "Configurata" : "Non configurata"}
-            </strong>
-            {status.wsUsername ? ` · WS: ${status.wsUsername}` : ""}
+        <div className="actions" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <div>
+            <strong>Stato SMTP: </strong>
+            <span style={{ color: status.configured ? "#15803d" : "#dc2626", fontWeight: 700 }}>
+              {status.configured ? "Configurato" : "Non configurato"}
+            </span>
+            {status.host ? <span className="muted"> &middot; Host: {status.host}</span> : null}
+            {status.from ? <span className="muted"> &middot; From: {status.from}</span> : null}
           </div>
           <div className="actions">
             <button className="btn ghost" onClick={loadAll}>Ricarica</button>
@@ -609,441 +283,212 @@ export default function AdminMailMarketing() {
           </div>
         </div>
         {testResult ? <div className="muted" style={{ marginTop: 8 }}>{testResult}</div> : null}
+        {!status.configured && (
+          <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
+            Per attivare le email, aggiungi nel file <code>.env</code> del backend:<br />
+            <code>SMTP_HOST=smtp.tuoserver.it</code><br />
+            <code>SMTP_PORT=587</code><br />
+            <code>SMTP_USER=tua@email.it</code><br />
+            <code>SMTP_PASS=password</code><br />
+            <code>{"SMTP_FROM=\"4Vape B2B <noreply@4vape.it>\""}</code>
+          </div>
+        )}
       </div>
 
-      <div className="panel mail-marketing-layout">
-        <div>
-          <h2>Template email</h2>
-          <form className="mail-form" onSubmit={saveTemplate}>
-            <div className="form-grid">
-              <label>
-                Nome template
-                <input
-                  value={templateForm.name}
-                  onChange={(e) => setTemplateForm((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="Promo primavera B2B"
-                />
-              </label>
-              <label>
-                Oggetto
-                <input
-                  value={templateForm.subject}
-                  onChange={(e) => setTemplateForm((prev) => ({ ...prev, subject: e.target.value }))}
-                  placeholder="Nuove promo disponibili"
-                />
-              </label>
-            </div>
-            <label>
-              Contenuto email (editor visuale)
-              <RichTextEditor
-                value={templateForm.html}
-                onChange={(next) => setTemplateForm((prev) => ({ ...prev, html: next }))}
-                placeholder="Scrivi il contenuto della newsletter..."
-              />
-            </label>
-            <label className="checkbox-row">
-              <input
-                type="checkbox"
-                checked={templateForm.active}
-                onChange={(e) => setTemplateForm((prev) => ({ ...prev, active: e.target.checked }))}
-              />
-              Template attivo
-            </label>
-            <div className="actions">
-              {templateForm.id ? (
-                <button
-                  type="button"
-                  className="btn ghost"
-                  onClick={() => setTemplateForm(DEFAULT_TEMPLATE_FORM)}
-                >
-                  Nuovo template
-                </button>
-              ) : null}
-              <button type="submit" className="btn primary" disabled={savingTemplate}>
-                {savingTemplate ? "Salvataggio..." : templateForm.id ? "Salva modifiche" : "Crea template"}
-              </button>
-            </div>
-          </form>
-
-          <div className="table compact mail-template-table" style={{ marginTop: 12 }}>
-            <div className="row header"><div>Nome</div><div>Oggetto</div><div>Azioni</div></div>
-            {templates.map((t) => (
-              <div className="row" key={t.id}>
-                <div>{t.name}</div>
-                <div>{t.subject}</div>
-                <div className="actions">
-                  <button type="button" className="btn ghost" onClick={() => loadTemplateIntoForm(t)}>Modifica</button>
-                  <button type="button" className="btn ghost" onClick={() => duplicateTemplate(t)}>Duplica</button>
-                  <button type="button" className="btn ghost danger" onClick={() => deleteTemplate(t.id)}>Elimina</button>
-                </div>
-              </div>
-            ))}
-            {!templates.length ? <div className="row"><div className="muted">Nessun template</div></div> : null}
-          </div>
-        </div>
-
-        <div>
-          <h2>Sincronizzazione pubblico</h2>
-          <div className="form-grid">
-            <label>
-              Lista MailUp
-              <select
-                className="select"
-                value={selectedListId}
-                onChange={(e) => {
-                  const next = Number(e.target.value);
-                  setSelectedListId(next);
-                  loadGroups(next);
-                  api(`/admin/mail-marketing/history?listId=${next}`)
-                    .then((r) => setMailupHistory(r?.items || []))
-                    .catch(() => setMailupHistory([]));
-                }}
-              >
-                {lists.map((l) => (
-                  <option key={l.id || l.IdList} value={l.id || l.IdList}>
-                    {(l.id || l.IdList)} · {l.name || l.Name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Gruppo MailUp
-              <select className="select" value={selectedGroupId} onChange={(e) => setSelectedGroupId(e.target.value)}>
-                <option value="">Nessuno</option>
-                {groups.map((g, i) => (
-                  <option key={`${g.groupId || g.IdGroup || i}`} value={g.groupId || g.IdGroup}>
-                    {(g.groupId || g.IdGroup)} · {g.name || g.Name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Aziende attive con email
-              <input value={companies.filter((c) => c.status === "ACTIVE" && c.email).length} disabled />
-            </label>
-          </div>
-          <div className="actions" style={{ marginTop: 12 }}>
-            <button className="btn primary" onClick={syncCompanies} disabled={syncing || !selectedListId}>
-              {syncing ? "Sincronizzazione..." : "Sincronizza ora"}
-            </button>
-          </div>
-          {syncSummary ? (
-            <div className="table compact" style={{ marginTop: 12 }}>
-              <div className="row header"><div>Totale</div><div>OK</div><div>Errori</div></div>
-              <div className="row"><div>{syncSummary.total}</div><div>{syncSummary.ok}</div><div>{syncSummary.failed}</div></div>
-            </div>
-          ) : null}
-
-          <div className="actions" style={{ marginTop: 16, justifyContent: "space-between" }}>
-            <h2 style={{ margin: 0 }}>Campi anagrafica</h2>
-            <button type="button" className="btn ghost" onClick={() => setFieldsOpen((v) => !v)}>
-              {fieldsOpen ? "Chiudi campi" : "Apri campi"}
-            </button>
-          </div>
-          {fieldsOpen ? (
-            <div className="table compact" style={{ marginTop: 10 }}>
-              <div className="row header"><div>ID campo</div><div>Nome</div></div>
-              {fields.map((f) => (
-                <div className="row" key={f.id || f.Id}>
-                  <div className="mono">{f.id || f.Id}</div>
-                  <div>{f.name || f.Name}</div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="muted" style={{ marginTop: 8 }}>
-              Clicca su "Apri campi" per vedere tutti i campi anagrafica.
-            </div>
-          )}
-        </div>
-      </div>
-
+      {/* Email types list */}
       <div className="panel">
-        <h2>Campagne</h2>
-        <form className="mail-form" onSubmit={saveCampaign}>
-          <div className="form-grid">
-            <label>
-              Nome campagna
-              <input
-                value={campaignForm.name}
-                onChange={(e) => setCampaignForm((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="Newsletter febbraio"
-              />
-            </label>
-            <label>
-              Oggetto
-              <input
-                value={campaignForm.subject}
-                onChange={(e) => setCampaignForm((prev) => ({ ...prev, subject: e.target.value }))}
-                placeholder="Offerte dedicate"
-              />
-            </label>
-            <label>
-              Template
-              <select
-                className="select"
-                value={campaignForm.templateId}
-                onChange={(e) => applyTemplateToCampaign(e.target.value)}
-              >
-                <option value="">Nessuno</option>
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Lista MailUp
-              <select
-                className="select"
-                value={campaignForm.listId}
-                onChange={(e) => {
-                  const listId = e.target.value;
-                  setCampaignForm((prev) => ({ ...prev, listId, groupId: "" }));
-                  setSelectedListId(Number(listId));
-                  loadGroups(Number(listId));
-                }}
-              >
-                {lists.map((l) => (
-                  <option key={l.id || l.IdList} value={l.id || l.IdList}>
-                    {(l.id || l.IdList)} · {l.name || l.Name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Gruppo MailUp
-              <select
-                className="select"
-                value={campaignForm.groupId}
-                onChange={(e) => setCampaignForm((prev) => ({ ...prev, groupId: e.target.value }))}
-              >
-                <option value="">Nessuno</option>
-                {groups.map((g, i) => (
-                  <option key={`${g.groupId || g.IdGroup || i}`} value={g.groupId || g.IdGroup}>
-                    {(g.groupId || g.IdGroup)} · {g.name || g.Name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Programmazione
-              <input
-                type="datetime-local"
-                value={campaignForm.scheduledAt}
-                onChange={(e) => setCampaignForm((prev) => ({ ...prev, scheduledAt: e.target.value }))}
-              />
-            </label>
-          </div>
+        <h2 style={{ marginBottom: 12 }}>Email transazionali</h2>
+        <p className="muted" style={{ marginBottom: 16 }}>
+          Ogni tipo di email ha un template personalizzabile con tag dinamici (stile WooCommerce).
+          Quando l&apos;evento corrispondente si verifica, l&apos;email viene inviata automaticamente al cliente.
+        </p>
 
-          <label>
-            Contenuto email (editor visuale)
-            <RichTextEditor
-              value={campaignForm.html}
-              onChange={(next) => setCampaignForm((prev) => ({ ...prev, html: next }))}
-              placeholder="Scrivi la campagna..."
-            />
-          </label>
+        <div className="mail-types-grid">
+          {types.map((t) => (
+            <div className="mail-type-card" key={t.type}>
+              <div className="mail-type-card-head">
+                <div>
+                  <strong>{t.label}</strong>
+                  <div className="mono muted" style={{ fontSize: 12 }}>{t.type}</div>
+                </div>
+                <span
+                  className={`tag ${t.active ? "success" : "warn"}`}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => toggleActive(t)}
+                  title={t.active ? "Clicca per disabilitare" : "Clicca per abilitare"}
+                >
+                  {t.active ? "Attiva" : "Disattivata"}
+                </span>
+              </div>
 
-          <div className="mail-audience-head">
-            <label className="checkbox-row">
-              <input
-                type="radio"
-                name="audienceType"
-                checked={campaignForm.audienceType === "ALL_ACTIVE"}
-                onChange={() => setCampaignForm((prev) => ({ ...prev, audienceType: "ALL_ACTIVE" }))}
-              />
-              Tutte le aziende attive
-            </label>
-            <label className="checkbox-row">
-              <input
-                type="radio"
-                name="audienceType"
-                checked={campaignForm.audienceType === "SELECTED_COMPANIES"}
-                onChange={() => setCampaignForm((prev) => ({ ...prev, audienceType: "SELECTED_COMPANIES" }))}
-              />
-              Solo aziende selezionate
-            </label>
-          </div>
+              <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>
+                <strong>Oggetto:</strong> {t.subject}
+              </div>
 
-          {campaignForm.audienceType === "SELECTED_COMPANIES" ? (
-            <div className="mail-audience-box">
-              <input
-                placeholder="Cerca azienda per nome, email, P.IVA..."
-                value={companySearch}
-                onChange={(e) => setCompanySearch(e.target.value)}
-              />
-              <div className="mail-audience-list">
-                {filteredCompanies.slice(0, 40).map((company) => (
-                  <label key={company.id} className="mail-audience-item">
+              <div className="mail-type-tags">
+                {t.tags.map((tag) => (
+                  <span key={tag.tag} className="mail-tag" title={tag.description}>
+                    {tag.tag}
+                  </span>
+                ))}
+              </div>
+
+              <div className="actions" style={{ marginTop: 10 }}>
+                <button className="btn ghost" onClick={() => openEdit(t)}>Modifica template</button>
+                <button className="btn ghost" onClick={() => setPreviewType(t)}>Anteprima</button>
+                <button className="btn primary small" onClick={() => openSendTest(t)}>Invia test</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Edit template modal */}
+      {editing && editingType && (
+        <Portal>
+          <div className="modal-backdrop" onClick={cancelEdit}>
+            <div className="modal product-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 960 }}>
+              <div className="modal-header">
+                <h3>Modifica template &mdash; {editingType.label}</h3>
+                <button className="btn ghost" onClick={cancelEdit}>Chiudi</button>
+              </div>
+              <div className="modal-body" style={{ display: "grid", gridTemplateColumns: "1fr 240px", gap: 20 }}>
+                <div>
+                  <label>
+                    Oggetto email
+                    <input
+                      value={draft.subject}
+                      onChange={(e) => setDraft((p) => ({ ...p, subject: e.target.value }))}
+                      placeholder={"Oggetto con {{tag}}"}
+                    />
+                  </label>
+                  <label style={{ marginTop: 12 }}>
+                    Contenuto email (HTML)
+                    <RichTextEditor
+                      value={draft.html}
+                      onChange={(next) => setDraft((p) => ({ ...p, html: next }))}
+                      placeholder="Scrivi il template email..."
+                    />
+                  </label>
+                  <label className="checkbox-row" style={{ marginTop: 12 }}>
                     <input
                       type="checkbox"
-                      checked={campaignForm.audienceCompanyIds.includes(company.id)}
-                      onChange={() => toggleCompanyTarget(company.id)}
+                      checked={draft.active}
+                      onChange={(e) => setDraft((p) => ({ ...p, active: e.target.checked }))}
                     />
-                    <span>{company.legalName || company.name}</span>
-                    <small>{company.email}</small>
+                    Email attiva (invio automatico)
                   </label>
-                ))}
-              </div>
-              <div className="muted">
-                Selezionati: <strong>{campaignForm.audienceCompanyIds.length}</strong>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="actions">
-            {campaignForm.id ? (
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() =>
-                  setCampaignForm((prev) => ({ ...DEFAULT_CAMPAIGN_FORM, listId: prev.listId || String(selectedListId) }))
-                }
-              >
-                Nuova campagna
-              </button>
-            ) : null}
-            <button type="submit" className="btn primary" disabled={savingCampaign}>
-              {savingCampaign ? "Salvataggio..." : campaignForm.id ? "Salva campagna" : "Crea campagna"}
-            </button>
-          </div>
-        </form>
-
-        <div className="table compact mail-campaign-table" style={{ marginTop: 12 }}>
-          <div className="row header">
-            <div>Campagna</div>
-            <div>Stato</div>
-            <div>Pubblico</div>
-            <div>Invio</div>
-            <div>Azioni</div>
-          </div>
-          {campaigns.map((c) => (
-            <div className="row" key={c.id}>
-              <div>
-                <strong>{c.name}</strong>
-                <div className="muted">{c.subject}</div>
-              </div>
-              <div>
-                <span className={`status-pill status-${String(c.status || "DRAFT").toLowerCase()}`}>
-                  {campaignStatusLabel(c.status)}
-                </span>
-                {c.lastError ? <div className="muted" style={{ marginTop: 4 }}>{c.lastError}</div> : null}
-              </div>
-              <div>
-                {c.audienceType === "ALL_ACTIVE" ? "Tutte attive" : `Selezionate (${Array.isArray(c.audienceCompanyIds) ? c.audienceCompanyIds.length : 0})`}
-              </div>
-              <div>
-                {c.sentAt ? new Date(c.sentAt).toLocaleString("it-IT") : c.scheduledAt ? new Date(c.scheduledAt).toLocaleString("it-IT") : "-"}
-                <div className="muted">OK {c.sentCount || 0} · KO {c.failedCount || 0}</div>
-              </div>
-              <div className="actions">
-                <button className="btn ghost" type="button" onClick={() => loadCampaignIntoForm(c)}>Modifica</button>
-                <button className="btn ghost" type="button" onClick={() => duplicateCampaign(c)}>Duplica</button>
-                <button className="btn ghost" type="button" onClick={() => setPreviewCampaign(c)}>Anteprima</button>
-                <button
-                  className="btn primary"
-                  type="button"
-                  onClick={() => sendCampaignNow(c.id)}
-                  disabled={sendingCampaignId === c.id}
-                >
-                  {sendingCampaignId === c.id ? "Invio..." : "Invia ora"}
-                </button>
-                <button className="btn ghost danger" type="button" onClick={() => deleteCampaign(c.id)}>Elimina</button>
+                  <div className="actions" style={{ marginTop: 16 }}>
+                    <button className="btn ghost" onClick={cancelEdit}>Annulla</button>
+                    <button className="btn primary" onClick={saveTemplate} disabled={saving}>
+                      {saving ? "Salvataggio..." : "Salva template"}
+                    </button>
+                  </div>
+                </div>
+                <div className="mail-tags-sidebar">
+                  <h4>Tag disponibili</h4>
+                  <p className="muted" style={{ fontSize: 12 }}>Clicca per inserire nel template</p>
+                  {editingType.tags.map((tag) => (
+                    <button
+                      key={tag.tag}
+                      type="button"
+                      className="mail-tag-btn"
+                      onClick={() => insertTag(tag.tag)}
+                      title={tag.description}
+                    >
+                      <code>{tag.tag}</code>
+                      <span className="muted">{tag.description}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          ))}
-          {!campaigns.length ? <div className="row"><div className="muted">Nessuna campagna</div></div> : null}
-        </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* Preview modal */}
+      {previewType && (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setPreviewType(null)}>
+            <div className="modal product-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 740 }}>
+              <div className="modal-header">
+                <h3>Anteprima &mdash; {previewType.label}</h3>
+                <button className="btn ghost" onClick={() => setPreviewType(null)}>Chiudi</button>
+              </div>
+              <div className="modal-body modal-body-single">
+                <div className="muted" style={{ marginBottom: 4 }}>Oggetto</div>
+                <div style={{ fontWeight: 700, marginBottom: 16 }}>
+                  {Object.entries(SAMPLE_DATA).reduce(
+                    (s, [k, v]) => s.replaceAll(k, v),
+                    previewType.subject || ""
+                  )}
+                </div>
+                <div
+                  className="mail-preview"
+                  dangerouslySetInnerHTML={{ __html: previewHtml(previewType) }}
+                />
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* Send test modal */}
+      {sendTestOpen && (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setSendTestOpen(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+              <div className="modal-header">
+                <h3>Invia email di test</h3>
+                <button className="btn ghost" onClick={() => setSendTestOpen(null)}>Chiudi</button>
+              </div>
+              <div className="modal-body modal-body-single">
+                <p className="muted">
+                  Verr&agrave; inviata un&apos;email con dati di esempio per il tipo <strong>{sendTestOpen}</strong>.
+                </p>
+                <label>
+                  Email destinatario
+                  <input
+                    type="email"
+                    value={sendTestEmail}
+                    onChange={(e) => setSendTestEmail(e.target.value)}
+                    placeholder="tua@email.it"
+                    autoFocus
+                  />
+                </label>
+                <div className="actions" style={{ marginTop: 16 }}>
+                  <button className="btn ghost" onClick={() => setSendTestOpen(null)}>Annulla</button>
+                  <button
+                    className="btn primary"
+                    onClick={doSendTest}
+                    disabled={sendingTest || !sendTestEmail}
+                  >
+                    {sendingTest ? "Invio..." : "Invia test"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* Info box */}
+      <div className="panel" style={{ background: "#f0f9ff", border: "1px solid #bae6fd" }}>
+        <h3 style={{ margin: "0 0 8px", color: "#0369a1" }}>Come funziona</h3>
+        <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8, color: "#334155" }}>
+          <li><strong>Conferma ordine</strong> &mdash; inviata automaticamente quando un ordine passa a stato &ldquo;Approvato&rdquo;</li>
+          <li><strong>Ordine spedito</strong> &mdash; inviata quando un ordine passa a stato &ldquo;Evaso&rdquo;</li>
+          <li><strong>Fattura disponibile</strong> &mdash; inviata quando si genera una fattura da un ordine</li>
+          <li><strong>Carrello abbandonato</strong> &mdash; da inviare manualmente o tramite job schedulato</li>
+          <li><strong>Benvenuto</strong> &mdash; da inviare quando un&apos;azienda viene attivata</li>
+          <li><strong>Pagamento ricevuto</strong> &mdash; da inviare manualmente con &ldquo;Invia test&rdquo; specificando i dati</li>
+        </ul>
+        <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
+          I tag come <code>{"{{customer_name}}"}</code>, <code>{"{{order_number}}"}</code> ecc.
+          vengono sostituiti automaticamente con i dati reali al momento dell&apos;invio.
+        </p>
       </div>
-
-      <div className="panel">
-        <div className="actions" style={{ justifyContent: "space-between" }}>
-          <h2 style={{ margin: 0 }}>Mail passate (MailUp)</h2>
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() =>
-              api(`/admin/mail-marketing/history?listId=${selectedListId}`)
-                .then((r) => setMailupHistory(r?.items || []))
-                .catch(() => setMailupHistory([]))
-            }
-          >
-            Aggiorna storico
-          </button>
-        </div>
-        <div className="table compact mail-history-table" style={{ marginTop: 10 }}>
-          <div className="row header">
-            <div>ID</div>
-            <div>Nome</div>
-            <div>Oggetto</div>
-            <div>Data</div>
-            <div>Azioni</div>
-          </div>
-          {mailupHistory.map((m, i) => (
-            <div className="row" key={String(m.Id || m.id || i)}>
-              <div className="mono">{m.Id || m.id || "-"}</div>
-              <div>{m.Name || m.name || "-"}</div>
-              <div>{m.Subject || m.subject || "-"}</div>
-              <div>
-                {m.CreationDate || m.createdAt || m.CreateDate
-                  ? new Date(m.CreationDate || m.createdAt || m.CreateDate).toLocaleString("it-IT")
-                  : "-"}
-              </div>
-              <div className="actions">
-                <button type="button" className="btn ghost" onClick={() => openHistoryMail(m)}>Apri</button>
-                <button type="button" className="btn ghost" onClick={() => duplicateFromHistory(m)}>Duplica</button>
-              </div>
-            </div>
-          ))}
-          {!mailupHistory.length ? (
-            <div className="row">
-              <div className="muted">
-                Nessuna mail trovata in MailUp per la lista selezionata.
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {previewCampaign ? (
-        <div className="modal-backdrop" onClick={() => setPreviewCampaign(null)}>
-          <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Anteprima campagna</h3>
-              <button className="btn ghost" onClick={() => setPreviewCampaign(null)}>Chiudi</button>
-            </div>
-            <div className="panel" style={{ marginTop: 12 }}>
-              <div className="muted">Oggetto</div>
-              <div style={{ fontWeight: 700, marginBottom: 12 }}>{previewCampaign.subject}</div>
-              <div className="mail-preview" dangerouslySetInnerHTML={{ __html: previewCampaign.html || "" }} />
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {previewHistoryMail ? (
-        <div className="modal-backdrop" onClick={() => setPreviewHistoryMail(null)}>
-          <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Mail inviata</h3>
-              <button className="btn ghost" onClick={() => setPreviewHistoryMail(null)}>Chiudi</button>
-            </div>
-            <div className="panel" style={{ marginTop: 12 }}>
-              <div className="muted">Nome</div>
-              <div style={{ fontWeight: 700 }}>{previewHistoryMail.name}</div>
-              <div className="muted" style={{ marginTop: 8 }}>Oggetto</div>
-              <div style={{ fontWeight: 700, marginBottom: 12 }}>{previewHistoryMail.subject}</div>
-              {previewHistoryMail.html ? (
-                <div className="mail-preview" dangerouslySetInnerHTML={{ __html: previewHistoryMail.html }} />
-              ) : (
-                <div className="muted">Contenuto HTML non disponibile da API MailUp per questa mail.</div>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }

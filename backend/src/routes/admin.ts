@@ -9,6 +9,7 @@ import https from "node:https";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import nodemailer from "nodemailer";
 import { getBearerTokenFromRequest, resolveSessionUserFromToken } from "../lib/session.js";
 
 async function getUser(request: any, reply: any) {
@@ -54,213 +55,181 @@ function buildCategorySlug(name: string, parentId?: string | null) {
 }
 
 export async function adminRoutes(app: FastifyInstance) {
-  const defaultMailupMeta = {
-    lists: [
-      {
-        id: 1,
-        name: "Newsletter",
-        description: "Iscritti alla newsletter.",
-        guid: "AAFA5375-BCF1-4E06-965A-E3A98B626156",
-      },
-    ],
-    groups: [
-      { listId: 1, groupId: 6, name: "TEST" },
-      { listId: 1, groupId: 7, name: "NEGOZIANTI" },
-      { listId: 1, groupId: 8, name: "CLIENTI PRIVATI" },
-      { listId: 1, groupId: 18, name: "nuove email sisal" },
-      { listId: 1, groupId: 20, name: "NUOVI" },
-      { listId: 1, groupId: 21, name: "4vape.it" },
-      { listId: 1, groupId: 22, name: "4vape.it TC 1" },
-      { listId: 1, groupId: 23, name: "4vape.it TC 2" },
-      { listId: 1, groupId: 24, name: "4vape.it TC 3" },
-    ],
-    fields: [
-      { id: "campo1", name: "nome" },
-      { id: "campo2", name: "cognome" },
-      { id: "campo3", name: "azienda" },
-      { id: "campo4", name: "città" },
-      { id: "campo5", name: "provincia" },
-      { id: "campo6", name: "cap" },
-      { id: "campo7", name: "regione" },
-      { id: "campo8", name: "paese" },
-      { id: "campo9", name: "indirizzo" },
-      { id: "campo10", name: "fax" },
-      { id: "campo11", name: "telefono" },
-      { id: "campo12", name: "IDCliente" },
-      { id: "campo13", name: "IDUltimoOrdine" },
-      { id: "campo14", name: "DataUltimoOrdine" },
-      { id: "campo15", name: "TotaleUltimoOrdine" },
-      { id: "campo16", name: "IDProdottiUltimoOrdine" },
-      { id: "campo17", name: "IDCategorieUltimoOrdine" },
-      { id: "campo18", name: "DataUltimoOrdineSpedito" },
-      { id: "campo19", name: "IDUltimoOrdineSpedito" },
-      { id: "campo20", name: "DataCarrelloAbbandonato" },
-      { id: "campo21", name: "TotaleCarrelloAbbandonato" },
-      { id: "campo22", name: "IDCarrelloAbbandonato" },
-      { id: "campo23", name: "TotaleFatturato" },
-      { id: "campo24", name: "TotaleFatturatoUltimi12Mesi" },
-      { id: "campo25", name: "TotaleFatturatoUltimi30gg" },
-      { id: "campo26", name: "IDTuttiProdottiAcquistati" },
-      { id: "campo27", name: "Compleanno" },
-    ],
-  };
-  let mailupTokenCache: { token: string; expiresAt: number } | null = null;
 
-  function getMailupConfig() {
-    return {
-      clientId: process.env.MAILUP_CLIENT_ID || "",
-      clientSecret: process.env.MAILUP_CLIENT_SECRET || "",
-      username: process.env.MAILUP_USERNAME || "",
-      password: process.env.MAILUP_PASSWORD || "",
-      tokenUrl:
-        process.env.MAILUP_TOKEN_URL ||
-        "https://services.mailup.com/Authorization/OAuth/Token",
-      consoleBase:
-        process.env.MAILUP_CONSOLE_BASE ||
-        "https://services.mailup.com/API/v1.1/Rest/ConsoleService.svc/Console",
-    };
-  }
-
-  async function getMailupAccessToken() {
-    const now = Date.now();
-    if (mailupTokenCache && mailupTokenCache.expiresAt > now + 15000) {
-      return mailupTokenCache.token;
-    }
-    const cfg = getMailupConfig();
-    if (!cfg.clientId || !cfg.clientSecret || !cfg.username || !cfg.password) {
-      throw new Error("Config MailUp incompleta in .env");
-    }
-    const body = new URLSearchParams({
-      grant_type: "password",
-      client_id: cfg.clientId,
-      client_secret: cfg.clientSecret,
-      username: cfg.username,
-      password: cfg.password,
-    });
-    const res = await fetch(cfg.tokenUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-    });
-    const text = await res.text();
-    let json: any = {};
-    try {
-      json = text ? JSON.parse(text) : {};
-    } catch {
-      json = {};
-    }
-    if (!res.ok || !json.access_token) {
-      throw new Error(json.error_description || json.error || text || `Token error ${res.status}`);
-    }
-    const expiresIn = Number(json.expires_in || 3600);
-    mailupTokenCache = {
-      token: json.access_token,
-      expiresAt: now + expiresIn * 1000,
-    };
-    return json.access_token as string;
-  }
-
-  async function mailupRequest(pathOrUrl: string, init?: RequestInit) {
-    const cfg = getMailupConfig();
-    const token = await getMailupAccessToken();
-    const url = pathOrUrl.startsWith("http")
-      ? pathOrUrl
-      : `${cfg.consoleBase.replace(/\/+$/, "")}/${pathOrUrl.replace(/^\/+/, "")}`;
-    const res = await fetch(url, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        ...(init?.headers || {}),
-      },
-    });
-    const text = await res.text();
-    let data: any = null;
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch {
-      data = text;
-    }
-    if (!res.ok) {
-      const msg =
-        (data && (data.Message || data.message || data.error_description || data.error)) ||
-        text ||
-        `MailUp error ${res.status}`;
-      throw new Error(String(msg));
-    }
-    return data;
-  }
-
-  async function upsertMailupRecipient(params: {
-    listId: number;
-    groupId?: number | null;
-    email: string;
-    name?: string;
-    fields?: Array<{ Id: string; Value: string }>;
-  }) {
-    const payload = {
-      Confirmed: true,
-      Force: true,
-      Recipients: [
-        {
-          Email: params.email,
-          Name: params.name || "",
-          Fields: params.fields || [],
-        },
+  /* ─── SMTP / Nodemailer setup ─── */
+  const EMAIL_TYPES = {
+    ORDER_CONFIRMATION: {
+      label: "Conferma ordine",
+      defaultSubject: "Conferma ordine #{{order_number}} — 4Vape",
+      tags: [
+        { tag: "{{customer_name}}", description: "Nome contatto" },
+        { tag: "{{company_name}}", description: "Ragione sociale" },
+        { tag: "{{order_number}}", description: "Numero ordine" },
+        { tag: "{{order_date}}", description: "Data ordine" },
+        { tag: "{{order_total}}", description: "Totale ordine" },
+        { tag: "{{order_items}}", description: "Tabella righe ordine (HTML)" },
+        { tag: "{{payment_method}}", description: "Metodo di pagamento" },
       ],
-      ...(params.groupId ? { Groups: [params.groupId] } : {}),
+      defaultHtml: `<h2>Ordine confermato</h2><p>Gentile {{customer_name}},</p><p>Il tuo ordine <strong>#{{order_number}}</strong> del {{order_date}} è stato confermato.</p><table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Prodotto</th><th>SKU</th><th>Qtà</th><th>Prezzo</th><th>Totale riga</th></tr></thead><tbody>{{order_items}}</tbody></table><p><strong>Totale: {{order_total}}</strong></p><p>Pagamento: {{payment_method}}</p><p>Grazie per il tuo ordine!<br/>4Vape B2B</p>`,
+    },
+    ORDER_SHIPPED: {
+      label: "Ordine spedito",
+      defaultSubject: "Ordine #{{order_number}} spedito — 4Vape",
+      tags: [
+        { tag: "{{customer_name}}", description: "Nome contatto" },
+        { tag: "{{company_name}}", description: "Ragione sociale" },
+        { tag: "{{order_number}}", description: "Numero ordine" },
+        { tag: "{{shipping_date}}", description: "Data spedizione" },
+        { tag: "{{tracking_number}}", description: "Numero tracking" },
+        { tag: "{{carrier}}", description: "Corriere" },
+      ],
+      defaultHtml: `<h2>Ordine spedito</h2><p>Gentile {{customer_name}},</p><p>Il tuo ordine <strong>#{{order_number}}</strong> è stato spedito il {{shipping_date}}.</p><p>Corriere: {{carrier}}<br/>Tracking: {{tracking_number}}</p><p>Grazie!<br/>4Vape B2B</p>`,
+    },
+    INVOICE_READY: {
+      label: "Fattura disponibile",
+      defaultSubject: "Fattura {{invoice_number}} — 4Vape",
+      tags: [
+        { tag: "{{customer_name}}", description: "Nome contatto" },
+        { tag: "{{company_name}}", description: "Ragione sociale" },
+        { tag: "{{invoice_number}}", description: "Numero fattura" },
+        { tag: "{{invoice_date}}", description: "Data fattura" },
+        { tag: "{{invoice_total}}", description: "Totale fattura" },
+      ],
+      defaultHtml: `<h2>Fattura disponibile</h2><p>Gentile {{customer_name}},</p><p>La fattura <strong>{{invoice_number}}</strong> del {{invoice_date}} è disponibile.</p><p><strong>Totale: {{invoice_total}}</strong></p><p>L'originale è disponibile nel tuo cassetto fiscale.</p><p>4Vape B2B</p>`,
+    },
+    ABANDONED_CART: {
+      label: "Carrello abbandonato",
+      defaultSubject: "Hai dimenticato qualcosa nel carrello? — 4Vape",
+      tags: [
+        { tag: "{{customer_name}}", description: "Nome contatto" },
+        { tag: "{{company_name}}", description: "Ragione sociale" },
+        { tag: "{{cart_total}}", description: "Totale carrello" },
+        { tag: "{{cart_items}}", description: "Articoli nel carrello (HTML)" },
+      ],
+      defaultHtml: `<h2>Hai dimenticato il carrello!</h2><p>Gentile {{customer_name}},</p><p>Hai degli articoli nel carrello per un totale di <strong>{{cart_total}}</strong>.</p>{{cart_items}}<p>Completa il tuo ordine!<br/>4Vape B2B</p>`,
+    },
+    WELCOME: {
+      label: "Benvenuto",
+      defaultSubject: "Benvenuto su 4Vape B2B!",
+      tags: [
+        { tag: "{{customer_name}}", description: "Nome contatto" },
+        { tag: "{{company_name}}", description: "Ragione sociale" },
+      ],
+      defaultHtml: `<h2>Benvenuto!</h2><p>Gentile {{customer_name}},</p><p>Il tuo account per <strong>{{company_name}}</strong> è stato attivato su 4Vape B2B.</p><p>Puoi iniziare a ordinare subito dalla piattaforma.</p><p>Buon lavoro!<br/>4Vape B2B</p>`,
+    },
+    PAYMENT_RECEIVED: {
+      label: "Pagamento ricevuto",
+      defaultSubject: "Pagamento ricevuto per ordine #{{order_number}} — 4Vape",
+      tags: [
+        { tag: "{{customer_name}}", description: "Nome contatto" },
+        { tag: "{{company_name}}", description: "Ragione sociale" },
+        { tag: "{{order_number}}", description: "Numero ordine" },
+        { tag: "{{payment_amount}}", description: "Importo pagamento" },
+        { tag: "{{payment_date}}", description: "Data pagamento" },
+      ],
+      defaultHtml: `<h2>Pagamento ricevuto</h2><p>Gentile {{customer_name}},</p><p>Abbiamo ricevuto il pagamento di <strong>{{payment_amount}}</strong> per l'ordine <strong>#{{order_number}}</strong>.</p><p>Grazie!<br/>4Vape B2B</p>`,
+    },
+  } as const;
+
+  type EmailType = keyof typeof EMAIL_TYPES;
+
+  function getSmtpConfig() {
+    return {
+      host: process.env.SMTP_HOST || "",
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === "true",
+      user: process.env.SMTP_USER || "",
+      pass: process.env.SMTP_PASS || "",
+      from: process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@4vape.it",
     };
+  }
+
+  function createTransporter() {
+    const cfg = getSmtpConfig();
+    if (!cfg.host || !cfg.user || !cfg.pass) return null;
+    return nodemailer.createTransport({
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.secure,
+      auth: { user: cfg.user, pass: cfg.pass },
+    });
+  }
+
+  function replaceTags(html: string, data: Record<string, string>): string {
+    let result = html;
+    for (const [key, value] of Object.entries(data)) {
+      result = result.replaceAll(key, value);
+    }
+    return result;
+  }
+
+  const PAYMENT_LABELS: Record<string, string> = {
+    BANK_TRANSFER: "Bonifico",
+    CARD: "Carta",
+    COD: "Contrassegno",
+    CASH: "Contanti",
+    OTHER: "Altro",
+  };
+
+  const money = (v: any) =>
+    new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(Number(v || 0));
+
+  async function sendTransactionalEmail(
+    type: EmailType,
+    recipientEmail: string,
+    data: Record<string, string>
+  ): Promise<{ ok: boolean; messageId?: string; error?: string }> {
+    const transporter = createTransporter();
+    if (!transporter) return { ok: false, error: "SMTP non configurato" };
+
+    const template = await prisma.mailMarketingTemplate.findFirst({
+      where: { name: type, active: true },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    const typeDef = EMAIL_TYPES[type];
+    const subject = replaceTags(template?.subject || typeDef.defaultSubject, data);
+    const htmlBody = replaceTags(template?.html || typeDef.defaultHtml, data);
+
+    const cfg = getSmtpConfig();
     try {
-      return await mailupRequest(`/List/${params.listId}/Recipients`, {
-        method: "POST",
-        body: JSON.stringify(payload),
+      const info = await transporter.sendMail({
+        from: cfg.from,
+        to: recipientEmail,
+        subject,
+        html: htmlBody,
       });
-    } catch {
-      return await mailupRequest(`/List/${params.listId}/Recipient`, {
-        method: "POST",
-        body: JSON.stringify(payload.Recipients[0]),
-      });
+      return { ok: true, messageId: info.messageId };
+    } catch (err: any) {
+      return { ok: false, error: err?.message || "Invio email fallito" };
     }
   }
 
-  async function createMailupEmail(params: {
-    listId: number;
-    subject: string;
-    name: string;
-    html: string;
-  }): Promise<number> {
-    const payload = {
-      Subject: params.subject,
-      Name: params.name,
-      Content: params.html,
-      ContentType: "html",
-      Embed: false,
-      IsConfirmation: false,
-    };
-    const data = await mailupRequest(`/List/${params.listId}/Email`, {
-      method: "POST",
-      body: JSON.stringify(payload),
+  async function buildOrderData(orderId: string): Promise<Record<string, string>> {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true, company: true },
     });
-    const id = Number(data?.id || data?.Id || data?.IdMessage || data?.Items?.[0]?.Id || 0);
-    if (!id) throw new Error("MailUp: impossibile creare email campagna");
-    return id;
-  }
-
-  async function sendMailupEmail(params: {
-    listId: number;
-    emailId: number;
-    groupId?: number | null;
-  }) {
-    const payload = {
-      ConfirmationEmail: false,
-      TrackableLinks: true,
-      SaveAsDraft: false,
-      ...(params.groupId ? { Groups: [params.groupId] } : {}),
+    if (!order) return {};
+    const itemRows = (order.items || [])
+      .map(
+        (i) =>
+          `<tr><td>${i.name || i.sku}</td><td>${i.sku}</td><td>${i.qty}</td><td>${money(i.unitPrice)}</td><td>${money(i.lineTotal)}</td></tr>`
+      )
+      .join("");
+    const contact = [order.company?.contactFirstName, order.company?.contactLastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    return {
+      "{{customer_name}}": contact || order.company?.name || "-",
+      "{{company_name}}": order.company?.legalName || order.company?.name || "-",
+      "{{order_number}}": String(order.orderNumber || order.id).slice(-8),
+      "{{order_date}}": new Date(order.createdAt).toLocaleDateString("it-IT"),
+      "{{order_total}}": money(order.total),
+      "{{order_items}}": itemRows,
+      "{{payment_method}}": PAYMENT_LABELS[order.paymentMethod || ""] || order.paymentMethod || "-",
     };
-    return mailupRequest(`/List/${params.listId}/Email/${params.emailId}/Send`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
   }
 
   async function resolveDefaultTaxRateId() {
@@ -347,417 +316,212 @@ export async function adminRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get("/mail-marketing/meta", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    return defaultMailupMeta;
-  });
+  /* ─── Mail Marketing: transactional email routes ─── */
 
   app.get("/mail-marketing/status", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
-    const cfg = getMailupConfig();
+    const cfg = getSmtpConfig();
     return {
-      configured: Boolean(cfg.clientId && cfg.clientSecret && cfg.username && cfg.password),
-      wsUsername: cfg.username || null,
+      configured: Boolean(cfg.host && cfg.user && cfg.pass),
+      from: cfg.from || null,
+      host: cfg.host || null,
     };
   });
 
-  app.post("/mail-marketing/test", async (request, reply) => {
+  app.post("/mail-marketing/test-connection", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
+    const transporter = createTransporter();
+    if (!transporter) {
+      return reply.code(400).send({ ok: false, error: "SMTP non configurato. Imposta SMTP_HOST, SMTP_USER e SMTP_PASS nel .env" });
+    }
     try {
-      await getMailupAccessToken();
-      const lists = await mailupRequest("/List");
-      return { ok: true, lists };
+      await transporter.verify();
+      return { ok: true };
     } catch (err: any) {
-      return reply.code(400).send({ ok: false, error: err?.message || "Connessione MailUp fallita" });
+      return reply.code(400).send({ ok: false, error: err?.message || "Connessione SMTP fallita" });
     }
   });
 
-  app.get("/mail-marketing/lists", async (request, reply) => {
+  app.get("/mail-marketing/types", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
-    try {
-      const data = await mailupRequest("/List");
-      return { items: data?.Items || data || [] };
-    } catch (err: any) {
-      return reply.code(400).send({ items: [], error: err?.message || "Errore caricamento liste" });
-    }
-  });
 
-  app.get("/mail-marketing/groups", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const listId = Number((request.query as any)?.listId || process.env.MAILUP_DEFAULT_LIST_ID || 1);
-    try {
-      let data: any = null;
-      try {
-        data = await mailupRequest(`/List/${listId}/Group`);
-      } catch {
-        data = await mailupRequest(`/Group?ListId=${listId}`);
-      }
-      return { items: data?.Items || data || [], source: "mailup" };
-    } catch (err: any) {
-      const fallback = defaultMailupMeta.groups.filter((g) => Number(g.listId) === Number(listId));
+    const templates = await prisma.mailMarketingTemplate.findMany({
+      orderBy: { updatedAt: "desc" },
+    });
+    const templateMap = new Map(templates.map((t) => [t.name, t]));
+
+    const result = Object.entries(EMAIL_TYPES).map(([key, def]) => {
+      const template = templateMap.get(key);
       return {
-        items: fallback,
-        source: "fallback",
-        warning: err?.message || "Errore caricamento gruppi da MailUp",
+        type: key,
+        label: def.label,
+        tags: def.tags,
+        active: template?.active ?? true,
+        subject: template?.subject || def.defaultSubject,
+        html: template?.html || def.defaultHtml,
+        templateId: template?.id || null,
+        updatedAt: template?.updatedAt || null,
       };
+    });
+    return result;
+  });
+
+  app.patch("/mail-marketing/types/:type", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const type = (request.params as any).type as string;
+    if (!(type in EMAIL_TYPES)) return reply.badRequest("Tipo email non valido");
+
+    const body = z.object({
+      subject: z.string().min(1).optional(),
+      html: z.string().min(1).optional(),
+      active: z.boolean().optional(),
+    }).parse(request.body);
+
+    const existing = await prisma.mailMarketingTemplate.findFirst({
+      where: { name: type },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    if (existing) {
+      return prisma.mailMarketingTemplate.update({
+        where: { id: existing.id },
+        data: {
+          subject: body.subject ?? existing.subject,
+          html: body.html ?? existing.html,
+          active: body.active ?? existing.active,
+        },
+      });
+    } else {
+      const def = EMAIL_TYPES[type as EmailType];
+      return prisma.mailMarketingTemplate.create({
+        data: {
+          name: type,
+          subject: body.subject || def.defaultSubject,
+          html: body.html || def.defaultHtml,
+          active: body.active ?? true,
+          createdById: user.id,
+        },
+      });
     }
   });
 
-  app.get("/mail-marketing/fields", async (request, reply) => {
+  app.post("/mail-marketing/send-test", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
-    return { items: defaultMailupMeta.fields };
-  });
+    const body = z.object({
+      type: z.string().min(1),
+      recipientEmail: z.string().email(),
+    }).parse(request.body);
 
-  app.post("/mail-marketing/sync/companies", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const body = z
-      .object({
-        listId: z.number().int().positive(),
-        groupId: z.number().int().positive().optional(),
-        companyIds: z.array(z.string()).optional(),
-      })
-      .parse(request.body);
+    if (!(body.type in EMAIL_TYPES)) return reply.badRequest("Tipo email non valido");
+    const type = body.type as EmailType;
 
-    const where: any = { status: "ACTIVE", email: { not: null } };
-    if (body.companyIds?.length) where.id = { in: body.companyIds };
-    const companies = await prisma.company.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-    });
+    let sampleData: Record<string, string> = {
+      "{{customer_name}}": "Mario Rossi",
+      "{{company_name}}": "Tabaccheria Rossi S.r.l.",
+      "{{order_number}}": "ORD-2025-0042",
+      "{{order_date}}": new Date().toLocaleDateString("it-IT"),
+      "{{order_total}}": "€ 1.250,00",
+      "{{order_items}}": '<tr><td>Liquido Menta 10ml</td><td>LIQ-MENTA-10</td><td>50</td><td>€ 3,50</td><td>€ 175,00</td></tr><tr><td>Resistenza X-Pro 0.8ohm</td><td>RES-XPRO-08</td><td>100</td><td>€ 2,80</td><td>€ 280,00</td></tr>',
+      "{{payment_method}}": "Bonifico",
+      "{{shipping_date}}": new Date().toLocaleDateString("it-IT"),
+      "{{tracking_number}}": "BRT-1234567890",
+      "{{carrier}}": "BRT",
+      "{{invoice_number}}": "FT-2025/042",
+      "{{invoice_date}}": new Date().toLocaleDateString("it-IT"),
+      "{{invoice_total}}": "€ 1.525,00",
+      "{{cart_total}}": "€ 890,00",
+      "{{cart_items}}": '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><tr><td>Liquido Menta 10ml x 30</td><td>€ 105,00</td></tr></table>',
+      "{{payment_amount}}": "€ 1.250,00",
+      "{{payment_date}}": new Date().toLocaleDateString("it-IT"),
+    };
 
-    const results: Array<{ companyId: string; name: string; email: string | null; ok: boolean; error?: string }> = [];
-    for (const company of companies) {
-      const email = (company.email || "").trim();
-      if (!email) {
-        results.push({ companyId: company.id, name: company.name, email: null, ok: false, error: "Email mancante" });
-        continue;
-      }
-      const fullName = [company.contactFirstName, company.contactLastName].filter(Boolean).join(" ").trim();
-      const fields = [
-        { Id: "campo1", Value: company.contactFirstName || "" },
-        { Id: "campo2", Value: company.contactLastName || "" },
-        { Id: "campo3", Value: company.legalName || company.name || "" },
-        { Id: "campo4", Value: company.city || "" },
-        { Id: "campo5", Value: company.province || "" },
-        { Id: "campo6", Value: company.cap || "" },
-        { Id: "campo8", Value: "IT" },
-        { Id: "campo9", Value: company.address || "" },
-        { Id: "campo11", Value: company.phone || "" },
-        { Id: "campo12", Value: company.customerCode || company.id },
-      ];
-      try {
-        await upsertMailupRecipient({
-          listId: body.listId,
-          groupId: body.groupId,
-          email,
-          name: fullName || company.name,
-          fields,
-        });
-        results.push({ companyId: company.id, name: company.name, email, ok: true });
-      } catch (err: any) {
-        results.push({
-          companyId: company.id,
-          name: company.name,
-          email,
-          ok: false,
-          error: err?.message || "Errore import contatto",
-        });
-      }
+    const result = await sendTransactionalEmail(type, body.recipientEmail, sampleData);
+    if (!result.ok) {
+      return reply.code(400).send(result);
     }
-    const ok = results.filter((r) => r.ok).length;
-    const failed = results.length - ok;
-    return { total: results.length, ok, failed, results };
+    return result;
   });
 
-  app.get("/mail-marketing/templates", async (request, reply) => {
+  app.post("/mail-marketing/send-real", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
-    return prisma.mailMarketingTemplate.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const body = z.object({
+      type: z.string().min(1),
+      orderId: z.string().optional(),
+      invoiceId: z.string().optional(),
+      recipientEmail: z.string().email().optional(),
+    }).parse(request.body);
+
+    if (!(body.type in EMAIL_TYPES)) return reply.badRequest("Tipo email non valido");
+    const type = body.type as EmailType;
+
+    if (type === "ORDER_CONFIRMATION" || type === "ORDER_SHIPPED" || type === "PAYMENT_RECEIVED") {
+      if (!body.orderId) return reply.badRequest("orderId richiesto");
+      const order = await prisma.order.findUnique({
+        where: { id: body.orderId },
+        include: { items: true, company: true },
+      });
+      if (!order) return reply.notFound("Ordine non trovato");
+      const email = body.recipientEmail || order.company?.email || order.company?.pec;
+      if (!email) return reply.badRequest("Nessuna email destinatario");
+
+      const data = await buildOrderData(body.orderId);
+      if (type === "ORDER_SHIPPED") {
+        data["{{shipping_date}}"] = new Date().toLocaleDateString("it-IT");
+        data["{{tracking_number}}"] = (order as any).trackingNumber || "-";
+        data["{{carrier}}"] = (order as any).carrier || "-";
+      }
+      if (type === "PAYMENT_RECEIVED") {
+        data["{{payment_amount}}"] = money(order.total);
+        data["{{payment_date}}"] = new Date().toLocaleDateString("it-IT");
+      }
+      const result = await sendTransactionalEmail(type, email, data);
+      if (!result.ok) return reply.code(400).send(result);
+      return result;
+    }
+
+    if (type === "INVOICE_READY") {
+      if (!body.invoiceId) return reply.badRequest("invoiceId richiesto");
+      const invoice = await prisma.fiscalInvoice.findUnique({
+        where: { id: body.invoiceId },
+        include: { company: true, lines: true },
+      });
+      if (!invoice) return reply.notFound("Fattura non trovata");
+      const email = body.recipientEmail || invoice.company?.pec || invoice.company?.email;
+      if (!email) return reply.badRequest("Nessuna email destinatario");
+      const contact = [invoice.company?.contactFirstName, invoice.company?.contactLastName]
+        .filter(Boolean).join(" ").trim();
+      const invoiceTotal = invoice.lines.reduce(
+        (s, l) => s + Number(l.unitGross || 0) * Number(l.qty || 0), 0
+      );
+      const data: Record<string, string> = {
+        "{{customer_name}}": contact || invoice.company?.name || "-",
+        "{{company_name}}": invoice.company?.legalName || invoice.company?.name || "-",
+        "{{invoice_number}}": invoice.invoiceNumber,
+        "{{invoice_date}}": new Date(invoice.issuedAt).toLocaleDateString("it-IT"),
+        "{{invoice_total}}": money(invoiceTotal),
+      };
+      const result = await sendTransactionalEmail(type, email, data);
+      if (!result.ok) return reply.code(400).send(result);
+      return result;
+    }
+
+    return reply.badRequest("Tipo email non supportato per invio diretto");
   });
 
-  app.post("/mail-marketing/templates", async (request, reply) => {
+  app.get("/mail-marketing/log", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
-    const body = z
-      .object({
-        name: z.string().min(2),
-        subject: z.string().min(2),
-        html: z.string().min(1),
-        active: z.boolean().optional(),
-      })
-      .parse(request.body);
-    return prisma.mailMarketingTemplate.create({
-      data: {
-        name: body.name,
-        subject: body.subject,
-        html: body.html,
-        active: body.active ?? true,
-        createdById: user.id,
-      },
-    });
-  });
-
-  app.patch("/mail-marketing/templates/:id", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const id = (request.params as any).id as string;
-    const body = z
-      .object({
-        name: z.string().min(2).optional(),
-        subject: z.string().min(2).optional(),
-        html: z.string().min(1).optional(),
-        active: z.boolean().optional(),
-      })
-      .parse(request.body);
-    return prisma.mailMarketingTemplate.update({
-      where: { id },
-      data: body,
-    });
-  });
-
-  app.delete("/mail-marketing/templates/:id", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const id = (request.params as any).id as string;
-    await prisma.mailMarketingTemplate.delete({ where: { id } });
-    return reply.code(204).send();
-  });
-
-  app.get("/mail-marketing/campaigns", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
+    // For now return campaigns used as a log — we repurpose the existing model
     return prisma.mailMarketingCampaign.findMany({
-      include: { template: true },
       orderBy: { createdAt: "desc" },
+      take: 100,
     });
-  });
-
-  app.get("/mail-marketing/history", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const listId = Number((request.query as any)?.listId || process.env.MAILUP_DEFAULT_LIST_ID || 1);
-    try {
-      let data: any = null;
-      try {
-        data = await mailupRequest(`/List/${listId}/Email`);
-      } catch {
-        try {
-          data = await mailupRequest(`/List/${listId}/Emails`);
-        } catch {
-          data = await mailupRequest(`/Email?ListId=${listId}`);
-        }
-      }
-      const items = data?.Items || data || [];
-      return { items, source: "mailup" };
-    } catch (err: any) {
-      return reply.code(400).send({
-        items: [],
-        source: "mailup",
-        error: err?.message || "Errore recupero storico MailUp",
-      });
-    }
-  });
-
-  app.get("/mail-marketing/history/:emailId", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const emailId = Number((request.params as any)?.emailId);
-    const listId = Number((request.query as any)?.listId || process.env.MAILUP_DEFAULT_LIST_ID || 1);
-    if (!emailId || !listId) return reply.badRequest("Parametri non validi");
-    try {
-      let data: any = null;
-      try {
-        data = await mailupRequest(`/List/${listId}/Email/${emailId}`);
-      } catch {
-        data = await mailupRequest(`/Email/${emailId}?ListId=${listId}`);
-      }
-      return { item: data || null };
-    } catch (err: any) {
-      return reply.code(400).send({ item: null, error: err?.message || "Errore recupero dettaglio email" });
-    }
-  });
-
-  app.post("/mail-marketing/campaigns", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const body = z
-      .object({
-        name: z.string().min(2),
-        subject: z.string().min(2),
-        html: z.string().min(1),
-        templateId: z.string().optional(),
-        listId: z.number().int().positive(),
-        groupId: z.number().int().positive().optional(),
-        audienceType: z.enum(["ALL_ACTIVE", "SELECTED_COMPANIES"]).default("ALL_ACTIVE"),
-        audienceCompanyIds: z.array(z.string()).optional(),
-        scheduledAt: z.string().optional(),
-      })
-      .parse(request.body);
-    return prisma.mailMarketingCampaign.create({
-      data: {
-        name: body.name,
-        subject: body.subject,
-        html: body.html,
-        templateId: body.templateId || null,
-        listId: body.listId,
-        groupId: body.groupId || null,
-        audienceType: body.audienceType,
-        audienceCompanyIds: body.audienceCompanyIds || [],
-        scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null,
-        status: body.scheduledAt ? "SCHEDULED" : "DRAFT",
-        createdById: user.id,
-      },
-    });
-  });
-
-  app.patch("/mail-marketing/campaigns/:id", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const id = (request.params as any).id as string;
-    const body = z
-      .object({
-        name: z.string().min(2).optional(),
-        subject: z.string().min(2).optional(),
-        html: z.string().min(1).optional(),
-        listId: z.number().int().positive().optional(),
-        groupId: z.number().int().positive().nullable().optional(),
-        audienceType: z.enum(["ALL_ACTIVE", "SELECTED_COMPANIES"]).optional(),
-        audienceCompanyIds: z.array(z.string()).optional(),
-        scheduledAt: z.string().nullable().optional(),
-        status: z.enum(["DRAFT", "SCHEDULED"]).optional(),
-      })
-      .parse(request.body);
-    return prisma.mailMarketingCampaign.update({
-      where: { id },
-      data: {
-        ...body,
-        ...(body.scheduledAt !== undefined
-          ? { scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null }
-          : {}),
-      },
-    });
-  });
-
-  app.delete("/mail-marketing/campaigns/:id", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const id = (request.params as any).id as string;
-    await prisma.mailMarketingCampaign.delete({ where: { id } });
-    return reply.code(204).send();
-  });
-
-  app.post("/mail-marketing/campaigns/:id/send", async (request, reply) => {
-    const user = await requireAdmin(request, reply);
-    if (!user) return;
-    const id = (request.params as any).id as string;
-    const campaign = await prisma.mailMarketingCampaign.findUnique({ where: { id } });
-    if (!campaign) return reply.notFound("Campagna non trovata");
-
-    const companyWhere: any = { status: "ACTIVE", email: { not: null } };
-    if (campaign.audienceType === "SELECTED_COMPANIES") {
-      const ids = Array.isArray(campaign.audienceCompanyIds) ? campaign.audienceCompanyIds : [];
-      if (!ids.length) return reply.badRequest("Pubblico vuoto");
-      companyWhere.id = { in: ids as string[] };
-    }
-    const recipients = await prisma.company.findMany({
-      where: companyWhere,
-      orderBy: { createdAt: "desc" },
-    });
-    if (!recipients.length) return reply.badRequest("Nessun destinatario valido");
-
-    let ok = 0;
-    let failed = 0;
-    for (const company of recipients) {
-      const email = (company.email || "").trim();
-      if (!email) {
-        failed += 1;
-        continue;
-      }
-      const fields = [
-        { Id: "campo1", Value: company.contactFirstName || "" },
-        { Id: "campo2", Value: company.contactLastName || "" },
-        { Id: "campo3", Value: company.legalName || company.name || "" },
-        { Id: "campo4", Value: company.city || "" },
-        { Id: "campo5", Value: company.province || "" },
-        { Id: "campo6", Value: company.cap || "" },
-        { Id: "campo8", Value: "IT" },
-        { Id: "campo9", Value: company.address || "" },
-        { Id: "campo11", Value: company.phone || "" },
-        { Id: "campo12", Value: company.customerCode || company.id },
-      ];
-      try {
-        await upsertMailupRecipient({
-          listId: campaign.listId,
-          groupId: campaign.groupId,
-          email,
-          name:
-            [company.contactFirstName, company.contactLastName].filter(Boolean).join(" ").trim() ||
-            company.name,
-          fields,
-        });
-        ok += 1;
-      } catch {
-        failed += 1;
-      }
-    }
-
-    if (!ok) {
-      await prisma.mailMarketingCampaign.update({
-        where: { id: campaign.id },
-        data: { status: "FAILED", failedCount: failed, lastError: "Nessun destinatario sincronizzato su MailUp" },
-      });
-      return reply.code(400).send({ ok: false, error: "Nessun destinatario valido" });
-    }
-
-    try {
-      const emailId = await createMailupEmail({
-        listId: campaign.listId,
-        subject: campaign.subject,
-        name: campaign.name,
-        html: campaign.html,
-      });
-      const sendRes = await sendMailupEmail({
-        listId: campaign.listId,
-        emailId,
-        groupId: campaign.groupId,
-      });
-      const sendId = sendRes?.id || sendRes?.Id || sendRes?.Message || null;
-      await prisma.mailMarketingCampaign.update({
-        where: { id: campaign.id },
-        data: {
-          status: "SENT",
-          sentAt: new Date(),
-          recipientCount: recipients.length,
-          sentCount: ok,
-          failedCount: failed,
-          mailupEmailId: emailId,
-          mailupSendId: sendId ? String(sendId) : null,
-          lastError: null,
-        },
-      });
-      return { ok: true, emailId, sendId, recipients: recipients.length, synced: ok, failed };
-    } catch (err: any) {
-      await prisma.mailMarketingCampaign.update({
-        where: { id: campaign.id },
-        data: {
-          status: "FAILED",
-          recipientCount: recipients.length,
-          sentCount: ok,
-          failedCount: failed,
-          lastError: err?.message || "Invio MailUp fallito",
-        },
-      });
-      return reply.code(400).send({ ok: false, error: err?.message || "Invio fallito" });
-    }
   });
 
   app.get("/users/pending", async (request, reply) => {
@@ -1361,6 +1125,24 @@ export async function adminRoutes(app: FastifyInstance) {
         },
         include: { items: true, company: true },
       });
+
+      // Send transactional email on status change (fire-and-forget)
+      if (body.status && body.status !== existing.status) {
+        const email = updated.company?.email || updated.company?.pec;
+        if (email) {
+          if (body.status === "APPROVED") {
+            buildOrderData(id).then((d) => sendTransactionalEmail("ORDER_CONFIRMATION", email, d)).catch(() => {});
+          } else if (body.status === "FULFILLED") {
+            buildOrderData(id).then((d) => {
+              d["{{shipping_date}}"] = new Date().toLocaleDateString("it-IT");
+              d["{{tracking_number}}"] = (updated as any).trackingNumber || "-";
+              d["{{carrier}}"] = (updated as any).carrier || "-";
+              sendTransactionalEmail("ORDER_SHIPPED", email, d);
+            }).catch(() => {});
+          }
+        }
+      }
+
       return updated;
     });
   });
@@ -3382,7 +3164,7 @@ export async function adminRoutes(app: FastifyInstance) {
       };
       row.qty += l.qty;
       row.accisaTotal += l.accisa;
-      row.ivatoNoExciseTotal += l.imponibile + l.vatNoExcise;
+      row.ivatoNoExciseTotal += l.imponibile;
       if (!row.accisaCategory && l.exciseCategoryRate) row.accisaCategory = l.exciseCategoryRate;
       bySku.set(key, row);
     }
@@ -3736,6 +3518,31 @@ export async function adminRoutes(app: FastifyInstance) {
       },
       update: {},
     });
+
+    // Scalare giacenza inventario per ogni riga fatturata
+    for (const line of linesToCreate) {
+      const invItem = await prisma.internalInventoryItem.findUnique({ where: { sku: line.sku } });
+      if (invItem) {
+        await prisma.internalInventoryItem.update({
+          where: { id: invItem.id },
+          data: { stockQty: { decrement: line.qty } },
+        });
+      }
+    }
+
+    // Send invoice ready email (fire-and-forget)
+    const invoiceEmail = order.company?.pec || order.company?.email;
+    if (invoiceEmail) {
+      const contact = [order.company?.contactFirstName, order.company?.contactLastName].filter(Boolean).join(" ").trim();
+      const invoiceTotal = linesToCreate.reduce((s, l) => s + Number(l.unitGross || 0) * Number(l.qty || 0), 0);
+      sendTransactionalEmail("INVOICE_READY", invoiceEmail, {
+        "{{customer_name}}": contact || order.company?.name || "-",
+        "{{company_name}}": order.company?.legalName || order.company?.name || "-",
+        "{{invoice_number}}": invoice.invoiceNumber,
+        "{{invoice_date}}": new Date(invoice.issuedAt).toLocaleDateString("it-IT"),
+        "{{invoice_total}}": money(invoiceTotal),
+      }).catch(() => {});
+    }
 
     return reply.code(201).send({ ok: true, invoiceId: invoice.id, invoiceNumber: invoice.invoiceNumber });
   });
@@ -5417,6 +5224,7 @@ export async function adminRoutes(app: FastifyInstance) {
           mlProduct: rawLine.mlProduct ?? existing?.mlProduct ?? product?.mlProduct ?? null,
           purchasePrice:
             rawLine.unitCost ?? product?.purchasePrice ?? existing?.purchasePrice ?? null,
+          listPrice: existing?.listPrice ?? (product as any)?.listPrice ?? null,
           price: rawLine.unitPrice ?? existing?.price ?? product?.price ?? null,
           taxRateId: pickVal(rawLine.taxRateId, existing?.taxRateId, product?.taxRateId),
           exciseRateId: pickVal(
@@ -5444,6 +5252,7 @@ export async function adminRoutes(app: FastifyInstance) {
                 nicotine: rawLine.nicotine ?? product?.nicotine ?? null,
                 mlProduct: rawLine.mlProduct ?? product?.mlProduct ?? null,
                 purchasePrice: rawLine.unitCost ?? product?.purchasePrice ?? null,
+                listPrice: (product as any)?.listPrice ?? null,
                 price: rawLine.unitPrice ?? product?.price ?? null,
                 stockQty: qty,
                 taxRateId: pickVal(rawLine.taxRateId, product?.taxRateId),

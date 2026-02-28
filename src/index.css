@@ -2582,8 +2582,13 @@ button {
 }
 .invoices-table-pro .row,
 .invoices-table-pro .row.header {
-  grid-template-columns: 0.9fr 0.9fr 1.6fr 0.9fr 0.9fr 1fr 1fr 0.85fr 0.85fr 1fr 1fr 1.8fr;
-  min-width: 1760px;
+  grid-template-columns: 90px 90px 1.2fr 90px 90px 100px 100px 80px 80px 100px 90px auto;
+  min-width: 1320px;
+}
+.invoices-table-pro .row > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .invoices-table-pro .row:not(.header):hover {
   background: rgba(241, 245, 249, 0.9);
@@ -3556,10 +3561,82 @@ button {
   color: #1e3a8a;
 }
 
-.mail-marketing-layout {
+.mail-types-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mail-type-card {
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 16px 18px;
+  background: #fff;
+}
+
+.mail-type-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.mail-type-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mail-tag {
+  display: inline-block;
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+
+.mail-tags-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mail-tags-sidebar h4 {
+  margin: 0 0 4px;
+}
+
+.mail-tag-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: #f8fafc;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.mail-tag-btn:hover {
+  background: #eef2ff;
+  border-color: #818cf8;
+}
+
+.mail-tag-btn code {
+  font-size: 0.78rem;
+  color: #4338ca;
+  font-weight: 700;
+}
+
+.mail-tag-btn .muted {
+  font-size: 0.72rem;
 }
 
 .mail-form {
@@ -3581,87 +3658,6 @@ button {
   height: 16px;
 }
 
-.mail-audience-head {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-
-.mail-audience-box {
-  border: 1px solid var(--stroke);
-  border-radius: 16px;
-  padding: 12px;
-  display: grid;
-  gap: 10px;
-  background: #f8fbff;
-}
-
-.mail-audience-list {
-  border: 1px solid var(--stroke);
-  border-radius: 12px;
-  max-height: 220px;
-  overflow: auto;
-  background: #fff;
-}
-
-.mail-audience-item {
-  display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 10px;
-  align-items: start;
-  padding: 10px 12px;
-  border-bottom: 1px solid #edf2f7;
-}
-
-.mail-audience-item:last-child {
-  border-bottom: none;
-}
-
-.mail-audience-item span {
-  grid-column: 2;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.mail-audience-item small {
-  grid-column: 2;
-  display: block;
-  color: var(--muted);
-  margin-top: 2px;
-  word-break: break-all;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 3px 10px;
-  border: 1px solid var(--stroke);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
-
-.status-draft {
-  background: #eef2ff;
-  color: #3730a3;
-}
-
-.status-scheduled {
-  background: #fff7ed;
-  color: #b45309;
-}
-
-.status-sent {
-  background: #e8f8ef;
-  color: #047857;
-}
-
-.status-failed {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
 .mail-preview {
   border: 1px solid var(--stroke);
   border-radius: 14px;
@@ -3671,30 +3667,8 @@ button {
   overflow: auto;
 }
 
-.mail-template-table .row {
-  grid-template-columns: 1.3fr 1.4fr 1fr;
-}
-
-.mail-campaign-table .row {
-  grid-template-columns: 1.2fr 0.8fr 1fr 1fr 1.4fr;
-}
-
-.mail-history-table .row {
-  grid-template-columns: 100px 1.2fr 1.6fr 180px 180px;
-}
-
-.companies-table .row {
-  grid-template-columns: 1.4fr 0.9fr 1fr 1.2fr 1fr 1fr 90px 120px 120px 160px;
-  min-width: 1560px;
-}
-
-@media (max-width: 1080px) {
-  .mail-marketing-layout {
-    grid-template-columns: 1fr;
-  }
-  .mail-campaign-table .row,
-  .mail-history-table .row,
-  .mail-template-table .row {
+@media (max-width: 900px) {
+  .mail-types-grid {
     grid-template-columns: 1fr;
   }
 }
