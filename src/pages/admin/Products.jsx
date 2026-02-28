@@ -20,6 +20,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione..." }) {
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
+  const savedRangeRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const EMOJI_LIST = [
@@ -41,11 +42,34 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
     }
   }, [value]);
 
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    const el = editorRef.current;
+    if (!el) return;
+    const common = range.commonAncestorContainer;
+    if (el.contains(common)) {
+      savedRangeRef.current = range.cloneRange();
+    }
+  }
+
+  function restoreSelection() {
+    const range = savedRangeRef.current;
+    if (!range) return;
+    const sel = window.getSelection();
+    if (!sel) return;
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
   function run(command, arg) {
     const el = editorRef.current;
     if (!el) return;
     el.focus();
+    restoreSelection();
     document.execCommand(command, false, arg);
+    saveSelection();
     onChange(el.innerHTML);
   }
 
@@ -110,11 +134,19 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
 
   function onHeadingChange(e) {
     const val = e.target.value;
-    if (val === "p") {
-      run("formatBlock", "<p>");
-    } else {
-      run("formatBlock", `<${val}>`);
+    const el = editorRef.current;
+    if (!el) return;
+    el.focus();
+    restoreSelection();
+    const block = val === "p" ? "p" : val.toLowerCase();
+    const applied =
+      document.execCommand("formatBlock", false, block) ||
+      document.execCommand("formatBlock", false, `<${block}>`);
+    if (!applied && block !== "p") {
+      document.execCommand("heading", false, block.toUpperCase());
     }
+    saveSelection();
+    onChange(el.innerHTML);
   }
 
   function onFontSizeChange(e) {
@@ -213,6 +245,9 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
         suppressContentEditableWarning
         data-placeholder={placeholder}
         onInput={onInput}
+        onMouseUp={saveSelection}
+        onKeyUp={saveSelection}
+        onFocus={saveSelection}
         onBlur={() => setShowEmojiPicker(false)}
       />
     </div>
