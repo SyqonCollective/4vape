@@ -175,7 +175,7 @@ button {
   grid-template-columns: 260px 1fr;
   gap: 1.5rem;
   padding: 1.5rem;
-  transition: grid-template-columns 0.24s ease;
+  transition: grid-template-columns 0.42s cubic-bezier(0.22, 0.74, 0.2, 1);
 }
 
 .admin-shell.sidebar-collapsed {
@@ -201,7 +201,9 @@ button {
   overflow: visible;
   isolation: isolate;
   border-right: 1px solid rgba(14, 165, 233, 0.12);
-  transition: padding 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+  transition: padding 0.36s cubic-bezier(0.22, 0.74, 0.2, 1),
+    border-color 0.36s cubic-bezier(0.22, 0.74, 0.2, 1),
+    box-shadow 0.36s cubic-bezier(0.22, 0.74, 0.2, 1);
 }
 
 .admin-sidebar::before {
@@ -577,7 +579,10 @@ button {
   max-width: 220px;
   opacity: 1;
   transform: translateX(0);
-  transition: max-width 0.22s ease, opacity 0.18s ease, transform 0.22s ease;
+  transition: max-width 0.34s cubic-bezier(0.22, 0.74, 0.2, 1),
+    opacity 0.26s cubic-bezier(0.22, 0.74, 0.2, 1),
+    transform 0.34s cubic-bezier(0.22, 0.74, 0.2, 1);
+  will-change: transform, opacity, max-width;
 }
 
 .brand-greeting {
@@ -660,7 +665,10 @@ button {
   align-items: center;
   gap: 0.6rem;
   cursor: grab;
-  transition: all 0.22s ease, padding 0.22s ease, gap 0.22s ease;
+  transition: all 0.34s cubic-bezier(0.22, 0.74, 0.2, 1),
+    padding 0.34s cubic-bezier(0.22, 0.74, 0.2, 1),
+    gap 0.34s cubic-bezier(0.22, 0.74, 0.2, 1);
+  will-change: transform, padding, gap;
 }
 .nav-item:active {
   cursor: grabbing;
@@ -672,7 +680,10 @@ button {
   max-width: 22px;
   opacity: 1;
   transform: translateX(0);
-  transition: max-width 0.2s ease, opacity 0.16s ease, transform 0.2s ease;
+  transition: max-width 0.3s cubic-bezier(0.22, 0.74, 0.2, 1),
+    opacity 0.22s cubic-bezier(0.22, 0.74, 0.2, 1),
+    transform 0.3s cubic-bezier(0.22, 0.74, 0.2, 1);
+  will-change: transform, opacity, max-width;
 }
 .nav-item.dragging {
   opacity: 0.6;
@@ -727,9 +738,13 @@ button {
   flex: 0 0 auto;
   opacity: 0;
   transform: scale(0.75);
-  transition: width 0.22s ease, opacity 0.18s ease, transform 0.22s ease, background 0.22s ease,
-    border-color 0.22s ease;
+  transition: width 0.34s cubic-bezier(0.22, 0.74, 0.2, 1),
+    opacity 0.26s cubic-bezier(0.22, 0.74, 0.2, 1),
+    transform 0.34s cubic-bezier(0.22, 0.74, 0.2, 1),
+    background 0.34s cubic-bezier(0.22, 0.74, 0.2, 1),
+    border-color 0.34s cubic-bezier(0.22, 0.74, 0.2, 1);
   overflow: hidden;
+  will-change: width, transform, opacity;
 }
 
 .nav-icon svg {
@@ -742,7 +757,10 @@ button {
   max-width: 220px;
   opacity: 1;
   transform: translateX(0);
-  transition: max-width 0.22s ease, opacity 0.18s ease, transform 0.22s ease;
+  transition: max-width 0.34s cubic-bezier(0.22, 0.74, 0.2, 1),
+    opacity 0.26s cubic-bezier(0.22, 0.74, 0.2, 1),
+    transform 0.34s cubic-bezier(0.22, 0.74, 0.2, 1);
+  will-change: transform, opacity, max-width;
 }
 
 .admin-shell:not(.sidebar-collapsed) .nav-icon {
