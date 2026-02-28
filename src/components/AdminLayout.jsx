@@ -361,15 +361,6 @@ export default function AdminLayout() {
               <strong>{adminName}</strong>
             </div>
           </div>
-          <button
-            type="button"
-            className="sidebar-toggle-btn"
-            onClick={toggleSidebarCollapsed}
-            title={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
-            aria-label={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
-          >
-            {sidebarCollapsed ? <LuChevronsRight /> : <LuChevronsLeft />}
-          </button>
         </div>
 
         <nav className="admin-nav">
@@ -405,6 +396,15 @@ export default function AdminLayout() {
             );
           })}
         </nav>
+        <button
+          type="button"
+          className="sidebar-toggle-btn"
+          onClick={toggleSidebarCollapsed}
+          title={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
+          aria-label={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
+        >
+          {sidebarCollapsed ? <LuChevronsRight /> : <LuChevronsLeft />}
+        </button>
       </aside>
 
       <main className="admin-main">
