@@ -5476,6 +5476,23 @@ button {
   white-space: nowrap;
 }
 
+.summary-line-supplier {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.confirm-danger-dialog {
+  width: min(520px, 94vw);
+}
+
+.confirm-danger-media {
+  width: 86px;
+  height: 86px;
+  margin: 0 auto 10px;
+}
+
 .order-modal .ghost,
 .order-modal .primary {
   border-radius: 12px;

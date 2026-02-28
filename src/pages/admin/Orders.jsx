@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Lottie from "lottie-react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
+import orderDangerAnim from "../../assets/OrderDanger.json";
 
 // CHECKLIST (admin richieste):
 // [x] Ordini ordinati per arrivo (createdAt desc)
@@ -102,6 +104,7 @@ export default function AdminOrders() {
   const [editSearchQuery, setEditSearchQuery] = useState("");
   const [editSearchResults, setEditSearchResults] = useState([]);
   const [confirmCompleteOrder, setConfirmCompleteOrder] = useState(null);
+  const [confirmDeleteLine, setConfirmDeleteLine] = useState(null);
   const [orderView, setOrderView] = useState("table");
   const [invoicePreview, setInvoicePreview] = useState(null);
 
@@ -117,8 +120,10 @@ export default function AdminOrders() {
       const res = await api(`/admin/orders${params.toString() ? `?${params.toString()}` : ""}`);
       setItems(res);
       setSelectedIds([]);
+      return res;
     } catch (err) {
       setError("Impossibile caricare ordini");
+      return [];
     }
   }
 
@@ -524,6 +529,59 @@ export default function AdminOrders() {
       await loadOrderStats();
     } catch {
       setError("Impossibile eliminare ordine");
+    }
+  }
+
+  async function confirmDeleteOrderLine() {
+    if (!confirmDeleteLine) return;
+    const source =
+      items.find((o) => o.id === confirmDeleteLine.orderId) ||
+      (summaryOrder?.id === confirmDeleteLine.orderId ? summaryOrder : null);
+    if (!source) {
+      setConfirmDeleteLine(null);
+      setError("Ordine non trovato");
+      return;
+    }
+    if (source.fiscalInvoice) {
+      setConfirmDeleteLine(null);
+      setError("Ordine già fatturato: modifica non consentita");
+      return;
+    }
+    const nextItems = (source.items || [])
+      .filter((x) => x.id !== confirmDeleteLine.itemId)
+      .map((x) => ({
+        productId: x.productId,
+        qty: Number(x.qty || 0),
+        unitPrice: Number(x.unitPrice || 0),
+      }))
+      .filter((x) => x.productId && x.qty > 0);
+    if (!nextItems.length) {
+      setConfirmDeleteLine(null);
+      setError("Impossibile eliminare l'ultima riga. Elimina l'ordine completo.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api(`/admin/orders/${source.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          companyId: source.companyId,
+          status: source.status,
+          paymentMethod: source.paymentMethod,
+          shippingCost: Number(source.shippingCost || 0),
+          shippingVatRate: Number(source.shippingVatRate || 22),
+          items: nextItems,
+        }),
+      });
+      const refreshed = await loadOrders();
+      const fresh = (refreshed || []).find((o) => o.id === source.id);
+      setSummaryOrder(fresh || null);
+      setConfirmDeleteLine(null);
+      await loadOrderStats();
+    } catch {
+      setError("Impossibile eliminare la riga prodotto");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -1331,7 +1389,24 @@ export default function AdminOrders() {
                             <div>{formatCurrency(item.unitPrice)}</div>
                             <div>{item.qty}</div>
                             <div>{formatCurrency(item.lineTotal)}</div>
-                            <div>{item.product?.sourceSupplier?.name || "-"}</div>
+                            <div className="summary-line-supplier">
+                              <div>{item.product?.sourceSupplier?.name || "-"}</div>
+                              {!summaryOrder.fiscalInvoice ? (
+                                <button
+                                  className="btn danger small"
+                                  onClick={() =>
+                                    setConfirmDeleteLine({
+                                      orderId: summaryOrder.id,
+                                      itemId: item.id,
+                                      itemName: item.name,
+                                      sku: item.sku,
+                                    })
+                                  }
+                                >
+                                  Elimina riga
+                                </button>
+                              ) : null}
+                            </div>
                           </div>
                         ))}
                         {!summaryOrder.items?.length ? (
@@ -1411,6 +1486,31 @@ export default function AdminOrders() {
                     Apri elenco fatture
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+      {confirmDeleteLine ? (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setConfirmDeleteLine(null)}>
+            <div className="modal confirm-dialog confirm-danger-dialog" onClick={(e) => e.stopPropagation()}>
+              <div className="confirm-danger-media">
+                <Lottie animationData={orderDangerAnim} loop autoplay />
+              </div>
+              <h3>Eliminare riga prodotto?</h3>
+              <p>
+                Stai per rimuovere <strong>{confirmDeleteLine.itemName}</strong>{" "}
+                <span className="mono">{confirmDeleteLine.sku}</span> dall&apos;ordine.
+                Questa azione modificherà l&apos;ordine ed è irreversibile.
+              </p>
+              <div className="actions">
+                <button className="btn ghost" onClick={() => setConfirmDeleteLine(null)}>
+                  Annulla
+                </button>
+                <button className="btn danger" onClick={confirmDeleteOrderLine} disabled={saving}>
+                  {saving ? "Elimino..." : "Conferma elimina"}
+                </button>
               </div>
             </div>
           </div>
