@@ -27,7 +27,6 @@ import {
   LuBuilding2,
   LuUserCog,
   LuChevronsLeft,
-  LuChevronsRight,
 } from "react-icons/lu";
 import { api, getToken, logout } from "../lib/api.js";
 import Portal from "./Portal.jsx";
@@ -403,7 +402,7 @@ export default function AdminLayout() {
           title={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
           aria-label={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
         >
-          {sidebarCollapsed ? <LuChevronsRight /> : <LuChevronsLeft />}
+          <LuChevronsLeft />
         </button>
       </aside>
 
