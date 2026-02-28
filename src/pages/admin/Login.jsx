@@ -6,6 +6,12 @@ export default function AdminLogin() {
   const hasClerkKey = Boolean(
     import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   );
+  const adminOrigin = import.meta.env.VITE_ADMIN_ORIGIN || "https://logistica4vape.it";
+  const forceRedirectUrl =
+    import.meta.env.VITE_CLERK_SIGN_IN_FORCE_REDIRECT_URL || `${adminOrigin}/admin/dashboard`;
+  const fallbackRedirectUrl =
+    import.meta.env.VITE_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL || `${adminOrigin}/admin/dashboard`;
+  const signUpUrl = import.meta.env.VITE_CLERK_SIGN_UP_URL || `${adminOrigin}/register`;
 
   return (
     <div className="auth-wrap auth-epic">
@@ -19,9 +25,9 @@ export default function AdminLogin() {
         {hasClerkKey ? (
           <SignIn
             routing="virtual"
-            forceRedirectUrl="/admin/dashboard"
-            fallbackRedirectUrl="/admin/dashboard"
-            signUpUrl="/register"
+            forceRedirectUrl={forceRedirectUrl}
+            fallbackRedirectUrl={fallbackRedirectUrl}
+            signUpUrl={signUpUrl}
             appearance={{
               variables: {
                 colorText: "#e8f2ff",
