@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import { api } from "../../lib/api.js";
@@ -105,8 +105,10 @@ export default function AdminOrders() {
   const [editSearchResults, setEditSearchResults] = useState([]);
   const [confirmCompleteOrder, setConfirmCompleteOrder] = useState(null);
   const [confirmDeleteLine, setConfirmDeleteLine] = useState(null);
+  const [pendingDeleteUndo, setPendingDeleteUndo] = useState(null);
   const [orderView, setOrderView] = useState("table");
   const [invoicePreview, setInvoicePreview] = useState(null);
+  const pendingDeleteTimerRef = useRef(null);
 
   async function loadOrders() {
     try {
@@ -560,6 +562,46 @@ export default function AdminOrders() {
       setError("Impossibile eliminare l'ultima riga. Elimina l'ordine completo.");
       return;
     }
+    if (pendingDeleteUndo) {
+      setError("Hai già una riga in attesa di eliminazione. Annulla o attendi 5 secondi.");
+      return;
+    }
+    const payload = {
+      id: `${source.id}:${confirmDeleteLine.itemId}:${Date.now()}`,
+      orderId: source.id,
+      itemId: confirmDeleteLine.itemId,
+      itemName: confirmDeleteLine.itemName,
+      sku: confirmDeleteLine.sku,
+    };
+    setConfirmDeleteLine(null);
+    setPendingDeleteUndo(payload);
+    pendingDeleteTimerRef.current = window.setTimeout(() => {
+      pendingDeleteTimerRef.current = null;
+      executeDeleteOrderLine(payload);
+    }, 5000);
+  }
+
+  async function executeDeleteOrderLine(payload) {
+    const latest = await loadOrders();
+    const source = (latest || []).find((o) => o.id === payload.orderId);
+    if (!source) {
+      setPendingDeleteUndo(null);
+      setError("Ordine non trovato");
+      return;
+    }
+    const nextItems = (source.items || [])
+      .filter((x) => x.id !== payload.itemId)
+      .map((x) => ({
+        productId: x.productId,
+        qty: Number(x.qty || 0),
+        unitPrice: Number(x.unitPrice || 0),
+      }))
+      .filter((x) => x.productId && x.qty > 0);
+    if (!nextItems.length) {
+      setPendingDeleteUndo(null);
+      setError("Impossibile eliminare l'ultima riga. Elimina l'ordine completo.");
+      return;
+    }
     setSaving(true);
     try {
       await api(`/admin/orders/${source.id}`, {
@@ -576,7 +618,7 @@ export default function AdminOrders() {
       const refreshed = await loadOrders();
       const fresh = (refreshed || []).find((o) => o.id === source.id);
       setSummaryOrder(fresh || null);
-      setConfirmDeleteLine(null);
+      setPendingDeleteUndo((curr) => (curr?.id === payload.id ? null : curr));
       await loadOrderStats();
     } catch {
       setError("Impossibile eliminare la riga prodotto");
@@ -584,6 +626,22 @@ export default function AdminOrders() {
       setSaving(false);
     }
   }
+
+  function undoDeleteOrderLine() {
+    if (pendingDeleteTimerRef.current) {
+      clearTimeout(pendingDeleteTimerRef.current);
+      pendingDeleteTimerRef.current = null;
+    }
+    setPendingDeleteUndo(null);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (pendingDeleteTimerRef.current) {
+        clearTimeout(pendingDeleteTimerRef.current);
+      }
+    };
+  }, []);
 
   function statusMeta(status) {
     if (status === "SUBMITTED") return { label: "In attesa pagamento", cls: "status pending" };
@@ -1515,6 +1573,22 @@ export default function AdminOrders() {
             </div>
           </div>
         </Portal>
+      ) : null}
+      {pendingDeleteUndo ? (
+        <div className="undo-toast" role="status" aria-live="polite">
+          <div className="undo-toast-title">Riga in eliminazione</div>
+          <div className="undo-toast-text">
+            {pendingDeleteUndo.itemName} <span className="mono">{pendingDeleteUndo.sku}</span>
+          </div>
+          <div className="undo-toast-actions">
+            <button className="btn ghost small" onClick={undoDeleteOrderLine}>
+              Annulla (undo)
+            </button>
+          </div>
+          <div className="undo-toast-progress">
+            <div key={pendingDeleteUndo.id} className="undo-toast-progress-bar" />
+          </div>
+        </div>
       ) : null}
       {editingOrder ? (
         <Portal>

@@ -5493,6 +5493,69 @@ button {
   margin: 0 auto 10px;
 }
 
+.undo-toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1200;
+  width: min(420px, calc(100vw - 24px));
+  background: linear-gradient(150deg, #0f172a, #1e293b);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 14px;
+  padding: 12px 12px 10px;
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.35);
+}
+
+.undo-toast-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.undo-toast-text {
+  margin-top: 4px;
+  font-size: 0.86rem;
+  color: rgba(226, 232, 240, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.undo-toast-actions {
+  margin-top: 10px;
+}
+
+.undo-toast-actions .btn.ghost.small {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.undo-toast-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.35);
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.undo-toast-progress-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #22c55e, #38bdf8);
+  transform-origin: left center;
+  animation: undoCountdown 5s linear forwards;
+}
+
+@keyframes undoCountdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 .order-modal .ghost,
 .order-modal .primary {
   border-radius: 12px;
