@@ -10,11 +10,8 @@ import { api, getToken, getAuthToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
-import ReactQuill, { Quill } from "react-quill-new";
+import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
-import QuillResizeImage from "quill-resize-image";
-
-Quill.register("modules/resize", QuillResizeImage);
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -84,9 +81,6 @@ const QUILL_MODULES = {
       },
     },
   },
-  resize: {
-    locale: {},
-  },
 };
 
 const QUILL_FORMATS = [
@@ -96,7 +90,6 @@ const QUILL_FORMATS = [
   "list",
   "link", "image",
   "color", "background",
-  "width", "height", "style",
 ];
 
 function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione..." }) {
