@@ -200,6 +200,7 @@ button {
   height: calc(100vh - 3rem);
   overflow: hidden;
   isolation: isolate;
+  border-right: 1px solid rgba(14, 165, 233, 0.12);
 }
 
 .admin-sidebar::before {
@@ -428,18 +429,31 @@ button {
   display: flex;
   gap: 0.9rem;
   align-items: center;
+  position: relative;
 }
 
 .sidebar-toggle-btn {
-  margin-left: auto;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: #fff;
-  color: #334155;
-  font-weight: 700;
+  position: absolute;
+  top: 50%;
+  right: -29px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 84px;
+  border-radius: 0 12px 12px 0;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.96));
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
   cursor: pointer;
+  z-index: 4;
+}
+
+.sidebar-toggle-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .brand-mark {
@@ -593,6 +607,7 @@ button {
 }
 
 .nav-icon {
+  display: none;
   width: 22px;
   height: 22px;
   border-radius: 8px;
@@ -619,7 +634,7 @@ button {
 }
 
 .admin-shell.sidebar-collapsed .sidebar-toggle-btn {
-  margin-left: 0;
+  right: -27px;
 }
 
 .admin-shell.sidebar-collapsed .brand {
@@ -637,6 +652,10 @@ button {
 .admin-shell.sidebar-collapsed .nav-item {
   justify-content: center;
   padding: 0.72rem;
+}
+
+.admin-shell.sidebar-collapsed .nav-icon {
+  display: inline-flex;
 }
 
 .page-header {

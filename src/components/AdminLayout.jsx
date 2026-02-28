@@ -1,6 +1,34 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Lottie from "lottie-react";
+import {
+  LuLayoutDashboard,
+  LuChartNoAxesCombined,
+  LuFileChartColumn,
+  LuMail,
+  LuPackage,
+  LuTruck,
+  LuBadgeCheck,
+  LuTags,
+  LuCloudDownload,
+  LuPercent,
+  LuSettings,
+  LuShoppingCart,
+  LuFileText,
+  LuBoxes,
+  LuClipboardList,
+  LuArrowLeftRight,
+  LuReceipt,
+  LuWallet,
+  LuShieldCheck,
+  LuPackagePlus,
+  LuRoute,
+  LuUndo2,
+  LuBuilding2,
+  LuUserCog,
+  LuChevronsLeft,
+  LuChevronsRight,
+} from "react-icons/lu";
 import { api, getToken, logout } from "../lib/api.js";
 import Portal from "./Portal.jsx";
 import logo from "../assets/logo.png";
@@ -13,30 +41,30 @@ import generalMp3 from "../assets/general.mp3";
 // [x] "Segna tutto come letto" campanella notifiche
 
 const links = [
-  { to: "/admin/dashboard", label: "Dashboard", icon: "DB" },
-  { to: "/admin/analytics", label: "Analytics", icon: "AN" },
-  { to: "/admin/reports", label: "Report", icon: "RP" },
-  { to: "/admin/mail-marketing", label: "Mail marketing", icon: "MM" },
-  { to: "/admin/products", label: "Prodotti", icon: "PR" },
-  { to: "/admin/supplier-registry", label: "Fornitori", icon: "FO" },
-  { to: "/admin/brands", label: "Brand", icon: "BR" },
-  { to: "/admin/categories", label: "Categorie", icon: "CA" },
-  { to: "/admin/suppliers", label: "Drop", icon: "DR" },
-  { to: "/admin/discounts", label: "Sconti e Regole", icon: "SC" },
-  { to: "/admin/settings", label: "Impostazioni", icon: "IM" },
-  { to: "/admin/orders", label: "Ordini", icon: "OR" },
-  { to: "/admin/invoices", label: "Fatture", icon: "FA" },
-  { to: "/admin/inventory", label: "Inventario", icon: "IN" },
-  { to: "/admin/goods-receipts", label: "Arrivo merci", icon: "AM" },
-  { to: "/admin/warehouse-movements", label: "Movimenti magazzino", icon: "MV" },
-  { to: "/admin/expenses", label: "Registro spese", icon: "RS" },
-  { to: "/admin/treasury", label: "Tesoreria", icon: "TS" },
-  { to: "/admin/fiscal", label: "Gestione fiscale", icon: "GF" },
-  { to: "/admin/bundles", label: "Bundle prodotto", icon: "BD" },
-  { to: "/admin/logistics", label: "Logistica", icon: "LG" },
-  { to: "/admin/returns", label: "Resi", icon: "RE" },
-  { to: "/admin/companies", label: "Clienti/Aziende", icon: "CL" },
-  { to: "/admin/users", label: "Utenti admin", icon: "UA" },
+  { to: "/admin/dashboard", label: "Dashboard", icon: LuLayoutDashboard },
+  { to: "/admin/analytics", label: "Analytics", icon: LuChartNoAxesCombined },
+  { to: "/admin/reports", label: "Report", icon: LuFileChartColumn },
+  { to: "/admin/mail-marketing", label: "Mail marketing", icon: LuMail },
+  { to: "/admin/products", label: "Prodotti", icon: LuPackage },
+  { to: "/admin/supplier-registry", label: "Fornitori", icon: LuTruck },
+  { to: "/admin/brands", label: "Brand", icon: LuBadgeCheck },
+  { to: "/admin/categories", label: "Categorie", icon: LuTags },
+  { to: "/admin/suppliers", label: "Drop", icon: LuCloudDownload },
+  { to: "/admin/discounts", label: "Sconti e Regole", icon: LuPercent },
+  { to: "/admin/settings", label: "Impostazioni", icon: LuSettings },
+  { to: "/admin/orders", label: "Ordini", icon: LuShoppingCart },
+  { to: "/admin/invoices", label: "Fatture", icon: LuFileText },
+  { to: "/admin/inventory", label: "Inventario", icon: LuBoxes },
+  { to: "/admin/goods-receipts", label: "Arrivo merci", icon: LuClipboardList },
+  { to: "/admin/warehouse-movements", label: "Movimenti magazzino", icon: LuArrowLeftRight },
+  { to: "/admin/expenses", label: "Registro spese", icon: LuReceipt },
+  { to: "/admin/treasury", label: "Tesoreria", icon: LuWallet },
+  { to: "/admin/fiscal", label: "Gestione fiscale", icon: LuShieldCheck },
+  { to: "/admin/bundles", label: "Bundle prodotto", icon: LuPackagePlus },
+  { to: "/admin/logistics", label: "Logistica", icon: LuRoute },
+  { to: "/admin/returns", label: "Resi", icon: LuUndo2 },
+  { to: "/admin/companies", label: "Clienti/Aziende", icon: LuBuilding2 },
+  { to: "/admin/users", label: "Utenti admin", icon: LuUserCog },
 ];
 
 const ORDER_KEY = "admin_sidebar_order";
@@ -340,39 +368,42 @@ export default function AdminLayout() {
             title={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
             aria-label={sidebarCollapsed ? "Espandi sidebar" : "Compatta sidebar"}
           >
-            {sidebarCollapsed ? ">>" : "<<"}
+            {sidebarCollapsed ? <LuChevronsRight /> : <LuChevronsLeft />}
           </button>
         </div>
 
         <nav className="admin-nav">
-          {order.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              draggable
-              onDragStart={() => onDragStart(l)}
-              onDragOver={(e) => onDragOverItem(e, l)}
-              onDrop={(e) => onDropItem(e, l)}
-              onDragEnd={() => {
-                if (baseOrderRef.current) setOrder(baseOrderRef.current);
-                setDragging(null);
-                setDragOver(null);
-                baseOrderRef.current = null;
-              }}
-              className={({ isActive }) => {
-                const classes = ["nav-item"];
-                if (isActive) classes.push("active");
-                if (dragOver === l.to) classes.push("drag-over");
-                if (dragging === l.to) classes.push("dragging");
-                return classes.join(" ");
-              }}
-              title={sidebarCollapsed ? l.label : undefined}
-            >
-              <span className="nav-grip" aria-hidden="true">⋮⋮</span>
-              <span className="nav-icon" aria-hidden="true">{l.icon}</span>
-              <span className="nav-label">{l.label}</span>
-            </NavLink>
-          ))}
+          {order.map((l) => {
+            const Icon = l.icon;
+            return (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                draggable
+                onDragStart={() => onDragStart(l)}
+                onDragOver={(e) => onDragOverItem(e, l)}
+                onDrop={(e) => onDropItem(e, l)}
+                onDragEnd={() => {
+                  if (baseOrderRef.current) setOrder(baseOrderRef.current);
+                  setDragging(null);
+                  setDragOver(null);
+                  baseOrderRef.current = null;
+                }}
+                className={({ isActive }) => {
+                  const classes = ["nav-item"];
+                  if (isActive) classes.push("active");
+                  if (dragOver === l.to) classes.push("drag-over");
+                  if (dragging === l.to) classes.push("dragging");
+                  return classes.join(" ");
+                }}
+                title={sidebarCollapsed ? l.label : undefined}
+              >
+                <span className="nav-grip" aria-hidden="true">⋮⋮</span>
+                <span className="nav-icon" aria-hidden="true"><Icon size={15} /></span>
+                <span className="nav-label">{l.label}</span>
+              </NavLink>
+            );
+          })}
         </nav>
       </aside>
 
