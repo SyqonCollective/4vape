@@ -6034,7 +6034,7 @@ export async function adminRoutes(app: FastifyInstance) {
           id: `order:${o.id}`,
           type: "ORDER_PAID_OR_COMPLETED",
           createdAt: o.createdAt,
-          title: o.status === "FULFILLED" ? "Ordine completato" : "Ordine pagato",
+          title: o.status === "FULFILLED" ? "Ordine completato" : "Nuovo ordine",
           message: `${o.company?.name || "Azienda"} · Stato ${orderStatusLabel(o.status)}`,
           href: "/admin/orders",
         })),

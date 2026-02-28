@@ -354,8 +354,20 @@ button {
 }
 
 .notif-item-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 700;
   color: #0f172a;
+}
+
+.notif-order-anim {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
 }
 
 .notif-item-body {

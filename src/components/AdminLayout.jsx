@@ -5,6 +5,7 @@ import { api, getToken, logout } from "../lib/api.js";
 import Portal from "./Portal.jsx";
 import logo from "../assets/logo.png";
 import notificationOn from "../assets/NotificationOn.json";
+import orderComplete from "../assets/OrderComplete.json";
 import saleMp3 from "../assets/sale.mp3";
 import generalMp3 from "../assets/general.mp3";
 
@@ -102,6 +103,7 @@ export default function AdminLayout() {
     }
   });
   const firstNotifLoadRef = useRef(true);
+  const hasSuccessfulNotifFetchRef = useRef(false);
   const saleAudioRef = useRef(null);
   const generalAudioRef = useRef(null);
 
@@ -192,7 +194,7 @@ export default function AdminLayout() {
         const prevIds = new Set(prev.map((x) => x.id));
         const fresh = incoming.filter((x) => !prevIds.has(x.id));
 
-        if (!firstNotifLoadRef.current && fresh.length > 0) {
+        if (hasSuccessfulNotifFetchRef.current && fresh.length > 0) {
           const hasOrder = fresh.some((x) => x.type === "ORDER_PAID_OR_COMPLETED");
           const hasOther = fresh.some((x) => x.type !== "NEW_ORDER");
           if (hasOrder && saleAudioRef.current) {
@@ -213,6 +215,7 @@ export default function AdminLayout() {
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .slice(0, 60);
       });
+      hasSuccessfulNotifFetchRef.current = true;
       setNotifError("");
     } catch {
       setNotifError("Impossibile aggiornare notifiche");
@@ -392,7 +395,14 @@ export default function AdminLayout() {
                         className={`notif-item ${new Date(n.createdAt).getTime() > seenAt ? "is-new" : ""}`}
                       >
                         <button className="notif-main" onClick={() => openNotification(n)}>
-                          <div className="notif-item-title">{n.title}</div>
+                          <div className="notif-item-title">
+                            <span>{n.title}</span>
+                            {n.type === "ORDER_PAID_OR_COMPLETED" ? (
+                              <span className="notif-order-anim">
+                                <Lottie animationData={orderComplete} loop />
+                              </span>
+                            ) : null}
+                          </div>
                           <div className="notif-item-body">{n.message}</div>
                           <div className="notif-item-date">
                             {new Date(n.createdAt).toLocaleString("it-IT")}
