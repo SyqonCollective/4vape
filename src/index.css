@@ -4274,6 +4274,43 @@ button {
   border-radius: 8px;
 }
 
+.rte .ql-toolbar .ql-emoji::after {
+  content: "😊";
+  font-size: 16px;
+}
+
+.rte-emoji-picker {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-height: 220px;
+  overflow-y: auto;
+  width: max-content;
+}
+
+.rte-emoji-item {
+  border: none;
+  background: none;
+  font-size: 18px;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.rte-emoji-item:hover {
+  background: #eff6ff;
+}
+
 .mono {
   font-family: "SF Mono", ui-monospace, monospace;
 }

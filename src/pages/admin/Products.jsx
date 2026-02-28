@@ -10,8 +10,11 @@ import { api, getToken, getAuthToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
-import ReactQuill from "react-quill-new";
+import ReactQuill, { Quill } from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import QuillResizeImage from "quill-resize-image";
+
+Quill.register("modules/resize", QuillResizeImage);
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -20,17 +23,70 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 // [x] Breve descrizione sopra descrizione con stesso editor rich text
 // [x] Scheda prodotto aperta più ampia (quasi full-screen)
 
+const EMOJI_LIST = [
+  "😀","😂","😍","🥰","😎","🤩","🔥","✨","💯","👍",
+  "❤️","💚","💙","💜","🧡","💛","🖤","🤍","💖","💝",
+  "🎉","🎊","🏆","⭐","🌟","💎","🎁","🎯","✅","❌",
+  "⚡","💧","🌈","🍃","🌿","🌸","🌺","🍀","🫧","💨",
+  "🚀","💣","🎶","📢","📌","🔗","📦","🛒","💰","🏷️",
+  "👉","👈","👆","👇","☝️","✌️","🤞","🙏","💪","🤝",
+  "🍓","🍇","🍊","🍋","🍎","🍑","🫐","🍉","🥝","🍌",
+  "☁️","🌙","☀️","🌊","❄️","🔔","💡","🎨","🧪","💊"
+];
+
 const QUILL_MODULES = {
-  toolbar: [
-    [{ header: [1, 2, 3, 4, false] }],
-    [{ size: ["small", false, "large", "huge"] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ align: [] }],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link", "image"],
-    [{ color: [] }, { background: [] }],
-    ["clean"],
-  ],
+  toolbar: {
+    container: [
+      [{ header: [1, 2, 3, 4, false] }],
+      [{ size: ["small", false, "large", "huge"] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ align: [] }],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link", "image"],
+      [{ color: [] }, { background: [] }],
+      ["emoji"],
+      ["clean"],
+    ],
+    handlers: {
+      emoji: function () {
+        const editor = this.quill;
+        const container = editor.container.closest(".rte");
+        if (!container) return;
+        let picker = container.querySelector(".rte-emoji-picker");
+        if (picker) {
+          picker.remove();
+          return;
+        }
+        picker = document.createElement("div");
+        picker.className = "rte-emoji-picker";
+        EMOJI_LIST.forEach((emoji) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "rte-emoji-item";
+          btn.textContent = emoji;
+          btn.addEventListener("click", () => {
+            const range = editor.getSelection(true);
+            editor.insertText(range.index, emoji);
+            editor.setSelection(range.index + emoji.length);
+            picker.remove();
+          });
+          picker.appendChild(btn);
+        });
+        const toolbar = container.querySelector(".ql-toolbar");
+        if (toolbar) toolbar.appendChild(picker);
+        const close = (e) => {
+          if (!picker.contains(e.target)) {
+            picker.remove();
+            document.removeEventListener("mousedown", close);
+          }
+        };
+        setTimeout(() => document.addEventListener("mousedown", close), 0);
+      },
+    },
+  },
+  resize: {
+    locale: {},
+  },
 };
 
 const QUILL_FORMATS = [
@@ -40,6 +96,7 @@ const QUILL_FORMATS = [
   "list",
   "link", "image",
   "color", "background",
+  "width", "height", "style",
 ];
 
 function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione..." }) {
