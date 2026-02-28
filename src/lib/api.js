@@ -50,16 +50,19 @@ export function setLogoutResolver(resolver) {
 }
 
 export async function getAuthToken() {
-  if (authTokenResolver) {
-    const resolved = await authTokenResolver();
-    if (resolved) return resolved;
+  if (CLERK_ENABLED) {
+    if (authTokenResolver) {
+      const resolved = await authTokenResolver();
+      if (resolved) return resolved;
+    }
     try {
       const clerkToken = await window?.Clerk?.session?.getToken?.();
       if (clerkToken) return clerkToken;
     } catch {
       // ignore and continue
     }
-    // When Clerk resolver is active, avoid falling back to stale local JWT.
+    // With Clerk enabled never fall back to legacy local JWT:
+    // it can be stale/invalid and causes infinite 401 loops.
     return null;
   }
   return getToken();
