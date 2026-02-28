@@ -4244,123 +4244,31 @@ button {
   overflow: hidden;
 }
 
-.rte-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px 10px;
+.rte .ql-toolbar.ql-snow {
+  border: none;
   border-bottom: 1px solid var(--stroke);
   background: #f8fafc;
-  align-items: center;
 }
 
-.rte-btn {
-  border: 1px solid var(--stroke);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text);
-  font-weight: 700;
-  font-size: 12px;
-  line-height: 1;
-  padding: 6px 8px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.rte-btn:hover {
-  background: #eff6ff;
-  border-color: #93c5fd;
-}
-
-.rte-select {
-  border: 1px solid var(--stroke);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text);
-  font-size: 12px;
-  padding: 5px 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.rte-select:hover {
-  border-color: #93c5fd;
-}
-
-.rte-separator {
-  width: 1px;
-  height: 22px;
-  background: var(--stroke);
-  margin: 0 2px;
-}
-
-.rte-emoji-wrap {
-  position: relative;
-}
-
-.rte-emoji-picker {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 100;
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 2px;
-  padding: 8px;
-  background: #fff;
-  border: 1px solid var(--stroke);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  max-height: 220px;
-  overflow-y: auto;
-  width: max-content;
-}
-
-.rte-emoji-item {
+.rte .ql-container.ql-snow {
   border: none;
-  background: none;
-  font-size: 18px;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 6px;
-  line-height: 1;
+  font-family: inherit;
+  font-size: 0.92rem;
 }
 
-.rte-emoji-item:hover {
-  background: #eff6ff;
-}
-
-.rte-editor {
+.rte .ql-editor {
   min-height: 170px;
-  padding: 12px;
   line-height: 1.55;
   color: var(--text);
-  outline: none;
-  white-space: pre-wrap;
+  padding: 12px;
 }
 
-.rte-editor:empty::before {
-  content: attr(data-placeholder);
+.rte .ql-editor.ql-blank::before {
   color: var(--muted);
+  font-style: normal;
 }
 
-.rte-editor p {
-  margin: 0 0 10px;
-}
-
-.rte-editor ul,
-.rte-editor ol {
-  margin: 0 0 10px 18px;
-}
-
-.rte-editor h1,
-.rte-editor h2,
-.rte-editor h3 {
-  margin: 0 0 10px;
-  line-height: 1.25;
-}
-
-.rte-editor img {
+.rte .ql-editor img {
   max-width: 100%;
   height: auto;
   border-radius: 8px;

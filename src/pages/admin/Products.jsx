@@ -10,6 +10,9 @@ import { api, getToken, getAuthToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
+
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 // CHECKLIST (admin richieste):
@@ -17,244 +20,38 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 // [x] Breve descrizione sopra descrizione con stesso editor rich text
 // [x] Scheda prodotto aperta più ampia (quasi full-screen)
 
+const QUILL_MODULES = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, false] }],
+    [{ size: ["small", false, "large", "huge"] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ align: [] }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link", "image"],
+    [{ color: [] }, { background: [] }],
+    ["clean"],
+  ],
+};
+
+const QUILL_FORMATS = [
+  "header", "size",
+  "bold", "italic", "underline", "strike",
+  "align",
+  "list",
+  "link", "image",
+  "color", "background",
+];
+
 function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione..." }) {
-  const editorRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const savedRangeRef = useRef(null);
-  const internalHtmlRef = useRef("");
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
-  const EMOJI_LIST = [
-    "😀","😂","😍","🥰","😎","🤩","🔥","✨","💯","👍",
-    "❤️","💚","💙","💜","🧡","💛","🖤","🤍","💖","💝",
-    "🎉","🎊","🏆","⭐","🌟","💎","🎁","🎯","✅","❌",
-    "⚡","💧","🌈","🍃","🌿","🌸","🌺","🍀","🫧","💨",
-    "🚀","💣","🎶","📢","📌","🔗","📦","🛒","💰","🏷️",
-    "👉","👈","👆","👇","☝️","✌️","🤞","🙏","💪","🤝",
-    "🍓","🍇","🍊","🍋","🍎","🍑","🫐","🍉","🥝","🍌",
-    "☁️","🌙","☀️","🌊","❄️","🔔","💡","🎨","🧪","💊"
-  ];
-
-  useEffect(() => {
-    const el = editorRef.current;
-    if (!el) return;
-    if (document.activeElement === el) return;
-    if (internalHtmlRef.current === (value || "")) return;
-    el.innerHTML = value || "";
-    internalHtmlRef.current = value || "";
-  }, [value]);
-
-  function saveSelection() {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-    const range = sel.getRangeAt(0);
-    const el = editorRef.current;
-    if (!el) return;
-    if (el.contains(range.commonAncestorContainer)) {
-      savedRangeRef.current = range.cloneRange();
-    }
-  }
-
-  function restoreSelection() {
-    const range = savedRangeRef.current;
-    if (!range) return;
-    const sel = window.getSelection();
-    if (!sel) return;
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-
-  function emitChange() {
-    const el = editorRef.current;
-    if (!el) return;
-    const html = el.innerHTML;
-    internalHtmlRef.current = html;
-    onChange(html);
-  }
-
-  function run(command, arg) {
-    const el = editorRef.current;
-    if (!el) return;
-    el.focus();
-    restoreSelection();
-    document.execCommand(command, false, arg);
-    saveSelection();
-    emitChange();
-  }
-
-  function onInput() {
-    saveSelection();
-    emitChange();
-  }
-
-  function onAddLink() {
-    saveSelection();
-    const sel = window.getSelection();
-    const selectedNode = sel?.anchorNode?.parentElement;
-    const isImage = selectedNode?.tagName === "IMG" || sel?.anchorNode?.tagName === "IMG";
-    const url = window.prompt("Inserisci URL (https://...)");
-    if (!url) return;
-    if (isImage) {
-      const img = selectedNode?.tagName === "IMG" ? selectedNode : sel?.anchorNode;
-      if (img) {
-        const a = document.createElement("a");
-        a.href = url.trim();
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        img.parentNode.insertBefore(a, img);
-        a.appendChild(img);
-        emitChange();
-        return;
-      }
-    }
-    run("createLink", url.trim());
-  }
-
-  function onInsertImage() {
-    saveSelection();
-    const url = window.prompt("Inserisci URL immagine (https://...)");
-    if (!url) return;
-    run("insertImage", url.trim());
-  }
-
-  function onUploadImage(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const el = editorRef.current;
-      if (!el) return;
-      el.focus();
-      restoreSelection();
-      document.execCommand("insertImage", false, reader.result);
-      saveSelection();
-      emitChange();
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  }
-
-  function onInsertEmoji(emoji) {
-    const el = editorRef.current;
-    if (!el) return;
-    el.focus();
-    restoreSelection();
-    document.execCommand("insertText", false, emoji);
-    saveSelection();
-    emitChange();
-    setShowEmojiPicker(false);
-  }
-
-  function preventFocusLoss(e) {
-    if (e.target.tagName !== "SELECT" && e.target.tagName !== "OPTION") {
-      e.preventDefault();
-    }
-  }
-
-  function onHeadingChange(e) {
-    const val = e.target.value;
-    run("formatBlock", `<${val}>`);
-  }
-
-  function onFontSizeChange(e) {
-    run("fontSize", e.target.value);
-  }
-
   return (
     <div className="rte">
-      <div className="rte-toolbar" onMouseDown={preventFocusLoss}>
-        <select className="rte-select" onChange={onHeadingChange} defaultValue="p" title="Formato">
-          <option value="p">Paragrafo</option>
-          <option value="h1">H1</option>
-          <option value="h2">H2</option>
-          <option value="h3">H3</option>
-          <option value="h4">H4</option>
-        </select>
-        <select className="rte-select" onChange={onFontSizeChange} defaultValue="3" title="Dimensione">
-          <option value="1">Piccolo</option>
-          <option value="2">Normale-</option>
-          <option value="3">Normale</option>
-          <option value="4">Medio</option>
-          <option value="5">Grande</option>
-          <option value="6">Molto grande</option>
-          <option value="7">Enorme</option>
-        </select>
-        <div className="rte-separator" />
-        <button type="button" className="rte-btn" onClick={() => run("bold")} title="Grassetto">
-          <strong>B</strong>
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("italic")} title="Corsivo">
-          <em>I</em>
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("underline")} title="Sottolineato">
-          <u>U</u>
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("strikeThrough")} title="Barrato">
-          <s>S</s>
-        </button>
-        <div className="rte-separator" />
-        <button type="button" className="rte-btn" onClick={() => run("justifyLeft")} title="Allinea a sinistra">
-          ≡←
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("justifyCenter")} title="Centra">
-          ≡↔
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("justifyRight")} title="Allinea a destra">
-          →≡
-        </button>
-        <div className="rte-separator" />
-        <button type="button" className="rte-btn" onClick={() => run("insertUnorderedList")} title="Elenco puntato">
-          • List
-        </button>
-        <button type="button" className="rte-btn" onClick={() => run("insertOrderedList")} title="Elenco numerato">
-          1. List
-        </button>
-        <div className="rte-separator" />
-        <button type="button" className="rte-btn" onClick={onAddLink} title="Aggiungi link (o link su immagine selezionata)">
-          🔗 Link
-        </button>
-        <button type="button" className="rte-btn" onClick={onInsertImage} title="Inserisci immagine da URL">
-          🖼️ URL
-        </button>
-        <button type="button" className="rte-btn" onClick={() => fileInputRef.current?.click()} title="Carica immagine">
-          📤 Img
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          style={{ display: "none" }}
-          onChange={onUploadImage}
-        />
-        <div className="rte-emoji-wrap">
-          <button type="button" className="rte-btn" onClick={() => setShowEmojiPicker((v) => !v)} title="Emoji">
-            😊
-          </button>
-          {showEmojiPicker && (
-            <div className="rte-emoji-picker">
-              {EMOJI_LIST.map((e) => (
-                <button key={e} type="button" className="rte-emoji-item" onClick={() => onInsertEmoji(e)}>
-                  {e}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="rte-separator" />
-        <button type="button" className="rte-btn" onClick={() => run("removeFormat")} title="Rimuovi formattazione">
-          Clear
-        </button>
-      </div>
-      <div
-        ref={editorRef}
-        className="rte-editor"
-        contentEditable
-        suppressContentEditableWarning
-        data-placeholder={placeholder}
-        onInput={onInput}
-        onMouseUp={saveSelection}
-        onKeyUp={saveSelection}
-        onBlur={() => { saveSelection(); setShowEmojiPicker(false); }}
+      <ReactQuill
+        theme="snow"
+        value={value || ""}
+        onChange={onChange}
+        placeholder={placeholder}
+        modules={QUILL_MODULES}
+        formats={QUILL_FORMATS}
       />
     </div>
   );
