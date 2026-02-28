@@ -340,6 +340,9 @@ model Order {
   status        OrderStatus   @default(DRAFT)
   paymentMethod PaymentMethod @default(BANK_TRANSFER)
   total         Decimal       @db.Decimal(12, 2)
+  shippingCost  Decimal       @default(0) @db.Decimal(12, 2)
+  shippingVatRate Decimal     @default(22) @db.Decimal(5, 2)
+  shippingVatAmount Decimal   @default(0) @db.Decimal(12, 2)
   discountTotal Decimal?      @db.Decimal(12, 2)
   createdAt     DateTime      @default(now())
 

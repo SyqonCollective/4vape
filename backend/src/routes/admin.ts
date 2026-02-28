@@ -1067,6 +1067,8 @@ export async function adminRoutes(app: FastifyInstance) {
         companyId: z.string().min(1),
         status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"]).optional(),
         paymentMethod: z.enum(["BANK_TRANSFER", "CARD", "COD", "OTHER"]).optional(),
+        shippingCost: z.number().nonnegative().optional(),
+        shippingVatRate: z.number().min(0).max(100).optional(),
         discountTotal: z.number().optional(),
         items: z.array(
           z.object({
@@ -1122,8 +1124,15 @@ export async function adminRoutes(app: FastifyInstance) {
       return sum + (rate > 0 ? roundUp2(base * (rate / 100)) : 0);
     }, 0);
     const exciseTotal = items.reduce((sum, i: any) => sum + roundUp2(Number(i.__exciseUnit || 0) * Number(i.qty || 0)), 0);
+    const shippingCost = Number(body.shippingCost || 0);
+    const shippingVatRate = Number(body.shippingVatRate ?? 22);
+    const shippingVatAmount = shippingVatRate > 0 ? roundUp2(shippingCost * (shippingVatRate / 100)) : 0;
     const discountTotal = body.discountTotal ? new Prisma.Decimal(body.discountTotal) : new Prisma.Decimal(0);
-    const gross = subtotal.add(new Prisma.Decimal(vatTotal)).add(new Prisma.Decimal(exciseTotal));
+    const gross = subtotal
+      .add(new Prisma.Decimal(vatTotal))
+      .add(new Prisma.Decimal(exciseTotal))
+      .add(new Prisma.Decimal(shippingCost))
+      .add(new Prisma.Decimal(shippingVatAmount));
     const total = Prisma.Decimal.max(gross.sub(discountTotal), new Prisma.Decimal(0));
 
     const maxOrderRow = await prisma.order.aggregate({
@@ -1139,6 +1148,9 @@ export async function adminRoutes(app: FastifyInstance) {
         status: body.status ?? "SUBMITTED",
         paymentMethod: body.paymentMethod ?? "BANK_TRANSFER",
         total,
+        shippingCost: new Prisma.Decimal(shippingCost),
+        shippingVatRate: new Prisma.Decimal(shippingVatRate),
+        shippingVatAmount: new Prisma.Decimal(shippingVatAmount),
         discountTotal,
         items: {
           create: items.map(({ __taxRate, __exciseUnit, ...rest }: any) => rest),
@@ -1159,6 +1171,8 @@ export async function adminRoutes(app: FastifyInstance) {
         status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "FULFILLED", "CANCELLED"]).optional(),
         paymentMethod: z.enum(["BANK_TRANSFER", "CARD", "COD", "OTHER"]).optional(),
         companyId: z.string().optional(),
+        shippingCost: z.number().nonnegative().optional(),
+        shippingVatRate: z.number().min(0).max(100).optional(),
         discountTotal: z.number().optional(),
         items: z
           .array(
@@ -1174,7 +1188,14 @@ export async function adminRoutes(app: FastifyInstance) {
 
     const existing = await prisma.order.findUnique({
       where: { id },
-      include: { items: true, fiscalInvoice: { select: { id: true } } },
+      include: {
+        items: {
+          include: {
+            product: { select: { taxRate: true, exciseTotal: true, exciseMl: true, exciseProduct: true } },
+          },
+        },
+        fiscalInvoice: { select: { id: true } },
+      },
     });
     if (!existing) return reply.notFound("Order not found");
     if (existing.fiscalInvoice) {
@@ -1183,6 +1204,9 @@ export async function adminRoutes(app: FastifyInstance) {
 
     let itemsPayload: Prisma.OrderItemCreateManyOrderInput[] | undefined;
     let total = existing.total;
+    const shippingCost = Number(body.shippingCost ?? existing.shippingCost ?? 0);
+    const shippingVatRate = Number(body.shippingVatRate ?? existing.shippingVatRate ?? 22);
+    const shippingVatAmount = shippingVatRate > 0 ? roundUp2(shippingCost * (shippingVatRate / 100)) : 0;
     let discountTotal =
       body.discountTotal != null ? new Prisma.Decimal(body.discountTotal) : existing.discountTotal;
 
@@ -1230,7 +1254,37 @@ export async function adminRoutes(app: FastifyInstance) {
       }, 0);
       const exciseTotal = itemsPayload.reduce((sum: number, i: any) => sum + roundUp2(Number(i.__exciseUnit || 0) * Number(i.qty || 0)), 0);
       const discountValue = discountTotal || new Prisma.Decimal(0);
-      const gross = subtotal.add(new Prisma.Decimal(vatTotal)).add(new Prisma.Decimal(exciseTotal));
+      const gross = subtotal
+        .add(new Prisma.Decimal(vatTotal))
+        .add(new Prisma.Decimal(exciseTotal))
+        .add(new Prisma.Decimal(shippingCost))
+        .add(new Prisma.Decimal(shippingVatAmount));
+      total = Prisma.Decimal.max(gross.sub(discountValue), new Prisma.Decimal(0));
+    } else {
+      const currentSubtotal = existing.items.reduce((sum, i) => sum + Number(i.lineTotal || 0), 0);
+      const currentVat = existing.items.reduce((sum, i) => {
+        const productExcise = Number(
+          (i as any)?.product?.exciseTotal ??
+          (Number((i as any)?.product?.exciseMl || 0) + Number((i as any)?.product?.exciseProduct || 0))
+        );
+        const rate = Number((i as any)?.product?.taxRate || 0);
+        const exc = roundUp2(productExcise * Number(i.qty || 0));
+        const base = Number(i.lineTotal || 0) + exc;
+        return sum + (rate > 0 ? roundUp2(base * (rate / 100)) : 0);
+      }, 0);
+      const currentExcise = existing.items.reduce((sum, i) => {
+        const productExcise = Number(
+          (i as any)?.product?.exciseTotal ??
+          (Number((i as any)?.product?.exciseMl || 0) + Number((i as any)?.product?.exciseProduct || 0))
+        );
+        return sum + roundUp2(productExcise * Number(i.qty || 0));
+      }, 0);
+      const discountValue = discountTotal || new Prisma.Decimal(0);
+      const gross = new Prisma.Decimal(currentSubtotal)
+        .add(new Prisma.Decimal(currentVat))
+        .add(new Prisma.Decimal(currentExcise))
+        .add(new Prisma.Decimal(shippingCost))
+        .add(new Prisma.Decimal(shippingVatAmount));
       total = Prisma.Decimal.max(gross.sub(discountValue), new Prisma.Decimal(0));
     }
 
@@ -1241,6 +1295,9 @@ export async function adminRoutes(app: FastifyInstance) {
           status: body.status ?? existing.status,
           paymentMethod: body.paymentMethod ?? existing.paymentMethod,
           companyId: body.companyId ?? existing.companyId,
+          shippingCost: new Prisma.Decimal(shippingCost),
+          shippingVatRate: new Prisma.Decimal(shippingVatRate),
+          shippingVatAmount: new Prisma.Decimal(shippingVatAmount),
           discountTotal,
           total,
           items: itemsPayload

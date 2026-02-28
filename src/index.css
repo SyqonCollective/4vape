@@ -5008,12 +5008,12 @@ button {
 
 .orders-table .row {
   display: grid;
-  grid-template-columns: 42px 90px 1.1fr 180px 150px 130px 130px 170px 220px;
+  grid-template-columns: 40px 86px minmax(170px, 1.1fr) minmax(160px, 1fr) 128px 108px 108px 150px minmax(300px, 1.6fr);
   gap: 12px;
   padding: 14px 18px;
   align-items: center;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1380px;
+  min-width: 0;
 }
 
 .orders-table-pro .row {
@@ -5027,13 +5027,23 @@ button {
 .orders-table .row > div:last-child,
 .order-row-actions {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-start;
   align-items: center;
+  white-space: normal;
+  overflow: hidden;
+}
+
+.orders-table .row > div {
+  min-width: 0;
   white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orders-table .row > div:last-child {
+  white-space: normal;
 }
 
 .order-row-check {
@@ -5189,12 +5199,12 @@ button {
 }
 
 .order-modal {
-  width: min(1120px, 94vw);
+  width: min(1520px, 98vw);
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
-  max-height: calc(100vh - 48px);
+  max-height: calc(100vh - 24px);
   display: flex;
   flex-direction: column;
   margin: 0 !important;
@@ -5209,7 +5219,7 @@ button {
 
 .order-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -5308,7 +5318,7 @@ button {
 .order-lines-header,
 .order-line {
   display: grid;
-  grid-template-columns: minmax(260px, 2.6fr) 120px 90px 120px 120px;
+  grid-template-columns: minmax(360px, 2.8fr) 140px 120px 140px 130px;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -5348,6 +5358,7 @@ button {
 
 .order-line input {
   width: 100%;
+  min-width: 0;
 }
 
 .line-title {
@@ -5455,7 +5466,7 @@ button {
 }
 
 .order-line > div:first-child {
-  min-width: 220px;
+  min-width: 0;
 }
 
 .order-line .btn.ghost {
@@ -5504,8 +5515,8 @@ button {
 
   .orders-table .row,
   .orders-table .row.header {
-    grid-template-columns: 42px 90px 1.1fr 180px 150px 130px 130px 170px 220px;
-    min-width: 1380px;
+    grid-template-columns: 40px 86px minmax(170px, 1.1fr) minmax(160px, 1fr) 128px 108px 108px 150px minmax(300px, 1.6fr);
+    min-width: 0;
   }
 
   .orders-filter-top {

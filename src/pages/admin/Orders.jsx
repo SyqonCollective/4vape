@@ -34,7 +34,7 @@ const formatCurrency = (value) =>
 const roundUp2 = (value) => Math.ceil((Number(value || 0) + Number.EPSILON) * 100) / 100;
 
 function computeOrderTotals(order) {
-  return (order?.items || []).reduce(
+  const base = (order?.items || []).reduce(
     (acc, item) => {
       const lineTotal = Number(item.lineTotal || 0);
       const qty = Number(item.qty || 0);
@@ -52,6 +52,18 @@ function computeOrderTotals(order) {
     },
     { revenue: 0, vat: 0, excise: 0 }
   );
+  const shipping = Number(order?.shippingCost || 0);
+  const shippingVat = Number(
+    order?.shippingVatAmount != null
+      ? order.shippingVatAmount
+      : roundUp2(shipping * (Number(order?.shippingVatRate || 22) / 100))
+  );
+  return {
+    ...base,
+    shipping,
+    shippingVat,
+    total: base.revenue + base.vat + base.excise + shipping + shippingVat,
+  };
 }
 
 export default function AdminOrders() {
@@ -80,10 +92,12 @@ export default function AdminOrders() {
   const [saving, setSaving] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
   const [shippingCost, setShippingCost] = useState(0);
+  const [shippingVatRate, setShippingVatRate] = useState(22);
   const [editCompanyId, setEditCompanyId] = useState("");
   const [editStatus, setEditStatus] = useState("SUBMITTED");
   const [editPaymentMethod, setEditPaymentMethod] = useState("BANK_TRANSFER");
   const [editShippingCost, setEditShippingCost] = useState(0);
+  const [editShippingVatRate, setEditShippingVatRate] = useState(22);
   const [editLineItems, setEditLineItems] = useState([]);
   const [editSearchQuery, setEditSearchQuery] = useState("");
   const [editSearchResults, setEditSearchResults] = useState([]);
@@ -142,7 +156,8 @@ export default function AdminOrders() {
       setEditCompanyId(editingOrder.companyId || "");
       setEditStatus(editingOrder.status || "SUBMITTED");
       setEditPaymentMethod(editingOrder.paymentMethod || "BANK_TRANSFER");
-      setEditShippingCost(0);
+      setEditShippingCost(Number(editingOrder.shippingCost || 0));
+      setEditShippingVatRate(Number(editingOrder.shippingVatRate || 22));
       setEditLineItems(
         (editingOrder.items || []).map((i) => ({
           productId: i.productId,
@@ -223,8 +238,15 @@ export default function AdminOrders() {
       },
       { subtotal: 0, vat: 0, excise: 0 }
     );
-    return { ...base, shipping: Number(shippingCost || 0), total: base.subtotal + base.vat + base.excise + Number(shippingCost || 0) };
-  }, [lineItems, shippingCost]);
+    const shipping = Number(shippingCost || 0);
+    const shippingVat = roundUp2(shipping * (Number(shippingVatRate || 0) / 100));
+    return {
+      ...base,
+      shipping,
+      shippingVat,
+      total: base.subtotal + base.vat + base.excise + shipping + shippingVat,
+    };
+  }, [lineItems, shippingCost, shippingVatRate]);
 
   const editTotals = useMemo(() => {
     const base = editLineItems.reduce(
@@ -244,8 +266,15 @@ export default function AdminOrders() {
       },
       { subtotal: 0, vat: 0, excise: 0 }
     );
-    return { ...base, shipping: Number(editShippingCost || 0), total: base.subtotal + base.vat + base.excise + Number(editShippingCost || 0) };
-  }, [editLineItems, editShippingCost]);
+    const shipping = Number(editShippingCost || 0);
+    const shippingVat = roundUp2(shipping * (Number(editShippingVatRate || 0) / 100));
+    return {
+      ...base,
+      shipping,
+      shippingVat,
+      total: base.subtotal + base.vat + base.excise + shipping + shippingVat,
+    };
+  }, [editLineItems, editShippingCost, editShippingVatRate]);
 
   const orderedStats = useMemo(() => {
     const byStatus = new Map((orderStats || []).map((s) => [s.status, Number(s.count || 0)]));
@@ -359,6 +388,7 @@ export default function AdminOrders() {
           status: orderStatus,
           paymentMethod,
           shippingCost: Number(shippingCost || 0),
+          shippingVatRate: Number(shippingVatRate || 22),
           items: lineItems.map((i) => ({
             productId: i.productId,
             qty: Number(i.qty || 1),
@@ -370,6 +400,7 @@ export default function AdminOrders() {
       setLineItems([]);
       setSearchQuery("");
       setShippingCost(0);
+      setShippingVatRate(22);
       await loadOrders();
       await loadOrderStats();
     } catch (err) {
@@ -440,6 +471,7 @@ export default function AdminOrders() {
           status: editStatus,
           paymentMethod: editPaymentMethod,
           shippingCost: Number(editShippingCost || 0),
+          shippingVatRate: Number(editShippingVatRate || 22),
           items: editLineItems.map((i) => ({
             productId: i.productId,
             qty: Number(i.qty || 1),
@@ -470,6 +502,19 @@ export default function AdminOrders() {
       setError("Impossibile eliminare ordine");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function deleteOrderById(orderId) {
+    const ok = window.confirm("Vuoi eliminare questo ordine?");
+    if (!ok) return;
+    try {
+      await api(`/admin/orders/${orderId}`, { method: "DELETE" });
+      if (editingOrder?.id === orderId) setEditingOrder(null);
+      await loadOrders();
+      await loadOrderStats();
+    } catch {
+      setError("Impossibile eliminare ordine");
     }
   }
 
@@ -623,12 +668,14 @@ export default function AdminOrders() {
             </thead>
             <tbody>${rows || '<tr><td colspan="6">Nessuna riga ordine.</td></tr>'}</tbody>
           </table>
-          <div class="tot">
+            <div class="tot">
             <div><span>Subtotale</span><strong>${formatCurrency(totals.revenue)}</strong></div>
             <div><span>Accise</span><strong>${formatCurrency(totals.excise)}</strong></div>
+            <div><span>Spedizione</span><strong>${formatCurrency(totals.shipping)}</strong></div>
+            <div><span>IVA spedizione</span><strong>${formatCurrency(totals.shippingVat)}</strong></div>
             <div><span>IVA</span><strong>${formatCurrency(totals.vat)}</strong></div>
             <div class="grand"><span>Totale ordine</span><strong>${formatCurrency(
-              totals.revenue + totals.vat + totals.excise
+              totals.total
             )}</strong></div>
           </div>
           <script>window.onload = () => { window.print(); window.close(); };</script>
@@ -881,6 +928,16 @@ export default function AdminOrders() {
               >
                 Modifica
               </button>
+              <button
+                className="btn danger"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteOrderById(o.id);
+                }}
+                disabled={Boolean(o.fiscalInvoice)}
+              >
+                Elimina
+              </button>
               {o.fiscalInvoice ? (
                 <button
                   className="btn ghost"
@@ -939,6 +996,9 @@ export default function AdminOrders() {
                   </button>
                   <button className="btn ghost small" onClick={() => setConfirmCompleteOrder(o)} disabled={Boolean(o.fiscalInvoice)}>
                     Completato
+                  </button>
+                  <button className="btn danger small" onClick={() => deleteOrderById(o.id)} disabled={Boolean(o.fiscalInvoice)}>
+                    Elimina
                   </button>
                   {o.fiscalInvoice ? (
                     <button className="btn ghost small" onClick={() => openInvoicePreview(o.fiscalInvoice.id)}>
@@ -1043,6 +1103,17 @@ export default function AdminOrders() {
                       value={shippingCost}
                       onWheel={(e) => e.currentTarget.blur()}
                       onChange={(e) => setShippingCost(Number(e.target.value || 0))}
+                    />
+                  </div>
+                  <div className="field">
+                    <label>IVA spedizione %</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={shippingVatRate}
+                      onWheel={(e) => e.currentTarget.blur()}
+                      onChange={(e) => setShippingVatRate(Number(e.target.value || 0))}
                     />
                   </div>
                 </div>
@@ -1150,6 +1221,10 @@ export default function AdminOrders() {
                     <div className="summary-row">
                       <span>Spedizione</span>
                       <strong>{formatCurrency(totals.shipping)}</strong>
+                    </div>
+                    <div className="summary-row">
+                      <span>IVA spedizione</span>
+                      <strong>{formatCurrency(totals.shippingVat)}</strong>
                     </div>
                     <div className="summary-row">
                       <span>IVA</span>
@@ -1275,9 +1350,17 @@ export default function AdminOrders() {
                               <span>IVA totale</span>
                               <strong>{formatCurrency(totals.vat)}</strong>
                             </div>
+                            <div className="summary-row">
+                              <span>Spedizione</span>
+                              <strong>{formatCurrency(totals.shipping)}</strong>
+                            </div>
+                            <div className="summary-row">
+                              <span>IVA spedizione</span>
+                              <strong>{formatCurrency(totals.shippingVat)}</strong>
+                            </div>
                             <div className="summary-row total">
                               <span>Totale ordine</span>
-                              <strong>{formatCurrency(totals.revenue + totals.vat + totals.excise)}</strong>
+                              <strong>{formatCurrency(totals.total)}</strong>
                             </div>
                           </div>
                         );
@@ -1385,6 +1468,17 @@ export default function AdminOrders() {
                             value={editShippingCost}
                             onWheel={(e) => e.currentTarget.blur()}
                             onChange={(e) => setEditShippingCost(Number(e.target.value || 0))}
+                          />
+                        </div>
+                        <div className="field">
+                          <label>IVA spedizione %</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editShippingVatRate}
+                            onWheel={(e) => e.currentTarget.blur()}
+                            onChange={(e) => setEditShippingVatRate(Number(e.target.value || 0))}
                           />
                         </div>
                       </div>
@@ -1498,6 +1592,10 @@ export default function AdminOrders() {
                       <div className="summary-row">
                         <span>Spedizione</span>
                         <strong>{formatCurrency(editTotals.shipping)}</strong>
+                      </div>
+                      <div className="summary-row">
+                        <span>IVA spedizione</span>
+                        <strong>{formatCurrency(editTotals.shippingVat)}</strong>
                       </div>
                       <div className="summary-row">
                         <span>IVA</span>
