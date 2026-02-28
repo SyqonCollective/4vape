@@ -32,7 +32,7 @@ async function loadLocalUserByEmailOrClerkId(clerkUserId: string, emails: string
     where: {
       OR: [
         { clerkUserId },
-        ...(normalized.length ? [{ email: { in: normalized } }] : []),
+        ...(normalized.length ? normalized.map((email) => ({ email: { equals: email, mode: "insensitive" as const } })) : []),
       ],
     },
     include: { company: true },
@@ -69,7 +69,15 @@ async function verifyClerkJwt(token: string): Promise<SessionUser | null> {
   const secretKey = process.env.CLERK_SECRET_KEY;
   if (!secretKey) return null;
 
-  const claims = await verifyClerkToken(token, { secretKey });
+  const envAuthorized = String(process.env.CLERK_AUTHORIZED_PARTIES || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const authorizedParties = envAuthorized.length
+    ? envAuthorized
+    : ["https://logistica4vape.it", "https://www.logistica4vape.it"];
+
+  const claims = await verifyClerkToken(token, { secretKey, authorizedParties });
   const clerkUserId = String(claims?.sub || "");
   if (!clerkUserId) return null;
 
