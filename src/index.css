@@ -3747,17 +3747,28 @@ button {
 }
 
 .modal.product-modal {
-  /* CHECKLIST: scheda prodotto più ampia/full-screen */
-  width: min(1480px, 98vw);
-  max-height: 92vh;
+  /* CHECKLIST: scheda prodotto full-screen */
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  top: 0;
+  left: 0;
+  transform: none;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  box-shadow: 0 32px 80px rgba(15, 23, 42, 0.24);
+  border: none;
+  box-shadow: none;
+  animation: product-modal-slide 0.3s ease both;
   background:
     radial-gradient(120% 110% at 100% 0%, rgba(14, 165, 233, 0.1), rgba(14, 165, 233, 0) 46%),
     radial-gradient(120% 110% at 0% 100%, rgba(16, 185, 129, 0.07), rgba(16, 185, 129, 0) 48%),
     #fff;
+}
+
+@keyframes product-modal-slide {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .modal.product-modal .modal-body {
@@ -4236,10 +4247,11 @@ button {
 .rte-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
+  gap: 6px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--stroke);
   background: #f8fafc;
+  align-items: center;
 }
 
 .rte-btn {
@@ -4250,13 +4262,72 @@ button {
   font-weight: 700;
   font-size: 12px;
   line-height: 1;
-  padding: 8px 10px;
+  padding: 6px 8px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .rte-btn:hover {
   background: #eff6ff;
   border-color: #93c5fd;
+}
+
+.rte-select {
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 12px;
+  padding: 5px 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.rte-select:hover {
+  border-color: #93c5fd;
+}
+
+.rte-separator {
+  width: 1px;
+  height: 22px;
+  background: var(--stroke);
+  margin: 0 2px;
+}
+
+.rte-emoji-wrap {
+  position: relative;
+}
+
+.rte-emoji-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-height: 220px;
+  overflow-y: auto;
+  width: max-content;
+}
+
+.rte-emoji-item {
+  border: none;
+  background: none;
+  font-size: 18px;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.rte-emoji-item:hover {
+  background: #eff6ff;
 }
 
 .rte-editor {
@@ -5082,7 +5153,10 @@ button {
   }
 
   .modal.product-modal {
-    width: min(720px, 94vw);
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
   }
 
   .modal.product-modal .modal-header {
@@ -5153,7 +5227,10 @@ button {
   }
 
   .modal.product-modal {
-    width: 94vw;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
     padding: 1.2rem 1.1rem;
   }
 

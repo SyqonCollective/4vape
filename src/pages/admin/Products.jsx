@@ -6,7 +6,7 @@ import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-tabl
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import trashAnim from "../../assets/Trash clean.json";
-import { api, getToken } from "../../lib/api.js";
+import { api, getToken, getAuthToken } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
 
@@ -19,6 +19,19 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione..." }) {
   const editorRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const EMOJI_LIST = [
+    "😀","😂","😍","🥰","😎","🤩","🔥","✨","💯","👍",
+    "❤️","💚","💙","💜","🧡","💛","🖤","🤍","💖","💝",
+    "🎉","🎊","🏆","⭐","🌟","💎","🎁","🎯","✅","❌",
+    "⚡","💧","🌈","🍃","🌿","🌸","🌺","🍀","🫧","💨",
+    "🚀","💣","🎶","📢","📌","🔗","📦","🛒","💰","🏷️",
+    "👉","👈","👆","👇","☝️","✌️","🤞","🙏","💪","🤝",
+    "🍓","🍇","🍊","🍋","🍎","🍑","🫐","🍉","🥝","🍌",
+    "☁️","🌙","☀️","🌊","❄️","🔔","💡","🎨","🧪","💊"
+  ];
 
   useEffect(() => {
     const el = editorRef.current;
@@ -43,32 +56,152 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
   }
 
   function onAddLink() {
-    const url = window.prompt("Inserisci URL (https://...)");
+    const sel = window.getSelection();
+    const selectedNode = sel?.anchorNode?.parentElement;
+    const isImage = selectedNode?.tagName === "IMG" || sel?.anchorNode?.tagName === "IMG";
+    const defaultUrl = isImage ? "" : "";
+    const url = window.prompt("Inserisci URL (https://...)", defaultUrl);
     if (!url) return;
+    if (isImage) {
+      const img = selectedNode?.tagName === "IMG" ? selectedNode : sel?.anchorNode;
+      if (img) {
+        const a = document.createElement("a");
+        a.href = url.trim();
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        img.parentNode.insertBefore(a, img);
+        a.appendChild(img);
+        onChange(editorRef.current.innerHTML);
+        return;
+      }
+    }
     run("createLink", url.trim());
+  }
+
+  function onInsertImage() {
+    const url = window.prompt("Inserisci URL immagine (https://...)");
+    if (!url) return;
+    run("insertImage", url.trim());
+  }
+
+  function onUploadImage(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const el = editorRef.current;
+      if (!el) return;
+      el.focus();
+      document.execCommand("insertImage", false, reader.result);
+      onChange(el.innerHTML);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
+  function onInsertEmoji(emoji) {
+    const el = editorRef.current;
+    if (!el) return;
+    el.focus();
+    document.execCommand("insertText", false, emoji);
+    onChange(el.innerHTML);
+    setShowEmojiPicker(false);
+  }
+
+  function onHeadingChange(e) {
+    const val = e.target.value;
+    if (val === "p") {
+      run("formatBlock", "<p>");
+    } else {
+      run("formatBlock", `<${val}>`);
+    }
+  }
+
+  function onFontSizeChange(e) {
+    run("fontSize", e.target.value);
   }
 
   return (
     <div className="rte">
       <div className="rte-toolbar">
+        <select className="rte-select" onChange={onHeadingChange} defaultValue="p" title="Formato">
+          <option value="p">Paragrafo</option>
+          <option value="h1">H1</option>
+          <option value="h2">H2</option>
+          <option value="h3">H3</option>
+          <option value="h4">H4</option>
+        </select>
+        <select className="rte-select" onChange={onFontSizeChange} defaultValue="3" title="Dimensione">
+          <option value="1">Piccolo</option>
+          <option value="2">Normale-</option>
+          <option value="3">Normale</option>
+          <option value="4">Medio</option>
+          <option value="5">Grande</option>
+          <option value="6">Molto grande</option>
+          <option value="7">Enorme</option>
+        </select>
+        <div className="rte-separator" />
         <button type="button" className="rte-btn" onClick={() => run("bold")} title="Grassetto">
-          B
+          <strong>B</strong>
         </button>
         <button type="button" className="rte-btn" onClick={() => run("italic")} title="Corsivo">
-          I
+          <em>I</em>
         </button>
         <button type="button" className="rte-btn" onClick={() => run("underline")} title="Sottolineato">
-          U
+          <u>U</u>
         </button>
+        <button type="button" className="rte-btn" onClick={() => run("strikeThrough")} title="Barrato">
+          <s>S</s>
+        </button>
+        <div className="rte-separator" />
+        <button type="button" className="rte-btn" onClick={() => run("justifyLeft")} title="Allinea a sinistra">
+          ≡←
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("justifyCenter")} title="Centra">
+          ≡↔
+        </button>
+        <button type="button" className="rte-btn" onClick={() => run("justifyRight")} title="Allinea a destra">
+          →≡
+        </button>
+        <div className="rte-separator" />
         <button type="button" className="rte-btn" onClick={() => run("insertUnorderedList")} title="Elenco puntato">
           • List
         </button>
         <button type="button" className="rte-btn" onClick={() => run("insertOrderedList")} title="Elenco numerato">
           1. List
         </button>
-        <button type="button" className="rte-btn" onClick={onAddLink} title="Aggiungi link">
-          Link
+        <div className="rte-separator" />
+        <button type="button" className="rte-btn" onClick={onAddLink} title="Aggiungi link (o link su immagine selezionata)">
+          🔗 Link
         </button>
+        <button type="button" className="rte-btn" onClick={onInsertImage} title="Inserisci immagine da URL">
+          🖼️ URL
+        </button>
+        <button type="button" className="rte-btn" onClick={() => fileInputRef.current?.click()} title="Carica immagine">
+          📤 Img
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={onUploadImage}
+        />
+        <div className="rte-emoji-wrap">
+          <button type="button" className="rte-btn" onClick={() => setShowEmojiPicker((v) => !v)} title="Emoji">
+            😊
+          </button>
+          {showEmojiPicker && (
+            <div className="rte-emoji-picker">
+              {EMOJI_LIST.map((e) => (
+                <button key={e} type="button" className="rte-emoji-item" onClick={() => onInsertEmoji(e)}>
+                  {e}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="rte-separator" />
         <button type="button" className="rte-btn" onClick={() => run("removeFormat")} title="Rimuovi formattazione">
           Clear
         </button>
@@ -80,6 +213,7 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
         suppressContentEditableWarning
         data-placeholder={placeholder}
         onInput={onInput}
+        onBlur={() => setShowEmojiPicker(false)}
       />
     </div>
   );
@@ -183,6 +317,7 @@ export default function AdminProducts() {
   const [bulkSnapshot, setBulkSnapshot] = useState("");
   const bulkGridRef = useRef(null);
   const [collapsedParents, setCollapsedParents] = useState(new Set());
+  const collapsedInitRef = useRef(false);
   const [bulkCollapsedParents, setBulkCollapsedParents] = useState(new Set());
   const [bulkDragOver, setBulkDragOver] = useState("");
   const [productFilter, setProductFilter] = useState("all");
@@ -372,8 +507,9 @@ export default function AdminProducts() {
 
   async function exportCsv() {
     try {
+      const authToken = await getAuthToken();
       const res = await fetch("/api/admin/products/export", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
@@ -396,9 +532,10 @@ export default function AdminProducts() {
     try {
       const form = new FormData();
       form.append("file", file);
+      const authToken = await getAuthToken();
       const res = await fetch("/api/admin/products/import", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
         body: form,
       });
       if (!res.ok) throw new Error();
@@ -431,6 +568,15 @@ export default function AdminProducts() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (collapsedInitRef.current || items.length === 0) return;
+    const parentIds = new Set(items.filter((p) => p.isParent).map((p) => p.id));
+    if (parentIds.size > 0) {
+      setCollapsedParents(parentIds);
+      collapsedInitRef.current = true;
+    }
+  }, [items]);
 
   useEffect(() => {
     let active = true;
@@ -604,8 +750,8 @@ export default function AdminProducts() {
       taxRateId: p.taxRateId || defaultTaxRateId || "",
       exciseRateId: p.exciseRateId || "",
       vatIncluded: true,
-      mlProduct: p.mlProduct ? Number(p.mlProduct).toFixed(3) : "",
-      nicotine: p.nicotine ? Number(p.nicotine).toFixed(3) : "",
+      mlProduct: p.mlProduct ? parseFloat(Number(p.mlProduct).toFixed(3)) : "",
+      nicotine: p.nicotine ? parseFloat(Number(p.nicotine).toFixed(3)) : "",
       codicePl: p.codicePl || "",
       barcode: p.barcode || "",
       brand: p.brand || "",
@@ -751,9 +897,10 @@ export default function AdminProducts() {
     try {
       const form = new FormData();
       Array.from(files).forEach((f) => form.append("files", f));
+      const authToken = await getAuthToken();
       const res = await fetch(`/api/admin/products/${selectedProduct.id}/images`, {
         method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
         body: form,
       });
       if (!res.ok) throw new Error("Upload failed");
@@ -841,9 +988,10 @@ export default function AdminProducts() {
         try {
           const form = new FormData();
           form.append("files", parentImageFile);
+          const authToken = await getAuthToken();
           const res = await fetch(`/api/admin/products/${parent.id}/images`, {
             method: "POST",
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
             body: form,
           });
           if (res.ok) {
@@ -925,9 +1073,10 @@ export default function AdminProducts() {
       if (manualImageFile) {
         const form = new FormData();
         form.append("files", manualImageFile);
+        const authToken = await getAuthToken();
         const res = await fetch(`/api/admin/products/${product.id}/images`, {
           method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
           body: form,
         });
         if (res.ok) {
@@ -1072,11 +1221,13 @@ export default function AdminProducts() {
     }
 
     const byParent = new Map();
-    const singles = [];
+    const topLevel = [];
     const baseItems = filteredItems;
-    const parentsOnly = sortItems(baseItems.filter((p) => p.isParent));
-    for (const parent of parentsOnly) {
-      byParent.set(parent.id, []);
+    for (const item of baseItems) {
+      if (item.isParent) {
+        byParent.set(item.id, []);
+        topLevel.push(item);
+      }
     }
     for (const item of baseItems) {
       if (item.isParent) continue;
@@ -1084,27 +1235,29 @@ export default function AdminProducts() {
       if (parentId && byParent.has(parentId)) {
         byParent.get(parentId).push(item);
       } else {
-        singles.push(item);
+        topLevel.push(item);
       }
     }
+    const sortedTop = sortItems(topLevel);
     const rows = [];
-    for (const parent of parentsOnly) {
-      rows.push({ type: "parent", item: parent });
-      if (!collapsedParents.has(parent.id)) {
-        const children = (byParent.get(parent.id) || []).sort((a, b) => {
-          const orderDiff = (a.parentSort ?? 0) - (b.parentSort ?? 0);
-          if (orderDiff !== 0) return orderDiff;
-          const an = a.name || "";
-          const bn = b.name || "";
-          return an.localeCompare(bn);
-        });
-        for (const child of children) {
-          rows.push({ type: "child", item: child, parent });
+    for (const item of sortedTop) {
+      if (item.isParent) {
+        rows.push({ type: "parent", item });
+        if (!collapsedParents.has(item.id)) {
+          const children = (byParent.get(item.id) || []).sort((a, b) => {
+            const orderDiff = (a.parentSort ?? 0) - (b.parentSort ?? 0);
+            if (orderDiff !== 0) return orderDiff;
+            const an = a.name || "";
+            const bn = b.name || "";
+            return an.localeCompare(bn);
+          });
+          for (const child of children) {
+            rows.push({ type: "child", item: child, parent: item });
+          }
         }
+      } else {
+        rows.push({ type: "single", item });
       }
-    }
-    for (const single of sortItems(singles)) {
-      rows.push({ type: "single", item: single });
     }
     return rows;
   })();
