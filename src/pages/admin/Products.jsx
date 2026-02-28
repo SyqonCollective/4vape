@@ -21,7 +21,7 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
   const savedRangeRef = useRef(null);
-  const isEditingRef = useRef(false);
+  const internalHtmlRef = useRef("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const EMOJI_LIST = [
@@ -38,10 +38,10 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
   useEffect(() => {
     const el = editorRef.current;
     if (!el) return;
-    if (isEditingRef.current) return;
-    if ((value || "") !== el.innerHTML) {
-      el.innerHTML = value || "";
-    }
+    if (document.activeElement === el) return;
+    if (internalHtmlRef.current === (value || "")) return;
+    el.innerHTML = value || "";
+    internalHtmlRef.current = value || "";
   }, [value]);
 
   function saveSelection() {
@@ -50,8 +50,7 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
     const range = sel.getRangeAt(0);
     const el = editorRef.current;
     if (!el) return;
-    const common = range.commonAncestorContainer;
-    if (el.contains(common)) {
+    if (el.contains(range.commonAncestorContainer)) {
       savedRangeRef.current = range.cloneRange();
     }
   }
@@ -65,24 +64,27 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
     sel.addRange(range);
   }
 
+  function emitChange() {
+    const el = editorRef.current;
+    if (!el) return;
+    const html = el.innerHTML;
+    internalHtmlRef.current = html;
+    onChange(html);
+  }
+
   function run(command, arg) {
     const el = editorRef.current;
     if (!el) return;
-    isEditingRef.current = true;
     el.focus();
     restoreSelection();
     document.execCommand(command, false, arg);
     saveSelection();
-    onChange(el.innerHTML);
-    setTimeout(() => { isEditingRef.current = false; }, 0);
+    emitChange();
   }
 
   function onInput() {
-    const el = editorRef.current;
-    if (!el) return;
-    isEditingRef.current = true;
-    onChange(el.innerHTML);
-    setTimeout(() => { isEditingRef.current = false; }, 0);
+    saveSelection();
+    emitChange();
   }
 
   function onAddLink() {
@@ -101,9 +103,7 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
         a.rel = "noopener noreferrer";
         img.parentNode.insertBefore(a, img);
         a.appendChild(img);
-        isEditingRef.current = true;
-        onChange(editorRef.current.innerHTML);
-        setTimeout(() => { isEditingRef.current = false; }, 0);
+        emitChange();
         return;
       }
     }
@@ -124,13 +124,11 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
     reader.onload = () => {
       const el = editorRef.current;
       if (!el) return;
-      isEditingRef.current = true;
       el.focus();
       restoreSelection();
       document.execCommand("insertImage", false, reader.result);
       saveSelection();
-      onChange(el.innerHTML);
-      setTimeout(() => { isEditingRef.current = false; }, 0);
+      emitChange();
     };
     reader.readAsDataURL(file);
     e.target.value = "";
@@ -139,14 +137,18 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
   function onInsertEmoji(emoji) {
     const el = editorRef.current;
     if (!el) return;
-    isEditingRef.current = true;
     el.focus();
     restoreSelection();
     document.execCommand("insertText", false, emoji);
     saveSelection();
-    onChange(el.innerHTML);
+    emitChange();
     setShowEmojiPicker(false);
-    setTimeout(() => { isEditingRef.current = false; }, 0);
+  }
+
+  function preventFocusLoss(e) {
+    if (e.target.tagName !== "SELECT" && e.target.tagName !== "OPTION") {
+      e.preventDefault();
+    }
   }
 
   function onHeadingChange(e) {
@@ -160,7 +162,7 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
 
   return (
     <div className="rte">
-      <div className="rte-toolbar" onMouseDown={(e) => e.preventDefault()}>
+      <div className="rte-toolbar" onMouseDown={preventFocusLoss}>
         <select className="rte-select" onChange={onHeadingChange} defaultValue="p" title="Formato">
           <option value="p">Paragrafo</option>
           <option value="h1">H1</option>
@@ -252,8 +254,7 @@ function RichTextEditor({ value, onChange, placeholder = "Scrivi la descrizione.
         onInput={onInput}
         onMouseUp={saveSelection}
         onKeyUp={saveSelection}
-        onFocus={() => { isEditingRef.current = true; saveSelection(); }}
-        onBlur={() => { saveSelection(); isEditingRef.current = false; setShowEmojiPicker(false); }}
+        onBlur={() => { saveSelection(); setShowEmojiPicker(false); }}
       />
     </div>
   );
