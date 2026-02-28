@@ -1,7 +1,11 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 const TOKEN_KEY = "4vape_token";
+const runtimeAdminHost =
+  typeof window !== "undefined" && /(^|\.)logistica4vape\.it$/i.test(window.location.hostname);
 const CLERK_ENABLED = Boolean(
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+    import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    runtimeAdminHost
 );
 const DEV_API_LOG =
   typeof window !== "undefined" &&

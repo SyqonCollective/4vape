@@ -32,8 +32,13 @@ import ReturnsTest from "./pages/ReturnsTest.jsx";
 import PublicHome from "./pages/PublicHome.jsx";
 import { getToken } from "./lib/api.js";
 
+const ADMIN_HOST_RE = /(^|\.)logistica4vape\.it$/i;
+const runtimeAdminHost =
+  typeof window !== "undefined" && ADMIN_HOST_RE.test(window.location.hostname);
 const clerkEnabled = Boolean(
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+    import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    runtimeAdminHost
 );
 
 function RequireAuthLegacy({ children }) {

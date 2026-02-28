@@ -3,8 +3,12 @@ import logo from "../../assets/logo.png";
 import AuthSmokeBackground from "../../components/AuthSmokeBackground.jsx";
 
 export default function AdminLogin() {
+  const runtimeAdminHost =
+    typeof window !== "undefined" && /(^|\.)logistica4vape\.it$/i.test(window.location.hostname);
   const hasClerkKey = Boolean(
-    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+      import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+      runtimeAdminHost
   );
   const adminOrigin = import.meta.env.VITE_ADMIN_ORIGIN || "https://logistica4vape.it";
   const forceRedirectUrl =
