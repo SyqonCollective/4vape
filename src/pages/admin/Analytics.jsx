@@ -42,11 +42,14 @@ function formatMoney(v) {
 
 function svgToDataUri(svgElement) {
   if (!svgElement) return "";
-  const raw = svgElement.outerHTML
-    .replace(/\n/g, "")
-    .replace(/\t/g, "")
-    .replace(/#/g, "%23");
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(raw)}`;
+  try {
+    const serializer = new XMLSerializer();
+    const raw = serializer.serializeToString(svgElement);
+    const encoded = window.btoa(unescape(encodeURIComponent(raw)));
+    return `data:image/svg+xml;base64,${encoded}`;
+  } catch {
+    return "";
+  }
 }
 
 const shortDate = (iso) => {
@@ -510,7 +513,7 @@ export default function AdminAnalytics() {
           <div class="kpis">
             <div class="kpi"><label>Vendite</label><strong>${formatMoney(data.totals.revenue)}</strong></div>
             <div class="kpi"><label>Costo prodotti</label><strong>${formatMoney(data.totals.cost)}</strong></div>
-            <div class="kpi"><label>Margine netto</label><strong>${formatMoney(data.totals.grossMargin)}</strong></div>
+            <div class="kpi"><label>Margine netto</label><strong>${formatMoney(data.totals.margin)}</strong></div>
             <div class="kpi"><label>Accise</label><strong>${formatMoney(data.totals.excise)}</strong></div>
             <div class="kpi"><label>IVA</label><strong>${formatMoney(data.totals.vat)}</strong></div>
             <div class="kpi"><label>Flusso cassa</label><strong>${formatMoney(data.totals.cashflow)}</strong></div>
@@ -528,7 +531,24 @@ export default function AdminAnalytics() {
               </tbody>
             </table>
           </div>
-          <script>window.onload = () => window.print();</script>
+          <script>
+            window.onload = () => {
+              const imgs = Array.from(document.images || []);
+              let pending = imgs.length;
+              if (!pending) return setTimeout(() => window.print(), 120);
+              const done = () => {
+                pending -= 1;
+                if (pending <= 0) setTimeout(() => window.print(), 120);
+              };
+              imgs.forEach((img) => {
+                if (img.complete) done();
+                else {
+                  img.onload = done;
+                  img.onerror = done;
+                }
+              });
+            };
+          </script>
         </body>
       </html>
     `;
@@ -631,7 +651,7 @@ export default function AdminAnalytics() {
       <div className="cards analytics-cards analytics-cards-modern">
         <div className="card"><div className="card-label">Vendite</div><div className="card-value">{formatMoney(data.totals.revenue)}</div><div className="card-sub">Ordini nel periodo</div></div>
         <div className="card"><div className="card-label">Costo prodotti</div><div className="card-value">{formatMoney(data.totals.cost)}</div><div className="card-sub">Costo fornitore stimato</div></div>
-        <div className="card"><div className="card-label">Margine netto</div><div className="card-value">{formatMoney(data.totals.grossMargin)}</div><div className="card-sub">Imponibile - costo prodotti</div></div>
+        <div className="card"><div className="card-label">Margine netto</div><div className="card-value">{formatMoney(data.totals.margin)}</div><div className="card-sub">Imponibile - costo prodotti</div></div>
         <div className="card"><div className="card-label">Accise</div><div className="card-value">{formatMoney(data.totals.excise)}</div><div className="card-sub">Totale accise</div></div>
         <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Calcolata sul prezzo</div></div>
         <div className="card"><div className="card-label">Ordini / Pezzi</div><div className="card-value">{data.totals.orders}</div><div className="card-sub">{data.totals.items} articoli</div></div>
@@ -696,7 +716,7 @@ export default function AdminAnalytics() {
         <div className="panel analytics-grid analytics-grid-performance">
           <div className="analytics-panel">
             <div className="panel-header"><div><h2>Prodotti top</h2><div className="muted">Per fatturato</div></div></div>
-            <div className="table compact">
+            <div className="table compact analytics-table analytics-table-products">
               <div className="row header"><div>Prodotto</div><div>SKU</div><div>Fatturato</div><div>Q.tà</div></div>
               {data.topProducts.map((p) => (
                 <div className="row" key={p.id}><div>{p.name}</div><div className="mono">{p.sku}</div><div>{formatMoney(p.revenue)}</div><div>{p.qty}</div></div>
@@ -705,7 +725,7 @@ export default function AdminAnalytics() {
           </div>
           <div className="analytics-panel">
             <div className="panel-header"><div><h2>Migliori clienti</h2><div className="muted">Per fatturato nel periodo</div></div></div>
-            <div className="table compact">
+            <div className="table compact analytics-table analytics-table-clients">
               <div className="row header"><div>Cliente</div><div>Ordini</div><div>Fatturato</div></div>
               {(data.topClients || []).map((c) => (
                 <div className="row" key={c.id}><div>{c.name}</div><div>{c.orders}</div><div>{formatMoney(c.revenue)}</div></div>
@@ -714,7 +734,7 @@ export default function AdminAnalytics() {
           </div>
           <div className="analytics-panel">
             <div className="panel-header"><div><h2>Categorie top</h2><div className="muted">Fatturato per categoria</div></div></div>
-            <div className="table compact">
+            <div className="table compact analytics-table analytics-table-categories">
               <div className="row header"><div>Categoria</div><div>Fatturato</div><div>Articoli</div></div>
               {data.topCategories.map((c) => (
                 <div className="row" key={c.name}><div>{c.name}</div><div>{formatMoney(c.revenue)}</div><div>{c.qty}</div></div>

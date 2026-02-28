@@ -2288,6 +2288,88 @@ export async function adminRoutes(app: FastifyInstance) {
     const supplierAgg = new Map<string, { id: string; name: string; revenue: number; qty: number }>();
     const categoryAgg = new Map<string, { name: string; revenue: number; qty: number; cost: number }>();
     const geoAgg = new Map<string, { area: string; revenue: number; orders: number }>();
+    const REGION_KEYS = new Set([
+      "Valle d'Aosta",
+      "Piemonte",
+      "Liguria",
+      "Lombardia",
+      "Trentino-Alto Adige",
+      "Veneto",
+      "Friuli-Venezia Giulia",
+      "Emilia-Romagna",
+      "Toscana",
+      "Umbria",
+      "Marche",
+      "Lazio",
+      "Abruzzo",
+      "Molise",
+      "Campania",
+      "Puglia",
+      "Basilicata",
+      "Calabria",
+      "Sicilia",
+      "Sardegna",
+    ]);
+    const GEO_ALIASES: Record<string, string> = {
+      "VALLE D AOSTA": "Valle d'Aosta",
+      "VALLEDAOSTA": "Valle d'Aosta",
+      "TRENTINO ALTO ADIGE": "Trentino-Alto Adige",
+      "FRIULI VENEZIA GIULIA": "Friuli-Venezia Giulia",
+      "EMILIA ROMAGNA": "Emilia-Romagna",
+      "PIEMONTE": "Piemonte",
+      "LIGURIA": "Liguria",
+      "LOMBARDIA": "Lombardia",
+      "VENETO": "Veneto",
+      "TOSCANA": "Toscana",
+      "UMBRIA": "Umbria",
+      "MARCHE": "Marche",
+      "LAZIO": "Lazio",
+      "ABRUZZO": "Abruzzo",
+      "MOLISE": "Molise",
+      "CAMPANIA": "Campania",
+      "PUGLIA": "Puglia",
+      "BASILICATA": "Basilicata",
+      "CALABRIA": "Calabria",
+      "SICILIA": "Sicilia",
+      "SARDEGNA": "Sardegna",
+      AO: "Valle d'Aosta",
+      TO: "Piemonte", VC: "Piemonte", NO: "Piemonte", CN: "Piemonte", AT: "Piemonte", AL: "Piemonte", BI: "Piemonte", VB: "Piemonte",
+      GE: "Liguria", IM: "Liguria", SP: "Liguria", SV: "Liguria",
+      MI: "Lombardia", BG: "Lombardia", BS: "Lombardia", CO: "Lombardia", CR: "Lombardia", LC: "Lombardia", LO: "Lombardia", MN: "Lombardia", MB: "Lombardia", PV: "Lombardia", SO: "Lombardia", VA: "Lombardia",
+      TN: "Trentino-Alto Adige", BZ: "Trentino-Alto Adige",
+      VE: "Veneto", VR: "Veneto", VI: "Veneto", PD: "Veneto", TV: "Veneto", RO: "Veneto", BL: "Veneto",
+      TS: "Friuli-Venezia Giulia", UD: "Friuli-Venezia Giulia", GO: "Friuli-Venezia Giulia", PN: "Friuli-Venezia Giulia",
+      BO: "Emilia-Romagna", FE: "Emilia-Romagna", FC: "Emilia-Romagna", MO: "Emilia-Romagna", PR: "Emilia-Romagna", PC: "Emilia-Romagna", RA: "Emilia-Romagna", RE: "Emilia-Romagna", RN: "Emilia-Romagna",
+      FI: "Toscana", AR: "Toscana", GR: "Toscana", LI: "Toscana", LU: "Toscana", MS: "Toscana", PI: "Toscana", PT: "Toscana", PO: "Toscana", SI: "Toscana",
+      PG: "Umbria", TR: "Umbria",
+      AN: "Marche", AP: "Marche", FM: "Marche", MC: "Marche", PU: "Marche",
+      RM: "Lazio", FR: "Lazio", LT: "Lazio", RI: "Lazio", VT: "Lazio",
+      AQ: "Abruzzo", CH: "Abruzzo", PE: "Abruzzo", TE: "Abruzzo",
+      CB: "Molise", IS: "Molise",
+      NA: "Campania", AV: "Campania", BN: "Campania", CE: "Campania", SA: "Campania",
+      BA: "Puglia", BT: "Puglia", BR: "Puglia", FG: "Puglia", LE: "Puglia", TA: "Puglia",
+      MT: "Basilicata", PZ: "Basilicata",
+      CZ: "Calabria", CS: "Calabria", KR: "Calabria", RC: "Calabria", VV: "Calabria",
+      PA: "Sicilia", AG: "Sicilia", CL: "Sicilia", CT: "Sicilia", EN: "Sicilia", ME: "Sicilia", RG: "Sicilia", SR: "Sicilia", TP: "Sicilia",
+      CA: "Sardegna", NU: "Sardegna", OR: "Sardegna", SS: "Sardegna", SU: "Sardegna",
+    };
+    const normalizeGeo = (value: string) =>
+      String(value || "")
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Z0-9 ]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    const resolveRegion = (value: string) => {
+      const norm = normalizeGeo(value);
+      if (!norm) return "";
+      if (GEO_ALIASES[norm]) return GEO_ALIASES[norm];
+      for (const key of REGION_KEYS) {
+        if (norm.includes(normalizeGeo(key))) return key;
+      }
+      return "";
+    };
     const clientAgg = new Map<string, { id: string; name: string; revenue: number; orders: number; items: number }>();
     const selectedDaily = days.map((d) => ({
       date: d.date,
@@ -2326,6 +2408,31 @@ export async function adminRoutes(app: FastifyInstance) {
         },
       },
     });
+    const fiscalInvoiceLines = await prisma.fiscalInvoiceLine.findMany({
+      where: {
+        invoice: {
+          issuedAt: {
+            gte: start,
+            lte: end,
+          },
+        },
+      },
+      include: {
+        invoice: {
+          select: {
+            issuedAt: true,
+          },
+        },
+      },
+    });
+    let invoiceRevenueTotal = 0;
+    const invoiceRevenueByDay = new Map<string, number>();
+    for (const line of fiscalInvoiceLines) {
+      const key = line.invoice.issuedAt.toISOString().slice(0, 10);
+      const lineRevenue = Number(line.unitGross || 0) * Number(line.qty || 0);
+      invoiceRevenueTotal += lineRevenue;
+      invoiceRevenueByDay.set(key, (invoiceRevenueByDay.get(key) || 0) + lineRevenue);
+    }
     const expenseInvoices = await prisma.expenseInvoice.findMany({
       where: {
         expenseDate: {
@@ -2360,12 +2467,11 @@ export async function adminRoutes(app: FastifyInstance) {
     for (const order of orders) {
       const key = order.createdAt.toISOString().slice(0, 10);
       const idx = dayIndex.get(key);
-      const orderRevenue = Number(order.total || 0);
+      const orderRevenue = order.items.reduce((sum, i) => sum + Number(i.lineTotal || 0), 0);
       const orderItems = order.items.reduce((sum, i) => sum + i.qty, 0);
       const area =
-        order.company?.province?.trim() ||
-        order.company?.city?.trim() ||
-        order.company?.name?.trim() ||
+        resolveRegion(order.company?.province?.trim() || "") ||
+        resolveRegion(order.company?.city?.trim() || "") ||
         "N/D";
       const geo = geoAgg.get(area) || { area, revenue: 0, orders: 0 };
       geo.revenue += orderRevenue;
@@ -2486,12 +2592,12 @@ export async function adminRoutes(app: FastifyInstance) {
     }
 
     for (const d of days) {
-      d.margin = d.revenue - d.cost - d.vat - d.excise;
-      d.cashflow = d.revenue - d.expenses;
+      d.margin = (d.revenue - d.vat - d.excise) - d.cost;
+      d.cashflow = (invoiceRevenueByDay.get(d.date) || 0) - d.expenses;
     }
     for (const d of selectedDaily) {
-      d.margin = d.revenue - d.cost - d.vat - d.excise;
-      d.cashflow = d.revenue - d.expenses;
+      d.margin = (d.revenue - d.vat - d.excise) - d.cost;
+      d.cashflow = (invoiceRevenueByDay.get(d.date) || 0) - d.expenses;
     }
 
     const topProducts = Array.from(productAgg.values())
@@ -2516,7 +2622,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
     const grossMargin = revenue - cost;
     const netRevenue = revenue - vat - excise;
-    const margin = revenue - cost - vat - excise;
+    const margin = (revenue - vat - excise) - cost;
     const avgOrderValue = orderCount ? revenue / orderCount : 0;
     const avgItemsPerOrder = orderCount ? items / orderCount : 0;
     const marginPct = revenue ? (grossMargin / revenue) * 100 : 0;
@@ -2530,7 +2636,7 @@ export async function adminRoutes(app: FastifyInstance) {
         vat,
         excise,
         expenses,
-        cashflow: revenue - expenses,
+        cashflow: invoiceRevenueTotal - expenses,
         margin,
         grossMargin,
         netRevenue,
@@ -2558,7 +2664,7 @@ export async function adminRoutes(app: FastifyInstance) {
               cost: selectedCost,
               vat: selectedVat,
               excise: selectedExcise,
-              margin: selectedRevenue - selectedCost - selectedVat - selectedExcise,
+              margin: (selectedRevenue - selectedVat - selectedExcise) - selectedCost,
               items: selectedItems,
               orders: selectedOrders,
             },

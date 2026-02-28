@@ -1014,6 +1014,28 @@ button {
 .analytics-grid-performance {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+
+.analytics-modern .analytics-table .row {
+  align-items: center;
+}
+
+.analytics-modern .analytics-table-products .row {
+  grid-template-columns: minmax(240px, 1.6fr) 120px 130px 72px;
+}
+
+.analytics-modern .analytics-table-clients .row {
+  grid-template-columns: minmax(220px, 1.8fr) 90px 130px;
+}
+
+.analytics-modern .analytics-table-categories .row {
+  grid-template-columns: minmax(200px, 1.6fr) 130px 90px;
+}
+
+.analytics-modern .analytics-table .row > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .panel-header {
   display: flex;
   justify-content: space-between;
