@@ -785,19 +785,16 @@ export async function adminRoutes(app: FastifyInstance) {
     const body = z
       .object({
         email: z.string().email(),
-        password: z.string().min(6),
         role: z.enum(["ADMIN", "MANAGER"]),
         permissions: z.record(z.boolean()).optional(),
       })
       .parse(request.body);
     const existing = await prisma.user.findUnique({ where: { email: body.email } });
     if (existing) return reply.conflict("Email già in uso");
-    const bcrypt = await import("bcryptjs");
-    const hash = await bcrypt.hash(body.password, 10);
     const created = await prisma.user.create({
       data: {
         email: body.email,
-        passwordHash: hash,
+        passwordHash: "CLERK_MANAGED",
         role: body.role as any,
         approved: true,
         permissions: (body.permissions || null) as any,

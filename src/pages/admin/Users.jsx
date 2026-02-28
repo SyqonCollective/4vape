@@ -35,7 +35,7 @@ export default function AdminUsers() {
   const [showCreate, setShowCreate] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [draft, setDraft] = useState({ email: "", password: "", role: "MANAGER", permissions: {} });
+  const [draft, setDraft] = useState({ email: "", role: "MANAGER", permissions: {} });
 
   async function load() {
     try {
@@ -54,7 +54,7 @@ export default function AdminUsers() {
   );
 
   function openCreate() {
-    setDraft({ email: "", password: "", role: "MANAGER", permissions: {} });
+    setDraft({ email: "", role: "MANAGER", permissions: {} });
     setShowCreate(true);
   }
 
@@ -62,21 +62,19 @@ export default function AdminUsers() {
     setEditUser(u);
     setDraft({
       email: u.email,
-      password: "",
       role: u.role,
       permissions: u.permissions || {},
     });
   }
 
   async function createUser() {
-    if (!draft.email || !draft.password) { setError("Email e password obbligatori"); return; }
+    if (!draft.email) { setError("Email obbligatoria"); return; }
     setSaving(true);
     try {
       await api("/admin/users/admin", {
         method: "POST",
         body: JSON.stringify({
           email: draft.email,
-          password: draft.password,
           role: draft.role,
           permissions: draft.permissions,
         }),
@@ -206,9 +204,9 @@ export default function AdminUsers() {
                 <button className="btn ghost" onClick={() => setShowCreate(false)}>Chiudi</button>
               </div>
               <div className="modal-body modal-body-single">
+                <p className="muted" style={{ marginBottom: 12, fontSize: 13 }}>L'utente deve avere un account Clerk con la stessa email per poter accedere.</p>
                 <div className="form-grid">
-                  <label>Email<input type="email" value={draft.email} onChange={(e) => setDraft((p) => ({ ...p, email: e.target.value }))} /></label>
-                  <label>Password<input type="password" value={draft.password} onChange={(e) => setDraft((p) => ({ ...p, password: e.target.value }))} /></label>
+                  <label>Email (deve corrispondere all'account Clerk)<input type="email" value={draft.email} onChange={(e) => setDraft((p) => ({ ...p, email: e.target.value }))} /></label>
                   <label>Ruolo
                     <select className="select" value={draft.role} onChange={(e) => setDraft((p) => ({ ...p, role: e.target.value }))}>
                       <option value="ADMIN">Admin</option>
