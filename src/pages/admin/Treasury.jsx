@@ -184,7 +184,10 @@ export default function AdminTreasury() {
   }
 
   function doPrint() {
-    const bodyRows = sorted
+    const printRows = selectedIds.size > 0
+      ? sorted.filter((r) => selectedIds.has(`${r.sourceType}-${r.sourceId}`))
+      : sorted;
+    const bodyRows = printRows
       .map(
         (r) =>
           `<tr><td>${fmtDate(r.date)}</td><td>${r.type || "-"}</td><td>${r.invoiceNo || "-"}</td><td>${r.counterparty || "-"}</td><td style="text-align:right">${money(r.total)}</td><td>${r.paid ? "Saldata" : "In attesa"}</td></tr>`

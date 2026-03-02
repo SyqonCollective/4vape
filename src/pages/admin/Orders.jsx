@@ -1348,12 +1348,8 @@ export default function AdminOrders() {
                       <strong>{formatCurrency(totals.shipping)}</strong>
                     </div>
                     <div className="summary-row">
-                      <span>IVA spedizione</span>
-                      <strong>{formatCurrency(totals.shippingVat)}</strong>
-                    </div>
-                    <div className="summary-row">
                       <span>IVA</span>
-                      <strong>{formatCurrency(totals.vat)}</strong>
+                      <strong>{formatCurrency(totals.vat + totals.shippingVat)}</strong>
                     </div>
                     <div className="summary-row total">
                       <span>Totale ordine</span>
@@ -1489,16 +1485,12 @@ export default function AdminOrders() {
                               <strong>{formatCurrency(totals.excise)}</strong>
                             </div>
                             <div className="summary-row">
-                              <span>IVA totale</span>
-                              <strong>{formatCurrency(totals.vat)}</strong>
-                            </div>
-                            <div className="summary-row">
                               <span>Spedizione</span>
                               <strong>{formatCurrency(totals.shipping)}</strong>
                             </div>
                             <div className="summary-row">
-                              <span>IVA spedizione</span>
-                              <strong>{formatCurrency(totals.shippingVat)}</strong>
+                              <span>IVA totale</span>
+                              <strong>{formatCurrency(totals.vat + totals.shippingVat)}</strong>
                             </div>
                             <div className="summary-row total">
                               <span>Totale ordine</span>
@@ -1777,12 +1769,8 @@ export default function AdminOrders() {
                         <strong>{formatCurrency(editTotals.shipping)}</strong>
                       </div>
                       <div className="summary-row">
-                        <span>IVA spedizione</span>
-                        <strong>{formatCurrency(editTotals.shippingVat)}</strong>
-                      </div>
-                      <div className="summary-row">
                         <span>IVA</span>
-                        <strong>{formatCurrency(editTotals.vat)}</strong>
+                        <strong>{formatCurrency(editTotals.vat + editTotals.shippingVat)}</strong>
                       </div>
                       <div className="summary-row total">
                         <span>Totale ordine</span>

@@ -6087,6 +6087,14 @@ export async function adminRoutes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
+  app.delete("/expenses/:id", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const { id } = request.params as { id: string };
+    await prisma.expenseInvoice.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
   app.get("/treasury/invoices", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;

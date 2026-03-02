@@ -122,6 +122,12 @@ export default function AdminGoodsReceipts() {
     province: "",
   });
 
+  useEffect(() => {
+    const open = Boolean(showCreateModal || editingReceipt || showSupplierModal || confirmDelete || conflictSkus.length);
+    document.body.classList.toggle("modal-open", open);
+    return () => document.body.classList.remove("modal-open");
+  }, [showCreateModal, editingReceipt, showSupplierModal, confirmDelete, conflictSkus]);
+
   async function loadReceipts() {
     try {
       const params = new URLSearchParams();

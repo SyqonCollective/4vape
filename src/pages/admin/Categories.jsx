@@ -311,12 +311,6 @@ export default function AdminCategories() {
         </div>
         <div className="brands-toolbar brands-toolbar-pro">
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca nome" />
-          <select className="select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="count-desc">Più prodotti</option>
-            <option value="count-asc">Meno prodotti</option>
-            <option value="name-asc">Nome A-Z</option>
-            <option value="name-desc">Nome Z-A</option>
-          </select>
           <label className="check">
             <input type="checkbox" checked={showOnlyRoot} onChange={(e) => setShowOnlyRoot(e.target.checked)} />
             <span>Solo principali</span>

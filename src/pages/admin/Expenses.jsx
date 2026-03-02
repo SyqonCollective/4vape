@@ -101,6 +101,16 @@ export default function AdminExpenses() {
     }
   }
 
+  async function deleteExpense(id) {
+    if (!window.confirm("Eliminare questa spesa?")) return;
+    try {
+      await api(`/admin/expenses/${id}`, { method: "DELETE" });
+      load();
+    } catch {
+      setError("Impossibile eliminare spesa");
+    }
+  }
+
   const filteredRows = useMemo(() => {
     const key = query.trim().toLowerCase();
     if (!key) return rows;
@@ -204,7 +214,7 @@ export default function AdminExpenses() {
 
       {viewMode === "table" ? (
       <div className="table expenses-table-pro">
-        <div className="row header"><div>Data</div><div>N. fattura</div><div>Fornitore</div><div>Categoria</div><div>Imponibile</div><div>IVA</div><div>Totale</div></div>
+        <div className="row header"><div>Data</div><div>N. fattura</div><div>Fornitore</div><div>Categoria</div><div>Imponibile</div><div>IVA</div><div>Totale</div><div></div></div>
         {filteredRows.map((r) => (
           <div className="row" key={r.id}>
             <div>{new Date(r.expenseDate).toLocaleDateString("it-IT")}</div>
@@ -214,6 +224,7 @@ export default function AdminExpenses() {
             <div>{money(r.amountNet)}</div>
             <div>{money(r.vat)}</div>
             <div>{money(r.total)}</div>
+            <div><button className="btn danger small" onClick={() => deleteExpense(r.id)}>Elimina</button></div>
           </div>
         ))}
       </div>
@@ -232,6 +243,7 @@ export default function AdminExpenses() {
                 <span>IVA: <strong>{money(r.vat)}</strong></span>
                 <span>Totale: <strong>{money(r.total)}</strong></span>
               </div>
+              <button className="btn danger small" onClick={() => deleteExpense(r.id)}>Elimina</button>
             </article>
           ))}
         </div>
