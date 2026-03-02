@@ -530,53 +530,38 @@ export default function AdminInvoices() {
       <InlineError message={error} onClose={() => setError("")} />
 
       <div className="invoices-toolbar">
-        <div className="invoices-toolbar-top">
+        <div className="inv-toolbar-row">
           <input
-            className="invoices-search"
-            placeholder="Cerca numero, cliente o riferimento ordine"
+            className="input"
+            placeholder="Cerca numero, cliente…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            style={{ minWidth: 180, flex: "1 1 200px" }}
           />
+          <input type="date" className="input" value={startDate} onChange={(e) => setStartDate(e.target.value)} title="Data dal" style={{ width: 140 }} />
+          <input type="date" className="input" value={endDate} onChange={(e) => setEndDate(e.target.value)} title="Data al" style={{ width: 140 }} />
+          <select className="select" value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: 120 }}>
+            <option value="">Stato: Tutti</option>
+            <option value="DA_SALDARE">Da saldare</option>
+            <option value="SALDATA">Saldata</option>
+          </select>
+          <select className="select" value={companyId} onChange={(e) => setCompanyId(e.target.value)} style={{ minWidth: 160, flex: "1 1 160px" }}>
+            <option value="">Cliente: Tutti</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
           <div className="products-view-switch">
             <button type="button" className={`btn ${viewMode === "table" ? "primary" : "ghost"}`} onClick={() => setViewMode("table")}>Tabella</button>
             <button type="button" className={`btn ${viewMode === "cards" ? "primary" : "ghost"}`} onClick={() => setViewMode("cards")}>Card</button>
           </div>
         </div>
-      <div className="filters-row">
-        <div className="filter-group">
-          <label>Data dal</label>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        <div className="inv-toolbar-row" style={{ justifyContent: "flex-end" }}>
+          <button className="btn ghost small" onClick={exportCurrentCsv}>Esporta CSV</button>
+          <button className="btn ghost small" onClick={printRegister}>Stampa registro</button>
+          <button className="btn ghost small" onClick={() => setShowTemplateEditor(true)}>Personalizza stampa</button>
+          <button className="btn primary small" onClick={() => setShowManual(true)}>+ Fattura manuale</button>
         </div>
-        <div className="filter-group">
-          <label>Data al</label>
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-        </div>
-        <div className="filter-group">
-          <label>Stato</label>
-          <select className="select" value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">Tutti</option>
-            <option value="DA_SALDARE">Da saldare</option>
-            <option value="SALDATA">Saldata</option>
-          </select>
-        </div>
-        <div className="filter-group" style={{ minWidth: 300 }}>
-          <label>Cliente</label>
-          <select className="select" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-            <option value="">Tutti</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="actions">
-          <button className="btn ghost" onClick={exportCurrentCsv}>Esporta CSV</button>
-          <button className="btn ghost" onClick={printRegister}>Stampa registro</button>
-          <button className="btn ghost" onClick={() => setShowTemplateEditor(true)}>Personalizza stampa</button>
-          <button className="btn primary" onClick={() => setShowManual(true)}>Fattura manuale</button>
-        </div>
-      </div>
       </div>
 
       <div className="cards">
@@ -608,7 +593,7 @@ export default function AdminInvoices() {
             <div>{payLabel(r.pagamento)}</div>
             <div>{money(r.totaleFattura)}</div>
             <div>{r.riferimentoOrdine || "-"}</div>
-            <div className="actions" onClick={(e) => e.stopPropagation()}>
+            <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
               <button className="btn ghost small" onClick={() => togglePaid(r)}>{r.stato === "SALDATA" ? "Da saldare" : "Saldata"}</button>
               <button className="btn ghost small" onClick={() => openEdit(r)}>Modifica</button>
               <button className="btn ghost small" onClick={() => printInvoice(r)}>Stampa</button>
@@ -635,7 +620,7 @@ export default function AdminInvoices() {
                 <span>{money(r.totaleFattura)}</span>
                 <span>Ordine {r.riferimentoOrdine || "-"}</span>
               </div>
-              <div className="actions" onClick={(e) => e.stopPropagation()}>
+              <div className="inv-actions" onClick={(e) => e.stopPropagation()} style={{ justifyContent: "center" }}>
                 <button className="btn ghost small" onClick={() => togglePaid(r)}>{r.stato === "SALDATA" ? "Da saldare" : "Saldata"}</button>
                 <button className="btn ghost small" onClick={() => openEdit(r)}>Modifica</button>
                 <button className="btn ghost small" onClick={() => printInvoice(r)}>Stampa</button>

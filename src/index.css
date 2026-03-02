@@ -2564,17 +2564,17 @@ button {
 }
 .invoices-toolbar {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
   background: linear-gradient(180deg, #ffffff, #f7fbff);
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 16px;
-  padding: 0.9rem;
+  padding: 0.65rem 0.9rem;
   margin-bottom: 0.9rem;
 }
-.invoices-toolbar-top {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) auto;
-  gap: 0.65rem;
+.inv-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   align-items: center;
 }
 .invoices-search {
@@ -2582,13 +2582,28 @@ button {
 }
 .invoices-table-pro .row,
 .invoices-table-pro .row.header {
-  grid-template-columns: 90px 90px 1.5fr 100px 100px 110px 100px auto;
+  grid-template-columns: 80px 90px 1.4fr 90px 90px 100px 80px minmax(200px, auto);
   min-width: 900px;
 }
 .invoices-table-pro .row > div {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.invoices-table-pro .row > div.inv-actions {
+  overflow: visible;
+  white-space: normal;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.invoices-table-pro .row > div.inv-actions .btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  min-height: 0;
+  line-height: 1.3;
 }
 .invoices-table-pro .row:not(.header):hover {
   background: rgba(241, 245, 249, 0.9);
@@ -6260,10 +6275,6 @@ button {
   }
 
   .orders-filter-top {
-    grid-template-columns: 1fr;
-  }
-
-  .invoices-toolbar-top {
     grid-template-columns: 1fr;
   }
 

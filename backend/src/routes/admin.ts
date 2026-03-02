@@ -9,6 +9,7 @@ import https from "node:https";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import nodemailer from "nodemailer";
 // MailUp email integration (transactional + campaigns)
 import { getBearerTokenFromRequest, resolveSessionUserFromToken } from "../lib/session.js";
 
@@ -351,7 +352,6 @@ export async function adminRoutes(app: FastifyInstance) {
     data: Record<string, string>
   ): Promise<{ ok: boolean; messageId?: string; error?: string }> {
     const cfg = getMailupConfig();
-    if (!cfg.clientId || !cfg.clientSecret) return { ok: false, error: "MailUp non configurato" };
 
     const template = await prisma.mailMarketingTemplate.findFirst({
       where: { name: type, active: true },
@@ -363,27 +363,19 @@ export async function adminRoutes(app: FastifyInstance) {
     const htmlBody = replaceTags(template?.html || typeDef.defaultHtml, data);
 
     try {
-      // Ensure recipient exists in MailUp
-      await upsertMailupRecipient({
-        listId: cfg.listId,
-        email: recipientEmail,
-        name: data["{{customer_name}}"] || "",
+      const transporter = nodemailer.createTransport({
+        host: cfg.smtpHost,
+        port: cfg.smtpPort,
+        secure: cfg.smtpPort === 465,
+        auth: { user: cfg.smtpUser, pass: cfg.smtpPass },
       });
 
-      // Create email in MailUp
-      const emailId = await createMailupEmail({
-        listId: cfg.listId,
+      const info = await transporter.sendMail({
+        from: cfg.from,
+        to: recipientEmail,
         subject,
-        name: `${type}_${Date.now()}`,
         html: htmlBody,
       });
-
-      // Send email
-      const sendRes = await sendMailupEmail({
-        listId: cfg.listId,
-        emailId,
-      });
-      const sendId = sendRes?.id || sendRes?.Id || sendRes?.Message || null;
 
       // Log to campaigns table
       await prisma.mailMarketingCampaign.create({
@@ -397,14 +389,14 @@ export async function adminRoutes(app: FastifyInstance) {
           sentAt: new Date(),
           recipientCount: 1,
           sentCount: 1,
-          mailupEmailId: emailId,
-          mailupSendId: sendId ? String(sendId) : null,
+          mailupEmailId: null,
+          mailupSendId: info.messageId || null,
         },
       });
 
-      return { ok: true, messageId: String(emailId) };
+      return { ok: true, messageId: info.messageId };
     } catch (err: any) {
-      return { ok: false, error: err?.message || "Invio email MailUp fallito" };
+      return { ok: false, error: err?.message || "Invio email SMTP fallito" };
     }
   }
 
