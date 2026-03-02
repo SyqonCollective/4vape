@@ -210,10 +210,14 @@ export async function adminRoutes(app: FastifyInstance) {
     emailId: number;
     groupId?: number | null;
   }) {
-    const payload = {
+    const payload: Record<string, unknown> = {
       ConfirmationEmail: false,
       TrackableLinks: true,
       SaveAsDraft: false,
+      TrackingInfo: {
+        Enabled: true,
+        Protocols: ["http", "https"],
+      },
       ...(params.groupId ? { Groups: [params.groupId] } : {}),
     };
     return mailupRequest(`/List/${params.listId}/Email/${params.emailId}/Send`, {
@@ -224,9 +228,27 @@ export async function adminRoutes(app: FastifyInstance) {
 
   /* ─── Transactional email types ─── */
   const EMAIL_TYPES = {
+    REGISTRATION: {
+      label: "Registrazione cliente",
+      defaultSubject: "Registrazione ricevuta — 4Vape B2B",
+      tags: [
+        { tag: "{{customer_name}}", description: "Nome contatto" },
+        { tag: "{{company_name}}", description: "Ragione sociale" },
+      ],
+      defaultHtml: `<h2>Registrazione ricevuta</h2><p>Gentile {{customer_name}},</p><p>Abbiamo ricevuto la tua richiesta di registrazione per <strong>{{company_name}}</strong> su 4Vape B2B.</p><p>Il tuo account è in attesa di approvazione da parte dell'amministrazione. Riceverai un'email non appena sarà attivato.</p><p>Grazie per averci scelto!<br/>4Vape B2B</p>`,
+    },
+    ACCOUNT_APPROVED: {
+      label: "Account approvato",
+      defaultSubject: "Il tuo account è stato approvato — 4Vape B2B",
+      tags: [
+        { tag: "{{customer_name}}", description: "Nome contatto" },
+        { tag: "{{company_name}}", description: "Ragione sociale" },
+      ],
+      defaultHtml: `<h2>Account approvato!</h2><p>Gentile {{customer_name}},</p><p>Il tuo account per <strong>{{company_name}}</strong> è stato approvato e attivato su 4Vape B2B.</p><p>Puoi accedere alla piattaforma e iniziare a ordinare subito.</p><p>Buon lavoro!<br/>4Vape B2B</p>`,
+    },
     ORDER_CONFIRMATION: {
-      label: "Conferma ordine",
-      defaultSubject: "Conferma ordine #{{order_number}} — 4Vape",
+      label: "Conferma ordine in elaborazione",
+      defaultSubject: "Conferma ordine #{{order_number}} in elaborazione — 4Vape",
       tags: [
         { tag: "{{customer_name}}", description: "Nome contatto" },
         { tag: "{{company_name}}", description: "Ragione sociale" },
@@ -236,7 +258,23 @@ export async function adminRoutes(app: FastifyInstance) {
         { tag: "{{order_items}}", description: "Tabella righe ordine (HTML)" },
         { tag: "{{payment_method}}", description: "Metodo di pagamento" },
       ],
-      defaultHtml: `<h2>Ordine confermato</h2><p>Gentile {{customer_name}},</p><p>Il tuo ordine <strong>#{{order_number}}</strong> del {{order_date}} è stato confermato.</p><table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Prodotto</th><th>SKU</th><th>Qtà</th><th>Prezzo</th><th>Totale riga</th></tr></thead><tbody>{{order_items}}</tbody></table><p><strong>Totale: {{order_total}}</strong></p><p>Pagamento: {{payment_method}}</p><p>Grazie per il tuo ordine!<br/>4Vape B2B</p>`,
+      defaultHtml: `<h2>Ordine in elaborazione</h2><p>Gentile {{customer_name}},</p><p>Il tuo ordine <strong>#{{order_number}}</strong> del {{order_date}} è stato confermato e preso in carico.</p><table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Prodotto</th><th>SKU</th><th>Qtà</th><th>Prezzo</th><th>Totale riga</th></tr></thead><tbody>{{order_items}}</tbody></table><p><strong>Totale: {{order_total}}</strong></p><p>Pagamento: {{payment_method}}</p><p>Grazie per il tuo ordine!<br/>4Vape B2B</p>`,
+    },
+    ORDER_PENDING_PAYMENT: {
+      label: "Ordine in attesa pagamento",
+      defaultSubject: "Ordine #{{order_number}} in attesa di pagamento — 4Vape",
+      tags: [
+        { tag: "{{customer_name}}", description: "Nome contatto" },
+        { tag: "{{company_name}}", description: "Ragione sociale" },
+        { tag: "{{order_number}}", description: "Numero ordine" },
+        { tag: "{{order_date}}", description: "Data ordine" },
+        { tag: "{{order_total}}", description: "Totale ordine" },
+        { tag: "{{order_items}}", description: "Tabella righe ordine (HTML)" },
+        { tag: "{{iban}}", description: "Codice IBAN per bonifico" },
+        { tag: "{{bank_name}}", description: "Nome banca" },
+        { tag: "{{payment_reference}}", description: "Causale di pagamento" },
+      ],
+      defaultHtml: `<h2>Ordine in attesa di pagamento</h2><p>Gentile {{customer_name}},</p><p>Il tuo ordine <strong>#{{order_number}}</strong> del {{order_date}} è stato registrato ed è in attesa di pagamento tramite bonifico bancario.</p><table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Prodotto</th><th>SKU</th><th>Qtà</th><th>Prezzo</th><th>Totale riga</th></tr></thead><tbody>{{order_items}}</tbody></table><p><strong>Totale da versare: {{order_total}}</strong></p><h3>Dati per il bonifico</h3><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%"><tr><td><strong>IBAN</strong></td><td>{{iban}}</td></tr><tr><td><strong>Banca</strong></td><td>{{bank_name}}</td></tr><tr><td><strong>Causale</strong></td><td>{{payment_reference}}</td></tr></table><p>Una volta ricevuto il pagamento, il tuo ordine verrà messo in elaborazione e riceverai un'email di conferma.</p><p>Grazie!<br/>4Vape B2B</p>`,
     },
     ORDER_SHIPPED: {
       label: "Ordine spedito",
@@ -274,26 +312,15 @@ export async function adminRoutes(app: FastifyInstance) {
       ],
       defaultHtml: `<h2>Hai dimenticato il carrello!</h2><p>Gentile {{customer_name}},</p><p>Hai degli articoli nel carrello per un totale di <strong>{{cart_total}}</strong>.</p>{{cart_items}}<p>Completa il tuo ordine!<br/>4Vape B2B</p>`,
     },
-    WELCOME: {
-      label: "Benvenuto",
-      defaultSubject: "Benvenuto su 4Vape B2B!",
+    WE_MISS_YOU: {
+      label: "Ci manchi",
+      defaultSubject: "Ci manchi! Torna a trovarci — 4Vape",
       tags: [
         { tag: "{{customer_name}}", description: "Nome contatto" },
         { tag: "{{company_name}}", description: "Ragione sociale" },
+        { tag: "{{last_order_date}}", description: "Data ultimo ordine" },
       ],
-      defaultHtml: `<h2>Benvenuto!</h2><p>Gentile {{customer_name}},</p><p>Il tuo account per <strong>{{company_name}}</strong> è stato attivato su 4Vape B2B.</p><p>Puoi iniziare a ordinare subito dalla piattaforma.</p><p>Buon lavoro!<br/>4Vape B2B</p>`,
-    },
-    PAYMENT_RECEIVED: {
-      label: "Pagamento ricevuto",
-      defaultSubject: "Pagamento ricevuto per ordine #{{order_number}} — 4Vape",
-      tags: [
-        { tag: "{{customer_name}}", description: "Nome contatto" },
-        { tag: "{{company_name}}", description: "Ragione sociale" },
-        { tag: "{{order_number}}", description: "Numero ordine" },
-        { tag: "{{payment_amount}}", description: "Importo pagamento" },
-        { tag: "{{payment_date}}", description: "Data pagamento" },
-      ],
-      defaultHtml: `<h2>Pagamento ricevuto</h2><p>Gentile {{customer_name}},</p><p>Abbiamo ricevuto il pagamento di <strong>{{payment_amount}}</strong> per l'ordine <strong>#{{order_number}}</strong>.</p><p>Grazie!<br/>4Vape B2B</p>`,
+      defaultHtml: `<h2>Ci manchi!</h2><p>Gentile {{customer_name}},</p><p>Non ti vediamo da un po' su 4Vape B2B. Il tuo ultimo ordine risale al {{last_order_date}}.</p><p>Abbiamo tante novità che ti aspettano! Torna a trovarci e scopri i nuovi prodotti nel catalogo.</p><p>A presto!<br/>4Vape B2B</p>`,
     },
   } as const;
 
@@ -703,8 +730,10 @@ export async function adminRoutes(app: FastifyInstance) {
       "{{invoice_total}}": "€ 1.525,00",
       "{{cart_total}}": "€ 890,00",
       "{{cart_items}}": '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><tr><td>Liquido Menta 10ml x 30</td><td>€ 105,00</td></tr></table>',
-      "{{payment_amount}}": "€ 1.250,00",
-      "{{payment_date}}": new Date().toLocaleDateString("it-IT"),
+      "{{iban}}": "IT60 X054 2811 1010 0000 0123 456",
+      "{{bank_name}}": "Intesa Sanpaolo",
+      "{{payment_reference}}": "Ordine #ORD-2025-0042 — Tabaccheria Rossi S.r.l.",
+      "{{last_order_date}}": new Date(Date.now() - 20 * 86400000).toLocaleDateString("it-IT"),
     };
 
     const result = await sendTransactionalEmail(type, body.recipientEmail, sampleData);
@@ -727,7 +756,7 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!(body.type in EMAIL_TYPES)) return reply.badRequest("Tipo email non valido");
     const type = body.type as EmailType;
 
-    if (type === "ORDER_CONFIRMATION" || type === "ORDER_SHIPPED" || type === "PAYMENT_RECEIVED") {
+    if (type === "ORDER_CONFIRMATION" || type === "ORDER_SHIPPED" || type === "ORDER_PENDING_PAYMENT") {
       if (!body.orderId) return reply.badRequest("orderId richiesto");
       const order = await prisma.order.findUnique({
         where: { id: body.orderId },
@@ -743,9 +772,10 @@ export async function adminRoutes(app: FastifyInstance) {
         data["{{tracking_number}}"] = (order as any).trackingNumber || "-";
         data["{{carrier}}"] = (order as any).carrier || "-";
       }
-      if (type === "PAYMENT_RECEIVED") {
-        data["{{payment_amount}}"] = money(order.total);
-        data["{{payment_date}}"] = new Date().toLocaleDateString("it-IT");
+      if (type === "ORDER_PENDING_PAYMENT") {
+        data["{{iban}}"] = "IT00X0000000000000000000000";
+        data["{{bank_name}}"] = "Banca aziendale";
+        data["{{payment_reference}}"] = String(order.orderNumber || order.id);
       }
       const result = await sendTransactionalEmail(type, email, data);
       if (!result.ok) return reply.code(400).send(result);
@@ -3824,6 +3854,43 @@ export async function adminRoutes(app: FastifyInstance) {
     return rows;
   });
 
+  /* ─── Invoice print template ─── */
+  app.get("/invoices/template", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const tpl = await prisma.mailMarketingTemplate.findFirst({
+      where: { name: "INVOICE_TEMPLATE" },
+      orderBy: { updatedAt: "desc" },
+    });
+    return { html: tpl?.html || "" };
+  });
+
+  app.put("/invoices/template", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const body = z.object({ html: z.string() }).parse(request.body);
+    const existing = await prisma.mailMarketingTemplate.findFirst({
+      where: { name: "INVOICE_TEMPLATE" },
+    });
+    if (existing) {
+      await prisma.mailMarketingTemplate.update({
+        where: { id: existing.id },
+        data: { html: body.html },
+      });
+    } else {
+      await prisma.mailMarketingTemplate.create({
+        data: {
+          name: "INVOICE_TEMPLATE",
+          subject: "Fattura",
+          html: body.html,
+          active: true,
+          createdById: user.id,
+        },
+      });
+    }
+    return { ok: true };
+  });
+
   app.delete("/invoices/:id", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
@@ -3901,9 +3968,10 @@ export async function adminRoutes(app: FastifyInstance) {
         invoiceNumber: z.string().min(1),
         issuedAt: z.string().min(1),
         companyId: z.string().min(1),
+        paymentMethod: z.string().optional(),
         lines: z.array(z.object({
-          sku: z.string().min(1),
-          productName: z.string().min(1),
+          sku: z.string().default("-"),
+          productName: z.string().default("-"),
           productId: z.string().nullable().optional(),
           codicePl: z.string().nullable().optional(),
           mlProduct: z.number().nullable().optional(),
@@ -3939,8 +4007,8 @@ export async function adminRoutes(app: FastifyInstance) {
       data: body.lines.map((l) => ({
         invoiceId: created.id,
         productId: l.productId || null,
-        sku: l.sku,
-        productName: l.productName,
+        sku: l.sku || "-",
+        productName: l.productName || "-",
         codicePl: l.codicePl || null,
         mlProduct: l.mlProduct ?? null,
         nicotine: l.nicotine ?? null,

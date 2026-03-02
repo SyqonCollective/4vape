@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
@@ -88,6 +88,28 @@ export default function AdminInvoices() {
 
   const [sendingEmail, setSendingEmail] = useState(null);
 
+  // Invoice template editor
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
+  const [invoiceTemplate, setInvoiceTemplate] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const templateEditorRef = useRef(null);
+
+  async function loadTemplate() {
+    try {
+      const res = await api("/admin/invoices/template");
+      setInvoiceTemplate(res?.html || "");
+    } catch { /* ignore */ }
+  }
+
+  async function saveTemplate() {
+    setSavingTemplate(true);
+    try {
+      await api("/admin/invoices/template", { method: "PUT", body: JSON.stringify({ html: invoiceTemplate }) });
+      setShowTemplateEditor(false);
+    } catch { setError("Errore salvataggio template"); }
+    finally { setSavingTemplate(false); }
+  }
+
   async function load() {
     try {
       const params = new URLSearchParams();
@@ -105,6 +127,7 @@ export default function AdminInvoices() {
 
   useEffect(() => {
     load();
+    loadTemplate();
   }, [startDate, endDate, status, companyId]);
 
   useEffect(() => {
@@ -191,6 +214,32 @@ export default function AdminInvoices() {
     const clientAddress = [c.address, c.cap, c.city, c.province].filter(Boolean).join(", ") || "-";
     const lines = row.lines || [];
     const t = calcLineTotals(lines);
+
+    // If custom template exists, use it with tag replacement
+    if (invoiceTemplate) {
+      const tags = {
+        "{{titolo}}": docTitle,
+        "{{numero}}": row.numero || "-",
+        "{{data}}": fmtDate(row.data),
+        "{{stato}}": row.stato === "SALDATA" ? "Saldata" : "Da saldare",
+        "{{pagamento}}": payLabel(row.pagamento),
+        "{{ordine}}": row.riferimentoOrdine || "-",
+        "{{cliente}}": row.cliente || "-",
+        "{{partita_iva}}": c.vatNumber || c.adminVatNumber || "-",
+        "{{indirizzo}}": clientAddress,
+        "{{righe_prodotti}}": buildLinesHtml(lines),
+        "{{imponibile}}": money(t.imponibile),
+        "{{accisa}}": money(t.accisa),
+        "{{iva}}": money(t.iva),
+        "{{totale}}": money(t.total),
+        "{{logo}}": logoUrl,
+        "{{nota_legale}}": LEGAL_COURTESY_NOTE,
+      };
+      let html = invoiceTemplate;
+      for (const [tag, val] of Object.entries(tags)) html = html.replaceAll(tag, val);
+      return html;
+    }
+
     return `
       <div class="head"><img class="logo" src="${logoUrl}" alt="4Vape" /><div class="company"><strong>4Vape B2B</strong><br/>${docTitle}</div></div>
       <h1>${docTitle} ${row.numero || "-"}</h1>
@@ -524,6 +573,7 @@ export default function AdminInvoices() {
         <div className="actions">
           <button className="btn ghost" onClick={exportCurrentCsv}>Esporta CSV</button>
           <button className="btn ghost" onClick={printRegister}>Stampa registro</button>
+          <button className="btn ghost" onClick={() => setShowTemplateEditor(true)}>Personalizza stampa</button>
           <button className="btn primary" onClick={() => setShowManual(true)}>Fattura manuale</button>
         </div>
       </div>
@@ -709,6 +759,64 @@ export default function AdminInvoices() {
           </div>
         </Portal>
       )}
+
+      {showTemplateEditor && (
+        <Portal>
+          <div className="modal-backdrop" onClick={() => setShowTemplateEditor(false)}>
+            <div className="modal product-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 960 }}>
+              <div className="modal-header">
+                <h3>Personalizza template fattura</h3>
+                <button className="btn ghost" onClick={() => setShowTemplateEditor(false)}>Chiudi</button>
+              </div>
+              <div className="modal-body" style={{ display: "grid", gridTemplateColumns: "1fr 240px", gap: 20 }}>
+                <div>
+                  <p className="muted" style={{ marginBottom: 12, fontSize: 13 }}>
+                    Personalizza il layout HTML della fattura stampata. Usa i tag qui a destra per inserire i dati dinamici.
+                    Lascia vuoto per usare il layout predefinito.
+                  </p>
+                  <InvoiceTemplateEditor
+                    ref={templateEditorRef}
+                    value={invoiceTemplate}
+                    onChange={setInvoiceTemplate}
+                  />
+                  <div className="actions" style={{ marginTop: 16 }}>
+                    <button className="btn ghost" onClick={() => { setInvoiceTemplate(""); }}>Reset a predefinito</button>
+                    <button className="btn ghost" onClick={() => setShowTemplateEditor(false)}>Annulla</button>
+                    <button className="btn primary" onClick={saveTemplate} disabled={savingTemplate}>{savingTemplate ? "Salvataggio..." : "Salva template"}</button>
+                  </div>
+                </div>
+                <div style={{ fontSize: 13 }}>
+                  <h4 style={{ margin: "0 0 8px" }}>Tag disponibili</h4>
+                  <p className="muted" style={{ fontSize: 12, marginBottom: 8 }}>Clicca per inserire</p>
+                  {[
+                    ["{{titolo}}", "Titolo (Fattura/DDT)"],
+                    ["{{numero}}", "Numero fattura"],
+                    ["{{data}}", "Data emissione"],
+                    ["{{stato}}", "Stato pagamento"],
+                    ["{{pagamento}}", "Metodo pagamento"],
+                    ["{{ordine}}", "Rif. ordine"],
+                    ["{{cliente}}", "Nome cliente"],
+                    ["{{partita_iva}}", "Partita IVA"],
+                    ["{{indirizzo}}", "Indirizzo cliente"],
+                    ["{{righe_prodotti}}", "Tabella prodotti"],
+                    ["{{imponibile}}", "Totale imponibile"],
+                    ["{{accisa}}", "Totale accisa"],
+                    ["{{iva}}", "Totale IVA"],
+                    ["{{totale}}", "Totale fattura"],
+                    ["{{logo}}", "URL logo"],
+                    ["{{nota_legale}}", "Nota legale"],
+                  ].map(([tag, desc]) => (
+                    <button key={tag} type="button" className="mail-tag-btn" style={{ display: "block", width: "100%", marginBottom: 4 }} onClick={() => setInvoiceTemplate((p) => p + tag)} title={desc}>
+                      <code>{tag}</code>
+                      <span className="muted" style={{ fontSize: 11 }}>{desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
     </section>
   );
 }
@@ -760,3 +868,66 @@ function LinesEditor({ lines, search, setSearch, results, onAdd, onUpdate, onRem
     </div>
   );
 }
+
+import { forwardRef, useImperativeHandle } from "react";
+
+const InvoiceTemplateEditor = forwardRef(function InvoiceTemplateEditor({ value, onChange }, ref) {
+  const editorRef = useRef(null);
+  const imageInputRef = useRef(null);
+
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    if ((value || "") !== el.innerHTML) el.innerHTML = value || "";
+  }, [value]);
+
+  useImperativeHandle(ref, () => ({ focus: () => editorRef.current?.focus() }));
+
+  function run(cmd, arg) {
+    const el = editorRef.current;
+    if (!el) return;
+    el.focus();
+    document.execCommand(cmd, false, arg);
+    onChange(el.innerHTML);
+  }
+
+  function onInput() {
+    const el = editorRef.current;
+    if (!el) return;
+    onChange(el.innerHTML);
+  }
+
+  function addLink() {
+    const url = window.prompt("Inserisci URL (https://...)");
+    if (url) run("createLink", url.trim());
+  }
+
+  function addImageFromFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { if (reader.result) run("insertImage", String(reader.result)); };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
+  return (
+    <div className="rte">
+      <div className="rte-toolbar">
+        <button type="button" className="rte-btn" onClick={() => run("bold")} title="Grassetto">B</button>
+        <button type="button" className="rte-btn" onClick={() => run("italic")} title="Corsivo">I</button>
+        <button type="button" className="rte-btn" onClick={() => run("underline")} title="Sottolineato">U</button>
+        <button type="button" className="rte-btn" onClick={() => run("formatBlock", "<h1>")} title="H1">H1</button>
+        <button type="button" className="rte-btn" onClick={() => run("formatBlock", "<h2>")} title="H2">H2</button>
+        <button type="button" className="rte-btn" onClick={() => run("insertUnorderedList")} title="Elenco">List</button>
+        <button type="button" className="rte-btn" onClick={() => run("justifyLeft")} title="Sinistra">Left</button>
+        <button type="button" className="rte-btn" onClick={() => run("justifyCenter")} title="Centra">Center</button>
+        <button type="button" className="rte-btn" onClick={addLink} title="Link">Link</button>
+        <button type="button" className="rte-btn" onClick={() => imageInputRef.current?.click()} title="Immagine">Img</button>
+        <button type="button" className="rte-btn" onClick={() => run("removeFormat")} title="Pulisci">Clear</button>
+      </div>
+      <input ref={imageInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={addImageFromFile} />
+      <div ref={editorRef} className="rte-editor" contentEditable suppressContentEditableWarning data-placeholder="Scrivi il template HTML della fattura..." onInput={onInput} />
+    </div>
+  );
+});

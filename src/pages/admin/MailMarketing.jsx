@@ -236,8 +236,10 @@ export default function AdminMailMarketing() {
     "{{cart_items}}":
       '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">' +
       "<tr><td>Liquido Menta 10ml x 30</td><td>\u20AC 105,00</td></tr></table>",
-    "{{payment_amount}}": "\u20AC 1.250,00",
-    "{{payment_date}}": new Date().toLocaleDateString("it-IT"),
+    "{{iban}}": "IT60 X054 2811 1010 0000 0123 456",
+    "{{bank_name}}": "Intesa Sanpaolo",
+    "{{payment_reference}}": "Ordine #ORD-2025-0042 \u2014 Tabaccheria Rossi S.r.l.",
+    "{{last_order_date}}": new Date(Date.now() - 20 * 86400000).toLocaleDateString("it-IT"),
   };
 
   function previewHtml(typeObj) {
@@ -476,16 +478,19 @@ export default function AdminMailMarketing() {
       <div className="panel" style={{ background: "#f0f9ff", border: "1px solid #bae6fd" }}>
         <h3 style={{ margin: "0 0 8px", color: "#0369a1" }}>Come funziona</h3>
         <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8, color: "#334155" }}>
-          <li><strong>Conferma ordine</strong> &mdash; inviata automaticamente quando un ordine passa a stato &ldquo;Approvato&rdquo;</li>
-          <li><strong>Ordine spedito</strong> &mdash; inviata quando un ordine passa a stato &ldquo;Evaso&rdquo;</li>
+          <li><strong>Registrazione cliente</strong> &mdash; inviata quando un cliente si registra (account in attesa di approvazione)</li>
+          <li><strong>Account approvato</strong> &mdash; inviata quando l&apos;amministrazione approva il cliente</li>
+          <li><strong>Conferma ordine in elaborazione</strong> &mdash; inviata quando un ordine con contrassegno/carta viene confermato</li>
+          <li><strong>Ordine in attesa pagamento</strong> &mdash; inviata per ordini con bonifico, contiene IBAN e dati per il pagamento</li>
+          <li><strong>Ordine spedito</strong> &mdash; inviata quando un ordine viene completato/spedito</li>
           <li><strong>Fattura disponibile</strong> &mdash; inviata quando si genera una fattura da un ordine</li>
-          <li><strong>Carrello abbandonato</strong> &mdash; da inviare manualmente o tramite job schedulato</li>
-          <li><strong>Benvenuto</strong> &mdash; da inviare quando un&apos;azienda viene attivata</li>
-          <li><strong>Pagamento ricevuto</strong> &mdash; da inviare manualmente con &ldquo;Invia test&rdquo; specificando i dati</li>
+          <li><strong>Carrello abbandonato</strong> &mdash; inviata dopo 30 minuti di inattività con carrello pieno</li>
+          <li><strong>Ci manchi</strong> &mdash; inviata a clienti che non ordinano da 15 giorni</li>
         </ul>
         <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
           I tag come <code>{"{{customer_name}}"}</code>, <code>{"{{order_number}}"}</code> ecc.
           vengono sostituiti automaticamente con i dati reali al momento dell&apos;invio.
+          Tutti i template sono completamente editabili.
         </p>
       </div>
     </section>
