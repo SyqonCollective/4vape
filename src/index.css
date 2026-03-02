@@ -2582,8 +2582,8 @@ button {
 }
 .invoices-table-pro .row,
 .invoices-table-pro .row.header {
-  grid-template-columns: 90px 90px 1.2fr 90px 90px 100px 100px 80px 80px 100px 90px auto;
-  min-width: 1320px;
+  grid-template-columns: 90px 90px 1.5fr 100px 100px 110px 100px auto;
+  min-width: 900px;
 }
 .invoices-table-pro .row > div {
   overflow: hidden;

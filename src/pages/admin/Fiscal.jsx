@@ -148,8 +148,8 @@ export default function AdminFiscal() {
       r.sku || "",
       r.prodotto || "",
       r.codicePl || "",
-      Number(r.mlProduct || 0).toFixed(3),
-      Number(r.nicotine || 0).toFixed(3),
+      parseFloat(Number(r.mlProduct || 0).toFixed(3)),
+      parseFloat(Number(r.nicotine || 0).toFixed(3)),
       Number(r.avgPriceIvato || 0).toFixed(2),
       Number(r.qty || 0),
       Number(r.accisa || 0).toFixed(6),
@@ -182,8 +182,8 @@ export default function AdminFiscal() {
       r.cfPivaAdm || "",
       r.prodotto || "",
       r.codicePl || "",
-      Number(r.mlProduct || 0).toFixed(3),
-      Number(r.nicotine || 0).toFixed(3),
+      parseFloat(Number(r.mlProduct || 0).toFixed(3)),
+      parseFloat(Number(r.nicotine || 0).toFixed(3)),
       Number(r.qty || 0),
     ]);
     exportCsv("gestione_fiscale_mensile.csv", headers, rows);

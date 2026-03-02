@@ -3732,14 +3732,22 @@ export async function adminRoutes(app: FastifyInstance) {
         ...(companyId ? { companyId } : {}),
       },
       include: {
-        company: { select: { id: true, name: true, legalName: true } },
-        order: { select: { id: true, orderNumber: true, paymentMethod: true } },
+        company: { select: { id: true, name: true, legalName: true, vatNumber: true, adminVatNumber: true, address: true, cap: true, city: true, province: true, email: true, pec: true, contactFirstName: true, contactLastName: true } },
+        order: { select: { id: true, orderNumber: true, paymentMethod: true, shippingCost: true, shippingVatRate: true, shippingVatAmount: true } },
         lines: {
           select: {
+            id: true,
+            sku: true,
+            productName: true,
+            codicePl: true,
+            mlProduct: true,
+            nicotine: true,
             qty: true,
             unitGross: true,
+            exciseUnit: true,
             exciseTotal: true,
             vatTotal: true,
+            productId: true,
             product: { select: { purchasePrice: true } },
           },
         },
@@ -3789,6 +3797,26 @@ export async function adminRoutes(app: FastifyInstance) {
           guadagno: imponibileProdotti - costoProdotti,
           paidAt: paidState?.paidAt || null,
           companyId: invoice.companyId,
+          company: invoice.company,
+          orderId: invoice.orderId,
+          shippingCost: Number(invoice.order?.shippingCost || 0),
+          shippingVatRate: Number(invoice.order?.shippingVatRate || 0),
+          shippingVatAmount: Number(invoice.order?.shippingVatAmount || 0),
+          lines: (invoice.lines || []).map((line) => ({
+            id: line.id,
+            sku: line.sku,
+            productName: line.productName,
+            codicePl: line.codicePl,
+            mlProduct: line.mlProduct ? Number(line.mlProduct) : null,
+            nicotine: line.nicotine ? Number(line.nicotine) : null,
+            qty: line.qty,
+            unitGross: Number(line.unitGross),
+            exciseUnit: Number(line.exciseUnit),
+            exciseTotal: Number(line.exciseTotal),
+            vatTotal: Number(line.vatTotal),
+            productId: line.productId,
+            purchasePrice: Number(line.product?.purchasePrice || 0),
+          })),
         };
       })
       .filter((r) => (status ? r.stato === status : true));
@@ -3815,34 +3843,53 @@ export async function adminRoutes(app: FastifyInstance) {
       .object({
         invoiceNumber: z.string().min(1).optional(),
         issuedAt: z.string().optional(),
-        imponibileProdotti: z.number().optional(),
-        accisa: z.number().optional(),
-        iva: z.number().optional(),
+        lines: z.array(z.object({
+          id: z.string().optional(),
+          sku: z.string().min(1),
+          productName: z.string().min(1),
+          productId: z.string().nullable().optional(),
+          codicePl: z.string().nullable().optional(),
+          mlProduct: z.number().nullable().optional(),
+          nicotine: z.number().nullable().optional(),
+          qty: z.number().min(1),
+          unitGross: z.number(),
+          exciseUnit: z.number().default(0),
+          exciseTotal: z.number().default(0),
+          vatTotal: z.number().default(0),
+        })).optional(),
       })
       .parse(request.body);
+
+    const invoice = await prisma.fiscalInvoice.findUnique({ where: { id }, include: { lines: true } });
+    if (!invoice) return reply.notFound("Fattura non trovata");
 
     const data: any = {};
     if (body.invoiceNumber) data.invoiceNumber = body.invoiceNumber.trim();
     if (body.issuedAt) data.issuedAt = new Date(`${body.issuedAt}T00:00:00.000Z`);
+    await prisma.fiscalInvoice.update({ where: { id }, data });
 
-    if (body.imponibileProdotti !== undefined || body.accisa !== undefined || body.iva !== undefined) {
-      const invoice = await prisma.fiscalInvoice.findUnique({ where: { id }, include: { lines: true } });
-      if (!invoice) return reply.notFound("Fattura non trovata");
-      const total = Number(body.imponibileProdotti || 0) + Number(body.accisa || 0) + Number(body.iva || 0);
-      if (invoice.lines.length === 1) {
-        await prisma.fiscalInvoiceLine.update({
-          where: { id: invoice.lines[0].id },
-          data: {
-            unitGross: new Prisma.Decimal(total),
-            exciseTotal: new Prisma.Decimal(body.accisa || 0),
-            exciseUnit: new Prisma.Decimal(body.accisa || 0),
-            vatTotal: new Prisma.Decimal(body.iva || 0),
-          },
+    if (body.lines) {
+      await prisma.fiscalInvoiceLine.deleteMany({ where: { invoiceId: id } });
+      if (body.lines.length) {
+        await prisma.fiscalInvoiceLine.createMany({
+          data: body.lines.map((l) => ({
+            invoiceId: id,
+            productId: l.productId || null,
+            sku: l.sku,
+            productName: l.productName,
+            codicePl: l.codicePl || null,
+            mlProduct: l.mlProduct ?? null,
+            nicotine: l.nicotine ?? null,
+            qty: l.qty,
+            unitGross: new Prisma.Decimal(l.unitGross),
+            exciseUnit: new Prisma.Decimal(l.exciseUnit),
+            exciseTotal: new Prisma.Decimal(l.exciseTotal),
+            vatTotal: new Prisma.Decimal(l.vatTotal),
+          })),
         });
       }
     }
 
-    await prisma.fiscalInvoice.update({ where: { id }, data });
     return { ok: true };
   });
 
@@ -3854,39 +3901,55 @@ export async function adminRoutes(app: FastifyInstance) {
         invoiceNumber: z.string().min(1),
         issuedAt: z.string().min(1),
         companyId: z.string().min(1),
-        paymentMethod: z.string().optional(),
-        imponibileProdotti: z.number().nonnegative(),
-        accisa: z.number().nonnegative(),
-        iva: z.number().nonnegative(),
-        costoProdotti: z.number().nonnegative().optional(),
+        lines: z.array(z.object({
+          sku: z.string().min(1),
+          productName: z.string().min(1),
+          productId: z.string().nullable().optional(),
+          codicePl: z.string().nullable().optional(),
+          mlProduct: z.number().nullable().optional(),
+          nicotine: z.number().nullable().optional(),
+          qty: z.number().min(1),
+          unitGross: z.number(),
+          exciseUnit: z.number().default(0),
+          exciseTotal: z.number().default(0),
+          vatTotal: z.number().default(0),
+        })).min(1),
       })
       .parse(request.body);
 
     const company = await prisma.company.findUnique({ where: { id: body.companyId } });
     if (!company) return reply.badRequest("Cliente non trovato");
-    const total = Number(body.imponibileProdotti || 0) + Number(body.accisa || 0) + Number(body.iva || 0);
 
     const created = await prisma.fiscalInvoice.create({
       data: {
         invoiceNumber: body.invoiceNumber.trim(),
         issuedAt: new Date(`${body.issuedAt}T00:00:00.000Z`),
         companyId: company.id,
+        exerciseNumber: company.licenseNumber || null,
+        cmnr: company.cmnr || null,
+        signNumber: company.signNumber || null,
         legalName: company.legalName || company.name || null,
         city: company.city || null,
         province: company.province || null,
         adminVatNumber: company.adminVatNumber || company.vatNumber || null,
-        lines: {
-          create: {
-            sku: "MANUAL",
-            productName: "Fattura manuale",
-            qty: 1,
-            unitGross: new Prisma.Decimal(total),
-            exciseUnit: new Prisma.Decimal(body.accisa || 0),
-            exciseTotal: new Prisma.Decimal(body.accisa || 0),
-            vatTotal: new Prisma.Decimal(body.iva || 0),
-          },
-        },
       },
+    });
+
+    await prisma.fiscalInvoiceLine.createMany({
+      data: body.lines.map((l) => ({
+        invoiceId: created.id,
+        productId: l.productId || null,
+        sku: l.sku,
+        productName: l.productName,
+        codicePl: l.codicePl || null,
+        mlProduct: l.mlProduct ?? null,
+        nicotine: l.nicotine ?? null,
+        qty: l.qty,
+        unitGross: new Prisma.Decimal(l.unitGross),
+        exciseUnit: new Prisma.Decimal(l.exciseUnit),
+        exciseTotal: new Prisma.Decimal(l.exciseTotal),
+        vatTotal: new Prisma.Decimal(l.vatTotal),
+      })),
     });
 
     await prisma.treasurySettlement.upsert({
@@ -3975,6 +4038,26 @@ export async function adminRoutes(app: FastifyInstance) {
       })
       .filter(Boolean) as any[];
 
+    // Add shipping line if order has shipping cost
+    const shippingCost = Number(order.shippingCost || 0);
+    const shippingVatAmount = Number(order.shippingVatAmount || 0);
+    if (shippingCost > 0) {
+      linesToCreate.push({
+        invoiceId: invoice.id,
+        productId: null,
+        sku: "SHIPPING",
+        productName: "Spedizione",
+        codicePl: null,
+        mlProduct: null,
+        nicotine: null,
+        qty: 1,
+        unitGross: shippingCost + shippingVatAmount,
+        exciseUnit: 0,
+        exciseTotal: 0,
+        vatTotal: shippingVatAmount,
+      });
+    }
+
     if (linesToCreate.length) {
       await prisma.fiscalInvoiceLine.createMany({ data: linesToCreate });
     }
@@ -3997,6 +4080,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
     // Scalare giacenza inventario per ogni riga fatturata
     for (const line of linesToCreate) {
+      if (line.sku === "SHIPPING") continue;
       const invItem = await prisma.internalInventoryItem.findUnique({ where: { sku: line.sku } });
       if (invItem) {
         await prisma.internalInventoryItem.update({
@@ -4021,6 +4105,33 @@ export async function adminRoutes(app: FastifyInstance) {
     }
 
     return reply.code(201).send({ ok: true, invoiceId: invoice.id, invoiceNumber: invoice.invoiceNumber });
+  });
+
+  app.post("/invoices/:id/send-email", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).id as string;
+    const invoice = await prisma.fiscalInvoice.findUnique({
+      where: { id },
+      include: { lines: true, company: true },
+    });
+    if (!invoice) return reply.notFound("Fattura non trovata");
+
+    const email = invoice.company?.pec || invoice.company?.email;
+    if (!email) return reply.badRequest("Nessun indirizzo email trovato per il cliente");
+
+    const contact = [invoice.company?.contactFirstName, invoice.company?.contactLastName].filter(Boolean).join(" ").trim();
+    const invoiceTotal = (invoice.lines || []).reduce((s, l) => s + Number(l.unitGross || 0) * Number(l.qty || 0), 0);
+
+    await sendTransactionalEmail("INVOICE_READY", email, {
+      "{{customer_name}}": contact || invoice.company?.name || "-",
+      "{{company_name}}": invoice.company?.legalName || invoice.company?.name || "-",
+      "{{invoice_number}}": invoice.invoiceNumber,
+      "{{invoice_date}}": new Date(invoice.issuedAt).toLocaleDateString("it-IT"),
+      "{{invoice_total}}": money(invoiceTotal),
+    });
+
+    return { ok: true, sentTo: email };
   });
 
   app.get("/settings", async (request, reply) => {
