@@ -352,6 +352,9 @@ export async function adminRoutes(app: FastifyInstance) {
     data: Record<string, string>
   ): Promise<{ ok: boolean; messageId?: string; error?: string }> {
     const cfg = getMailupConfig();
+    if (!cfg.smtpUser || !cfg.smtpPass) {
+      return { ok: false, error: "SMTP non configurato: imposta MAILUP_SMTP_USER e MAILUP_SMTP_PASS (o MAILUP_USERNAME / MAILUP_PASSWORD) nel file .env del server" };
+    }
 
     const template = await prisma.mailMarketingTemplate.findFirst({
       where: { name: type, active: true },
