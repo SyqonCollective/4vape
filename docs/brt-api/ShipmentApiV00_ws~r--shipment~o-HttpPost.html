@@ -1,0 +1,1797 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <!--DXMETADATA start type="MetaCharset" --><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"><!--DXMETADATA end-->
+    <meta http-equiv="X-UA-Compatible" value="IE=9" />
+
+    <!--DXMETADATA start type="Literal" condition="helpversion:value=3" value="<meta name=""Microsoft.Help.SelfBranded"" content=""true"" />" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<title>%%LocalItemTitle%%</title>" --><title>Create (Post)</title><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<meta name=""Title"" content=""%%ItemTitleNoQuotes%%""/>" --><meta name="Title" content=""/><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="PackageLink" packagename="jquery" filetype="script" firstlinkattributes="id=""mshs_support_script"""--><script src="template/packages/jquery/script/default/jquery-1.11.3.min.js" type="text/javascript" id="mshs_support_script"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="script"--><script src="template/packages/jquery-ui/script/default/jquery-ui-1.11.4.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/jquery-ui/css/default/jquery-ui-1.11.4.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TemplateSettingsJson" format="<script type=""text/javascript"">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:%%TemplateSettingsJson%%});</script>" --><script type="text/javascript">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:{"dynamictoc":{"initialNodeId":"n17","initialNodeContainer":"c2","isResizable":true},"inthistopic":{"isEnabled":true},"currentLocale":"-","isFrameless":true,"navigationKind":"inpage","versions":{"locale":{"currentId":"-"}}}});</script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="light" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/light/css/dynamic-toc.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/plugins-webservice/css/default/jquery-plugins.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="css" firstlinkattributes=" data-mshv2-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv2.css"" data-mshv1-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv1.css"" data-responsive-mobile=""template/packages/core-webservice/dx.webservice.mobile.css"" data-responsive-tablet=""template/packages/core-webservice/dx.webservice.tablet.css"""--><link rel="stylesheet" type="text/css" href="template/packages/core-webservice/css/dx.webservice.css"  data-mshv2-stylesheet="/template/packages/core-webservice/dx.webservice.mshv2.css" data-mshv1-stylesheet="/template/packages/core-webservice/dx.webservice.mshv1.css" data-responsive-mobile="template/packages/core-webservice/dx.webservice.mobile.css" data-responsive-tablet="template/packages/core-webservice/dx.webservice.tablet.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="script"--><script src="template/packages/plugins-webservice/script/default/jquery-plugins.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="script"--><script src="template/packages/core-webservice/script/dx.webservice.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="TopicId" format="<meta name=""Microsoft.Help.Id"" content=""%%TopicId%%""/>" --><meta name="Microsoft.Help.Id" content="ShipmentApiV00_ws~r--shipment~o-HttpPost"/><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Synopsis" StripHtmlTags="True" MaxLength="250" format="<meta name=""Description"" content=""%%Synopsis%%"" />"--><meta name="Description" content="Questo metodo genera una spedizione nel sistema BRT nella soluzione Disk B." /><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TocParentId" format="<meta name=""Microsoft.Help.TocParent"" content=""%%TocParentId%%""/>" --><!--DXMETADATA end-->
+    <meta name="Microsoft.Help.ContentType" content="Reference" />
+    <!--DXMETADATA start type="MshvKeywords" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="MshvMetaTags" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.Locale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.TopicLocale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Stylesheets" --><link rel="stylesheet" type="text/css" href="stylesheets/customstyles.css"></link>
+    <link rel="stylesheet" type="text/css" href="stylesheets/fields.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="StylePropertyValues" format="<style>%%StylePropertyValues%%</style>" --><style>#i-header-container { background-color: #EEEEEE }
+#i-header-container { color: #000000 }
+.i-is-new .i-page-title-text::after, ul#i-dt-root li.i-is-new>a::after { content: "Nuovo" }
+</style><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scripts" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="DesignTime"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_PROPERTIES" --><!--DXMETADATA end -->
+    <!--DXMETADATA start type="CustomHeadContent" --><!--DXMETADATA end-->
+</head>
+
+<body>
+    <div id="i-before-header-content" class="i-before-header-content">
+        
+    </div>
+
+    <div id="i-header-container">
+        <div id="i-header-content" class="i-header-content i-content-width-container">
+            <!--DXMETADATA start type="LogoImage" --><img class="logoimage" src="images/BRT_logo_redgrad_rgb1.png" border="0"></img><!--DXMETADATA end-->
+            <div class="i-project-title"><!--DXMETADATA start type="ProjectTitle" -->Brt Rest API Shipment<!--DXMETADATA end--></div>
+            <div class="i-search-container">
+                <!--DXMETADATA start type="outputfileextension" format="<form action=""websearch%%outputfileextension%%"">" --><form action="websearch.html"><!--DXMETADATA end-->
+                <input id="i-search" name="query"/>
+                <input type="submit" id="i-search-button" value=""/>
+                <!--DXMETADATA start type="Literal" value="</form>" --></form><!--DXMETADATA end-->
+            </div>
+            <!--DXMETADATA start type="outputfileextension" format="<a id=""i-index-button"" href=""webindex%%outputfileextension%%""></a>" --><a id="i-index-button" href="webindex.html"></a><!--DXMETADATA end-->
+        </div>
+    </div>
+    
+    <div class="i-content-width-container"><div class="i-busy-overlay"></div></div>
+
+    <div id="i-breadcrumbs-outer-container" class="i-content-width-container"><!--DXMETADATA start type="Breadcrumbs" scrap="_BREADCRUMBS" --><div class="i-breadcrumbs-container">
+<a href="ShipmentApiV00_ws.html">Brt Rest API Shipment</a>
+ / <a href="ShipmentApiV00_ws~g-shipments APIs.html">Shipment API</a>
+ / Create (Post)</div><!--DXMETADATA end --></div>
+
+    
+
+    <div id="i-actions-outer-container" class="i-content-width-container">
+        <div id="i-actions-container">
+            <div id="i-actions-content" class="i-fixed-to-top">
+                <!-- Spacing --> <span class="i-toggle-all-sections i-function-link">
+                <label class="i-collapse-all"><!--DXMETADATA start type="Phrase" name="COLLAPSE_ALL" -->Nascondi tutto<!--DXMETADATA end--></label>
+                <label class="i-expand-all" style="display: none;"><!--DXMETADATA start type="Phrase" name="EXPAND_ALL" -->Mostra tutto<!--DXMETADATA end--></label>
+            </span><!--DXMETADATA start type="Literal" condition="communityenabled" value="%%scrap:name=_COMMUNITY_DROPDOWN%%" --><!--DXMETADATA end -->
+                <div class="i-in-this-topic-container">
+                    <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-toc-outer-container" class="i-content-width-container">
+        <div id="i-toc-container">
+            <div id="i-toc-content" class="i-fixed-to-top">
+                <div class="i-toc-content-scroll-container">
+                    <div id="i-dynamic-toc-container"><ul id="i-dt-root"></ul></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-body-content-container" class="i-content-width-container">
+        <div id="i-body-content" class="i-body-content">
+            <div class="i-page-title"><!--DXMETADATA start type="Scrap" name="_OPERATION_PAGE_TITLE" --><table class="i-operation-page-title"><tr><td class="i-operation-kind HttpPost">Post</td><td class="i-operation-page-title-text">Create</td></tr></table><!--DXMETADATA end--></div>
+            <div class="i-in-this-topic-container">
+                <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+            </div>
+            <!--DXMETADATA start type="ResourcePath" condition="content:content=""%%ResourcePath%%"",operator=""<>"",value=""%%ItemName%%""" format="<p class=""resource-path-container""><strong>$$RESOURCE_PATH$$</strong> <span class=""i-resource-path"">%%ResourcePath%%</span></p>" --><p class="resource-path-container"><strong>Resource Path:</strong> <span class="i-resource-path">/rest/v1/shipments/shipment</span></p><!--DXMETADATA end -->
+
+            <!--DXMETADATA start type="FullyQualifiedResourcePath" condition="content:content=""%%IncludeFullResourceUriInOperationPages%%"",operator=""="",value=""True""" format="<p class=""resource-path-container""><strong>$$URI$$</strong> <span class=""i-resource-path"">%%FullyQualifiedResourcePath%%</span></p>" --><p class="resource-path-container"><strong>Uri:</strong> <span class="i-resource-path">https://api.brt.it/rest/v1/shipments/shipment</span></p><!--DXMETADATA end -->
+
+            <!--DXMETADATA start type="Description" source="Item" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=description,caption=$$Description$$%%<div class=""i-description-content"">%%description%%</div></div>" --><div class="i-section-heading" id="i-description-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Descrizione</span></div><div id="i-description-section-content" class="i-section-content"><div class="i-description-content"><P>Questo metodo&nbsp;genera una&nbsp;spedizione&nbsp;nel sistema&nbsp;BRT nella soluzione <STRONG>Disk B</STRONG>.</P>
+<P>Il servizio esegue le seguenti operazioni:</P>
+<OL>
+<LI>
+<DIV>Calcolo instradamento.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </DIV>
+<LI>
+<DIV>Stampa l'etichetta segnacolli nel formato richiesto(opzionale)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </DIV>
+<LI>
+<DIV>Creazione spedizione&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </DIV></LI></OL>
+<P>La creazione delle spedizioni con Auto Conferma&nbsp;o Conferma Esplicita deve essere concordata in fase di analisi preliminare con il cliente, in base alla sua operatività. <EM>Tale modalità operativa vale per tutto il traffico del cliente e non può essere variato per singola spedizione.</EM></P></div></div><!--DXMETADATA end -->
+			
+			<!--DXMETADATA start type="FilteredItemList" scrap="PARAMETER_LIST" namespace="parameter" source="Item" filter="type=!header" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=resources,caption=$$Parameters$$%%%%filtereditemlist%%</div>" --><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="FilteredItemList" scrap="HEADER_LIST" namespace="parameter" source="Item" filter="type=header" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=resources,caption=$$REQUEST_HEADERS$$%%%%filtereditemlist%%</div>" --><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="FilteredItemList" scrap="REQUEST_LIST" namespace="request" source="Item" -->
+<div class="i-section-heading" id="i-request_-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Request </span></div><div id="i-request_-section-content" class="i-section-content"><p>The request body is of type <a href="ShipmentApiV00_ws~j-createRequest.html">createRequest</a>.</p><h3>Sommario</h3><TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschema-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschema.png"></TD>
+<TD>
+<DIV class=i-item-summary>createRequest 
+<DIV class=i-child-tree-description>Struttura di input per l'invio di una nuova spedizione a BRT.</DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>account : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-account.html">account</A></SPAN>
+<DIV class=i-child-tree-description>
+<P>Informazioni dell'account abilitato al servizio web.</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>userID : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Codice utente per l'autenticazione al servizio.</P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(255,0,0); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><FONT size=3>Dato obbligatorio.</FONT></SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>password : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Password utente.</P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(255,0,0); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><FONT size=3>Dato obbligatorio.</FONT></SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>createData : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-createData.html">createData</A></SPAN>
+<DIV class=i-child-tree-description>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>network : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Network. [rif. BRT VABATB]&nbsp;[<SPAN class=CampoLength>max </SPAN><SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=1</SPAN>]</P>
+<P>I valori possibili vengono comunicati da BRT.&nbsp;Se indicata stringa vuota&nbsp;viene utilizzato&nbsp;il network standard BRT.&nbsp;&nbsp;</P>
+<P>In caso che il cliente possa scegliere più network, in ogni singola richiesta può essere indicato un solo valore.</P>
+<P>Viene controllata l'esistenza del dato e l'appartenenza al cliente.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>departureDepot : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Linea di partenza. [rif. BRT VABFGS] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=3</SPAN></SPAN> scale=0</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P>Viene comunicato da BRT. In caso che il cliente abbia più punti di partenza, saranno comunicati più valori. In ogni singola richiesta può essere indicato un solo valore.</P>
+<P>Viene controllata l'esistenza del dato.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>senderCustomerCode : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Codice cliente mittente. [rif. BRT VABCCM] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=7</SPAN></SPAN> scale=0</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P>Viene comunicato da BRT. In caso che il cliente abbia più codice cliente, saranno comunicati più valori. In ogni singola richiesta può essere indicato un solo valore.</P>
+<P>Viene controllata l'esistenza del dato e l'appartenenza all'utente di collegamento (legame padre-figlio).</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>deliveryFreightTypeCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Tipo porto. [rif. BRT VABCBO] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=3</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P>Può valere 'DAP' (porto franco) oppure 'EXW' (porto assegnato).</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeCompanyName : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN>Ragione sociale destinatario. [rif. BRT VABRSD VABRD2] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=70</SPAN>]</SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio se brtServiceCode non è B15.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeAddress : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN><SPAN>Indirizzo destinatario. [<SPAN class=CampoLength>min length = 6</SPAN>; <SPAN class=CampoLength>max length =35</SPAN> per spedizioni domestiche (IT) oppure effettuate con Network non abilitati alla gestione dell’indirizzo esteso, <SPAN class=CampoLength>max length =105</SPAN> per spedizioni estere effettuate con Network abilitati alla gestione dell’indirizzo esteso]</SPAN></SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio se brtServiceCode non è B15.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeZIPCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>CAP nel formato della nazione di destinazione. [rif. BRT VABCAD] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=9</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio se brtServiceCode non è B15.</P>
+<P>Viene controllato che sia formalmente valido per la nazione indicata.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeCity : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN>Località di destinazione. [rif. BRT VABLOD] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=35</SPAN>]</SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio se brtServiceCode non è B15.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeProvinceAbbreviation : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Sigla della provincia di destinazione. [rif. BRT VABPRD] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=2</SPAN>]</P>
+<P><SPAN>Viene controllato che sia formalmente valido rispetto all'elenco sigle delle provincie italiane.&nbsp;</SPAN></P>
+<P><SPAN><SPAN class=CampoObbligatorio style="COLOR: rgb(0,0,0)">Dato facoltativo.</SPAN></SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeCountryAbbreviationISOAlpha2 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Sigla della nazione di destinazione. [rif. BRT VABNZD] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=2</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio se brtServiceCode non è B15.</P>
+<P><SPAN>Deve essere indicata l'abbreviazione ISO&nbsp;3166-1 alpha-2.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeClosingShift1_DayOfTheWeek : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Giorno di chiusura 1. [rif. parte BRT VABGC1] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=3</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Può valere:</P>
+<P>'MON' = Lunedì / 'TUE' = Martedì / 'WED' = Mercoledì&nbsp;/ 'THU' = Giovedì&nbsp;/ 'FRI' = Venerdì / 'SAT' = Sabato / 'SUN'&nbsp; = Domenica</P>
+<P>se non passato, ma passato il dato consigneeClosingShift1_PeriodOfTheDay, è come indicare 'tutta la settimana'</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeClosingShift1_PeriodOfTheDay : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Periodo di chiusura nel giorno 1. [rif. parte BRT VABGC1]&nbsp; [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=2</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Può valere:</P>
+<P>'AM' = mattina</P>
+<P>'PM' = pomeriggio</P>
+<P>se non passato, ma passato il dato consigneeClosingShift1_DayOfTheWeek, è come indicare 'tutto il giorno'</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeClosingShift2_DayOfTheWeek : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Giorno di chiusura 2. [rif. parte BRT VABGC2]&nbsp; [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=3</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Può valere:</P>
+<P>'MON' = Lunedì / 'TUE' = Martedì / 'WED' = Mercoledì&nbsp;/ 'THU' = Giovedì&nbsp;/ 'FRI' = Venerdì / 'SAT' = Sabato / 'SUN'&nbsp; = Domenica</P>
+<P>se non passato, ma passato il dato consigneeClosingShift2_PeriodOfTheDay, è come indicare 'tutta la settimana'</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeClosingShift2_PeriodOfTheDay : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Periodo di chiusura nel giorno 2. [rif. parte BRT VABGC2]&nbsp; [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=2</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Può valere:</P>
+<P>'AM' = mattina</P>
+<P>'PM' = pomeriggio</P>
+<P>se non passato, ma passato il dato consigneeClosingShift2_DayOfTheWeek, è come indicare 'tutto il giorno'</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeContactName : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Referente consegna. [rif. BRT VATNOT + VATTRC=A]&nbsp; [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=35</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeTelephone : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Telefono referente consegna. [rif. BRT VATNOT + VATTRC=B]&nbsp; [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=16</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeEMail : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>EMail referente consegna. [rif. BRT VATNOT + VATTRC=I e J]&nbsp; [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=70</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se valorizzato a '1' il dato isAlertRequired, verrà mandato l'alert al destinatario via email a questo indirizzo (se previsto dal contratto con BRT).</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeMobilePhoneNumber : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Mobile referente consegna. [rif. BRT VATNOT + VATTRC=S]&nbsp; [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=16</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se valorizzato a '1' il dato isAlertRequired, verrà mandato l'alert al destinatario via SMS a questo numero (se previsto dal contratto con BRT).</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>isAlertRequired : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Richiesta Alert.</P>
+<P>Può valere '0' o '1'.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeVATNumber : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Numero partita IVA. [rif. parte BRT VATNOT + VATTRC=R]&nbsp; [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=16</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeVATNumberCountryISOAlpha2 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Sigla nazione partita IVA.&nbsp; [rif. parte BRT VATNOT + VATTRC=A] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=2</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P><SPAN>Se indicato, deve essere&nbsp;l'abbreviazione ISO&nbsp;3166-1 alpha-2.&nbsp;</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeItalianFiscalCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Codice fiscale italiano. [rif. BRT VATNOT + VATTRC=Q] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=16</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>pricingConditionCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Codice tariffa. [rif. BRT VABCTR]&nbsp; [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=3</SPAN></SPAN> scale=0</SPAN>]</P>
+<P>Viene comunicato da BRT. In caso che il cliente abbia&nbsp;più tariffe, saranno comunicati più valori. In ogni singola richiesta può essere indicato un solo valore.</P>
+<P>Viene controllata l'esistenza del dato e l'appartenenza al cliente.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>serviceType : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Tipo servizio. [rif. BRT VABTSP] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=1</SPAN>]</P>
+<P>Il suo significato viene spiegato da BRT. Se indicata stringa vuota viene preso il default BRT</P>
+<P>Può valere:</P>
+<P>Default&nbsp;= servizio standard</P>
+<P>'E' = servizio priority</P>
+<P>'H' = servizio 10:30</P>
+<P>&nbsp;</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>insuranceAmount : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Importo assicurazione sulla spedizione. [rif. BRT VABIAS] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=7</SPAN></SPAN> scale=2</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>insuranceAmountCurrency : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Divisa dell'importo assicurazione sulla spedizione. [rif. BRT VABVAS] [<SPAN class=CampoLength>max length=3</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se omesso ma valorizzato insuranceAmount, viene impostato 'EUR'</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>senderParcelType : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Natura merce. [rif. BRT VABNAS] [<SPAN class=CampoLength>max length=15</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>numberOfParcels : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN>Numero di pacchi. [rif. BRT VABNCL] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=2</SPAN></SPAN> scale=0</SPAN>]</SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio.</SPAN></P>
+<P><SPAN>Il numero massimo di colli richiedibili è 30</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>weightKG : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN>Peso totale della spedizione in chilogrammi. [rif. BRT VABPKB]&nbsp; [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=5</SPAN></SPAN> scale=1</SPAN>]</SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>volumeM3 : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Volume totale della spedizione in metri cubi. [rif. BRT VABVLB] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=5</SPAN></SPAN> scale=3</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>quantityToBeInvoiced : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Quantità da fatturare. [rif. BRT VABQFT] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=7 </SPAN></SPAN>scale=3</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>cashOnDelivery : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Contrassegno. [rif. BRT VABCAS] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=7 </SPAN></SPAN>scale=2</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se valorizzato a '1' il dato&nbsp;isCODMandatory, questo dato deve essere valorizzato.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>isCODMandatory : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Contrassegno obbligatorio.</P>
+<P>Può valere '0' o '1'.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>codPaymentType : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Tipo pagamento contrassegno. [rif. BRT VABTIC] [<SPAN class=CampoLength>max length=2</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se valorizzato a '1' il dato&nbsp;isCODMandatory, questo dato può essere valorizzato.</P>
+<P>Se valorizzato, viene controllata l'esistenza del dato.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>codCurrency : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Divisa contrassegno. [rif. BRT VABVCA] [<SPAN class=CampoLength>max length=3</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se valorizzato a '1' il dato&nbsp;isCODMandatory, questo dato può essere valorizzato.</P>
+<P>Se valorizzato, viene controllata l'esistenza del dato.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>numericSenderReference : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN>Riferimento mittente numerico. [rif. BRT VABRMN] [<SPAN class=CampoLength>precision=15 scale=0</SPAN>]</SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>alphanumericSenderReference : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN>Riferimento mittente alfanumerico. [rif. BRT VABRMA] [<SPAN class=CampoLength>max length=15</SPAN>]</SPAN></P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>notes : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Note. [rif. BRT VABNOT VABNT2] [<SPAN class=CampoLength>max length=70</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>parcelsHandlingCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Codice trattamento merce. [rif. BRT VABCTM] [<SPAN class=CampoLength>max length=2</SPAN>]</P>
+<P>Dato facoltativo</P>
+<P>Viene comunicato da BRT, nel caso serva un valore specifico. In caso contrario lasciare vuoto</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>deliveryDateRequired : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Data consegna richiesta. [rif. BRT VABDCR] [<SPAN class=CampoLength>max length=10</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Data&nbsp;in formato&nbsp;date *ISO [yyyy-MM-dd]</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>deliveryType : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Tipo di consegna rispetto alla data di consegna richiesta. [rif. BRT VABTCR] [<SPAN class=CampoLength>max length=1</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>declaredParcelValue : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Valore merce dichiarato. [rif. BRT VABVMD]&nbsp; [<SPAN class=CampoLength>precision=7 scale=2</SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>declaredParcelValueCurrency : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Divisa valore merce dichiarato. [rif. BRT VABVAD]&nbsp; [<SPAN class=CampoLength>max length=3</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se omesso ma valorizzato declaredParcelValue, viene impostato 'EUR'</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>particularitiesDeliveryManagementCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Gestione particolarietà di consegna. [rif. BRT VABGMA]&nbsp; [<SPAN class=CampoLength>max length=2</SPAN>]</SPAN></P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Dato facoltativo.</SPAN></P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sono più valori, che vengono comunicati da BRT.</SPAN></P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>particularitiesHoldOnStockManagementCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Gestione particolarietà di giacenza. [rif. BRT VABGCA] <SPAN class=CampoLength><FONT color=#222222>[</FONT><SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=2</FONT></SPAN><FONT color=#222222>]</FONT></SPAN></SPAN></P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Dato facoltativo.</SPAN></P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sono più valori, che vengono comunicati da BRT.</SPAN></P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>variousParticularitiesManagementCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Gestione particolarietà varie. [rif. BRT VABGVA] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=2</FONT></SPAN>]</SPAN></P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Dato facoltativo.</SPAN></P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sono più valori, che vengono comunicati da BRT.</SPAN></P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>particularDelivery1 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Particolarità di consegna 1. [rif. BRT VABTC1]&nbsp; [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=1</FONT></SPAN>]</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Dato facoltativo.</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sono più valori, che vengono comunicati da BRT.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato.</P>
+<P>&nbsp;</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>particularDelivery2 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Particolarità di consegna 2. [rif. BRT VABTC2] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=1</FONT></SPAN>]</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Dato facoltativo.</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sono più valori, che vengono comunicati da BRT.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato.</P>
+<P>&nbsp;</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>palletType1 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Tipo pallet 1. [rif. parte BRT VABANT] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=4</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Può valere 'EPAL' o 'EUR'</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>palletType1Number : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Numero di pallet del tipo 1. [rif. parte BRT VABANT] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>precision=2 scale=0</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se&nbsp;valorizzato palletType1, diventa obbligatorio.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>palletType2 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Tipo pallet 2. [rif. parte BRT VABANT] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=4</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Può valere 'EPAL' o 'EUR'</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>palletType2Number : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Numero di pallet del tipo 2. [rif. parte BRT VABANT] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>precision=2 scale=0</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se&nbsp;valorizzato palletType2, diventa obbligatorio.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>originalSenderCompanyName : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Ragione sociale mittente. [rif. BRT VABRMO] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=25</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>originalSenderZIPCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>CAP nel formato della nazione del&nbsp;mittente. [rif. BRT VABCMO] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=9</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se indicato, viene controllato che sia formalmente valido per la nazione indicata.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>originalSenderCountryAbbreviationISOAlpha2 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Sigla della nazione del mittente. [rif. BRT VABNMO] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=2</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P><SPAN>Deve essere indicata l'abbreviazione ISO&nbsp;3166-1 alpha-2.&nbsp;</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>cmrCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Codice CMR. [rif. BRT VABCMR] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=35</FONT></SPAN>]</P>
+<P>Campo obbligatorio se si passa dal accorpamento bolle, altrimenti può essere lasciato vuoto</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>neighborNameMandatoryAuthorization : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Nome vicino a cui consegnare in assenza del destinatario (obbligatoria autorizzazione).&nbsp; [rif. BRT VATNOT + VATTRC=V e W] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=70</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se indicato, viene utilizzato solo previa autorizzazione BRT.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>pinCodeMandatoryAuthorization : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>PIN code (obbligatoria autorizzazione). [rif. BRT VATNOT + VATTRC=Y] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=15</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Se indicato, viene utilizzato solo previa autorizzazione BRT.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>packingListPDFName : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Nome del packing list PDF. [rif. parte BRT VATNOT + VATTRC=P] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=33</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>packingListPDFFlagPrint : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Flag 1 stampa del packing list PDF. [rif. parte BRT VATNOT + VATTRC=P] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=1</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Valore comunicato da BRT.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>packingListPDFFlagEmail : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Flag 1 stampa del packing list PDF. [rif. parte BRT VATNOT + VATTRC=P] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=1</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P>Valore comunicato da BRT.&nbsp;</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>pudoId : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Identificativo del PUDO BRTfermopoint. [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=20</FONT></SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P><SPAN>se valorizzato pudoId, nel caso in cui l'indirizzo di consegna sia diverso dall'indirizzo del PUDO presente&nbsp;nell'anagrafica di BRT,&nbsp;la spedizione viene creata correttamente&nbsp;al indirizzo del PUDO,&nbsp;ma l'esito del servizio restituisce un&nbsp;warning(code 5)</SPAN></P>
+<P>nel caso una spedizione sia consegnata a PUDO deve essere valorizzato almeno uno tra consegneeEMail e consegneeMobilePhoneNumber.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>brtServiceCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>BRT Service Code. [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=3</FONT></SPAN>]</P>
+<P dir=ltr align=left><FONT color=#2b2b2b face="Segoe UI,Segoe UI"><FONT color=#2b2b2b face="Segoe UI,Segoe UI">Dato facoltativo.</FONT></FONT></P>
+<P dir=ltr align=left><FONT color=#2b2b2b><SPAN lang=EN-GB xml:lang="EN-GB"><SPAN lang=IT xml:lang="IT">Default　= servizio standard</SPAN></SPAN></FONT></P>
+<P dir=ltr align=left><SPAN lang=EN-GB xml:lang="EN-GB">'B11' = servizio Direct to Shop. <SPAN lang=IT xml:lang="IT">Viene controllato che sia presente il pudoId, che sia formalmente valido e che le caratteristiche della spedizione siano compatibili con il BRT Service Code</SPAN></SPAN></P>
+<P dir=ltr align=left><SPAN lang=EN-GB xml:lang="EN-GB"><SPAN lang=IT xml:lang="IT"><SPAN lang=EN-GB xml:lang="EN-GB">‘B13’ = servizio Shop to Shop. <SPAN lang=IT xml:lang="IT">Viene controllato che sia presente il pudoId, che sia formalmente valido e che le caratteristiche della spedizione siano compatibili con il&nbsp;BRT Service Code</SPAN></SPAN></SPAN></SPAN></P>
+<P dir=ltr align=left><SPAN lang=EN-GB xml:lang="EN-GB"><SPAN lang=IT xml:lang="IT"><SPAN lang=EN-GB xml:lang="EN-GB"><SPAN lang=IT xml:lang="IT"><SPAN lang=EN-GB xml:lang="EN-GB"><SPAN lang=IT xml:lang="IT"><SPAN lang=EN-GB xml:lang="EN-GB">‘B14’ = servizio Shop to Home. <SPAN lang=IT xml:lang="IT">Viene controllato che la spedizione non sia diretta a un PUDO BRTfermopoint e che le caratteristiche della spedizione siano compatibili con il　BRT Service Code</SPAN></SPAN></SPAN></SPAN></SPAN></SPAN></SPAN></SPAN></P>
+<P dir=ltr align=left><SPAN lang=EN-GB xml:lang="EN-GB"><SPAN lang=EN-GB xml:lang="EN-GB">‘B15’ = servizio Return from Shop. <SPAN lang=IT xml:lang="IT">Viene controllato che sia compilato correttamente il dato returnDepot. Non occorrono i dati del destinatario, se presenti verranno sostituiti con i dati del Deposito di reso.</SPAN></SPAN></SPAN></P>
+<P dir=ltr align=left>'<SPAN><SPAN class="ui-provider gq b c d e f g h i j k l m n o p q r s t u v w x y z ab ac ae af ag ah ai aj ak" dir=ltr>B20' = Servizio FRESH per spedizioni a temperatura controllata e garantita (0 °C - &nbsp;4°C)</SPAN></SPAN></P>
+<P dir=ltr align=left>&nbsp;</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnDepot : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>&nbsp;</P>
+<P dir=ltr align=left><SPAN lang=IT xml:lang="IT">Deposito di reso [precision=10 scale=0]</SPAN></P>
+<P></P>
+<P><SPAN lang=IT xml:lang="IT"><FONT color=#2b2b2b face="Segoe UI"><FONT color=#2b2b2b face="Segoe UI">Dato obbligatorio a seconda del tipo servizio.</FONT></FONT></SPAN></P>
+<P><SPAN lang=IT xml:lang="IT"><FONT color=#2b2b2b face="Segoe UI"><FONT color=#2b2b2b face="Segoe UI"><SPAN lang=IT xml:lang="IT">Viene comunicato da BRT. In caso che il cliente abbia associati&nbsp;più depositi di reso, saranno comunicati più valori. In ogni singola richiesta può essere indicato un solo valore.</SPAN></FONT></FONT></SPAN></P>
+<P></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>expiryDate : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Data scadenza.&nbsp;[<SPAN class=CampoLength>max length=10</SPAN>]</P>
+<P>Dato obbligatorio per il servizio Fresh.</P>
+<P>Data&nbsp;in formato&nbsp;date *ISO [yyyy-MM-dd]</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>isLabelRequired : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P>Se indicato '1' viene richiesta l'etichetta da applicare al pacco.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>labelParameters : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-labelParameters.html">labelParameters</A></SPAN>
+<DIV class=i-child-tree-description>
+<P class=CampoObbligatorio>Dato obbligatorio se indicato '1' in isLabelRequired.</P>
+<P>Nel caso non sia indicato '1' in isLabelRequired il parametro non deve essere valorizzato (può essere omesso).</P>
+<P>&nbsp;</P></DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>outputType : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P class=CampoObbligatorio>Dato obbligatorio se indicato isLabelRequired = '1'.</P>
+<P>Viene generato uno stream dati in formato&nbsp;<A href="https://www.base64encode.org/" target=_blank>Base64</A>; una volta ricevuto occorre effeturare la decodifica prima di stampare l'etichetta. Se sono stampate più etichette ne sarà presente una per pagina.</P>
+<P>Deve valere:</P>
+<P>'PDF' = Formato etichetta in PDF</P>
+<P>'ZPL' = Formato ASCII dell'etichetta con codifica standard ZPL (Zebra Programming Language)</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>offsetX : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P class=CampoObbligatorio>Dato obbligatorio se indicato isLabelRequired = '1'.</P>
+<P class=CampoObbligatorio>Nel caso il parametro venisse omesso oppure venisse&nbsp;passato un dato alfanumerico, viene forzato il valore 0 (zero).</P>
+<P>Distanza orizzontale dal vertice in alto a sinistra.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>offsetY : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P class=CampoObbligatorio>Dato obbligatorio se indicato isLabelRequired = '1'.</P>
+<P class=CampoObbligatorio>Nel caso il parametro venisse omesso oppure venisse&nbsp;passato un dato alfanumerico, viene forzato il valore 0 (zero).</P>
+<P>Distanza verticale dal vertice in alto a sinistra.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>isBorderRequired : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P class=CampoObbligatorio>Dato obbligatorio se indicato isLabelRequired = '1'.</P>
+<P class=CampoObbligatorio>Nel caso il parametro venisse omesso oppure venisse&nbsp;passato un dato diverso da '0' e '1', viene forzato il valore '0' (zero).</P>
+<P>Se vale '1' viene creato un bordo all'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>isLogoRequired : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P class=CampoObbligatorio>Dato obbligatorio se indicato isLabelRequired = '1'.</P>
+<P class=CampoObbligatorio>Nel caso il parametro venisse omesso oppure venisse&nbsp;passato un dato diverso da '0' e '1', viene forzato il valore '0' (zero).</P>
+<P>Se vale '1' viene creato il logo BRT sull'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>isBarcodeControlRowRequired : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P class=CampoObbligatorio>Dato obbligatorio se indicato isLabelRequired = '1'.</P>
+<P class=CampoObbligatorio>Nel caso il parametro venisse omesso oppure venisse&nbsp;passato un dato diverso da '0' e '1', viene forzato il valore '0' (zero).</P>
+<P>Se vale '1' viene creata una riga di controllo sopra al barcode.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>labelFormat : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Dato facoltativo.</P>
+<P>Se valorizzato,&nbsp;indica il formato dell'etichetta che verrà restituita.</P>
+<P>I valori possibili sono:</P>
+<P>Se non passato oppure impostata stringa vuota, sarà restituita l'etichetta BRT&nbsp;- Formato 95 mm * 65 mm</P>
+<P>'DP5': etichetta DPD solo per clienti abilitati al Direct Infeed - Formato 100 mm * 150 mm, l'OutputType&nbsp;in questo caso è solo&nbsp;ZPL.</P>
+<P>'DPH': etichetta "ibrida" DPD/BRT solo per clienti abilitati - Formato 100 mm * 150 mm, l'OutputType&nbsp;in questo caso è solo&nbsp;ZPL.</P>
+<P dir=ltr align=left>&nbsp;</P>
+<P></P>
+<P></P>
+<P dir=ltr align=left></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSender : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-actualSender.html">actualSender</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSenderName : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Nome del mittente reale.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=70</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSenderCity : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Località del mittente reale.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=35</SPAN>]</P>
+<P>Dato Facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSenderAddress : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Indirizzo del mittente reale.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=35</SPAN>]</P>
+<P>Dato Facoltativo.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSenderZIPCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>CAP nel formato della nazione del&nbsp;mittente reale.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=9</SPAN>]</P>
+<P>Dato Facoltativo.</P>
+<P>Viene controllato che sia formalmente valido per la nazione indicata</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSenderProvince : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sigla della provincia del mittente reale.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=2</SPAN>]</P>
+<P>Dato Facoltativo.</P>
+<P>Viene controllato che sia formalmente valido rispetto all'elenco sigle delle provincie italiane</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSenderCountry : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sigla della nazione del mittente reale.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=3</SPAN>]</P>
+<P>Dato Facoltativo.</P>
+<P>Deve essere indicata l'abbreviazione ISO 3166-1 alpha-2</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSenderEmail : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Email del mittente reale.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=70</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P class=CampoObbligatorio>deve essere valorizzato almeno uno dei due campi tra actualSenderEmail e actualSenderMobilePhoneNumber</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSenderMobilePhoneNumber : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Mobile del mittente reale.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=16</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio. </P>
+<P class=CampoObbligatorio>deve essere valorizzato almeno uno dei due campi tra actualSenderEmail e actualSenderMobilePhoneNumber</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>actualSenderPudoId : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Id pudo del mittente reale.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=20</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P><SPAN>Se valorizzato actualSenderPudoId, nel caso in cui l'indirizzo di consegna sia diverso dall'indirizzo del PUDO presente&nbsp;nell'anagrafica di BRT,&nbsp;la spedizione viene creata correttamente&nbsp;al indirizzo del PUDO,&nbsp;ma l'esito del servizio restituisce un&nbsp;warning (5)</SPAN></P>
+<P>&nbsp;</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsignee : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-returnShipmentConsignee.html">returnShipmentConsignee</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsigneeName : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Nome del destinatario del reso.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=70</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsigneeCity : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Località del destinatario del reso.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=35</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsigneeAddress : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Indirizzo del destinatario del reso.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=35</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsigneeZIPCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>CAP nel formato della nazione del destinatario del reso.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=9</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P>Viene controllato che sia formalmente valido per la nazione indicata</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsigneeProvince : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sigla della provincia del destinatario del reso.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=2</SPAN>]</P>
+<P>Dato Opzionale.</P>
+<P>Viene controllato che sia formalmente valido rispetto all'elenco sigle delle provincie italiane</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsigneeCountry : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sigla della nazione del destinatario del reso.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=3</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P>Deve essere indicata l'abbreviazione ISO 3166-1 alpha-2</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsigneeEmail : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Email del destinatario del reso.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=70</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P class=CampoObbligatorio>deve essere valorizzato almeno uno dei due campi tra returnShipmentConsigneeEmail e returnShipmentConsigneeMobilePhoneNumber</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsigneeMobilePhoneNumber : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Mobile del destinatario del reso.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=16</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P class=CampoObbligatorio>deve essere valorizzato almeno uno dei due campi tra returnShipmentConsigneeEmail e returnShipmentConsigneeMobilePhoneNumber</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>returnShipmentConsigneePudoId : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Id pudo del destinatario del reso.&nbsp;&nbsp;[<SPAN class=CampoLength>Maxlegth=20</SPAN>]</P>
+<P>Dato facoltativo.</P>
+<P><SPAN>Se valorizzato returnShipmentConsigneePudoId, nel caso in cui l'indirizzo di consegna sia diverso dall'indirizzo del PUDO presente&nbsp;nell'anagrafica di BRT,&nbsp;la spedizione di reso viene creata correttamente&nbsp;al indirizzo del PUDO,&nbsp;ma l'esito del servizio restituisce un&nbsp;warning (5)</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE><h3>Sample Data</h3><pre>{
+  <span style="color: #800000; ">&quot;account&quot;</span>: {
+    <span style="color: #800000; ">&quot;userID&quot;</span>: 1020100,
+    <span style="color: #800000; ">&quot;password&quot;</span>: <span style="color: #800000; ">&quot;*****&quot;</span>
+  },
+  <span style="color: #800000; ">&quot;createData&quot;</span>: {
+    <span style="color: #800000; ">&quot;network&quot;</span>: <span style="color: #800000; ">&quot; &quot;</span>,
+    <span style="color: #800000; ">&quot;departureDepot&quot;</span>: 102,
+    <span style="color: #800000; ">&quot;senderCustomerCode&quot;</span>: 1020100,
+    <span style="color: #800000; ">&quot;deliveryFreightTypeCode&quot;</span>: <span style="color: #800000; ">&quot;DAP&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeCompanyName&quot;</span>: <span style="color: #800000; ">&quot;TEST UFFICIO VAS&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeAddress&quot;</span>: <span style="color: #800000; ">&quot;VIA DEL PODERE FIUME 55&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeCountryAbbreviationISOAlpha2&quot;</span>: <span style="color: #800000; ">&quot;IT&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeClosingShift1_DayOfTheWeek&quot;</span>: <span style="color: #800000; ">&quot;MON&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeClosingShift1_PeriodOfTheDay&quot;</span>: <span style="color: #800000; ">&quot;PM&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeClosingShift2_DayOfTheWeek&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeClosingShift2_PeriodOfTheDay&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeContactName&quot;</span>: <span style="color: #800000; ">&quot;RAIMONDI SCANU&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeTelephone&quot;</span>: <span style="color: #800000; ">&quot;66144217&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeEMail&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeMobilePhoneNumber&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;isAlertRequired&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;consigneeVATNumber&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeVATNumberCountryISOAlpha2&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeItalianFiscalCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;pricingConditionCode&quot;</span>: <span style="color: #800000; ">&quot;000&quot;</span>,
+    <span style="color: #800000; ">&quot;serviceType&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;insuranceAmount&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;insuranceAmountCurrency&quot;</span>: <span style="color: #800000; ">&quot;EUR&quot;</span>,
+    <span style="color: #800000; ">&quot;senderParcelType&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;quantityToBeInvoiced&quot;</span>: 0.0,
+    <span style="color: #800000; ">&quot;cashOnDelivery&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;isCODMandatory&quot;</span>: <span style="color: #800000; ">&quot;0&quot;</span>,
+    <span style="color: #800000; ">&quot;codPaymentType&quot;</span>: <span style="color: #800000; ">&quot;  &quot;</span>,
+    <span style="color: #800000; ">&quot;codCurrency&quot;</span>: <span style="color: #800000; ">&quot;EUR&quot;</span>,
+    <span style="color: #800000; ">&quot;notes&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;parcelsHandlingCode&quot;</span>: <span style="color: #800000; ">&quot;2&quot;</span>,
+    <span style="color: #800000; ">&quot;deliveryDateRequired&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;deliveryType&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;declaredParcelValue&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;declaredParcelValueCurrency&quot;</span>: <span style="color: #800000; ">&quot;EUR&quot;</span>,
+    <span style="color: #800000; ">&quot;particularitiesDeliveryManagementCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;particularitiesHoldOnStockManagementCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;variousParticularitiesManagementCode&quot;</span>: <span style="color: #800000; ">&quot;B&quot;</span>,
+    <span style="color: #800000; ">&quot;particularDelivery1&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;particularDelivery2&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;palletType1&quot;</span>: <span style="color: #800000; ">&quot;EUR&quot;</span>,
+    <span style="color: #800000; ">&quot;palletType1Number&quot;</span>: 10,
+    <span style="color: #800000; ">&quot;palletType2&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;palletType2Number&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;originalSenderCompanyName&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;originalSenderZIPCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;originalSenderCountryAbbreviationISOAlpha2&quot;</span>: <span style="color: #800000; ">&quot;   &quot;</span>,
+    <span style="color: #800000; ">&quot;cmrCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;neighborNameMandatoryAuthorization&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;pinCodeMandatoryAuthorization&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;packingListPDFName&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;packingListPDFFlagPrint&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;packingListPDFFlagEmail&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;numericSenderReference&quot;</span>: 55,
+    <span style="color: #800000; ">&quot;alphanumericSenderReference&quot;</span>: <span style="color: #800000; ">&quot;aaa&quot;</span>,
+    <span style="color: #800000; ">&quot;numberOfParcels&quot;</span>: 1,
+    <span style="color: #800000; ">&quot;weightKG&quot;</span>: 81.0,
+    <span style="color: #800000; ">&quot;volumeM3&quot;</span>: 0.451,
+    <span style="color: #800000; ">&quot;consigneeZIPCode&quot;</span>: <span style="color: #800000; ">&quot;55047 &quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeCity&quot;</span>: <span style="color: #800000; ">&quot;QUERCETA&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeProvinceAbbreviation&quot;</span>: <span style="color: #800000; ">&quot;LU&quot;</span>
+  },
+  <span style="color: #800000; ">&quot;isLabelRequired&quot;</span>: 1,
+  <span style="color: #800000; ">&quot;labelParameters&quot;</span>: {
+    <span style="color: #800000; ">&quot;outputType&quot;</span>: <span style="color: #800000; ">&quot;ZPL&quot;</span>,
+    <span style="color: #800000; ">&quot;offsetX&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;offsetY&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;isBorderRequired&quot;</span>: <span style="color: #800000; ">&quot;0&quot;</span>,
+    <span style="color: #800000; ">&quot;isLogoRequired&quot;</span>: <span style="color: #800000; ">&quot;0&quot;</span>,
+    <span style="color: #800000; ">&quot;isBarcodeControlRowRequired&quot;</span>: <span style="color: #800000; ">&quot;0&quot;</span>
+  }
+}</pre></div>
+<!--DXMETADATA end -->
+			
+			<!--DXMETADATA start type="FilteredItemList" scrap="SUCCESS_RESPONSE_LIST" namespace="response" source="Item" filter="type=success" -->
+<div class="i-section-heading" id="i-response_-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Response </span></div><div id="i-response_-section-content" class="i-section-content"><p>The response body is of type <a href="ShipmentApiV00_ws~j-createResult.html">createResult</a>.</p>Successful operation<h3>Sommario</h3><TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschema-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschema.png"></TD>
+<TD>
+<DIV class=i-item-summary>createResult 
+<DIV class=i-child-tree-description>Contiene la struttura di ritorno dati con HTTP code = 200</DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>createResponse : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-createResponse.html">createResponse</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>currentTimeUTC : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>Data e ora in formato UTC con offset&nbsp;rispetto alla localizzazione del server di riposta.</DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>executionMessage : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-executionMessage.html">executionMessage</A></SPAN>
+<DIV class=i-child-tree-description>Struttura contenente il messaggio di risposta.</DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>code : <SPAN class=i-type>integer</SPAN>
+<DIV class=i-child-tree-description>
+<P>Codice esito richiesta.</P>
+<P>I messaggi sono codificati con questa logica:&nbsp;</P>
+<UL>
+<LI><EM>code</EM>&gt;0 esito postivo, viene comunque segnalato un warning 
+<LI><EM>code</EM>=0 esito positivo 
+<LI><EM>code</EM>&lt;0 esito negativo 
+<UL>
+<LI>
+<P>&nbsp;da -1 a -60 sono errori comuni a tutti i metodi.</P>
+<LI>
+<P>da -61 a -99 sono errori dedicati alla scrittura spedizione</P>
+<LI>
+<P>da -100 a -160 sono errori dedicati alla conferma / cancellazione di una&nbsp;spedizione.</P></LI></UL></LI></UL></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>severity : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Vale:</P>
+<P>WARNING</P>
+<P>ERROR</P>
+<P>INFO</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>codeDesc : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>Descrizione del messaggio</DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>message : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>Dettaglio del messaggio.</DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>arrivalTerminal : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Terminal di arrivo.</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>arrivalDepot : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Filiale di arrivo. [rif. BRT VABLNA]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>deliveryZone : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Zona di consegna. [rif. BRT VABZNC]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>parcelNumberFrom : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Numero (segnacollo) assegnato al primo pacco della spedizione. [rif. BRT VABNCD]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>parcelNumberTo : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Numero&nbsp;(segnacollo) assegnato all'ultimo pacco della spedizione.<EM>&nbsp;</EM>[rif. BRT VABNCA] I segnacolli sono consecutivi.</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>departureDepot : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Filiale di partenza. [rif. BRT VABLNP]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>seriesNumber : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Numero serie assegnata al cliente. [rif. BRT VABNRS]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>serviceType : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Tipo servizio. [rif. BRT VABTPS]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeCompanyName : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Ragione sociale destinatario. [rif. BRT VABRSD]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeAddress : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; WHITE-SPACE: pre-wrap; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(23,43,77); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: 0px; BACKGROUND-COLOR: rgb(255,255,255); TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial; text-decoration-thickness: initial'>Indirizzo destinatario. [<SPAN class=CampoLength>min length = 6</SPAN>; <SPAN class=CampoLength>max length =35</SPAN> per spedizioni domestiche (IT) oppure effettuate con Network non abilitati alla gestione dell’indirizzo esteso, <SPAN class=CampoLength>max length =105</SPAN> per spedizioni estere affettuate con Network abilitati alla gestione dell’indirizzo esteso]</SPAN></P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; WHITE-SPACE: pre-wrap; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(23,43,77); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: 0px; BACKGROUND-COLOR: rgb(255,255,255); TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial; text-decoration-thickness: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; WHITE-SPACE: pre-wrap; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(23,43,77); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: 0px; BACKGROUND-COLOR: rgb(255,255,255); TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial; text-decoration-thickness: initial'>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</SPAN></SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeZIPCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>CAP nel formato della nazione di destinazione. [rif. BRT VABCAD]</P>
+<P>Il dato potrebbe essere stato normalizzato.</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeCity : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Località destinatario. [rif. BRT VABLOD]</P>
+<P>Il dato potrebbe essere stato normalizzato.</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeProvinceAbbreviation : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Sigla della provincia del destinatario.&nbsp; [rif. BRT VABPRD]</P>
+<P>Il dato potrebbe essere stato normalizzato.</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeCountryAbbreviationBRT : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Sigla BRT della nazione del destinatario. [rif. BRT VABNZD]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>numberOfParcels : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Numero di pacchi della spedizione. [rif. BRT VABNCL]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>weightKG : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Peso totale della spedizione. [rif. BRT VABPKB]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>volumeM3 : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P>Volume totale della spedizione. [rif. BRT VABVLB]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>alphanumericSenderReference : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Riferimento mittente alfanumerico. [rif. BRT VABRMA]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>senderCompanyName : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Ragione sociale mittente. [rif. BRT VABRMO]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>senderProvinceAbbreviation : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Sigla della provincia del mittente.&nbsp; [rif. BRT VABNMO]</P>
+<P>Dato utile nel caso il cliente voglia costruirsi autonomamente l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>labels : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-labels.html">labels</A></SPAN>
+<DIV class=i-child-tree-description>Contiene le etichette e il relativo barcode BRT&nbsp;della spedizione.</DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexarrayproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexarrayproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>label : <SPAN class=i-type>Array[<A href="ShipmentApiV00_ws~j-label.html">label</A>]</SPAN>
+<DIV class=i-child-tree-description>La struttura contiene l'etichetta e il relativo barcode BRT&nbsp;del pacco.</DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>dataLength : <SPAN class=i-type>integer</SPAN>
+<DIV class=i-child-tree-description>Lunghezza in byte dello stream etichetta.</DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>parcelID : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>E' il Barcode BRT presente sul etichetta, in codifica code 128 - lungo 18.</DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>trackingByParcelID : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>E' il dato con cui eseguire la ricerca spedizione mediante l'API REST trackingByParcelID - lungo 15.</DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>parcelNumberGeoPost : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>E' il numero di collo GeoPost.</DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>stream : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Lo stream dati è ANSI in formato&nbsp;<A href="https://www.base64decode.org/">Base64</A>; una volta ricevuto occorre effeturare la decodifica prima di stampare l'etichetta.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></div>
+<!--DXMETADATA end -->
+			
+			<!--DXMETADATA start type="TaggedComment" source="Item" id="##EXAMPLEINTRO" format="%%replaceinquotes:value=false%%%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=""$$Example$$%%designlist:tagidentifier=##EXAMPLECODE,itemtype=Example%%""%%%%comment%%" --><div class="i-section-heading" id="i-example-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Example</span></div><div id="i-example-section-content" class="i-section-content"><P>Creazione di una spedizione&nbsp;con&nbsp;la generazione automatica delle&nbsp;etichette da applicare sui pacchi.</P>
+<P>I&nbsp;parametri&nbsp;del tipo etichetta sono&nbsp;passati attraverso&nbsp;<A href="ShipmentApiV00_ws~j-labelParameters.html" data-auto-update-caption="true">labelParameters Json Schema</A>,&nbsp;nel nostro caso abbiamo scelto come formato di output etichetta ZPL&nbsp;&nbsp;(se necessario solo&nbsp;per questa modalità è possibile anche centrare l'etichetta sul proprio formato "label"&nbsp; attraverso i parametri offsetX e "offsetY), lo stream dati&nbsp;ritornato&nbsp;è codificato in base64 sarà quindi necessario&nbsp;decodificare lo stream prima di inviarlo all'etichettatrice.</P>
+<P>&nbsp;</P>
+<P>Nel esempio l'etichetta tornata è la seguente:</P>
+<P><STRONG>BASE64</STRONG></P>
+<P>AF5YQQ0KXlBPSQ0KXkxIMTMwLDIwDQpeUFJDXkZTDQpeRk8wNjAsMDAwXkdCMTMwLDEyMCwwMDNeRlMNCl5GTzA3MCwwMTBeQTBOLDEzNSw3Ml5GUl5GRE9PMV5GUw0KXkZPMjA1LDAzMF5BME4sMDkwLDQ4XkZET08xXkZTDQpeRk81NDEsMDAwXkdCMDg4LDExMCwwM15GUw0KXkZPNTQ4LDAxMF5BME4sMTI1LDc1XkZSXkZEMk9eRlMNCl5GTzAwMCwzMjBeQUNOLDU0LDIwXkZEMTAyXkZTDQpeRk8xMTAsMTMwXkdCTzQwMiwwMDUsMDA1DQpeRlMNCl5CWTMsMywwDQpeRk8xMTAsMTMwXkJDTiwyMDAsTixOLE5eRkQ+OzEwMjAwMTAzMDAyMzI3MDIwMF5GUw0KXkZPMTEwLDMzMF5HQk80MDIsMDA1LDAwNV5GUw0KXkZPMDIwLDM3MF5BME4sMDkwLDYwXkZETzMtXkZTDQpeRk8xMzAsMzcwXkEwTiwwOTAsMDg0XkZET08yM15GUw0KXkZPMzIwLDM0MF5BME4sMTQ1LDEwOF5GRDI3T15GUw0KXkZPMDAwLDQ2MF5BQ04sMTgsMTBeRkRSaWYuOiA2ICAgICAgICAgICAgICBeRlMNCl5GTzMzMCw0NjBeQUNOLDE4LDEwXkZEMDYvMDIvMjAyMF5GUw0KXkZPNDYwLDQ2MF5BQ04sMTgsMTBeRkQgXkZTDQpeRk81MTAsNDQ1XkFDTiwzNiwyMF5GRCBeRlMNCl5GVDU5Miw0ODBeQTBCLDI1LDIyXkZEICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIF5GUw0KXkZUNTk1LDQ4MF5BMEIsMjUsMjJeR0IwLDM1MCwzXkZTDQpeRlQ2MjUsNDgwXkEwQiwyNSwyMl5GRFNQRURJWklPTkUgREkgUFJPVkEgQ0VEVkFTIEJPICAgICAgICBeRlMNCl5GVDY1NSw0ODBeQTBCLDI1LDIyXkZEVklBIEVOUklDTyBNQVRURUksIDU0ICBCT0xPR05BICAgICAgIF5GUw0KXkZUNjkwLDQ4MF5BMEIsMjUsMjFeRkRNQy4gMCwwMDAgICBeRlMNCl5GVDY5MCwzMjBeQTBCLDI1LDIyXkZEICAgIDEtMiAgICBeRlMNCl5GVDY5MCwxNjBeQTBCLDI1LDIyXkZES0cuICAxLDAgICAgXkZTDQpeRk8wMDAsMjQwXkdCMDY1LDA2NSw2MF5GUw0KXkZPMDIwLDI1MF5BME4sMDYwLDA0OF5GUl5GREVeRlMNDF5YWg0KDQw=</P>
+<P><STRONG>DECODE BASE64</STRONG></P>
+<P>^XA<BR>^POI<BR>^LH130,20<BR>^PRC^FS<BR>^FO060,000^GB130,120,003^FS<BR>^FO070,010^A0N,135,72^FR^FDOO1^FS<BR>^FO205,030^A0N,090,48^FDOO1^FS<BR>^FO541,000^GB088,110,03^FS<BR>^FO548,010^A0N,125,75^FR^FD2O^FS<BR>^FO000,320^ACN,54,20^FD102^FS<BR>^FO110,130^GBO402,005,005<BR>^FS<BR>^BY3,3,0<BR>^FO110,130^BCN,200,N,N,N^FD&gt;;102001030023270200^FS<BR>^FO110,330^GBO402,005,005^FS<BR>^FO020,370^A0N,090,60^FDO3-^FS<BR>^FO130,370^A0N,090,084^FDOO23^FS<BR>^FO320,340^A0N,145,108^FD27O^FS<BR>^FO000,460^ACN,18,10^FDRif.: 6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ^FS<BR>^FO330,460^ACN,18,10^FD06/02/2020^FS<BR>^FO460,460^ACN,18,10^FD ^FS<BR>^FO510,445^ACN,36,20^FD ^FS<BR>^FT592,480^A0B,25,22^FD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ^FS<BR>^FT595,480^A0B,25,22^GB0,350,3^FS<BR>^FT625,480^A0B,25,22^FDSPEDIZIONE DI PROVA CEDVAS BO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ^FS<BR>^FT655,480^A0B,25,22^FDVIA ENRICO MATTEI, 54&nbsp; BOLOGNA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ^FS<BR>^FT690,480^A0B,25,21^FDMC. 0,000&nbsp;&nbsp; ^FS<BR>^FT690,320^A0B,25,22^FD&nbsp;&nbsp;&nbsp; 1-2&nbsp;&nbsp;&nbsp; ^FS<BR>^FT690,160^A0B,25,22^FDKG.&nbsp; 1,0&nbsp;&nbsp;&nbsp; ^FS<BR>^FO000,240^GB065,065,60^FS<BR>^FO020,250^A0N,060,048^FR^FDE^FS<BR>^XZ</P><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="EXAMPLEGROUP_LIST" namespace="ExampleGroup" source="Item" filter="type=inline" condition="content:content=""%%GroupExamples%%"",operator=""="",value=""True""" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%taggedcomment:source=item,id=##EXAMPLEINTRO,blankformat=""%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=$$Example$$%%"",format= %%%%filtereditemlist%%</div>" blankformat="%%taggedcomment:source=item,id=##EXAMPLEINTRO,format=</div>%%" --> 
+<div class="i-tab-container">
+    <ul>
+        <li class="i-filtered-content-Json">
+			<a href="#i-tab-content-5b873f6e-c75d-407c-909e-33af3cfc1fa0">Json</a>
+		</li>
+
+    </ul>
+	<div id="i-tab-content-5b873f6e-c75d-407c-909e-33af3cfc1fa0" class="i-filtered-content-Json i-code">
+		<pre><span style="color: #008000; ">//METHOD POST /shipment
+//INPUT BODY 
+</span>
+{
+  <span style="color: #800000; ">&quot;account&quot;</span>: {
+    <span style="color: #800000; ">&quot;userID&quot;</span>: <span style="color: #800000; ">&quot;1020100&quot;</span>,
+    <span style="color: #800000; ">&quot;password&quot;</span>: <span style="color: #800000; ">&quot;brt1447st&quot;</span>
+  },
+  <span style="color: #800000; ">&quot;createData&quot;</span>: {
+    <span style="color: #800000; ">&quot;network&quot;</span>: <span style="color: #800000; ">&quot; &quot;</span>,
+    <span style="color: #800000; ">&quot;departureDepot&quot;</span>: <span style="color: #800000; ">&quot;102&quot;</span>,
+    <span style="color: #800000; ">&quot;senderCustomerCode&quot;</span>: <span style="color: #800000; ">&quot;1020100&quot;</span>,
+    <span style="color: #800000; ">&quot;deliveryFreightTypeCode&quot;</span>: <span style="color: #800000; ">&quot;DAP&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeCompanyName&quot;</span>: <span style="color: #800000; ">&quot;TEST UFFICIO VAS&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeAddress&quot;</span>: <span style="color: #800000; ">&quot;VIA DEL PODERE FIUME 55&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeCountryAbbreviationISOAlpha2&quot;</span>: <span style="color: #800000; ">&quot;IT&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeClosingShift1_DayOfTheWeek&quot;</span>: <span style="color: #800000; ">&quot;MON&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeClosingShift1_PeriodOfTheDay&quot;</span>: <span style="color: #800000; ">&quot;PM&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeClosingShift2_DayOfTheWeek&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeClosingShift2_PeriodOfTheDay&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeContactName&quot;</span>: <span style="color: #800000; ">&quot;RAIMONDI SCANU&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeTelephone&quot;</span>: <span style="color: #800000; ">&quot;66144217&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeEMail&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeMobilePhoneNumber&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;isAlertRequired&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;consigneeVATNumber&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeVATNumberCountryISOAlpha2&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeItalianFiscalCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;pricingConditionCode&quot;</span>: <span style="color: #800000; ">&quot;000&quot;</span>,
+    <span style="color: #800000; ">&quot;serviceType&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;insuranceAmount&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;insuranceAmountCurrency&quot;</span>: <span style="color: #800000; ">&quot;EUR&quot;</span>,
+    <span style="color: #800000; ">&quot;senderParcelType&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;quantityToBeInvoiced&quot;</span>: 0.0,
+    <span style="color: #800000; ">&quot;cashOnDelivery&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;isCODMandatory&quot;</span>: <span style="color: #800000; ">&quot;0&quot;</span>,
+    <span style="color: #800000; ">&quot;codPaymentType&quot;</span>: <span style="color: #800000; ">&quot;  &quot;</span>,
+    <span style="color: #800000; ">&quot;codCurrency&quot;</span>: <span style="color: #800000; ">&quot;EUR&quot;</span>,
+    <span style="color: #800000; ">&quot;notes&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;parcelsHandlingCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;deliveryDateRequired&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;deliveryType&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;declaredParcelValue&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;declaredParcelValueCurrency&quot;</span>: <span style="color: #800000; ">&quot;EUR&quot;</span>,
+    <span style="color: #800000; ">&quot;particularitiesDeliveryManagementCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;particularitiesHoldOnStockManagementCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;variousParticularitiesManagementCode&quot;</span>: <span style="color: #800000; ">&quot;B&quot;</span>,
+    <span style="color: #800000; ">&quot;particularDelivery1&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;particularDelivery2&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;palletType1&quot;</span>: <span style="color: #800000; ">&quot;EUR&quot;</span>,
+    <span style="color: #800000; ">&quot;palletType1Number&quot;</span>: 10,
+    <span style="color: #800000; ">&quot;palletType2&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;palletType2Number&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;originalSenderCompanyName&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;originalSenderZIPCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;originalSenderCountryAbbreviationISOAlpha2&quot;</span>: <span style="color: #800000; ">&quot;   &quot;</span>,
+    <span style="color: #800000; ">&quot;cmrCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;neighborNameMandatoryAuthorization&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;pinCodeMandatoryAuthorization&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;packingListPDFName&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;packingListPDFFlagPrint&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;packingListPDFFlagEmail&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+     <span style="color: #800000; ">&quot;numericSenderReference&quot;</span>: 55,
+    <span style="color: #800000; ">&quot;alphanumericSenderReference&quot;</span>: <span style="color: #800000; ">&quot;aaa1&quot;</span>,
+     <span style="color: #800000; ">&quot;numberOfParcels&quot;</span>:1,
+        <span style="color: #800000; ">&quot;weightKG&quot;</span>: 81.0,
+            <span style="color: #800000; ">&quot;volumeM3&quot;</span>: 0.451,
+            <span style="color: #800000; ">&quot;consigneeZIPCode&quot;</span>: <span style="color: #800000; ">&quot;55047 &quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeCity&quot;</span>: <span style="color: #800000; ">&quot;QUERCETA&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeProvinceAbbreviation&quot;</span>: <span style="color: #800000; ">&quot;LU&quot;</span>
+  },
+  <span style="color: #800000; ">&quot;isLabelRequired&quot;</span>: 1,
+  <span style="color: #800000; ">&quot;labelParameters&quot;</span>: {
+    <span style="color: #800000; ">&quot;outputType&quot;</span>: <span style="color: #800000; ">&quot;ZPL&quot;</span>,
+    <span style="color: #800000; ">&quot;offsetX&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;offsetY&quot;</span>: 0,
+    <span style="color: #800000; ">&quot;isBorderRequired&quot;</span>: <span style="color: #800000; ">&quot;N&quot;</span>,
+    <span style="color: #800000; ">&quot;isLogoRequired&quot;</span>: <span style="color: #800000; ">&quot;N&quot;</span>,
+    <span style="color: #800000; ">&quot;isBarcodeControlRowRequired&quot;</span>: <span style="color: #800000; ">&quot;N&quot;</span>
+  }
+}
+ 
+ 
+ <span style="color: #008000; ">//OUTPUT Body
+</span> <span style="color: #008000; ">//
+</span> {<span style="color: #800000; ">&quot;createResponse&quot;</span>: {
+   <span style="color: #800000; ">&quot;currentTimeUTC&quot;</span>: <span style="color: #800000; ">&quot;2020-06-17-14.10.32.726000+02:00&quot;</span>,
+   <span style="color: #800000; ">&quot;executionMessage&quot;</span>:    {
+      <span style="color: #800000; ">&quot;code&quot;</span>: 0,
+      <span style="color: #800000; ">&quot;severity&quot;</span>: <span style="color: #800000; ">&quot;INFO&quot;</span>,
+      <span style="color: #800000; ">&quot;codeDesc&quot;</span>: <span style="color: #800000; ">&quot;SHIPMENT DATA RECEIVED&quot;</span>,
+      <span style="color: #800000; ">&quot;message&quot;</span>: <span style="color: #800000; ">&quot;BRT has received shipment information properly&quot;</span>
+   },
+   <span style="color: #800000; ">&quot;arrivalTerminal&quot;</span>: <span style="color: #800000; ">&quot;099&quot;</span>,
+   <span style="color: #800000; ">&quot;arrivalDepot&quot;</span>: <span style="color: #800000; ">&quot;099&quot;</span>,
+   <span style="color: #800000; ">&quot;deliveryZone&quot;</span>: <span style="color: #800000; ">&quot;72&quot;</span>,
+   <span style="color: #800000; ">&quot;parcelNumberFrom&quot;</span>: <span style="color: #800000; ">&quot;0321962&quot;</span>,
+   <span style="color: #800000; ">&quot;parcelNumberTo&quot;</span>: <span style="color: #800000; ">&quot;0321962&quot;</span>,
+   <span style="color: #800000; ">&quot;departureDepot&quot;</span>: 102,
+   <span style="color: #800000; ">&quot;seriesNumber&quot;</span>: 4,
+   <span style="color: #800000; ">&quot;serviceType&quot;</span>: <span style="color: #800000; ">&quot;C&quot;</span>,
+   <span style="color: #800000; ">&quot;consigneeCompanyName&quot;</span>: <span style="color: #800000; ">&quot;TEST UFFICIO VAS&quot;</span>,
+   <span style="color: #800000; ">&quot;consigneeAddress&quot;</span>: <span style="color: #800000; ">&quot;VIA DEL PODERE FIUME 55&quot;</span>,
+   <span style="color: #800000; ">&quot;consigneeZIPCode&quot;</span>: <span style="color: #800000; ">&quot;55047&quot;</span>,
+   <span style="color: #800000; ">&quot;consigneeCity&quot;</span>: <span style="color: #800000; ">&quot;QUERCETA&quot;</span>,
+   <span style="color: #800000; ">&quot;consigneeProvinceAbbreviation&quot;</span>: <span style="color: #800000; ">&quot;LU&quot;</span>,
+   <span style="color: #800000; ">&quot;consigneeCountryAbbreviationBRT&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+   <span style="color: #800000; ">&quot;numberOfParcels&quot;</span>: 1,
+   <span style="color: #800000; ">&quot;weightKG&quot;</span>: 81,
+   <span style="color: #800000; ">&quot;volumeM3&quot;</span>: 0.451,
+   <span style="color: #800000; ">&quot;alphanumericSenderReference&quot;</span>: <span style="color: #800000; ">&quot;AAA1&quot;</span>,
+   <span style="color: #800000; ">&quot;senderCompanyName&quot;</span>: <span style="color: #800000; ">&quot;BRT TEST 0&quot;</span>,
+   <span style="color: #800000; ">&quot;senderProvinceAbbreviation&quot;</span>: <span style="color: #800000; ">&quot;BO&quot;</span>,
+   <span style="color: #800000; ">&quot;labels&quot;</span>: {<span style="color: #800000; ">&quot;label&quot;</span>: [   {
+      <span style="color: #800000; ">&quot;dataLength&quot;</span>: 1196,
+      <span style="color: #800000; ">&quot;parcelID&quot;</span>: <span style="color: #800000; ">&quot;102099040321962724&quot;</span>,
+      <span style="color: #800000; ">&quot;stream&quot;</span>: <span style="color: #800000; ">&quot;XlhBDV5MSDExMCwyMA1eUE9JDV5QUkNeRlMNXkZPMDYwLDAwMF5HQjEzMCwxMjAsMDAzXkZTDV5GTzA3MCwwMTBeQTBOLDEzNSw3Ml5GUl5GRE85OV5GUw1eRk8yMDUsMDMwXkEwTiwwOTAsNDheRkRPOTleRlMNXkZPNTQxLDAwMF5HQjA4OCwxMTAsMDNeRlMNXkZPNTQ4LDAxMF5BME4sMTI1LDc1XkZSXkZENzJeRlMNXkZPMDAwLDMyMF5BQ04sNTQsMjBeRkQxMDJeRlMNXkZPMTEwLDEzMF5HQk80MDIsMDA1LDAwNV5GUw1eQlkzLDMsMF5GUw1eRk8xMTAsMTMwXkJDTiwyMDAsTixOLE5eRkQ+OzEwMjA5OTA0MDMyMTk2MjcyNF5GUw1eRk8xMTAsMzMwXkdCTzQwMiwwMDUsMDA1XkZTDV5GTzAyMCwzNzBeQTBOLDA5MCw2MF5GRE80LV5GUw1eRk8xMzAsMzcwXkEwTiwwOTAsMDg0XkZETzMyMV5GUw1eRk8zMjAsMzQwXkEwTiwxNDUsMTA4XkZEOTYyXkZTDV5GTzAzMCw0NjBeQUNOLDE4LDEwXkZEUmlmLjogQUFBMV5GUw1eRk8zMzAsNDYwXkFDTiwxOCwxMF5GRDE3LzA2LzIwMjBeRlMNXkZPNDYwLDQ2MF5BQ04sMTgsMTBeRkReRlMNXkZPNTEwLDQ0NV5BQ04sMzYsMjBeRkReRlMNXkZUNTkyLDQ4MF5BMEIsMjUsMjJeRkReRlMNXkZUNTk1LDQ4MF5BMEIsMjUsMjJeR0IwLDM1MCwzXkZTDV5GVDYyNSw0ODBeQTBCLDI1LDIyXkZEVEVTVCBVRkZJQ0lPIFZBUyAgICAgICAgICAgTFVeRlMNXkZUNjU1LDQ4MF5BMEIsMjUsMjJeRkRWSUEgREVMIFBPREVSRSBGSVVNRSA1IFFVRVJDRVRBXkZTDV5GVDY5MCw0ODBeQTBCLDI1LDIxXkZETUMuIDAsNDUxXkZTDV5GVDY5MCwzMjBeQTBCLDI1LDIyXkZEICAgIDEtMV5GUw1eRlQ2OTAsMTYwXkEwQiwyNSwyMl5GREtHLiAgODEsMF5GUw1eRk8wMDAsMjQwXkdCMDY1LDA2NSwwM15GUw1eRk8wMjAsMjUwXkEwTiwwNjAsMDQ4XkZEQ15GUw1eWFoN&quot;</span>
+   }]},
+   <span style="color: #800000; ">&quot;disclaimer&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+}}</pre>
+	</div>
+	
+</div>
+</div><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="INLINE_EXAMPLE" namespace="Example" source="Item" filter="type=inline" condition="content:content=""%%GroupExamples%%"",operator=""<>"",value=""True""" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%taggedcomment:source=item,id=##EXAMPLEINTRO,blankformat=""%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=$$Example$$%%"",format= %%%%filtereditemlist%%</div>" blankformat="%%taggedcomment:source=item,id=##EXAMPLEINTRO,format=</div>%%" --><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="MENU_LINK" namespace="example" source="Item" filter="" NoHeader="True" NoFooter="True" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=$$Example$$%%%%filtereditemlist%%</div>" --><!--DXMETADATA end -->
+			
+			<!--DXMETADATA start type="FilteredItemList" scrap="FAULT_RESPONSE_LIST" namespace="response" source="Item" filter="type=fault" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=resources,caption=$$Fault  Responses$$%%%%filtereditemlist%%</div>" --><!--DXMETADATA end -->
+			
+            <!--DXMETADATA start type="TaggedComment" source="Item" id="##REMARKS" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=remarks,caption=$$Remarks$$%%%%comment%%</div>" --><div class="i-section-heading" id="i-remarks-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Note</span></div><div id="i-remarks-section-content" class="i-section-content">Il codice di ritorno alla chiamata fa riferimento al valore della proprietà code della struttura&nbsp;<A href="ShipmentApiV00_ws~j-executionMessage.html">executeMessage</A></div><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="CATEGORIZED_LINKS" namespace="linkcategory" source="Item" filter="" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=seealso,caption=""$$See_Also$$%%designlist:tagidentifier=##SEEALSO,itemtype=See Also%%""%%%%filtereditemlist%%</div>"--><div class="i-section-heading" id="i-seealso-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Vedi Anche</span></div><div id="i-seealso-section-content" class="i-section-content"><a href="ShipmentApiV00_ws~g-shipments APIs.html">Shipment API</a>
+|&nbsp;<a href="ShipmentApiV00_ws.html">Brt Rest API Shipment</a>
+</p>
+</div><!--DXMETADATA end-->
+            <div id="i-footer-content" class="i-footer-content">
+                <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_FOOTER" --><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="CopyrightNotice" format="<p>&nbsp;</p><p>&nbsp;</p><hr style=""height: 1px"" /><p>%%variable%%</p>" --><p>&nbsp;</p><p>&nbsp;</p><hr style="height: 1px" /><p>BRT SpA &copy; 2023 All Rights Reserved.</p><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="FeedbackLink" format="" --><a href="mailto:cedvas@brt.it?subject=Documentation Feedback: ShipmentApiV00_ws~r--shipment~o-HttpPost.html">Send comments</a> on this topic.<!--DXMETADATA end-->
+            </div>
+        </div>
+    </div>
+        
+    <script type="text/javascript">
+        $(function () {
+            var documentInstance = new Innovasys.Content.Document(document.body);
+            documentInstance.load();
+        });
+    </script>
+</body>
+</html>

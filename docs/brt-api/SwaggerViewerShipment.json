@@ -1,0 +1,934 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "shipments APIs",
+    "description": "APIs available for shipments",
+    "version": "1.0.0"
+  },
+  "host": "as777:10061",
+  "schemes": [ "http" ],
+  "basePath": "/rest/v1/shipments",
+  "tags": [
+    {
+      "name": "shipments APIs",
+      "description": "APIs available for shipments"
+    }
+  ],
+  "definitions": {
+    "deleteResponse": {
+      "type": "object",
+      "properties": {
+        "currentTimeUTC": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "executionMessage": {
+          "$ref": "#/definitions/executionMessage"
+        }
+      }
+    },
+    "deleteData": {
+      "type": "object",
+      "properties": {
+        "senderCustomerCode": {
+          "type": "number"
+        },
+        "numericSenderReference": {
+          "type": "number"
+        },
+        "alphanumericSenderReference": {
+          "type": "string",
+          "maxLength": 15
+        }
+      }
+    },
+    "deleteRequest": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/account"
+        },
+        "deleteData": {
+          "$ref": "#/definitions/deleteData"
+        }
+      }
+    },
+    "routingResponse": {
+      "type": "object",
+      "properties": {
+        "currentTimeUTC": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "executionMessage": {
+          "$ref": "#/definitions/executionMessage"
+        },
+        "arrivalTerminal": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "arrivalDepot": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "deliveryZone": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "consigneeZIPCode": {
+          "type": "string",
+          "maxLength": 9
+        },
+        "consigneeCity": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "consigneeProvinceAbbreviation": {
+          "type": "string",
+          "maxLength": 2
+        }
+      }
+    },
+    "routingData": {
+      "type": "object",
+      "properties": {
+        "network": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "departureDepot": {
+          "type": "number"
+        },
+        "senderCustomerCode": {
+          "type": "number"
+        },
+        "deliveryFreightTypeCode": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "consigneeCompanyName": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "consigneeAddress": {
+          "type": "string",
+          "maxLength": 250
+        },
+        "consigneeZIPCode": {
+          "type": "string",
+          "maxLength": 9
+        },
+        "consigneeCity": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "consigneeProvinceAbbreviation": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "consigneeCountryAbbreviationISOAlpha2": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "serviceType": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "numberOfParcels": {
+          "type": "number"
+        },
+        "weightKG": {
+          "type": "number"
+        },
+        "volumeM3": {
+          "type": "number"
+        },
+        "variousParticularitiesManagementCode": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "particularDelivery1": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "particularDelivery2": {
+          "type": "string",
+          "maxLength": 1
+        }
+      }
+    },
+    "routingRequest": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/account"
+        },
+        "routingData": {
+          "$ref": "#/definitions/routingData"
+        }
+      }
+    },
+    "confirmResponse": {
+      "type": "object",
+      "properties": {
+        "currentTimeUTC": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "executionMessage": {
+          "$ref": "#/definitions/executionMessage"
+        }
+      }
+    },
+    "confirmData": {
+      "type": "object",
+      "properties": {
+        "senderCustomerCode": {
+          "type": "number"
+        },
+        "numericSenderReference": {
+          "type": "number"
+        },
+        "alphanumericSenderReference": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "cmrCode": {
+          "type": "string",
+          "maxLength": 35
+        } 
+      }
+    },
+    "confirmRequest": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/account"
+        },
+        "confirmData": {
+          "$ref": "#/definitions/confirmData"
+        }
+      }
+    },
+    "label": {
+      "type": "object",
+      "properties": {
+        "dataLength": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "parcelID": {
+          "type": "string",
+          "maxLength": 18
+        },
+        "trackingByParcelID": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "parcelNumberGeoPost": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "stream": {
+          "type": "string",
+          "maxLength": 9000
+        }
+      }
+    },
+    "labels": {
+      "type": "object",
+      "properties": {
+        "label_LENGTH": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "label": {
+          "type": "array",
+          "maxItems": 85,
+          "items": {
+            "$ref": "#/definitions/label"
+          }
+        }
+      }
+    },
+    "executionMessage": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "severity": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "codeDesc": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 128
+        }
+      }
+    },
+    "createResponse": {
+      "type": "object",
+      "properties": {
+        "currentTimeUTC": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "executionMessage": {
+          "$ref": "#/definitions/executionMessage"
+        },
+        "arrivalTerminal": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "arrivalDepot": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "deliveryZone": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "parcelNumberFrom": {
+          "type": "string",
+          "maxLength": 7
+        },
+        "parcelNumberTo": {
+          "type": "string",
+          "maxLength": 7
+        },
+        "departureDepot": {
+          "type": "number"
+        },
+        "seriesNumber": {
+          "type": "number"
+        },
+        "serviceType": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "consigneeCompanyName": {
+          "type": "string",
+          "maxLength": 70
+        },
+        "consigneeAddress": {
+          "type": "string",
+          "maxLength": 250
+        },
+        "consigneeZIPCode": {
+          "type": "string",
+          "maxLength": 9
+        },
+        "consigneeCity": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "consigneeProvinceAbbreviation": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "consigneeCountryAbbreviationBRT": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "numberOfParcels": {
+          "type": "number"
+        },
+        "weightKG": {
+          "type": "number"
+        },
+        "volumeM3": {
+          "type": "number"
+        },
+        "alphanumericSenderReference": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "senderCompanyName": {
+          "type": "string",
+          "maxLength": 48
+        },
+        "senderProvinceAbbreviation": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "labels": {
+          "$ref": "#/definitions/labels"
+        },
+        "disclaimer": {
+          "type": "string",
+          "maxLength": 1024
+        }
+      }
+    },
+    "labelParameters": {
+      "type": "object",
+      "properties": {
+        "outputType": {
+          "type": "string",
+          "maxLength": 6
+        },
+        "offsetX": {
+          "type": "string",
+          "maxLength": 8
+        },
+        "offsetY": {
+          "type": "string",
+          "maxLength": 8
+        },
+        "isBorderRequired": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "isLogoRequired": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "isBarcodeControlRowRequired": {
+          "type": "string",
+          "maxLength": 1
+        },
+		"labelFormat": {
+          "type": "string",
+          "maxLength": 3
+        }
+      }
+    },
+    "actualSender": {
+      "type": "object",
+      "properties": {
+        "actualSenderName": {
+          "type": "string",
+          "maxLength": 70
+        },
+        "actualSenderCity": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "actualSenderAddress": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "actualSenderZIPCode": {
+          "type": "string",
+          "maxLength": 9
+        },
+        "actualSenderProvince": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "actualSenderCountry": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "actualSenderEmail": {
+          "type": "string",
+          "maxLength": 70
+        },
+        "actualSenderMobilePhoneNumber": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "actualSenderPudoId": {
+          "type": "string",
+          "maxLength": 20
+        }
+      }
+    },
+    "returnShipmentConsignee": {
+      "type": "object",
+      "properties": {
+        "returnShipmentConsigneeName": {
+          "type": "string",
+          "maxLength": 70
+        },
+        "returnShipmentConsigneeCity": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "returnShipmentConsigneeAddress": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "returnShipmentConsigneeZIPCode": {
+          "type": "string",
+          "maxLength": 9
+        },
+        "returnShipmentConsigneeProvince": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "returnShipmentConsigneeCountry": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "returnShipmentConsigneeEmail": {
+          "type": "string",
+          "maxLength": 70
+        },
+        "returnShipmentConsigneeMobilePhoneNumber": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "returnShipmentConsigneePudoId": {
+          "type": "string",
+          "maxLength": 20
+        }
+      }
+    },
+    "createData": {
+      "type": "object",
+      "properties": {
+        "network": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "departureDepot": {
+          "type": "number"
+        },
+        "senderCustomerCode": {
+          "type": "number"
+        },
+        "deliveryFreightTypeCode": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "consigneeCompanyName": {
+          "type": "string",
+          "maxLength": 70
+        },
+        "consigneeAddress": {
+          "type": "string",
+          "maxLength": 250
+        },
+        "consigneeZIPCode": {
+          "type": "string",
+          "maxLength": 9
+        },
+        "consigneeCity": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "consigneeProvinceAbbreviation": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "consigneeCountryAbbreviationISOAlpha2": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "consigneeClosingShift1_DayOfTheWeek": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "consigneeClosingShift1_PeriodOfTheDay": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "consigneeClosingShift2_DayOfTheWeek": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "consigneeClosingShift2_PeriodOfTheDay": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "consigneeContactName": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "consigneeTelephone": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "consigneeEMail": {
+          "type": "string",
+          "maxLength": 70
+        },
+        "consigneeMobilePhoneNumber": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "isAlertRequired": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "consigneeVATNumber": {
+          "type": "string",
+          "maxLength": 14
+        },
+        "consigneeVATNumberCountryISOAlpha2": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "consigneeItalianFiscalCode": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "pricingConditionCode": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "serviceType": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "insuranceAmount": {
+          "type": "number"
+        },
+        "insuranceAmountCurrency": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "senderParcelType": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "numberOfParcels": {
+          "type": "number"
+        },
+        "weightKG": {
+          "type": "number"
+        },
+        "volumeM3": {
+          "type": "number"
+        },
+        "quantityToBeInvoiced": {
+          "type": "number"
+        },
+        "cashOnDelivery": {
+          "type": "number"
+        },
+        "isCODMandatory": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "codPaymentType": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "codCurrency": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "numericSenderReference": {
+          "type": "number"
+        },
+        "alphanumericSenderReference": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 70
+        },
+        "parcelsHandlingCode": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "deliveryDateRequired": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "deliveryType": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "declaredParcelValue": {
+          "type": "number"
+        },
+        "declaredParcelValueCurrency": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "particularitiesDeliveryManagementCode": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "particularitiesHoldOnStockManagementCode": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "variousParticularitiesManagementCode": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "particularDelivery1": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "particularDelivery2": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "palletType1": {
+          "type": "string",
+          "maxLength": 4
+        },
+        "palletType1Number": {
+          "type": "number"
+        },
+        "palletType2": {
+          "type": "string",
+          "maxLength": 4
+        },
+        "palletType2Number": {
+          "type": "number"
+        },
+        "originalSenderCompanyName": {
+          "type": "string",
+          "maxLength": 25
+        },
+        "originalSenderZIPCode": {
+          "type": "string",
+          "maxLength": 9
+        },
+        "originalSenderCountryAbbreviationISOAlpha2": {
+          "type": "string",
+          "maxLength": 2
+        },
+        "cmrCode": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "neighborNameMandatoryAuthorization": {
+          "type": "string",
+          "maxLength": 70
+        },
+        "pinCodeMandatoryAuthorization": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "packingListPDFName": {
+          "type": "string",
+          "maxLength": 33
+        },
+        "packingListPDFFlagPrint": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "packingListPDFFlagEmail": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "pudoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "brtServiceCode": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "returnDepot": {
+          "type": "number"
+         },
+        "expiryDate": {
+          "type": "string",
+          "maxLength": 10
+        }
+      }
+    },
+    "account": {
+      "type": "object",
+      "properties": {
+        "userID": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "password": {
+          "type": "string",
+          "maxLength": 35
+        }
+      }
+    },
+    "createRequest": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/account"
+        },
+        "createData": {
+          "$ref": "#/definitions/createData"
+        },
+        "isLabelRequired": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "labelParameters": {
+          "$ref": "#/definitions/labelParameters"
+        },
+        "actualSender": {
+          "$ref": "#/definitions/actualSender"
+        },
+        "returnShipmentConsignee": {
+          "$ref": "#/definitions/returnShipmentConsignee"
+        }
+      }
+    },
+    "deleteResult": {
+      "type": "object",
+      "properties": {
+        "deleteResponse": {
+          "$ref": "#/definitions/deleteResponse"
+        }
+      }
+    },
+    "routingResult": {
+      "type": "object",
+      "properties": {
+        "routingResponse": {
+          "$ref": "#/definitions/routingResponse"
+        }
+      }
+    },
+    "confirmResult": {
+      "type": "object",
+      "properties": {
+        "confirmResponse": {
+          "$ref": "#/definitions/confirmResponse"
+        }
+      }
+    },
+    "createResult": {
+      "type": "object",
+      "properties": {
+        "createResponse": {
+          "$ref": "#/definitions/createResponse"
+        }
+      }
+    }
+  },
+  "paths": {
+    "/delete": {
+      "put": {
+        "tags": [
+          "shipments APIs"
+        ],
+        "operationId": "Delete",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/deleteRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/deleteResult"
+            }
+          }
+        }
+      }
+    },
+    "/shipment": {
+      "post": {
+        "tags": [
+          "shipments APIs"
+        ],
+        "operationId": "Create",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/createRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/createResult"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "shipments APIs"
+        ],
+        "operationId": "Confirm",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/confirmRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/confirmResult"
+            }
+          }
+        }
+      }
+    },
+    "/routing": {
+      "put": {
+        "tags": [
+          "shipments APIs"
+        ],
+        "operationId": "Routing",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/routingRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/routingResult"
+            }
+          }
+        }
+      }
+    }
+  }
+}

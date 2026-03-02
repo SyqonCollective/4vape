@@ -1,0 +1,463 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "tracking APIs",
+    "description": "APIs available for tracking",
+    "version": "1.0.0"
+  },
+  "host": "as777:10023",
+  "schemes": [ "http" ],
+  "basePath": "/rest/tracking",
+  "tags": [
+    {
+      "name": "tracking APIs",
+      "description": "APIs available for tracking"
+    }
+  ],
+  "definitions": {
+    "nota": {
+      "type": "object",
+      "properties": {
+        "descrizione": {
+          "type": "string",
+          "maxLength": 100
+        }
+      }
+    },
+    "note": {
+      "type": "object",
+      "properties": {
+        "nota": {
+          "$ref": "#/definitions/nota"
+        }
+      }
+    },
+    "evento": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "ora": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "descrizione": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "filiale": {
+          "type": "string",
+          "maxLength": 30
+        }
+      }
+    },
+    "eventi": {
+      "type": "object",
+      "properties": {
+        "evento": {
+          "$ref": "#/definitions/evento"
+        }
+      }
+    },
+    "assicurazione": {
+      "type": "object",
+      "properties": {
+        "assicurazione_importo": {
+          "type": "number",
+          "format": "double"
+        },
+        "assicurazione_divisa": {
+          "type": "string",
+          "maxLength": 3
+        }
+      }
+    },
+    "contrassegno": {
+      "type": "object",
+      "properties": {
+        "contrassegno_importo": {
+          "type": "number",
+          "format": "double"
+        },
+        "contrassegno_divisa": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "contrassegno_incasso": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "contrassegno_particolarita": {
+          "type": "string",
+          "maxLength": 35
+        }
+      }
+    },
+    "merce": {
+      "type": "object",
+      "properties": {
+        "colli": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "peso_kg": {
+          "type": "number",
+          "format": "float"
+        },
+        "volume_m3": {
+          "type": "number",
+          "format": "float"
+        },
+        "natura_merce": {
+          "type": "string",
+          "maxLength": 15
+        }
+      }
+    },
+    "recapito_dest": {
+      "type": "object",
+      "properties": {
+        "ragione_sociale": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "indirizzo": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "cap": {
+          "type": "string",
+          "maxLength": 9
+        },
+        "localita": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "sigla_provincia": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "sigla_nazione": {
+          "type": "string",
+          "maxLength": 3
+        },
+        "referente_consegna": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "telefono_referente": {
+          "type": "string",
+          "maxLength": 16
+        }
+      }
+    },
+    "recapito_mitt": {
+      "type": "object",
+      "properties": {
+        "codice": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "ragione_sociale": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "indirizzo": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "cap": {
+          "type": "string",
+          "maxLength": 9
+        },
+        "localita": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "sigla_area": {
+          "type": "string",
+          "maxLength": 3
+        }
+      }
+    },
+    "riferimenti": {
+      "type": "object",
+      "properties": {
+        "riferimento_mittente_numerico": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "riferimento_mittente_alfabetico": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "riferimento_partner_estero": {
+          "type": "string",
+          "maxLength": 20
+        }
+      }
+    },
+    "dati_consegna": {
+      "type": "object",
+      "properties": {
+        "data_cons_richiesta": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "ora_cons_richiesta": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "tipo_cons_richiesta": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "descrizione_cons_richiesta": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "data_teorica_consegna": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "ora_teorica_consegna_da": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "ora_teorica_consegna_a": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "data_consegna_merce": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "ora_consegna_merce": {
+          "type": "string",
+          "maxLength": 5
+        },
+        "firmatario_consegna": {
+          "type": "string",
+          "maxLength": 35
+        }
+      }
+    },
+    "dati_spedizione": {
+      "type": "object",
+      "properties": {
+        "spedizione_id": {
+          "type": "string",
+          "maxLength": 12
+        },
+        "spedizione_data": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "tipo_porto": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "porto": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "tipo_servizio": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "servizio": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "cod_filiale_arrivo": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "filiale_arrivo": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "filiale_arrivo_URL": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "stato_sped_parte1": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "stato_sped_parte2": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "descrizione_stato_sped_parte1": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "descrizione_stato_sped_parte2": {
+          "type": "string",
+          "maxLength": 150
+        }
+      }
+    },
+    "spedizione": {
+      "type": "object",
+      "properties": {
+        "dati_spedizione": {
+          "$ref": "#/definitions/dati_spedizione"
+        },
+        "dati_consegna": {
+          "$ref": "#/definitions/dati_consegna"
+        },
+        "riferimenti": {
+          "$ref": "#/definitions/riferimenti"
+        },
+        "mittente": {
+          "$ref": "#/definitions/recapito_mitt"
+        },
+        "destinatario": {
+          "$ref": "#/definitions/recapito_dest"
+        },
+        "merce": {
+          "$ref": "#/definitions/merce"
+        },
+        "contrassegno": {
+          "$ref": "#/definitions/contrassegno"
+        },
+        "assicurazione": {
+          "$ref": "#/definitions/assicurazione"
+        }
+      }
+    },
+    "executionMessage": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "severity": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "codeDesc": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 128
+        }
+      }
+    },
+    "ttParcelIdResponse": {
+      "type": "object",
+      "properties": {
+        "currentTimeUTC": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "executionMessage": {
+          "$ref": "#/definitions/executionMessage"
+        },
+        "esito": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "versione": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "risposta_timestamp": {
+          "type": "string",
+          "maxLength": 26
+        },
+        "bolla": {
+          "$ref": "#/definitions/spedizione"
+        },
+        "contatore_eventi": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "lista_eventi": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/definitions/eventi"
+          }
+        },
+        "contatore_note": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "lista_note": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/definitions/note"
+          }
+        }
+      }
+    },
+    "parcelIDResult": {
+      "type": "object",
+      "properties": {
+        "ttParcelIdResponse": {
+          "$ref": "#/definitions/ttParcelIdResponse"
+        }
+      }
+    }
+  },
+  "paths": {
+    "/parcelID/{parcelID}": {
+      "get": {
+        "tags": [
+          "tracking APIs"
+        ],
+        "operationId": "ParcelID",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "userID",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "maxLength": 35
+          },
+          {
+            "name": "password",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "maxLength": 35
+          },
+          {
+            "name": "parcelID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "maxLength": 35
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/parcelIDResult"
+            }
+          }
+        }
+      }
+    }
+  }
+}

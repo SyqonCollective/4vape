@@ -1,0 +1,397 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <!--DXMETADATA start type="MetaCharset" --><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"><!--DXMETADATA end-->
+    <meta http-equiv="X-UA-Compatible" value="IE=9" />
+
+    <!--DXMETADATA start type="Literal" condition="helpversion:value=3" value="<meta name=""Microsoft.Help.SelfBranded"" content=""true"" />" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<title>%%LocalItemTitle%%</title>" --><title>routingRequest</title><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<meta name=""Title"" content=""%%ItemTitleNoQuotes%%""/>" --><meta name="Title" content=""/><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="PackageLink" packagename="jquery" filetype="script" firstlinkattributes="id=""mshs_support_script"""--><script src="template/packages/jquery/script/default/jquery-1.11.3.min.js" type="text/javascript" id="mshs_support_script"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="script"--><script src="template/packages/jquery-ui/script/default/jquery-ui-1.11.4.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/jquery-ui/css/default/jquery-ui-1.11.4.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TemplateSettingsJson" format="<script type=""text/javascript"">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:%%TemplateSettingsJson%%});</script>" --><script type="text/javascript">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:{"dynamictoc":{"initialNodeId":"n37","initialNodeContainer":"c1","isResizable":true},"inthistopic":{"isEnabled":true},"currentLocale":"-","isFrameless":true,"navigationKind":"inpage","versions":{"locale":{"currentId":"-"}}}});</script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="light" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/light/css/dynamic-toc.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/plugins-webservice/css/default/jquery-plugins.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="css" firstlinkattributes=" data-mshv2-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv2.css"" data-mshv1-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv1.css"" data-responsive-mobile=""template/packages/core-webservice/dx.webservice.mobile.css"" data-responsive-tablet=""template/packages/core-webservice/dx.webservice.tablet.css"""--><link rel="stylesheet" type="text/css" href="template/packages/core-webservice/css/dx.webservice.css"  data-mshv2-stylesheet="/template/packages/core-webservice/dx.webservice.mshv2.css" data-mshv1-stylesheet="/template/packages/core-webservice/dx.webservice.mshv1.css" data-responsive-mobile="template/packages/core-webservice/dx.webservice.mobile.css" data-responsive-tablet="template/packages/core-webservice/dx.webservice.tablet.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="script"--><script src="template/packages/plugins-webservice/script/default/jquery-plugins.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="script"--><script src="template/packages/core-webservice/script/dx.webservice.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="TopicId" format="<meta name=""Microsoft.Help.Id"" content=""%%TopicId%%""/>" --><meta name="Microsoft.Help.Id" content="ShipmentApiV00_ws~j-routingRequest"/><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Synopsis" StripHtmlTags="True" MaxLength="250" format="<meta name=""Description"" content=""%%Synopsis%%"" />"--><meta name="Description" content="Struttura di input contenente i dati relativi al destinatario della spedizione." /><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TocParentId" format="<meta name=""Microsoft.Help.TocParent"" content=""%%TocParentId%%""/>" --><!--DXMETADATA end-->
+    <meta name="Microsoft.Help.ContentType" content="Reference" />
+    <!--DXMETADATA start type="MshvKeywords" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="MshvMetaTags" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.Locale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.TopicLocale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Stylesheets" --><link rel="stylesheet" type="text/css" href="stylesheets/customstyles.css"></link>
+    <link rel="stylesheet" type="text/css" href="stylesheets/fields.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="StylePropertyValues" format="<style>%%StylePropertyValues%%</style>" --><style>#i-header-container { background-color: #EEEEEE }
+#i-header-container { color: #000000 }
+.i-is-new .i-page-title-text::after, ul#i-dt-root li.i-is-new>a::after { content: "Nuovo" }
+</style><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scripts" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="DesignTime"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_PROPERTIES" --><!--DXMETADATA end -->
+    <!--DXMETADATA start type="CustomHeadContent" --><!--DXMETADATA end-->
+</head>
+
+<body>
+    <div id="i-before-header-content" class="i-before-header-content">
+        
+    </div>
+
+    <div id="i-header-container">
+        <div id="i-header-content" class="i-header-content i-content-width-container">
+            <!--DXMETADATA start type="LogoImage" --><img class="logoimage" src="images/BRT_logo_redgrad_rgb1.png" border="0"></img><!--DXMETADATA end-->
+            <div class="i-project-title"><!--DXMETADATA start type="ProjectTitle" -->Brt Rest API Shipment<!--DXMETADATA end--></div>
+            <div class="i-search-container">
+                <!--DXMETADATA start type="outputfileextension" format="<form action=""websearch%%outputfileextension%%"">" --><form action="websearch.html"><!--DXMETADATA end-->
+                <input id="i-search" name="query"/>
+                <input type="submit" id="i-search-button" value=""/>
+                <!--DXMETADATA start type="Literal" value="</form>" --></form><!--DXMETADATA end-->
+            </div>
+            <!--DXMETADATA start type="outputfileextension" format="<a id=""i-index-button"" href=""webindex%%outputfileextension%%""></a>" --><a id="i-index-button" href="webindex.html"></a><!--DXMETADATA end-->
+        </div>
+    </div>
+    
+    <div class="i-content-width-container"><div class="i-busy-overlay"></div></div>
+
+    <div id="i-breadcrumbs-outer-container" class="i-content-width-container"><!--DXMETADATA start type="Breadcrumbs" scrap="_BREADCRUMBS" --><div class="i-breadcrumbs-container">
+<a href="ShipmentApiV00_ws.html">Brt Rest API Shipment</a>
+ / routingRequest</div><!--DXMETADATA end --></div>
+
+    
+
+    <div id="i-actions-outer-container" class="i-content-width-container">
+        <div id="i-actions-container">
+            <div id="i-actions-content" class="i-fixed-to-top">
+                <!-- Spacing --> <span class="i-toggle-all-sections i-function-link">
+                <label class="i-collapse-all"><!--DXMETADATA start type="Phrase" name="COLLAPSE_ALL" -->Nascondi tutto<!--DXMETADATA end--></label>
+                <label class="i-expand-all" style="display: none;"><!--DXMETADATA start type="Phrase" name="EXPAND_ALL" -->Mostra tutto<!--DXMETADATA end--></label>
+            </span><!--DXMETADATA start type="Literal" condition="communityenabled" value="%%scrap:name=_COMMUNITY_DROPDOWN%%" --><!--DXMETADATA end -->
+                <div class="i-in-this-topic-container">
+                    <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-toc-outer-container" class="i-content-width-container">
+        <div id="i-toc-container">
+            <div id="i-toc-content" class="i-fixed-to-top">
+                <div class="i-toc-content-scroll-container">
+                    <div id="i-dynamic-toc-container"><ul id="i-dt-root"></ul></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-body-content-container" class="i-content-width-container">
+        <div id="i-body-content" class="i-body-content">
+            <div class="i-page-title"><div class="i-page-title-text"><!--DXMETADATA start type="LocalItemTitle" -->routingRequest<!--DXMETADATA end--></div></div>
+            <div class="i-in-this-topic-container">
+                <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+            </div>
+            <!--DXMETADATA start type="Description" source="Item" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=description,caption=$$Description$$%%<div class=""i-description-content"">%%description%%</div></div>" --><div class="i-section-heading" id="i-description-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Descrizione</span></div><div id="i-description-section-content" class="i-section-content"><div class="i-description-content">Struttura di input contenente i&nbsp;dati relativi al destinatario della spedizione.</div></div><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="ChildTree" source="Item" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=description,caption=$$Overview$$%%%%ChildTree%%</div>" --><div class="i-section-heading" id="i-description-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Sommario</span></div><div id="i-description-section-content" class="i-section-content"><TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschema-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschema.png"></TD>
+<TD>
+<DIV class=i-item-summary>routingRequest 
+<DIV class=i-child-tree-description>Struttura di input contenente i&nbsp;dati relativi al destinatario della spedizione.</DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>account : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-account.html">account</A></SPAN>
+<DIV class=i-child-tree-description>
+<P>Informazioni dell'account abilitato al servizio web.</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>userID : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Codice utente per l'autenticazione al servizio.</P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(255,0,0); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><FONT size=3>Dato obbligatorio.</FONT></SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>password : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Password utente.</P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(255,0,0); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><FONT size=3>Dato obbligatorio.</FONT></SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>routingData : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-routingData.html">routingData</A></SPAN>
+<DIV class=i-child-tree-description>
+<P>Dati relativi al destinatario della spedizione.</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></DIV></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>network : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Network. [rif. BRT VABATB] [<SPAN class=CampoLength>max length=1</SPAN>]</P>
+<P>I valori possibili vengono comunicati da BRT.&nbsp;Se indicata stringa vuota&nbsp;viene utilizzato&nbsp;il network standard BRT.&nbsp;&nbsp;</P>
+<P>In caso che il cliente possa scegliere più network, in ogni singola richiesta può essere indicato un solo valore.</P>
+<P>Viene controllata l'esistenza del dato e l'appartenenza al cliente.</P>
+<P class=CampoObbligatorio>&nbsp;</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>departureDepot : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Filiale di partenza.&nbsp; [rif. BRT VABFGS] [<SPAN class=CampoLength>precision=3 scale=0</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene comunicato da BRT. In caso che il cliente abbia più punti di partenza, saranno comunicati più valori. In ogni singola richiesta può essere indicato un solo valore.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato e l'appartenenza al cliente.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>senderCustomerCode : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Codice cliente mittente. [rif. BRT VABCCM] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>precision=7 scale=0</FONT></SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene comunicato da BRT. In caso che il cliente abbia più codice cliente, saranno comunicati più valori. In ogni singola richiesta può essere indicato un solo valore.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato e l'appartenenza all'utente di collegamento.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>deliveryFreightTypeCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Tipo porto.&nbsp;[rif. BRT VABCBO] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=3</FONT></SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Può valere 'DAP' (porto franco) oppure 'EXW' (porto assegnato).</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeCompanyName : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Ragione sociale destinatario. [rif. BRT VABRSD VABRD2] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=70</FONT></SPAN>]</SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeAddress : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; WHITE-SPACE: pre-wrap; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(23,43,77); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: 0px; BACKGROUND-COLOR: rgb(255,255,255); TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial; text-decoration-thickness: initial'>Indirizzo destinatario. [<SPAN class=CampoLength>min length = 6;</SPAN> <SPAN class=CampoLength>max length =35</SPAN> per spedizioni domestiche (IT) oppure effettuate con Network non abilitati alla gestione dell’indirizzo esteso, <SPAN class=CampoLength>max length =105 </SPAN>per spedizioni estere affettuate con Network abilitati alla gestione dell’indirizzo esteso]</SPAN></SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeZIPCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>CAP nel formato della nazione di destinazione. [rif. BRT VABCAD] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=9</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllato che sia formalmente valido per la nazione indicata.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeCity : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Località di destinazione. [rif. BRT VABLOD] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=35</SPAN>]</SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeProvinceAbbreviation : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Sigla della provincia di destinazione. [rif. BRT VABPRD] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=2</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio se la nazione è Italia.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN>Viene controllato che sia formalmente valido rispetto all'elenco sigle delle provincie italiane.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>consigneeCountryAbbreviationISOAlpha2 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Sigla della nazione di destinazione. [rif. BRT VABNZD] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=2</SPAN>]</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN>Deve essere indicata l'abbreviazione ISO&nbsp;3166-1 alpha-2.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>serviceType : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Tipo servizio. [rif. BRT VABTPS] [<SPAN class=CampoLength>max</SPAN> <SPAN class=CampoLength>length<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength>=1</SPAN>]</P>
+<P>Il suo significato viene spiegato da BRT. Se indicata stringa vuota viene preso il default BRT</P>
+<P>Può valere:</P>
+<P>Default&nbsp;= servizio standard</P>
+<P>'E' = servizio priority</P>
+<P>'H' = servizio 10:30</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>numberOfParcels : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Numero dei pacchi della spedizione. [rif. BRT VABNCL] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=2</SPAN></SPAN> scale=0</SPAN>]</SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>weightKG : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Peso totale della spedizione in chilogrammi. [rif. BRT VABPKB] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=5</SPAN></SPAN> scale=1</SPAN>]</SPAN></P>
+<P><SPAN class=CampoObbligatorio>Dato obbligatorio.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>volumeM3 : <SPAN class=i-type>number</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Volume totale della spedizione in metri cubi. [rif. BRT VABVLB] [<SPAN class=CampoLength>precision<SPAN>&nbsp;</SPAN></SPAN><SPAN class=CampoLength><SPAN class=CampoLength><SPAN class=CampoLength>=2</SPAN></SPAN> scale=3</SPAN>]</SPAN></P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Dato facoltativo.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>variousParticularitiesManagementCode : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Gestione particolarietà varie. [rif. BRT VABGVA] [<SPAN class=CampoLength>max length=2</SPAN>]</SPAN></P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Dato facoltativo.</SPAN></P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sono più valori, che vengono comunicati da BRT.</SPAN></P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato.</SPAN></P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>particularDelivery1 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Particolarità di consegna 1. [rif. BRT VABTC1] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=1</FONT></SPAN>]</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Dato facoltativo.</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sono più valori, che vengono comunicati da BRT.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>particularDelivery2 : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Particolarità di consegna 2. [rif. BRT VABTC2] [<SPAN class=CampoLength><FONT class=CampoLength color=#222222>max length=1</FONT></SPAN>]</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Dato facoltativo.</P>
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Sono più valori, che vengono comunicati da BRT.</P>
+<P style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Viene controllata l'esistenza del dato.</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></div><!--DXMETADATA end -->
+			
+			<!--DXMETADATA start type="FilteredItemList" scrap="PROPERTY_LIST" namespace="all properties" source="Item" filter="" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=properties,caption=$$Properties$$%%%%filtereditemlist%%</div>" --><div class="i-section-heading" id="i-properties-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Proprietà</span></div><div id="i-properties-section-content" class="i-section-content"><table class="i-filtered-item-list"><tr><th>Nome</th><th>Descrizione</th><th class="i-property-data-type">Data Type</th></tr>
+<tr><td class=i-link>account</td><td class="i-description"><P>Informazioni dell'account abilitato al servizio web.</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></td><td class="i-property-data-type"><a href="ShipmentApiV00_ws~j-account.html">account</a></td></tr>
+<tr><td class=i-link>routingData</td><td class="i-description"><P>Dati relativi al destinatario della spedizione.</P>
+<P class=CampoObbligatorio>Dato obbligatorio.</P></td><td class="i-property-data-type"><a href="ShipmentApiV00_ws~j-routingData.html">routingData</a></td></tr>
+</table></div><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="SampleData" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=sampledata,caption=$$Sample_Data$$%%%%SampleData%%</div>" --><div class="i-section-heading" id="i-sampledata-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Sample Data</span></div><div id="i-sampledata-section-content" class="i-section-content"><pre>{
+  <span style="color: #800000; ">&quot;account&quot;</span>: {
+    <span style="color: #800000; ">&quot;userID&quot;</span>: 1020100,
+    <span style="color: #800000; ">&quot;password&quot;</span>: <span style="color: #800000; ">&quot;brt1447st&quot;</span>
+  },
+  <span style="color: #800000; ">&quot;routingData&quot;</span>: {
+    <span style="color: #800000; ">&quot;network&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;departureDepot&quot;</span>: 102,
+    <span style="color: #800000; ">&quot;senderCustomerCode&quot;</span>: 1020100,
+    <span style="color: #800000; ">&quot;deliveryFreightTypeCode&quot;</span>: <span style="color: #800000; ">&quot;DAP&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeCompanyName&quot;</span>: <span style="color: #800000; ">&quot;Spedizione di prova CEDVAS&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeAddress&quot;</span>: <span style="color: #800000; ">&quot;via montirone 37&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeZIPCode&quot;</span>: <span style="color: #800000; ">&quot;40050&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeCity&quot;</span>: <span style="color: #800000; ">&quot;MINERBIO                           &quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeProvinceAbbreviation&quot;</span>: <span style="color: #800000; ">&quot;BO&quot;</span>,
+    <span style="color: #800000; ">&quot;consigneeCountryAbbreviationISOAlpha2&quot;</span>: <span style="color: #800000; ">&quot;IT&quot;</span>,
+    <span style="color: #800000; ">&quot;serviceType&quot;</span>: <span style="color: #800000; ">&quot;E&quot;</span>,
+    <span style="color: #800000; ">&quot;numberOfParcels&quot;</span>: 2,
+    <span style="color: #800000; ">&quot;weightKG&quot;</span>: 1.0,
+    <span style="color: #800000; ">&quot;volumeM3&quot;</span>: 0.0,
+    <span style="color: #800000; ">&quot;variousParticularitiesManagementCode&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;particularDelivery1&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+    <span style="color: #800000; ">&quot;particularDelivery2&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+  }
+}</pre></div><!--DXMETADATA end -->
+            		
+			<!--DXMETADATA start type="TaggedComment" source="Item" id="##EXAMPLEINTRO" format="%%replaceinquotes:value=false%%%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=""$$Example$$%%designlist:tagidentifier=##EXAMPLECODE,itemtype=Example%%""%%%%comment%%" --><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="EXAMPLEGROUP_LIST" namespace="ExampleGroup" source="Item" filter="type=inline" condition="content:content=""%%GroupExamples%%"",operator=""="",value=""True""" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%taggedcomment:source=item,id=##EXAMPLEINTRO,blankformat=""%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=$$Example$$%%"",format= %%%%filtereditemlist%%</div>" blankformat="%%taggedcomment:source=item,id=##EXAMPLEINTRO,format=</div>%%" --><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="INLINE_EXAMPLE" namespace="Example" source="Item" filter="type=inline" condition="content:content=""%%GroupExamples%%"",operator=""<>"",value=""True""" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%taggedcomment:source=item,id=##EXAMPLEINTRO,blankformat=""%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=$$Example$$%%"",format= %%%%filtereditemlist%%</div>" blankformat="%%taggedcomment:source=item,id=##EXAMPLEINTRO,format=</div>%%" --><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="MENU_LINK" namespace="example" source="Item" filter="" NoHeader="True" NoFooter="True" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=$$Example$$%%%%filtereditemlist%%</div>" --><!--DXMETADATA end -->
+			
+            <!--DXMETADATA start type="TaggedComment" source="Item" id="##REMARKS" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=remarks,caption=$$Remarks$$%%%%comment%%</div>" --><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="CATEGORIZED_LINKS" namespace="linkcategory" source="Item" filter="" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=seealso,caption=""$$See_Also$$%%designlist:tagidentifier=##SEEALSO,itemtype=See Also%%""%%%%filtereditemlist%%</div>"--><div class="i-section-heading" id="i-seealso-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Vedi Anche</span></div><div id="i-seealso-section-content" class="i-section-content"><a href="ShipmentApiV00_ws.html">Brt Rest API Shipment</a>
+</p>
+</div><!--DXMETADATA end-->
+            <div id="i-footer-content" class="i-footer-content">
+                <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_FOOTER" --><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="CopyrightNotice" format="<p>&nbsp;</p><p>&nbsp;</p><hr style=""height: 1px"" /><p>%%variable%%</p>" --><p>&nbsp;</p><p>&nbsp;</p><hr style="height: 1px" /><p>BRT SpA &copy; 2023 All Rights Reserved.</p><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="FeedbackLink" format="" --><a href="mailto:cedvas@brt.it?subject=Documentation Feedback: ShipmentApiV00_ws~j-routingRequest.html">Send comments</a> on this topic.<!--DXMETADATA end-->
+            </div>
+        </div>
+    </div>
+        
+    <script type="text/javascript">
+        $(function () {
+            var documentInstance = new Innovasys.Content.Document(document.body);
+            documentInstance.load();
+        });
+    </script>
+</body>
+</html>

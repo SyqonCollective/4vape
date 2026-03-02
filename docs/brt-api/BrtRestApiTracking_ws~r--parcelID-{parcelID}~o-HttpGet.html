@@ -1,0 +1,1202 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <!--DXMETADATA start type="MetaCharset" --><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"><!--DXMETADATA end-->
+    <meta http-equiv="X-UA-Compatible" value="IE=9" />
+
+    <!--DXMETADATA start type="Literal" condition="helpversion:value=3" value="<meta name=""Microsoft.Help.SelfBranded"" content=""true"" />" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<title>%%LocalItemTitle%%</title>" --><title>ParcelID (Get)</title><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<meta name=""Title"" content=""%%ItemTitleNoQuotes%%""/>" --><meta name="Title" content=""/><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="PackageLink" packagename="jquery" filetype="script" firstlinkattributes="id=""mshs_support_script"""--><script src="template/packages/jquery/script/default/jquery-1.11.3.min.js" type="text/javascript" id="mshs_support_script"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="script"--><script src="template/packages/jquery-ui/script/default/jquery-ui-1.11.4.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/jquery-ui/css/default/jquery-ui-1.11.4.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TemplateSettingsJson" format="<script type=""text/javascript"">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:%%TemplateSettingsJson%%});</script>" --><script type="text/javascript">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:{"dynamictoc":{"initialNodeId":"n83","initialNodeContainer":"c4","isResizable":true},"inthistopic":{"isEnabled":true},"currentLocale":"-","isFrameless":true,"navigationKind":"inpage","versions":{"locale":{"currentId":"-"}}}});</script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="light" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/light/css/dynamic-toc.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/plugins-webservice/css/default/jquery-plugins.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="css" firstlinkattributes=" data-mshv2-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv2.css"" data-mshv1-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv1.css"" data-responsive-mobile=""template/packages/core-webservice/dx.webservice.mobile.css"" data-responsive-tablet=""template/packages/core-webservice/dx.webservice.tablet.css"""--><link rel="stylesheet" type="text/css" href="template/packages/core-webservice/css/dx.webservice.css"  data-mshv2-stylesheet="/template/packages/core-webservice/dx.webservice.mshv2.css" data-mshv1-stylesheet="/template/packages/core-webservice/dx.webservice.mshv1.css" data-responsive-mobile="template/packages/core-webservice/dx.webservice.mobile.css" data-responsive-tablet="template/packages/core-webservice/dx.webservice.tablet.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="script"--><script src="template/packages/plugins-webservice/script/default/jquery-plugins.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="script"--><script src="template/packages/core-webservice/script/dx.webservice.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="TopicId" format="<meta name=""Microsoft.Help.Id"" content=""%%TopicId%%""/>" --><meta name="Microsoft.Help.Id" content="BrtRestApiTracking_ws~r--parcelID-{parcelID}~o-HttpGet"/><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Synopsis" StripHtmlTags="True" MaxLength="250" format="<meta name=""Description"" content=""%%Synopsis%%"" />"--><meta name="Description" content="Servizio di tracking della spedizione interrogabile con il segnacollo (parcelID) restituito dal servizio di create. " /><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TocParentId" format="<meta name=""Microsoft.Help.TocParent"" content=""%%TocParentId%%""/>" --><!--DXMETADATA end-->
+    <meta name="Microsoft.Help.ContentType" content="Reference" />
+    <!--DXMETADATA start type="MshvKeywords" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="MshvMetaTags" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.Locale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.TopicLocale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Stylesheets" --><link rel="stylesheet" type="text/css" href="stylesheets/customstyles.css"></link>
+    <link rel="stylesheet" type="text/css" href="stylesheets/fields.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="StylePropertyValues" format="<style>%%StylePropertyValues%%</style>" --><style>#i-header-container { background-color: #EEEEEE }
+#i-header-container { color: #000000 }
+.i-is-new .i-page-title-text::after, ul#i-dt-root li.i-is-new>a::after { content: "Nuovo" }
+</style><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scripts" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="DesignTime"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_PROPERTIES" --><!--DXMETADATA end -->
+    <!--DXMETADATA start type="CustomHeadContent" --><!--DXMETADATA end-->
+</head>
+
+<body>
+    <div id="i-before-header-content" class="i-before-header-content">
+        
+    </div>
+
+    <div id="i-header-container">
+        <div id="i-header-content" class="i-header-content i-content-width-container">
+            <!--DXMETADATA start type="LogoImage" --><img class="logoimage" src="images/BRT_logo_redgrad_rgb1.png" border="0"></img><!--DXMETADATA end-->
+            <div class="i-project-title"><!--DXMETADATA start type="ProjectTitle" -->Brt Rest API Tracking<!--DXMETADATA end--></div>
+            <div class="i-search-container">
+                <!--DXMETADATA start type="outputfileextension" format="<form action=""websearch%%outputfileextension%%"">" --><form action="websearch.html"><!--DXMETADATA end-->
+                <input id="i-search" name="query"/>
+                <input type="submit" id="i-search-button" value=""/>
+                <!--DXMETADATA start type="Literal" value="</form>" --></form><!--DXMETADATA end-->
+            </div>
+            <!--DXMETADATA start type="outputfileextension" format="<a id=""i-index-button"" href=""webindex%%outputfileextension%%""></a>" --><a id="i-index-button" href="webindex.html"></a><!--DXMETADATA end-->
+        </div>
+    </div>
+    
+    <div class="i-content-width-container"><div class="i-busy-overlay"></div></div>
+
+    <div id="i-breadcrumbs-outer-container" class="i-content-width-container"><!--DXMETADATA start type="Breadcrumbs" scrap="_BREADCRUMBS" --><div class="i-breadcrumbs-container">
+<a href="BrtRestApiTracking_ws.html">Brt Rest API Tracking</a>
+ / <a href="BrtRestApiTracking_ws~g-tracking APIs.html">Tracking API</a>
+ / ParcelID (Get)</div><!--DXMETADATA end --></div>
+
+    
+
+    <div id="i-actions-outer-container" class="i-content-width-container">
+        <div id="i-actions-container">
+            <div id="i-actions-content" class="i-fixed-to-top">
+                <!-- Spacing --> <span class="i-toggle-all-sections i-function-link">
+                <label class="i-collapse-all"><!--DXMETADATA start type="Phrase" name="COLLAPSE_ALL" -->Nascondi tutto<!--DXMETADATA end--></label>
+                <label class="i-expand-all" style="display: none;"><!--DXMETADATA start type="Phrase" name="EXPAND_ALL" -->Mostra tutto<!--DXMETADATA end--></label>
+            </span><!--DXMETADATA start type="Literal" condition="communityenabled" value="%%scrap:name=_COMMUNITY_DROPDOWN%%" --><!--DXMETADATA end -->
+                <div class="i-in-this-topic-container">
+                    <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-toc-outer-container" class="i-content-width-container">
+        <div id="i-toc-container">
+            <div id="i-toc-content" class="i-fixed-to-top">
+                <div class="i-toc-content-scroll-container">
+                    <div id="i-dynamic-toc-container"><ul id="i-dt-root"></ul></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-body-content-container" class="i-content-width-container">
+        <div id="i-body-content" class="i-body-content">
+            <div class="i-page-title"><!--DXMETADATA start type="Scrap" name="_OPERATION_PAGE_TITLE" --><table class="i-operation-page-title"><tr><td class="i-operation-kind HttpGet">Get</td><td class="i-operation-page-title-text">ParcelID</td></tr></table><!--DXMETADATA end--></div>
+            <div class="i-in-this-topic-container">
+                <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+            </div>
+            <!--DXMETADATA start type="ResourcePath" condition="content:content=""%%ResourcePath%%"",operator=""<>"",value=""%%ItemName%%""" format="<p class=""resource-path-container""><strong>$$RESOURCE_PATH$$</strong> <span class=""i-resource-path"">%%ResourcePath%%</span></p>" --><p class="resource-path-container"><strong>Resource Path:</strong> <span class="i-resource-path">/rest/v1/tracking/parcelID/{parcelID}</span></p><!--DXMETADATA end -->
+
+            <!--DXMETADATA start type="FullyQualifiedResourcePath" condition="content:content=""%%IncludeFullResourceUriInOperationPages%%"",operator=""="",value=""True""" format="<p class=""resource-path-container""><strong>$$URI$$</strong> <span class=""i-resource-path"">%%FullyQualifiedResourcePath%%</span></p>" --><p class="resource-path-container"><strong>Uri:</strong> <span class="i-resource-path">https://api.brt.it/rest/v1/tracking/parcelID/{parcelID}</span></p><!--DXMETADATA end -->
+
+            <!--DXMETADATA start type="Description" source="Item" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=description,caption=$$Description$$%%<div class=""i-description-content"">%%description%%</div></div>" --><div class="i-section-heading" id="i-description-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Descrizione</span></div><div id="i-description-section-content" class="i-section-content"><div class="i-description-content">Servizio di tracking della spedizione&nbsp;interrogabile con il segnacollo (<EM>parcelID</EM>) restituito dal servizio di <EM>create.</EM>&nbsp;</div></div><!--DXMETADATA end -->
+			
+			<!--DXMETADATA start type="FilteredItemList" scrap="PARAMETER_LIST" namespace="parameter" source="Item" filter="type=!header" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=resources,caption=$$Parameters$$%%%%filtereditemlist%%</div>" --><div class="i-section-heading" id="i-resources-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Parameters</span></div><div id="i-resources-section-content" class="i-section-content"><table class="i-filtered-item-list"><tr><th>Nome</th><th>Descrizione</th><th class="i-parameter-data-type">Data Type</th></tr>
+<tr><td class=i-link>parcelID</td><td class="i-description"><P>Tipo Parametro:&nbsp;<STRONG>path parameter</STRONG></P>
+<P>Identificativo del collo con cui si vuole effettuare il traking della spedizione</P></td><td class="i-parameter-data-type">string</td></tr>
+</table></div><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="FilteredItemList" scrap="HEADER_LIST" namespace="parameter" source="Item" filter="type=header" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=resources,caption=$$REQUEST_HEADERS$$%%%%filtereditemlist%%</div>" --><div class="i-section-heading" id="i-resources-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Request Headers</span></div><div id="i-resources-section-content" class="i-section-content"><table class="i-filtered-item-list"><tr><th>Nome</th><th>Descrizione</th></tr>
+<tr><td class=i-link>userID</td><td class="i-description"><P>Codice utente per l'autenticazione al servizio.</P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(255,0,0); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><FONT size=3>Dato obbligatorio.</FONT></SPAN></P></td></tr>
+<tr><td class=i-link>password</td><td class="i-description"><P>Password utente.</P>
+<P><SPAN style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FLOAT: none; FONT-WEIGHT: 400; COLOR: rgb(255,0,0); FONT-STYLE: normal; TEXT-ALIGN: left; ORPHANS: 2; WIDOWS: 2; DISPLAY: inline !important; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'><FONT size=3>Dato obbligatorio.</FONT></SPAN></P></td></tr>
+</table></div><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="FilteredItemList" scrap="REQUEST_LIST" namespace="request" source="Item" --><!--DXMETADATA end -->
+			
+			<!--DXMETADATA start type="FilteredItemList" scrap="SUCCESS_RESPONSE_LIST" namespace="response" source="Item" filter="type=success" -->
+<div class="i-section-heading" id="i-response_-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Response </span></div><div id="i-response_-section-content" class="i-section-content"><p>The response body is of type <a href="BrtRestApiTracking_ws~j-parcelIDResult.html">parcelIDResult</a>.</p>Successful operation<h3>Sommario</h3><TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschema-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschema.png"></TD>
+<TD>
+<DIV class=i-item-summary>parcelIDResult </DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>ttParcelIdResponse : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-ttParcelIdResponse.html">ttParcelIdResponse</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>currentTimeUTC : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>executionMessage : <SPAN class=i-type><A href="ShipmentApiV00_ws~j-executionMessage.html">executionMessage</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>code : <SPAN class=i-type>integer</SPAN>
+<DIV class=i-child-tree-description>
+<P>Codice esito richiesta.</P>
+<P>I messaggi sono codificati con questa logica:&nbsp;</P>
+<UL>
+<LI><EM>code</EM>&gt;0 esito postivo, viene comunque segnalato un warning 
+<LI><EM>code</EM>=0 esito positivo 
+<LI><EM>code</EM>&lt;0 esito negativo 
+<UL>
+<LI>
+<P>&nbsp;da -1 a -60 sono errori comuni a tutti i metodi.</P>
+<LI>
+<P>da -61 a -99 sono errori dedicati alla scrittura spedizione</P>
+<LI>
+<P>da -100 a -160 sono errori dedicati alla conferma / cancellazione di una&nbsp;spedizione.</P></LI></UL></LI></UL></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>severity : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>
+<P>Vale:</P>
+<P>WARNING</P>
+<P>ERROR</P>
+<P>INFO</P></DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>codeDesc : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>Descrizione del messaggio</DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>message : <SPAN class=i-type>string</SPAN>
+<DIV class=i-child-tree-description>Dettaglio del messaggio.</DIV></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>esito : <SPAN class=i-type>integer</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>versione : <SPAN class=i-type>integer</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>risposta_timestamp : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>bolla : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-spedizione.html">spedizione</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>dati_spedizione : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-dati_spedizione.html">dati_spedizione</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>spedizione_id : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>spedizione_data : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>tipo_porto : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>porto : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>tipo_servizio : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>servizio : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>cod_filiale_arrivo : <SPAN class=i-type>integer</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>filiale_arrivo : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>filiale_arrivo_URL : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>stato_sped_parte1 : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>stato_sped_parte2 : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>descrizione_stato_sped_parte1 : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>descrizione_stato_sped_parte2 : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>dati_consegna : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-dati_consegna.html">dati_consegna</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>data_cons_richiesta : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>ora_cons_richiesta : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>tipo_cons_richiesta : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>descrizione_cons_richiesta : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>data_teorica_consegna : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>ora_teorica_consegna_da : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>ora_teorica_consegna_a : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>data_consegna_merce : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>ora_consegna_merce : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>firmatario_consegna : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>riferimenti : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-riferimenti.html">riferimenti</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>riferimento_mittente_numerico : <SPAN class=i-type>integer</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>riferimento_mittente_alfabetico : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>riferimento_partner_estero : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>mittente : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-recapito_mitt.html">recapito_mitt</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>codice : <SPAN class=i-type>integer</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>ragione_sociale : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>indirizzo : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>cap : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>localita : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>sigla_area : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>destinatario : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-recapito_dest.html">recapito_dest</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>ragione_sociale : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>indirizzo : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>cap : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>localita : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>sigla_provincia : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>sigla_nazione : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>referente_consegna : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>telefono_referente : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>merce : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-merce.html">merce</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>colli : <SPAN class=i-type>integer</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>peso_kg : <SPAN class=i-type>number</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>volume_m3 : <SPAN class=i-type>number</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>natura_merce : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>contrassegno : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-contrassegno.html">contrassegno</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>contrassegno_importo : <SPAN class=i-type>number</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>contrassegno_divisa : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>contrassegno_incasso : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>contrassegno_particolarita : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>assicurazione : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-assicurazione.html">assicurazione</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>assicurazione_importo : <SPAN class=i-type>number</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>assicurazione_divisa : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>contatore_eventi : <SPAN class=i-type>integer</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexarrayproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexarrayproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>lista_eventi : <SPAN class=i-type>Array[<A href="BrtRestApiTracking_ws~j-eventi.html">eventi</A>]</SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>evento : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-evento.html">evento</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>data : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>ora : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>id : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>descrizione : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>filiale : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>contatore_note : <SPAN class=i-type>integer</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexarrayproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexarrayproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>lista_note : <SPAN class=i-type>Array[<A href="BrtRestApiTracking_ws~j-note.html">note</A>]</SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemacomplexproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemacomplexproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>nota : <SPAN class=i-type><A href="BrtRestApiTracking_ws~j-nota.html">nota</A></SPAN></DIV>
+<DIV>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD class=i-jsonschemaproperty-icon><IMG class=i-item-icon src="template/packages/core-webservice/images/jsonschemaproperty.png"></TD>
+<TD>
+<DIV class=i-item-summary>descrizione : <SPAN class=i-type>string</SPAN></DIV>
+<DIV></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></DIV></TD></TR></TBODY></TABLE></div>
+<!--DXMETADATA end -->
+			
+			<!--DXMETADATA start type="TaggedComment" source="Item" id="##EXAMPLEINTRO" format="%%replaceinquotes:value=false%%%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=""$$Example$$%%designlist:tagidentifier=##EXAMPLECODE,itemtype=Example%%""%%%%comment%%" --><div class="i-section-heading" id="i-example-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Example</span></div><div id="i-example-section-content" class="i-section-content">Esempio di ritorno dati<!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="EXAMPLEGROUP_LIST" namespace="ExampleGroup" source="Item" filter="type=inline" condition="content:content=""%%GroupExamples%%"",operator=""="",value=""True""" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%taggedcomment:source=item,id=##EXAMPLEINTRO,blankformat=""%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=$$Example$$%%"",format= %%%%filtereditemlist%%</div>" blankformat="%%taggedcomment:source=item,id=##EXAMPLEINTRO,format=</div>%%" --> 
+<div class="i-tab-container">
+    <ul>
+        <li class="i-filtered-content-Json">
+			<a href="#i-tab-content-a839ab92-0d90-454e-a21e-f16428f39ac3">Json</a>
+		</li>
+
+    </ul>
+	<div id="i-tab-content-a839ab92-0d90-454e-a21e-f16428f39ac3" class="i-filtered-content-Json i-code">
+		<pre>{<span style="color: #800000; ">&quot;ttParcelIdResponse&quot;</span>: {
+   <span style="color: #800000; ">&quot;currentTimeUTC&quot;</span>: <span style="color: #800000; ">&quot;2020-11-18-16.47.59.865651+01:00&quot;</span>,
+   <span style="color: #800000; ">&quot;executionMessage&quot;</span>:    {
+      <span style="color: #800000; ">&quot;code&quot;</span>: 0,
+      <span style="color: #800000; ">&quot;severity&quot;</span>: <span style="color: #800000; ">&quot;INFO&quot;</span>,
+      <span style="color: #800000; ">&quot;codeDesc&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+      <span style="color: #800000; ">&quot;message&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+   },
+   <span style="color: #800000; ">&quot;esito&quot;</span>: 0,
+   <span style="color: #800000; ">&quot;versione&quot;</span>: 0,
+   <span style="color: #800000; ">&quot;risposta_timestamp&quot;</span>: <span style="color: #800000; ">&quot;2020-11-18-17.47.59.877000&quot;</span>,
+   <span style="color: #800000; ">&quot;bolla&quot;</span>:    {
+      <span style="color: #800000; ">&quot;dati_spedizione&quot;</span>:       {
+         <span style="color: #800000; ">&quot;spedizione_id&quot;</span>: <span style="color: #800000; ">&quot;102021014099&quot;</span>,
+         <span style="color: #800000; ">&quot;spedizione_data&quot;</span>: <span style="color: #800000; ">&quot;14.09.2020&quot;</span>,
+         <span style="color: #800000; ">&quot;tipo_porto&quot;</span>: <span style="color: #800000; ">&quot;A&quot;</span>,
+         <span style="color: #800000; ">&quot;porto&quot;</span>: <span style="color: #800000; ">&quot;Destinatario&quot;</span>,
+         <span style="color: #800000; ">&quot;tipo_servizio&quot;</span>: <span style="color: #800000; ">&quot;C&quot;</span>,
+         <span style="color: #800000; ">&quot;servizio&quot;</span>: <span style="color: #800000; ">&quot;EXPRESS&quot;</span>,
+         <span style="color: #800000; ">&quot;cod_filiale_arrivo&quot;</span>: 1,
+         <span style="color: #800000; ">&quot;filiale_arrivo&quot;</span>: <span style="color: #800000; ">&quot;BOLOGNA ROVERI&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale_arrivo_URL&quot;</span>: <span style="color: #800000; ">&quot;https://www.brt.it/filiale/L/IT/id/23&quot;</span>,
+         <span style="color: #800000; ">&quot;stato_sped_parte1&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;stato_sped_parte2&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione_stato_sped_parte1&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione_stato_sped_parte2&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      },
+      <span style="color: #800000; ">&quot;dati_consegna&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data_cons_richiesta&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora_cons_richiesta&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;tipo_cons_richiesta&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione_cons_richiesta&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;data_teorica_consegna&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora_teorica_consegna_da&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora_teorica_consegna_a&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;data_consegna_merce&quot;</span>: <span style="color: #800000; ">&quot;15.09.2020&quot;</span>,
+         <span style="color: #800000; ">&quot;ora_consegna_merce&quot;</span>: <span style="color: #800000; ">&quot;11.46&quot;</span>,
+         <span style="color: #800000; ">&quot;firmatario_consegna&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      },
+      <span style="color: #800000; ">&quot;riferimenti&quot;</span>:       {
+         <span style="color: #800000; ">&quot;riferimento_mittente_numerico&quot;</span>: 1014081,
+         <span style="color: #800000; ">&quot;riferimento_mittente_alfabetico&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;riferimento_partner_estero&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      },
+      <span style="color: #800000; ">&quot;mittente&quot;</span>:       {
+         <span style="color: #800000; ">&quot;codice&quot;</span>: 0,
+         <span style="color: #800000; ">&quot;ragione_sociale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;indirizzo&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;cap&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;localita&quot;</span>: <span style="color: #800000; ">&quot;BOLOGNA&quot;</span>,
+         <span style="color: #800000; ">&quot;sigla_area&quot;</span>: <span style="color: #800000; ">&quot;BO&quot;</span>
+      },
+      <span style="color: #800000; ">&quot;destinatario&quot;</span>:       {
+         <span style="color: #800000; ">&quot;ragione_sociale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;indirizzo&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;cap&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;localita&quot;</span>: <span style="color: #800000; ">&quot;CENTERGROSS&quot;</span>,
+         <span style="color: #800000; ">&quot;sigla_provincia&quot;</span>: <span style="color: #800000; ">&quot;BO&quot;</span>,
+         <span style="color: #800000; ">&quot;sigla_nazione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;referente_consegna&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;telefono_referente&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      },
+      <span style="color: #800000; ">&quot;merce&quot;</span>:       {
+         <span style="color: #800000; ">&quot;colli&quot;</span>: 1,
+         <span style="color: #800000; ">&quot;peso_kg&quot;</span>: 0.1,
+         <span style="color: #800000; ">&quot;volume_m3&quot;</span>: 0.001,
+         <span style="color: #800000; ">&quot;natura_merce&quot;</span>: <span style="color: #800000; ">&quot;DOCUMENTI&quot;</span>
+      },
+      <span style="color: #800000; ">&quot;contrassegno&quot;</span>:       {
+         <span style="color: #800000; ">&quot;contrassegno_importo&quot;</span>: 0,
+         <span style="color: #800000; ">&quot;contrassegno_divisa&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;contrassegno_incasso&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;contrassegno_particolarita&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      },
+      <span style="color: #800000; ">&quot;assicurazione&quot;</span>:       {
+         <span style="color: #800000; ">&quot;assicurazione_importo&quot;</span>: 0,
+         <span style="color: #800000; ">&quot;assicurazione_divisa&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }
+   },
+   <span style="color: #800000; ">&quot;contatore_eventi&quot;</span>: 6,
+   <span style="color: #800000; ">&quot;lista_eventi&quot;</span>:    [
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;15.09.2020&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;11.46&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;704&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;CONSEGNATA&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;BOLOGNA ROVERI (001)&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;15.09.2020&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;00.00&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;MIC&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;IN CONSEGNA&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;BOLOGNA ROVERI (001)&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;15.09.2020&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;06.52&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;703&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;ARRIVATA IN FILIALE&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;BOLOGNA ROVERI (001)&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;14.09.2020&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;21.00&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;702&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;PARTITA&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;DIREZIONE GENERALE (102)&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;14.09.2020&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;18.00&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;701&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;RITIRATA&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;DIREZIONE GENERALE (102)&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;14.09.2020&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;16.32&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;700&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;DATI SPEDIZ. TRASMESSI A BRT&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;DIREZIONE GENERALE (102)&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }},
+      {<span style="color: #800000; ">&quot;evento&quot;</span>:       {
+         <span style="color: #800000; ">&quot;data&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;ora&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;id&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>,
+         <span style="color: #800000; ">&quot;filiale&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>
+      }}
+   ],
+   <span style="color: #800000; ">&quot;contatore_note&quot;</span>: 0,
+   <span style="color: #800000; ">&quot;lista_note&quot;</span>:    [
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}},
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}},
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}},
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}},
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}},
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}},
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}},
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}},
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}},
+      {<span style="color: #800000; ">&quot;nota&quot;</span>: {<span style="color: #800000; ">&quot;descrizione&quot;</span>: <span style="color: #800000; ">&quot;&quot;</span>}}
+   ]
+}}</pre>
+	</div>
+	
+</div>
+</div><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="INLINE_EXAMPLE" namespace="Example" source="Item" filter="type=inline" condition="content:content=""%%GroupExamples%%"",operator=""<>"",value=""True""" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%taggedcomment:source=item,id=##EXAMPLEINTRO,blankformat=""%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=$$Example$$%%"",format= %%%%filtereditemlist%%</div>" blankformat="%%taggedcomment:source=item,id=##EXAMPLEINTRO,format=</div>%%" --><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="MENU_LINK" namespace="example" source="Item" filter="" NoHeader="True" NoFooter="True" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=example,caption=$$Example$$%%%%filtereditemlist%%</div>" --><!--DXMETADATA end -->
+			
+			<!--DXMETADATA start type="FilteredItemList" scrap="FAULT_RESPONSE_LIST" namespace="response" source="Item" filter="type=fault" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=resources,caption=$$Fault  Responses$$%%%%filtereditemlist%%</div>" --><!--DXMETADATA end -->
+			
+            <!--DXMETADATA start type="TaggedComment" source="Item" id="##REMARKS" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=remarks,caption=$$Remarks$$%%%%comment%%</div>" --><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="CATEGORIZED_LINKS" namespace="linkcategory" source="Item" filter="" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=seealso,caption=""$$See_Also$$%%designlist:tagidentifier=##SEEALSO,itemtype=See Also%%""%%%%filtereditemlist%%</div>"--><div class="i-section-heading" id="i-seealso-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Vedi Anche</span></div><div id="i-seealso-section-content" class="i-section-content"><a href="BrtRestApiTracking_ws~g-tracking APIs.html">Tracking API</a>
+|&nbsp;<a href="BrtRestApiTracking_ws.html">Brt Rest API Tracking</a>
+</p>
+</div><!--DXMETADATA end-->
+            <div id="i-footer-content" class="i-footer-content">
+                <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_FOOTER" --><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="CopyrightNotice" format="<p>&nbsp;</p><p>&nbsp;</p><hr style=""height: 1px"" /><p>%%variable%%</p>" --><p>&nbsp;</p><p>&nbsp;</p><hr style="height: 1px" /><p>BRT SpA &copy; 2023 All Rights Reserved.</p><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="FeedbackLink" format="" --><a href="mailto:cedvas@brt.it?subject=Documentation Feedback: BrtRestApiTracking_ws~r--parcelID-{parcelID}~o-HttpGet.html">Send comments</a> on this topic.<!--DXMETADATA end-->
+            </div>
+        </div>
+    </div>
+        
+    <script type="text/javascript">
+        $(function () {
+            var documentInstance = new Innovasys.Content.Document(document.body);
+            documentInstance.load();
+        });
+    </script>
+</body>
+</html>

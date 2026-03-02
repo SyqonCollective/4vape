@@ -1084,6 +1084,17 @@ export default function AdminOrders() {
                   Fattura
                 </button>
               )}
+              {(o.status === "APPROVED" || o.status === "FULFILLED") && (
+                <button
+                  className="btn ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("/admin/logistica", { state: { orderId: o.id } });
+                  }}
+                >
+                  📦 Spedisci
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -1132,6 +1143,11 @@ export default function AdminOrders() {
                   ) : (
                     <button className="btn primary small" onClick={() => createInvoiceFromOrder(o.id)}>
                       Fattura
+                    </button>
+                  )}
+                  {(o.status === "APPROVED" || o.status === "FULFILLED") && (
+                    <button className="btn ghost small" onClick={() => navigate("/admin/logistica", { state: { orderId: o.id } })}>
+                      📦 Spedisci
                     </button>
                   )}
                 </div>

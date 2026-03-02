@@ -1,0 +1,12 @@
+﻿/* This StyleSheet contains custom styles for this project */
+
+
+.CampoObbligatorio
+{
+    color: Red;
+}
+
+.CampoLength
+{
+    color: Green;
+}

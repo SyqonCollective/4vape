@@ -1,0 +1,146 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <!--DXMETADATA start type="MetaCharset" --><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"><!--DXMETADATA end-->
+    <meta http-equiv="X-UA-Compatible" value="IE=9" />
+
+    <!--DXMETADATA start type="Literal" condition="helpversion:value=3" value="<meta name=""Microsoft.Help.SelfBranded"" content=""true"" />" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<title>%%LocalItemTitle%%</title>" --><title>Shipment API</title><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<meta name=""Title"" content=""%%ItemTitleNoQuotes%%""/>" --><meta name="Title" content=""/><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="PackageLink" packagename="jquery" filetype="script" firstlinkattributes="id=""mshs_support_script"""--><script src="template/packages/jquery/script/default/jquery-1.11.3.min.js" type="text/javascript" id="mshs_support_script"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="script"--><script src="template/packages/jquery-ui/script/default/jquery-ui-1.11.4.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/jquery-ui/css/default/jquery-ui-1.11.4.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TemplateSettingsJson" format="<script type=""text/javascript"">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:%%TemplateSettingsJson%%});</script>" --><script type="text/javascript">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:{"dynamictoc":{"initialNodeId":"n11","initialNodeContainer":"c1","isResizable":true},"inthistopic":{"isEnabled":true},"currentLocale":"-","isFrameless":true,"navigationKind":"inpage","versions":{"locale":{"currentId":"-"}}}});</script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="light" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/light/css/dynamic-toc.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/plugins-webservice/css/default/jquery-plugins.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="css" firstlinkattributes=" data-mshv2-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv2.css"" data-mshv1-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv1.css"" data-responsive-mobile=""template/packages/core-webservice/dx.webservice.mobile.css"" data-responsive-tablet=""template/packages/core-webservice/dx.webservice.tablet.css"""--><link rel="stylesheet" type="text/css" href="template/packages/core-webservice/css/dx.webservice.css"  data-mshv2-stylesheet="/template/packages/core-webservice/dx.webservice.mshv2.css" data-mshv1-stylesheet="/template/packages/core-webservice/dx.webservice.mshv1.css" data-responsive-mobile="template/packages/core-webservice/dx.webservice.mobile.css" data-responsive-tablet="template/packages/core-webservice/dx.webservice.tablet.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="script"--><script src="template/packages/plugins-webservice/script/default/jquery-plugins.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="script"--><script src="template/packages/core-webservice/script/dx.webservice.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="TopicId" format="<meta name=""Microsoft.Help.Id"" content=""%%TopicId%%""/>" --><meta name="Microsoft.Help.Id" content="ShipmentApiV00_ws~g-shipments APIs"/><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Synopsis" StripHtmlTags="True" MaxLength="250" format="<meta name=""Description"" content=""%%Synopsis%%"" />"--><meta name="Description" content="I verbi HTTP gesiti sono POST e PUT" /><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TocParentId" format="<meta name=""Microsoft.Help.TocParent"" content=""%%TocParentId%%""/>" --><!--DXMETADATA end-->
+    <meta name="Microsoft.Help.ContentType" content="Reference" />
+    <!--DXMETADATA start type="MshvKeywords" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="MshvMetaTags" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.Locale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.TopicLocale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Stylesheets" --><link rel="stylesheet" type="text/css" href="stylesheets/customstyles.css"></link>
+    <link rel="stylesheet" type="text/css" href="stylesheets/fields.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="StylePropertyValues" format="<style>%%StylePropertyValues%%</style>" --><style>#i-header-container { background-color: #EEEEEE }
+#i-header-container { color: #000000 }
+.i-is-new .i-page-title-text::after, ul#i-dt-root li.i-is-new>a::after { content: "Nuovo" }
+</style><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scripts" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="DesignTime"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_PROPERTIES" --><!--DXMETADATA end -->
+    <!--DXMETADATA start type="CustomHeadContent" --><!--DXMETADATA end-->
+</head>
+
+<body>
+    <div id="i-before-header-content" class="i-before-header-content">
+        
+    </div>
+
+    <div id="i-header-container">
+        <div id="i-header-content" class="i-header-content i-content-width-container">
+            <!--DXMETADATA start type="LogoImage" --><img class="logoimage" src="images/BRT_logo_redgrad_rgb1.png" border="0"></img><!--DXMETADATA end-->
+            <div class="i-project-title"><!--DXMETADATA start type="ProjectTitle" -->Brt Rest API Shipment<!--DXMETADATA end--></div>
+            <div class="i-search-container">
+                <!--DXMETADATA start type="outputfileextension" format="<form action=""websearch%%outputfileextension%%"">" --><form action="websearch.html"><!--DXMETADATA end-->
+                <input id="i-search" name="query"/>
+                <input type="submit" id="i-search-button" value=""/>
+                <!--DXMETADATA start type="Literal" value="</form>" --></form><!--DXMETADATA end-->
+            </div>
+            <!--DXMETADATA start type="outputfileextension" format="<a id=""i-index-button"" href=""webindex%%outputfileextension%%""></a>" --><a id="i-index-button" href="webindex.html"></a><!--DXMETADATA end-->
+        </div>
+    </div>
+    
+    <div class="i-content-width-container"><div class="i-busy-overlay"></div></div>
+
+    <div id="i-breadcrumbs-outer-container" class="i-content-width-container"><!--DXMETADATA start type="Breadcrumbs" scrap="_BREADCRUMBS" --><div class="i-breadcrumbs-container">
+<a href="ShipmentApiV00_ws.html">Brt Rest API Shipment</a>
+ / Shipment API</div><!--DXMETADATA end --></div>
+
+    
+
+    <div id="i-actions-outer-container" class="i-content-width-container">
+        <div id="i-actions-container">
+            <div id="i-actions-content" class="i-fixed-to-top">
+                <!-- Spacing --> <span class="i-toggle-all-sections i-function-link">
+                <label class="i-collapse-all"><!--DXMETADATA start type="Phrase" name="COLLAPSE_ALL" -->Nascondi tutto<!--DXMETADATA end--></label>
+                <label class="i-expand-all" style="display: none;"><!--DXMETADATA start type="Phrase" name="EXPAND_ALL" -->Mostra tutto<!--DXMETADATA end--></label>
+            </span><!--DXMETADATA start type="Literal" condition="communityenabled" value="%%scrap:name=_COMMUNITY_DROPDOWN%%" --><!--DXMETADATA end -->
+                <div class="i-in-this-topic-container">
+                    <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-toc-outer-container" class="i-content-width-container">
+        <div id="i-toc-container">
+            <div id="i-toc-content" class="i-fixed-to-top">
+                <div class="i-toc-content-scroll-container">
+                    <div id="i-dynamic-toc-container"><ul id="i-dt-root"></ul></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-body-content-container" class="i-content-width-container">
+        <div id="i-body-content" class="i-body-content">
+            <div class="i-page-title"><div class="i-page-title-text"><!--DXMETADATA start type="LocalItemTitle" -->Shipment API<!--DXMETADATA end--></div></div>
+            <div class="i-in-this-topic-container">
+                <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+            </div>
+            <!--DXMETADATA start type="Description" source="Item" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=description,caption=$$Description$$%%<div class=""i-description-content"">%%description%%</div></div>" --><div class="i-section-heading" id="i-description-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Descrizione</span></div><div id="i-description-section-content" class="i-section-content"><div class="i-description-content"><P>I verbi HTTP gesiti sono <STRONG>POST</STRONG> e <STRONG>PUT</STRONG></P>
+<P>Se&nbsp;l'invocazione dei serivizi&nbsp;è formalmente&nbsp;corretta, il servizio ritorna <STRONG>Http Code</STRONG>&nbsp;200. Se la chiamata è corretta ma presenta errori dal punto di vista funzionale occorre fare riferimento alla struttura di ritorno esito&nbsp;<A href="ShipmentApiV00_ws~j-executionMessage.html" data-auto-update-caption="true">executionMessage</A>&nbsp;per interpretare correttamente il valore ottenuto. </P>
+<DIV class="i-box i-box-caution">
+<P style='FONT-SIZE: 16px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; MARGIN-TOP: -6px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); FONT-STYLE: normal; PADDING-TOP: 0px; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>Tutti i servizi rest documentati<SPAN>&nbsp;</SPAN><STRONG><EM><U>NON</U></EM></STRONG><SPAN>&nbsp;</SPAN>sono disponibili nelle seguenti fasce orarie per attività di manutenzione ordinaria:</P>
+<UL style='FONT-SIZE: 16px; MARGIN-BOTTOM: 0px; FONT-FAMILY: "Segoe UI", Segoe, "Segoe WP", "Helvetica Neue", Helvetica, sans-serif; WHITE-SPACE: normal; WORD-SPACING: 0px; TEXT-TRANSFORM: none; FONT-WEIGHT: 400; COLOR: rgb(34,34,34); PADDING-BOTTOM: 0px; FONT-STYLE: normal; ORPHANS: 2; WIDOWS: 2; LETTER-SPACING: normal; TEXT-INDENT: 0px; font-variant-ligatures: normal; font-variant-caps: normal; -webkit-text-stroke-width: 0px; text-decoration-style: initial; text-decoration-color: initial'>
+<LI>tutti i giorni dalle 02.30 CET alle ore&nbsp;03.00 CET; 
+<LI>ogni domenica dalle ore 09.30 CET alle ore&nbsp;15.00 CET;&nbsp;&nbsp; </LI></UL></DIV></div></div><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="FilteredItemList" scrap="ITEM_LIST" namespace="resource" condition="content:content=""%%IsGroupedByResource%%"",operator=""="",value=""True""" source="Item" filter="" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=resources,caption=$$Resources$$%%%%filtereditemlist%%</div>" --><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="FilteredItemList" scrap="OPERATION_LIST" namespace="operation" condition="content:content=""%%IsGroupedByResource%%"",operator=""<>"",value=""True""" source="Item" filter="" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=resources,caption=$$Operations$$%%%%filtereditemlist%%</div>" --><div class="i-section-heading" id="i-resources-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Operations</span></div><div id="i-resources-section-content" class="i-section-content"><table class="i-filtered-item-list">
+<tr><td class="i-operation-kind HttpPut">Put</td><td class=DescriptionCell><A HREF="ShipmentApiV00_ws~r--shipment~o-HttpPut.html">Confirm</A><div><DIV id=placeholder_092c7ec3-ad4a-4daf-8934-6f60350d1bab>Servizio necessario per confermare una spedizione precedentemente creata con il servizio&nbsp;<A href="ShipmentApiV00_ws~r--shipment~o-HttpPost.html" data-auto-update-caption="true">Create (Post)</A>&nbsp;non autocofermata. 
+<P>L'utilizzo di questa operazione è dedicato ai clienti che decidono di lavorare in modalità <EM>Conferma Esplicita</EM> delle spedizioni e tale decisione deve essere concordata in fase di attivazione con il personale BRT</P></DIV>
+<P><EM>Se un cliente configurato in modalità <STRONG>AutoConfema</STRONG> invoca questa operazione,&nbsp;viene restituito il codice&nbsp;</EM><A href="ShipmentApiV00_ws~j-executionMessage~y-code.html"><EM>excecutionCode</EM></A> <EM>-101</EM></P></div></td></tr>
+<tr><td class="i-operation-kind HttpPost">Post</td><td class=DescriptionCell><A HREF="ShipmentApiV00_ws~r--shipment~o-HttpPost.html">Create</A><div><P>Questo metodo&nbsp;genera una&nbsp;spedizione&nbsp;nel sistema&nbsp;BRT nella soluzione <STRONG>Disk B</STRONG>.</P>
+<P>Il servizio esegue le seguenti operazioni:</P>
+<OL>
+<LI>
+<DIV>Calcolo instradamento.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </DIV>
+<LI>
+<DIV>Stampa l'etichetta segnacolli nel formato richiesto(opzionale)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </DIV>
+<LI>
+<DIV>Creazione spedizione&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </DIV></LI></OL>
+<P>La creazione delle spedizioni con Auto Conferma&nbsp;o Conferma Esplicita deve essere concordata in fase di analisi preliminare con il cliente, in base alla sua operatività. <EM>Tale modalità operativa vale per tutto il traffico del cliente e non può essere variato per singola spedizione.</EM></P></div></td></tr>
+<tr><td class="i-operation-kind HttpPut">Put</td><td class=DescriptionCell><A HREF="ShipmentApiV00_ws~r--delete~o-HttpPut.html">Delete</A><div><P>Questo servizio esegue la cancellazione di una spedizione precedente creata o confermata. Un spedizione è cancellabile, indipendetemente dalla modalità operativa <EM>AutoConferma/ConfermaEsplicita,</EM> fino a quando la spedizione viene presa in gestione dalla filiale BRT.</P></div></td></tr>
+<tr><td class="i-operation-kind HttpPut">Put</td><td class=DescriptionCell><A HREF="ShipmentApiV00_ws~r--routing~o-HttpPut.html">Routing</A><div><P>Calcolo delle coordinate instradamento&nbsp;BRT. Questo servizio rest NON è necessario per i clienti che decidono di utilizzare servizi&nbsp;<A href="ShipmentApiV00_ws~r--shipment~o-HttpPost.html">Create</A> e&nbsp;<A href="ShipmentApiV00_ws~r--shipment~o-HttpPut.html">Confirm</A>. <U>Rappresenta un'alternativa per quei clienti che non vogliono implementare l'algoritmo del cappario BRT per produrre internamente le proprie etichette continuando ad affidarci i dati delle spedizioni nei modi tradizionali e NON utilizzare questi servizi rest</U></P>
+<P>&nbsp;</P></div></td></tr>
+</table></div><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="TaggedComment" source="Item" id="##REMARKS" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=remarks,caption=$$Remarks$$%%%%comment%%</div>" --><div class="i-section-heading" id="i-remarks-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Note</span></div><div id="i-remarks-section-content" class="i-section-content"><P>Scaricare il seguente<A href="BrtRestAPI-DEMO-soapui-project.xml"> file xml</A> contentente un progetto&nbsp;<A href="https://www.soapui.org/downloads/soapui.html" target=_blank>SoapUi</A>&nbsp;con alcuni&nbsp;esempi di invocazione ai vari servizi Rest.</P></div><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="CATEGORIZED_LINKS" namespace="linkcategory" source="Item" filter="" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=seealso,caption=""$$See_Also$$%%designlist:tagidentifier=##SEEALSO,itemtype=See Also%%""%%%%filtereditemlist%%</div>"--><div class="i-section-heading" id="i-seealso-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Vedi Anche</span></div><div id="i-seealso-section-content" class="i-section-content"><a href="ShipmentApiV00_ws.html">Brt Rest API Shipment</a>
+</p>
+</div><!--DXMETADATA end-->
+            <div id="i-footer-content" class="i-footer-content">
+                <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_FOOTER" --><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="CopyrightNotice" format="<p>&nbsp;</p><p>&nbsp;</p><hr style=""height: 1px"" /><p>%%variable%%</p>" --><p>&nbsp;</p><p>&nbsp;</p><hr style="height: 1px" /><p>BRT SpA &copy; 2023 All Rights Reserved.</p><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="FeedbackLink" format="" --><a href="mailto:cedvas@brt.it?subject=Documentation Feedback: ShipmentApiV00_ws~g-shipments APIs.html">Send comments</a> on this topic.<!--DXMETADATA end-->
+            </div>
+        </div>
+    </div>
+        
+    <script type="text/javascript">
+        $(function () {
+            var documentInstance = new Innovasys.Content.Document(document.body);
+            documentInstance.load();
+        });
+    </script>
+</body>
+</html>

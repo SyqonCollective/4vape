@@ -681,12 +681,31 @@ model Shipment {
   id              String         @id @default(cuid())
   orderId         String?        @unique
   fiscalInvoiceId String?
-  carrier         String?
+  carrier         String?        @default("BRT")
   trackingCode    String?
   status          ShipmentStatus @default(DRAFT)
   shippingDate    DateTime?
   deliveredAt     DateTime?
   notes           String?
+
+  // BRT-specific fields
+  brtParcelId       String?   // BRT 18-char barcode (parcelID from create response)
+  brtTrackingId     String?   // BRT 15-char tracking ID (trackingByParcelID)
+  brtNumericRef     Int?      // numericSenderReference sent to BRT
+  brtAlphanumericRef String?  // alphanumericSenderReference sent to BRT
+  brtSeriesNumber   Int?      // series assigned by BRT
+  brtDepartureDepot Int?      // filiale di partenza
+  brtArrivalDepot   String?   // filiale di arrivo
+  brtDeliveryZone   String?   // zona di consegna
+  brtLabelPdf       String?   // base64 label PDF
+  brtServiceType    String?   // '' standard, 'E' priority, 'H' 10:30
+  brtNumberOfParcels Int?     // number of parcels
+  brtWeightKG       Decimal?  @db.Decimal(7, 1)
+  brtCodAmount      Decimal?  @db.Decimal(12, 2) // cash on delivery
+  brtInsuranceAmount Decimal? @db.Decimal(12, 2)
+  brtLastEvent      String?   // last tracking event description
+  brtLastEventDate  DateTime? // last tracking event date
+
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -694,4 +713,6 @@ model Shipment {
 
   @@index([status])
   @@index([shippingDate])
+  @@index([brtParcelId])
+  @@index([brtTrackingId])
 }

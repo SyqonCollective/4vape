@@ -6734,6 +6734,424 @@ export async function adminRoutes(app: FastifyInstance) {
     return updated;
   });
 
+  /* ─── BRT REST API Integration ─── */
+
+  function getBrtConfig() {
+    return {
+      baseUrl: process.env.BRT_API_BASE_URL || "https://api.brt.it/rest/v1",
+      userId: process.env.BRT_USER_ID || "",
+      password: process.env.BRT_PASSWORD || "",
+      departureDepot: parseInt(process.env.BRT_DEPARTURE_DEPOT || "0", 10),
+      senderCustomerCode: parseInt(process.env.BRT_SENDER_CUSTOMER_CODE || "0", 10),
+      senderCompanyName: process.env.BRT_SENDER_COMPANY_NAME || "4Vape S.r.l.",
+    };
+  }
+
+  // BRT status endpoint
+  app.get("/logistics/brt/status", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const cfg = getBrtConfig();
+    return {
+      configured: !!(cfg.userId && cfg.password && cfg.departureDepot && cfg.senderCustomerCode),
+      userId: cfg.userId ? cfg.userId.slice(0, 3) + "***" : null,
+      departureDepot: cfg.departureDepot || null,
+      senderCustomerCode: cfg.senderCustomerCode || null,
+      senderCompanyName: cfg.senderCompanyName,
+    };
+  });
+
+  // Create BRT shipment from order
+  app.post("/logistics/brt/create", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const cfg = getBrtConfig();
+    if (!cfg.userId || !cfg.password) {
+      return reply.code(400).send({ ok: false, error: "BRT non configurato. Aggiungi BRT_USER_ID e BRT_PASSWORD nel .env" });
+    }
+
+    const body = z.object({
+      orderId: z.string().min(1),
+      numberOfParcels: z.number().int().min(1).max(30).default(1),
+      weightKG: z.number().min(0.1).max(99999),
+      volumeM3: z.number().optional(),
+      serviceType: z.enum(["", "E", "H"]).default(""),
+      deliveryFreightTypeCode: z.enum(["DAP", "EXW"]).default("DAP"),
+      cashOnDelivery: z.number().optional(),
+      insuranceAmount: z.number().optional(),
+      notes: z.string().optional(),
+      isAlertRequired: z.boolean().default(true),
+    }).parse(request.body);
+
+    // Load order with company
+    const order = await prisma.order.findUnique({
+      where: { id: body.orderId },
+      include: {
+        company: true,
+        shipment: true,
+        items: { include: { product: true } },
+      },
+    });
+    if (!order) return reply.notFound("Ordine non trovato");
+    if (order.shipment?.brtParcelId) {
+      return reply.code(409).send({ ok: false, error: "Ordine già spedito con BRT" });
+    }
+    const company = order.company;
+    if (!company.address || !company.cap || !company.city) {
+      return reply.code(400).send({ ok: false, error: "Indirizzo destinatario incompleto. Verificare indirizzo, CAP e città dell'azienda." });
+    }
+
+    const numericRef = order.orderNumber;
+    const alphaRef = `ORD-${order.orderNumber}`;
+
+    const brtPayload: any = {
+      account: { userID: cfg.userId, password: cfg.password },
+      createData: {
+        network: "",
+        departureDepot: cfg.departureDepot,
+        senderCustomerCode: cfg.senderCustomerCode,
+        deliveryFreightTypeCode: body.deliveryFreightTypeCode,
+        consigneeCompanyName: (company.legalName || company.name).slice(0, 70),
+        consigneeAddress: company.address.slice(0, 35),
+        consigneeZIPCode: company.cap.slice(0, 9),
+        consigneeCity: company.city.slice(0, 35),
+        consigneeProvinceAbbreviation: (company.province || "").slice(0, 2),
+        consigneeCountryAbbreviationISOAlpha2: "IT",
+        consigneeContactName: [company.contactFirstName, company.contactLastName].filter(Boolean).join(" ").slice(0, 35) || "",
+        consigneeTelephone: (company.phone || "").slice(0, 16),
+        consigneeEMail: (company.email || "").slice(0, 70),
+        isAlertRequired: body.isAlertRequired ? "1" : "0",
+        numberOfParcels: body.numberOfParcels,
+        weightKG: body.weightKG,
+        numericSenderReference: numericRef,
+        alphanumericSenderReference: alphaRef,
+        isLabelRequired: "1",
+        labelFormat: "PDF",
+        serviceType: body.serviceType || "",
+      },
+    };
+
+    if (body.volumeM3) brtPayload.createData.volumeM3 = body.volumeM3;
+    if (body.cashOnDelivery && body.cashOnDelivery > 0) {
+      brtPayload.createData.cashOnDelivery = body.cashOnDelivery;
+      brtPayload.createData.isCODMandatory = "1";
+      brtPayload.createData.codCurrency = "EUR";
+    }
+    if (body.insuranceAmount && body.insuranceAmount > 0) {
+      brtPayload.createData.insuranceAmount = body.insuranceAmount;
+      brtPayload.createData.insuranceAmountCurrency = "EUR";
+    }
+
+    // Call BRT API
+    let brtRes: any;
+    try {
+      const url = `${cfg.baseUrl}/shipments/shipment`;
+      const fetchRes = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(brtPayload),
+      });
+      brtRes = await fetchRes.json();
+    } catch (err: any) {
+      return reply.code(502).send({ ok: false, error: `Errore comunicazione BRT: ${err.message}` });
+    }
+
+    const result = brtRes?.createResponse || brtRes;
+    const execMsg = result?.executionMessage;
+    if (execMsg && execMsg.code < 0) {
+      return reply.code(400).send({
+        ok: false,
+        error: `BRT errore ${execMsg.code}: ${execMsg.message || execMsg.codeDesc || "Errore sconosciuto"}`,
+        brtResponse: result,
+      });
+    }
+
+    // Extract label
+    const labels = result?.labels?.label || [];
+    const firstLabel = labels[0];
+    const parcelId = firstLabel?.parcelID || result?.parcelNumberFrom || "";
+    const trackingId = firstLabel?.trackingByParcelID || "";
+    const labelPdf = firstLabel?.stream || "";
+
+    // Upsert shipment
+    const shipmentData = {
+      carrier: "BRT",
+      trackingCode: trackingId || parcelId,
+      status: "READY" as const,
+      shippingDate: new Date(),
+      notes: body.notes || null,
+      brtParcelId: parcelId,
+      brtTrackingId: trackingId,
+      brtNumericRef: numericRef,
+      brtAlphanumericRef: alphaRef,
+      brtSeriesNumber: result?.seriesNumber ? parseInt(result.seriesNumber, 10) : null,
+      brtDepartureDepot: cfg.departureDepot,
+      brtArrivalDepot: result?.arrivalDepot || null,
+      brtDeliveryZone: result?.deliveryZone || null,
+      brtLabelPdf: labelPdf || null,
+      brtServiceType: body.serviceType || null,
+      brtNumberOfParcels: body.numberOfParcels,
+      brtWeightKG: body.weightKG,
+      brtCodAmount: body.cashOnDelivery || null,
+      brtInsuranceAmount: body.insuranceAmount || null,
+    };
+
+    let shipment;
+    if (order.shipment) {
+      shipment = await prisma.shipment.update({
+        where: { id: order.shipment.id },
+        data: shipmentData,
+        include: { order: { include: { company: { select: { id: true, name: true } } } } },
+      });
+    } else {
+      shipment = await prisma.shipment.create({
+        data: { orderId: order.id, ...shipmentData },
+        include: { order: { include: { company: { select: { id: true, name: true } } } } },
+      });
+    }
+
+    // Update order status to FULFILLED
+    await prisma.order.update({ where: { id: order.id }, data: { status: "FULFILLED" } });
+
+    return {
+      ok: true,
+      shipment,
+      brtResponse: {
+        parcelId,
+        trackingId,
+        arrivalDepot: result?.arrivalDepot,
+        deliveryZone: result?.deliveryZone,
+        seriesNumber: result?.seriesNumber,
+        consigneeCity: result?.consigneeCity,
+        warningCode: execMsg?.code > 0 ? execMsg.code : undefined,
+        warningMessage: execMsg?.code > 0 ? execMsg.message : undefined,
+      },
+    };
+  });
+
+  // Get BRT label PDF for a shipment
+  app.get("/logistics/brt/label/:shipmentId", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const id = (request.params as any).shipmentId as string;
+    const shipment = await prisma.shipment.findUnique({ where: { id } });
+    if (!shipment) return reply.notFound("Spedizione non trovata");
+    if (!shipment.brtLabelPdf) return reply.code(404).send({ error: "Etichetta BRT non disponibile" });
+
+    const pdfBuffer = Buffer.from(shipment.brtLabelPdf, "base64");
+    reply.header("Content-Type", "application/pdf");
+    reply.header("Content-Disposition", `inline; filename="BRT-${shipment.brtParcelId || shipment.id}.pdf"`);
+    return reply.send(pdfBuffer);
+  });
+
+  // Track BRT shipment
+  app.get("/logistics/brt/track/:shipmentId", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const cfg = getBrtConfig();
+    if (!cfg.userId || !cfg.password) {
+      return reply.code(400).send({ ok: false, error: "BRT non configurato" });
+    }
+    const id = (request.params as any).shipmentId as string;
+    const shipment = await prisma.shipment.findUnique({ where: { id } });
+    if (!shipment) return reply.notFound("Spedizione non trovata");
+    const parcelId = shipment.brtTrackingId || shipment.brtParcelId;
+    if (!parcelId) return reply.code(400).send({ ok: false, error: "Nessun parcel ID BRT" });
+
+    try {
+      const url = `${cfg.baseUrl}/tracking/parcelID/${encodeURIComponent(parcelId)}`;
+      const fetchRes = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          userID: cfg.userId,
+          password: cfg.password,
+        },
+      });
+      const trackData = await fetchRes.json();
+      const execMsg = trackData?.executionMessage;
+      if (execMsg && execMsg.code < 0) {
+        return reply.code(400).send({
+          ok: false,
+          error: `BRT tracking errore ${execMsg.code}: ${execMsg.message || execMsg.codeDesc}`,
+        });
+      }
+
+      // Extract tracking events
+      const bolla = trackData?.bolla || trackData;
+      const eventi = bolla?.eventi?.evento || [];
+      const datiSpedizione = bolla?.dati_spedizione || {};
+      const datiConsegna = bolla?.dati_consegna || {};
+
+      // Update shipment with latest tracking info
+      const lastEvent = Array.isArray(eventi) && eventi.length > 0 ? eventi[0] : null;
+      const updateData: any = {};
+
+      if (lastEvent) {
+        updateData.brtLastEvent = lastEvent.descrizione || lastEvent.desc || JSON.stringify(lastEvent);
+        if (lastEvent.data) {
+          updateData.brtLastEventDate = new Date(lastEvent.data);
+        }
+      }
+
+      // Check if delivered
+      if (datiConsegna?.data_consegna_merce && datiConsegna.data_consegna_merce !== "") {
+        updateData.status = "DELIVERED";
+        updateData.deliveredAt = new Date(datiConsegna.data_consegna_merce);
+      } else if (datiSpedizione?.stato_sped_parte1) {
+        // Map BRT status to our status
+        const stato = String(datiSpedizione.stato_sped_parte1).toUpperCase();
+        if (stato.includes("CONSEGNAT")) updateData.status = "DELIVERED";
+        else if (stato.includes("TRANSITO") || stato.includes("PARTENZA")) updateData.status = "SHIPPED";
+        else if (stato.includes("GIACENZ") || stato.includes("SVINCOLA") || stato.includes("ECCEZ")) updateData.status = "EXCEPTION";
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await prisma.shipment.update({ where: { id }, data: updateData });
+      }
+
+      return {
+        ok: true,
+        tracking: {
+          datiSpedizione,
+          datiConsegna,
+          eventi,
+          riferimenti: bolla?.riferimenti || {},
+          merce: bolla?.merce || {},
+          recapito_dest: bolla?.recapito_dest || {},
+          note: bolla?.note || {},
+        },
+      };
+    } catch (err: any) {
+      return reply.code(502).send({ ok: false, error: `Errore comunicazione BRT: ${err.message}` });
+    }
+  });
+
+  // Bulk track all active BRT shipments
+  app.post("/logistics/brt/track-all", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const cfg = getBrtConfig();
+    if (!cfg.userId || !cfg.password) {
+      return reply.code(400).send({ ok: false, error: "BRT non configurato" });
+    }
+
+    const shipments = await prisma.shipment.findMany({
+      where: {
+        carrier: "BRT",
+        brtTrackingId: { not: null },
+        status: { in: ["READY", "SHIPPED"] },
+      },
+      take: 100,
+    });
+
+    const results: { id: string; trackingId: string; status: string; error?: string }[] = [];
+
+    for (const s of shipments) {
+      const parcelId = s.brtTrackingId || s.brtParcelId;
+      if (!parcelId) continue;
+
+      try {
+        const url = `${cfg.baseUrl}/tracking/parcelID/${encodeURIComponent(parcelId)}`;
+        const fetchRes = await fetch(url, {
+          method: "GET",
+          headers: { "Content-Type": "application/json", userID: cfg.userId, password: cfg.password },
+        });
+        const trackData = await fetchRes.json();
+        const bolla = trackData?.bolla || trackData;
+        const datiConsegna = bolla?.dati_consegna || {};
+        const datiSpedizione = bolla?.dati_spedizione || {};
+        const eventi = bolla?.eventi?.evento || [];
+        const lastEvent = Array.isArray(eventi) && eventi.length > 0 ? eventi[0] : null;
+
+        const updateData: any = {};
+        if (lastEvent) {
+          updateData.brtLastEvent = lastEvent.descrizione || lastEvent.desc || "";
+          if (lastEvent.data) updateData.brtLastEventDate = new Date(lastEvent.data);
+        }
+
+        if (datiConsegna?.data_consegna_merce && datiConsegna.data_consegna_merce !== "") {
+          updateData.status = "DELIVERED";
+          updateData.deliveredAt = new Date(datiConsegna.data_consegna_merce);
+        } else if (datiSpedizione?.stato_sped_parte1) {
+          const stato = String(datiSpedizione.stato_sped_parte1).toUpperCase();
+          if (stato.includes("CONSEGNAT")) updateData.status = "DELIVERED";
+          else if (stato.includes("TRANSITO") || stato.includes("PARTENZA")) updateData.status = "SHIPPED";
+          else if (stato.includes("GIACENZ") || stato.includes("ECCEZ")) updateData.status = "EXCEPTION";
+        }
+
+        if (Object.keys(updateData).length > 0) {
+          await prisma.shipment.update({ where: { id: s.id }, data: updateData });
+        }
+
+        results.push({ id: s.id, trackingId: parcelId, status: updateData.status || s.status });
+      } catch (err: any) {
+        results.push({ id: s.id, trackingId: parcelId, status: s.status, error: err.message });
+      }
+    }
+
+    return { ok: true, tracked: results.length, results };
+  });
+
+  // Delete/cancel BRT shipment
+  app.post("/logistics/brt/delete/:shipmentId", async (request, reply) => {
+    const user = await requireAdmin(request, reply);
+    if (!user) return;
+    const cfg = getBrtConfig();
+    if (!cfg.userId || !cfg.password) {
+      return reply.code(400).send({ ok: false, error: "BRT non configurato" });
+    }
+    const id = (request.params as any).shipmentId as string;
+    const shipment = await prisma.shipment.findUnique({ where: { id } });
+    if (!shipment) return reply.notFound("Spedizione non trovata");
+    if (!shipment.brtNumericRef) return reply.code(400).send({ ok: false, error: "Nessun riferimento BRT" });
+
+    try {
+      const url = `${cfg.baseUrl}/shipments/delete`;
+      const fetchRes = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          account: { userID: cfg.userId, password: cfg.password },
+          deleteData: {
+            senderCustomerCode: cfg.senderCustomerCode,
+            numericSenderReference: shipment.brtNumericRef,
+            alphanumericSenderReference: shipment.brtAlphanumericRef || "",
+          },
+        }),
+      });
+      const delRes = await fetchRes.json();
+      const execMsg = (delRes?.deleteResponse || delRes)?.executionMessage;
+      if (execMsg && execMsg.code < 0) {
+        return reply.code(400).send({
+          ok: false,
+          error: `BRT errore ${execMsg.code}: ${execMsg.message || execMsg.codeDesc}`,
+        });
+      }
+
+      // Reset shipment BRT data
+      await prisma.shipment.update({
+        where: { id },
+        data: {
+          status: "DRAFT",
+          brtParcelId: null,
+          brtTrackingId: null,
+          brtLabelPdf: null,
+          brtSeriesNumber: null,
+          brtArrivalDepot: null,
+          brtDeliveryZone: null,
+          brtLastEvent: null,
+          brtLastEventDate: null,
+          trackingCode: null,
+        },
+      });
+
+      return { ok: true, message: "Spedizione BRT annullata" };
+    } catch (err: any) {
+      return reply.code(502).send({ ok: false, error: `Errore comunicazione BRT: ${err.message}` });
+    }
+  });
+
   app.get("/returns", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;

@@ -1,0 +1,231 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <!--DXMETADATA start type="MetaCharset" --><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"><!--DXMETADATA end-->
+    <meta http-equiv="X-UA-Compatible" value="IE=9" />
+
+    <!--DXMETADATA start type="Literal" condition="helpversion:value=3" value="<meta name=""Microsoft.Help.SelfBranded"" content=""true"" />" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<title>%%LocalItemTitle%%</title>" --><title>Brt Rest API Shipment</title><!--DXMETADATA end-->
+    <!--DXMETADATA start type="ItemTitle" format="<meta name=""Title"" content=""%%ItemTitleNoQuotes%%""/>" --><meta name="Title" content=""/><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="PackageLink" packagename="jquery" filetype="script" firstlinkattributes="id=""mshs_support_script"""--><script src="template/packages/jquery/script/default/jquery-1.11.3.min.js" type="text/javascript" id="mshs_support_script"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="script"--><script src="template/packages/jquery-ui/script/default/jquery-ui-1.11.4.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="jquery-ui" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/jquery-ui/css/default/jquery-ui-1.11.4.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TemplateSettingsJson" format="<script type=""text/javascript"">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:%%TemplateSettingsJson%%});</script>" --><script type="text/javascript">var Innovasys=(Innovasys||{});$.extend(true,Innovasys,{settings:{isHideBodyDuringLoadDisabled:true,dynamictoc:{isEnabled:true},inthistopic:{isSupported:true},dynamicstyles:{isDynamicWordWrapEnabled:true}}},{settings:{"dynamictoc":{"initialNodeId":"n7","initialNodeContainer":"c0","isResizable":true},"inthistopic":{"isEnabled":true},"currentLocale":"-","isFrameless":true,"navigationKind":"inpage","versions":{"locale":{"currentId":"-"}}}});</script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="light" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/light/css/dynamic-toc.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="css"--><link rel="stylesheet" type="text/css" href="template/packages/plugins-webservice/css/default/jquery-plugins.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="css" firstlinkattributes=" data-mshv2-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv2.css"" data-mshv1-stylesheet=""/template/packages/core-webservice/dx.webservice.mshv1.css"" data-responsive-mobile=""template/packages/core-webservice/dx.webservice.mobile.css"" data-responsive-tablet=""template/packages/core-webservice/dx.webservice.tablet.css"""--><link rel="stylesheet" type="text/css" href="template/packages/core-webservice/css/dx.webservice.css"  data-mshv2-stylesheet="/template/packages/core-webservice/dx.webservice.mshv2.css" data-mshv1-stylesheet="/template/packages/core-webservice/dx.webservice.mshv1.css" data-responsive-mobile="template/packages/core-webservice/dx.webservice.mobile.css" data-responsive-tablet="template/packages/core-webservice/dx.webservice.tablet.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="plugins-webservice" filetype="script"--><script src="template/packages/plugins-webservice/script/default/jquery-plugins.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    <!--DXMETADATA start type="PackageLink" packagename="core-webservice" filetype="script"--><script src="template/packages/core-webservice/script/dx.webservice.min.js" type="text/javascript"></script><!--DXMETADATA end-->
+    
+    <!--DXMETADATA start type="TopicId" format="<meta name=""Microsoft.Help.Id"" content=""%%TopicId%%""/>" --><meta name="Microsoft.Help.Id" content="ShipmentApiV00_ws"/><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Synopsis" StripHtmlTags="True" MaxLength="250" format="<meta name=""Description"" content=""%%Synopsis%%"" />"--><meta name="Description" content="In questa pagina vengono riportate le specifiche tecniche dei servizi esposti da BRT" /><!--DXMETADATA end-->
+    <!--DXMETADATA start type="TocParentId" format="<meta name=""Microsoft.Help.TocParent"" content=""%%TocParentId%%""/>" --><!--DXMETADATA end-->
+    <meta name="Microsoft.Help.ContentType" content="Reference" />
+    <!--DXMETADATA start type="MshvKeywords" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="MshvMetaTags" condition="helpversion:value=3" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.Locale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Help3CatalogLocale" condition="helpversion:value=3" format="<meta name=""Microsoft.Help.TopicLocale"" content=""%%Help3CatalogLocale%%"" />"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Stylesheets" --><link rel="stylesheet" type="text/css" href="stylesheets/customstyles.css"></link>
+    <link rel="stylesheet" type="text/css" href="stylesheets/fields.css"></link><!--DXMETADATA end-->
+    <!--DXMETADATA start type="StylePropertyValues" format="<style>%%StylePropertyValues%%</style>" --><style>#i-header-container { background-color: #EEEEEE }
+#i-header-container { color: #000000 }
+.i-is-new .i-page-title-text::after, ul#i-dt-root li.i-is-new>a::after { content: "Nuovo" }
+</style><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scripts" --><!--DXMETADATA end-->
+    <!--DXMETADATA start type="DesignTime"--><!--DXMETADATA end-->
+    <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_PROPERTIES" --><!--DXMETADATA end -->
+    <!--DXMETADATA start type="CustomHeadContent" --><!--DXMETADATA end-->
+</head>
+
+<body>
+    <div id="i-before-header-content" class="i-before-header-content">
+        
+    </div>
+
+    <div id="i-header-container">
+        <div id="i-header-content" class="i-header-content i-content-width-container">
+            <!--DXMETADATA start type="LogoImage" --><img class="logoimage" src="images/BRT_logo_redgrad_rgb1.png" border="0"></img><!--DXMETADATA end-->
+            <div class="i-project-title"><!--DXMETADATA start type="ProjectTitle" -->Brt Rest API Shipment<!--DXMETADATA end--></div>
+            <div class="i-search-container">
+                <!--DXMETADATA start type="outputfileextension" format="<form action=""websearch%%outputfileextension%%"">" --><form action="websearch.html"><!--DXMETADATA end-->
+                <input id="i-search" name="query"/>
+                <input type="submit" id="i-search-button" value=""/>
+                <!--DXMETADATA start type="Literal" value="</form>" --></form><!--DXMETADATA end-->
+            </div>
+            <!--DXMETADATA start type="outputfileextension" format="<a id=""i-index-button"" href=""webindex%%outputfileextension%%""></a>" --><a id="i-index-button" href="webindex.html"></a><!--DXMETADATA end-->
+        </div>
+    </div>
+    
+    <div class="i-content-width-container"><div class="i-busy-overlay"></div></div>
+
+    <div id="i-breadcrumbs-outer-container" class="i-content-width-container"><!--DXMETADATA start type="Breadcrumbs" scrap="_BREADCRUMBS" --><!--DXMETADATA end --></div>
+
+    
+
+    <div id="i-actions-outer-container" class="i-content-width-container">
+        <div id="i-actions-container">
+            <div id="i-actions-content" class="i-fixed-to-top">
+                <!-- Spacing --> <span class="i-toggle-all-sections i-function-link">
+                <label class="i-collapse-all"><!--DXMETADATA start type="Phrase" name="COLLAPSE_ALL" -->Nascondi tutto<!--DXMETADATA end--></label>
+                <label class="i-expand-all" style="display: none;"><!--DXMETADATA start type="Phrase" name="EXPAND_ALL" -->Mostra tutto<!--DXMETADATA end--></label>
+            </span><!--DXMETADATA start type="Literal" condition="communityenabled" value="%%scrap:name=_COMMUNITY_DROPDOWN%%" --><!--DXMETADATA end -->
+                <div class="i-in-this-topic-container">
+                    <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-toc-outer-container" class="i-content-width-container">
+        <div id="i-toc-container">
+            <div id="i-toc-content" class="i-fixed-to-top">
+                <div class="i-toc-content-scroll-container">
+                    <div id="i-dynamic-toc-container"><ul id="i-dt-root"></ul></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="i-body-content-container" class="i-content-width-container">
+        <div id="i-body-content" class="i-body-content">
+            <div class="i-page-title"><div class="i-page-title-text"><!--DXMETADATA start type="LocalItemTitle" -->Brt Rest API Shipment<!--DXMETADATA end--></div></div>
+            <div class="i-in-this-topic-container">
+                <span class="i-action-group-heading"><!--DXMETADATA start type="Phrase" Name="IN_THIS_TOPIC" -->In questo argomento<!--DXMETADATA end--></span>
+            </div>
+            <!--DXMETADATA start type="PublicUri" format="<p class=""resource-path-container""><strong>$$URI$$</strong> <span class=""i-resource-path"">%%PublicUri%%</span></p>" --><p class="resource-path-container"><strong>Uri:</strong> <span class="i-resource-path">https://api.brt.it/rest/v1/shipments</span></p><!--DXMETADATA end -->
+
+            <!--DXMETADATA start type="Description" source="Item" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=description,caption=$$Description$$%%<div class=""i-description-content"">%%description%%</div></div>" --><div class="i-section-heading" id="i-description-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Descrizione</span></div><div id="i-description-section-content" class="i-section-content"><div class="i-description-content"><P>In questa pagina vengono riportate le specifiche tecniche dei servizi esposti da BRT</P>
+<H1>Sicurezza Autenticazione</H1>
+<P>Ad ogni cliente BRT, in&nbsp;fase di attivazione del servizio viene fornito un userID e password che devono essere&nbsp;sempre utilizzati come parametri di input dei servizi&nbsp;nel campo&nbsp;<A href="ShipmentApiV00_ws~j-account.html" data-auto-update-caption="true">account</A></P>
+<H1>Request Encoding</H1>
+<P>Le chiamate al rest vanno effetuate con encoding UTF8</P>
+<DIV class=i-filtered-content- data-title="" data-itemid="">
+<TABLE class=i-syntax-table>
+<TBODY>
+<TR>
+<TH>Account Example</TH>
+<TH>
+<DIV class=i-copy-code-wrapper><SPAN class=i-copy-code>Copy Code</SPAN> </DIV></TH></TR>
+<TR>
+<TD class=i-code colSpan=2><PRE><SPAN style="COLOR: #800000">"account"</SPAN>: {
+    <SPAN style="COLOR: #800000">"userID"</SPAN>: <SPAN style="COLOR: #800000">"XXXXXX"</SPAN>,
+    <SPAN style="COLOR: #800000">"password"</SPAN>: <SPAN style="COLOR: #800000">"******"</SPAN>
+  }</PRE></TD></TR></TBODY></TABLE></DIV> 
+<H1>Esempi</H1>
+<P>Scaricare il seguente <A href="BrtRestAPI-DEMO-soapui-project.xml">file xml</A>&nbsp;contenente un progetto&nbsp;<A href="https://www.soapui.org/downloads/soapui.html" target=_blank>SoapUi</A>&nbsp;con alcuni&nbsp;esempi di invocazione ai vari servizi Rest.</P></div></div><!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="FilteredItemList" scrap="RESOURCEGROUP_LIST" namespace="resource group" source="Item" filter=""%%</div>" -->
+<div class="i-section-heading" id="i-operations_shipments APIs-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Brt Rest API Shipment</span></div><div id="i-operations_shipments APIs-section-content" class="i-section-content"><table class="i-filtered-item-list">
+<tr><td class="i-operation-kind HttpPut">Put</td><td class=DescriptionCell><A HREF="ShipmentApiV00_ws~r--shipment~o-HttpPut.html">Confirm</A><div><DIV id=placeholder_092c7ec3-ad4a-4daf-8934-6f60350d1bab>Servizio necessario per confermare una spedizione precedentemente creata con il servizio&nbsp;<A href="ShipmentApiV00_ws~r--shipment~o-HttpPost.html" data-auto-update-caption="true">Create (Post)</A>&nbsp;non autocofermata. 
+<P>L'utilizzo di questa operazione è dedicato ai clienti che decidono di lavorare in modalità <EM>Conferma Esplicita</EM> delle spedizioni e tale decisione deve essere concordata in fase di attivazione con il personale BRT</P></DIV>
+<P><EM>Se un cliente configurato in modalità <STRONG>AutoConfema</STRONG> invoca questa operazione,&nbsp;viene restituito il codice&nbsp;</EM><A href="ShipmentApiV00_ws~j-executionMessage~y-code.html"><EM>excecutionCode</EM></A> <EM>-101</EM></P></div></td></tr>
+<tr><td class="i-operation-kind HttpPost">Post</td><td class=DescriptionCell><A HREF="ShipmentApiV00_ws~r--shipment~o-HttpPost.html">Create</A><div><P>Questo metodo&nbsp;genera una&nbsp;spedizione&nbsp;nel sistema&nbsp;BRT nella soluzione <STRONG>Disk B</STRONG>.</P>
+<P>Il servizio esegue le seguenti operazioni:</P>
+<OL>
+<LI>
+<DIV>Calcolo instradamento.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </DIV>
+<LI>
+<DIV>Stampa l'etichetta segnacolli nel formato richiesto(opzionale)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </DIV>
+<LI>
+<DIV>Creazione spedizione&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </DIV></LI></OL>
+<P>La creazione delle spedizioni con Auto Conferma&nbsp;o Conferma Esplicita deve essere concordata in fase di analisi preliminare con il cliente, in base alla sua operatività. <EM>Tale modalità operativa vale per tutto il traffico del cliente e non può essere variato per singola spedizione.</EM></P></div></td></tr>
+<tr><td class="i-operation-kind HttpPut">Put</td><td class=DescriptionCell><A HREF="ShipmentApiV00_ws~r--delete~o-HttpPut.html">Delete</A><div><P>Questo servizio esegue la cancellazione di una spedizione precedente creata o confermata. Un spedizione è cancellabile, indipendetemente dalla modalità operativa <EM>AutoConferma/ConfermaEsplicita,</EM> fino a quando la spedizione viene presa in gestione dalla filiale BRT.</P></div></td></tr>
+<tr><td class="i-operation-kind HttpPut">Put</td><td class=DescriptionCell><A HREF="ShipmentApiV00_ws~r--routing~o-HttpPut.html">Routing</A><div><P>Calcolo delle coordinate instradamento&nbsp;BRT. Questo servizio rest NON è necessario per i clienti che decidono di utilizzare servizi&nbsp;<A href="ShipmentApiV00_ws~r--shipment~o-HttpPost.html">Create</A> e&nbsp;<A href="ShipmentApiV00_ws~r--shipment~o-HttpPut.html">Confirm</A>. <U>Rappresenta un'alternativa per quei clienti che non vogliono implementare l'algoritmo del cappario BRT per produrre internamente le proprie etichette continuando ad affidarci i dati delle spedizioni nei modi tradizionali e NON utilizzare questi servizi rest</U></P>
+<P>&nbsp;</P></div></td></tr>
+</table></div>
+<!--DXMETADATA end -->
+            
+            <!--DXMETADATA start type="FilteredItemList" scrap="ITEM_LIST" namespace="json schema" source="Item" filter="" format="%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=jsonschemas,caption=$$Json_Schemas$$%%%%filtereditemlist%%</div>" --><div class="i-section-heading" id="i-jsonschemas-section-heading"><span class="i-section-heading-icon"><!-- --></span><span class="i-section-heading-text">Json Schemas</span></div><div id="i-jsonschemas-section-content" class="i-section-content"><table class="i-filtered-item-list">
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-deleteResponse.html">deleteResponse</A></td><td class="i-description">&nbsp;</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-deleteData.html">deleteData</A></td><td class="i-description">&nbsp;</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-deleteRequest.html">deleteRequest</A></td><td class="i-description">&nbsp;</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-routingResponse.html">routingResponse</A></td><td class="i-description"><P>In caso di elaborazione terminata con successo, il risultato conterrà&nbsp;alcuni dati&nbsp;delle richiesta "normalizzati", ovvero, corretti secondo gli standard BRT e campi necessari per l'instradamento di una spedizione in formato Disk B:</P>
+<UL>
+<LI><STRONG><STRONG><STRONG>arrivalTerminal</STRONG></STRONG></STRONG> 
+<LI><STRONG><STRONG><STRONG><STRONG>arrivalDepot</STRONG></STRONG></STRONG></STRONG> 
+<LI><STRONG><STRONG><STRONG><STRONG><STRONG><STRONG><STRONG><STRONG>deliveryZone</STRONG></STRONG></STRONG></STRONG></STRONG></STRONG></STRONG></STRONG> </LI></UL>
+<TABLE class=i-child-tree-table>
+<TBODY>
+<TR>
+<TD>
+<P>&nbsp;</P></TD></TR></TBODY></TABLE></td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-routingData.html">routingData</A></td><td class="i-description">Dati relativi al destinatario della spedizione.</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-routingRequest.html">routingRequest</A></td><td class="i-description">Struttura di input contenente i&nbsp;dati relativi al destinatario della spedizione.</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-confirmResponse.html">confirmResponse</A></td><td class="i-description">Contiene il risultato della chiamata</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-confirmData.html">confirmData</A></td><td class="i-description"><P>Dati relativi alla spedizione che si vuole confermare.</P>
+<P>L'auto conferma o conferma esplicita è un accordo&nbsp;con il cliente&nbsp; stabilito in fase di attivazione. Vale per tutte le spedizioni di quel codice cliente.</P></td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-confirmRequest.html">confirmRequest</A></td><td class="i-description">Struttura di input per la conferma di una&nbsp;spedizione già inviata a BRT.</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-label.html">label</A></td><td class="i-description">La struttura contiene l'etichetta e il relativo barcode BRT&nbsp;del pacco.</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-labels.html">labels</A></td><td class="i-description">Contiene le etichette e i relativi barcode BRT&nbsp;della spedizione.</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-executionMessage.html">executionMessage</A></td><td class="i-description"><P>Elenco codici di errore:</P>
+<UL>
+<LI>-1 = Errore generico 
+<LI>-5 = Parametro non valido 
+<LI>-7 = Login fallito 
+<LI>-57 = Parametro mancante per il login 
+<LI>-63 = Errore in calcolo instradamento 
+<LI>-64 = Errore in numerazione pacco 
+<LI>-65 = Errore in stampa etichetta 
+<LI>-67 = Errore su User/Account, il codice impostato come senderCostomerCode deve essere collegato a codice cliente utilizzato per l'autenticazione (account.userId) 
+<LI>-68 = Dato errato o inconsistente 
+<UL>
+<LI>controllare i messaggi di dettaglio che possono contenere il nome del dato in errore, ma anche il motivo della sua inconsistenza. Ad esempio: 
+<UL>
+<LI>GB Shipments: at least one of ConsigneeEMail or consigneeMobilePhoneNumber is mandatory 
+<UL>
+<LI>al momento in cui la Brexit sarà attiva, le spedizioni in Gran Bretagna dovranno avere o l'email o il numero di telefono mobile </LI></UL>
+<LI>Invalid Return Depot 
+<UL>
+<LI>I<SPAN lang=IT xml:lang="IT">n caso di reso, il deposito di reso indicato non esiste o il mittente non ne è abilitato</SPAN> </LI></UL>
+<LI><SPAN lang=IT xml:lang="IT"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><SPAN lang=EN-GB xml:lang="EN-GB"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><FONT color=#212121 face="Segoe UI,Segoe UI"><SPAN lang=IT xml:lang="IT">For shipments to Italy or with this network, The maximum length of ConsigneeAddress is 35 characters - The maximum length of ConsigneeAddress is 105 characters</SPAN></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></FONT></SPAN></FONT></FONT></SPAN> 
+<UL>
+<LI>La lunghezza di ConsigneeAddress è diversa a seconda se la spedizione è domestica&nbsp;o estera, e a seconda del&nbsp;network </LI></UL>
+<LI>deliveryDateRequired must be &lt;= expiryDate 
+<UL>
+<LI>la data consegna richiesta deve essere minore o uguale alla data scadenza (si sta parlando di servizio Fresh) </LI></UL></LI></UL></LI></UL>
+<LI>-69 = pudoId non valido o non esistente 
+<LI>-70 = problemi in richiesta servizio Fresh, es.: expiryDate&nbsp;(data scadenza) non valida o&nbsp;brtServiceCode non consentito al cliente 
+<LI>-101 = Spedizione non confermabile 
+<LI>-102 = Spedizione già confermata 
+<LI>-151 =&nbsp;Spedizione&nbsp;mai creata oppure creata oltre 40 giorni prima 
+<LI>-152 = Spedizione&nbsp;già in presa in gestione dalla filiale 
+<LI>-153 = Spedizione in elaborazione, ritentare 
+<LI>-154 = Sono state trovate più spedizioni con gli stessi riferimenti 
+<LI>-155 = Record allocato in fase di cancellazione </LI></UL>
+<P>Elenco codici di warning</P>
+<UL>
+<LI>4 = Normalizzazione CAP/Località/Provincia avvenuta 
+<LI>5&nbsp;= Indirizzo del destinatario&nbsp;modificato con&nbsp;l'indirizzo del pudo BRTfermopoint 
+<LI>6 = Impostati i dati del destinatario con i dati del deposito di reso </LI></UL></td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-createResponse.html">createResponse</A></td><td class="i-description"><P>Se la chiamata ha esito positivo vengono ritornati i dati del calcolo instradamento e le eventuali etichette della spedizione se richieste</P></td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-labelParameters.html">labelParameters</A></td><td class="i-description">Parametri per la costruzione dell'etichetta da applicare al pacco. Indicare sempre questo dato anche se non richiesta l'etichetta.</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-actualSender.html">actualSender</A></td><td class="i-description"><P>Dati del mittente reale della spedizione, da utilizzare nel caso in cui brtServiceCode assuma il valore B13 (Shop to Shop) e <SPAN lang=IT>B14 (Shop to Home).</SPAN></P>
+<P>Dato facoltativo.</P></td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-returnShipmentConsignee.html">returnShipmentConsignee</A></td><td class="i-description"><P>Dati del&nbsp;destinatario del reso&nbsp;della spedizione, da utilizzare nel caso in cui brtServiceCode assuma il valore B13 (Shop to Shop) &nbsp;e <SPAN lang=IT xml:lang="IT">B14 (Shop to Home)</SPAN>. In caso assuma il valore B15 (Return from Shop) non è obbligatorio in quanto non è previsto di rendere al mittente reale.</P>
+<P>Dato facoltativo.&nbsp;&nbsp;</P></td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-createData.html">createData</A></td><td class="i-description">Dati relativi alla spedizione che si vuole richiedere.</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-account.html">account</A></td><td class="i-description">Indicare l'utente e la password fornite da BRT, per le quelli è stata&nbsp;richiesta&nbsp;la ablitazione al servizio web.</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-createRequest.html">createRequest</A></td><td class="i-description">Struttura di input per l'invio di una nuova spedizione a BRT.</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-deleteResult.html">deleteResult</A></td><td class="i-description">&nbsp;</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-routingResult.html">routingResult</A></td><td class="i-description">Contiene la struttura di ritorno dati con HTTP code = 200</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-confirmResult.html">confirmResult</A></td><td class="i-description">Contiene la struttura di ritorno dati con HTTP code = 200</td></tr>
+<tr><td class=i-link><A HREF="ShipmentApiV00_ws~j-createResult.html">createResult</A></td><td class="i-description">Contiene la struttura di ritorno dati con HTTP code = 200</td></tr>
+</table></div><!--DXMETADATA end -->
+            <!--DXMETADATA start type="FilteredItemList" scrap="CATEGORIZED_LINKS" namespace="linkcategory" source="Item" filter="" NoHeader="True" NoFooter="True" format="%%replaceinquotes:value=false%%%%scrap:name=_COLLAPSIBLE_HEADER,idprefix=seealso,caption=""$$See_Also$$%%designlist:tagidentifier=##SEEALSO,itemtype=See Also%%""%%%%filtereditemlist%%</div>"--><!--DXMETADATA end-->
+            <div id="i-footer-content" class="i-footer-content">
+                <!--DXMETADATA start type="Scrap" condition="communityenabled" name="_COMMUNITY_FOOTER" --><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="CopyrightNotice" format="<p>&nbsp;</p><p>&nbsp;</p><hr style=""height: 1px"" /><p>%%variable%%</p>" --><p>&nbsp;</p><p>&nbsp;</p><hr style="height: 1px" /><p>BRT SpA &copy; 2023 All Rights Reserved.</p><!--DXMETADATA end -->
+<!--DXMETADATA start type="Variable" name="FeedbackLink" format="" --><a href="mailto:cedvas@brt.it?subject=Documentation Feedback: ShipmentApiV00_ws.html">Send comments</a> on this topic.<!--DXMETADATA end-->
+            </div>
+        </div>
+    </div>
+        
+    <script type="text/javascript">
+        $(function () {
+            var documentInstance = new Innovasys.Content.Document(document.body);
+            documentInstance.load();
+        });
+    </script>
+</body>
+</html>

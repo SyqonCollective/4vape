@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="ed3e3b96-276d-4c1b-bb2e-014e07274be0" activeEnvironment="Default" name="BrtRestApi - DEMO" resourceRoot="${projectDir}" soapui-version="5.5.0" abortOnError="false" runType="SEQUENTIAL" defaultScriptLanguage="Groovy" xmlns:con="http://eviware.com/soapui/config"><con:settings/><con:interface xsi:type="con:RestService" id="ec6c380a-c9e0-4129-ac97-bbb1a018802c" wadlVersion="http://wadl.dev.java.net/2009/02" name="shipments APIs" type="rest" basePath="/rest/v1/shipments" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:description>APIs available for shipments</con:description><con:settings/><con:definitionCache type="TEXT" rootPart=""/><con:endpoints><con:endpoint>http://as777:10000</con:endpoint><con:endpoint>http://as777:10061</con:endpoint><con:endpoint>https://api.brt.it</con:endpoint></con:endpoints><con:resource name="/routing" path="/routing" id="8d89ac21-fa9b-4da0-b315-289e619975ab"><con:settings/><con:parameters/><con:method name="Routing" id="97cc499d-4d44-4290-bb0a-1cf2b969cf68" method="PUT"><con:description>
+</con:description><con:settings/><con:parameters/><con:representation type="RESPONSE"><con:mediaType>application/xml</con:mediaType><con:status>200</con:status><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json</con:mediaType><con:status>200</con:status><con:params/></con:representation><con:representation type="REQUEST"><con:mediaType>application/xml</con:mediaType><con:params/></con:representation><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="FAULT"><con:mediaType xsi:nil="true"/><con:status>400</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="FAULT"><con:mediaType>text/html;charset=ISO-8859-1</con:mediaType><con:status>500</con:status><con:params/><con:element>html</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="FAULT"><con:mediaType>text/plain</con:mediaType><con:status>500</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="FAULT"><con:mediaType>text/html; charset=UTF-8</con:mediaType><con:status>404</con:status><con:params/><con:element>html</con:element></con:representation><con:representation type="FAULT"><con:mediaType xsi:nil="true"/><con:status>405</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="FAULT"><con:mediaType xsi:nil="true"/><con:status>405</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="FAULT"><con:mediaType xsi:nil="true"/><con:status>405</con:status><con:params/><con:element>data</con:element></con:representation><con:request name="Request BRT.IT" id="1609c661-39e2-4655-a9cc-9dc80e08839e" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="accept" value="application/json" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>https://api.brt.it</con:endpoint><con:request>{
+        "account":  {
+        "userID": "1020101",
+        "password": "brt1450st"
+      },
+        "routingData": {
+        "network": "",
+        "departureDepot": 102,
+        "senderCustomerCode": 1020101,
+        "deliveryFreightTypeCode": "DAP",
+        "consigneeCompanyName": "Spedizione di prova BrtRestApi",
+        "consigneeAddress": "via mattei 52",
+        "consigneeZIPCode": "40138",
+        "consigneeCity": "BOLOGNA",
+        "consigneeProvinceAbbreviation": "BO",
+        "consigneeCountryAbbreviationISOAlpha2": "IT",
+        "serviceType": "E",
+        "numberOfParcels": 2,
+        "weightKG": 1.0,
+        "volumeM3": 0.0,
+        "variousParticularitiesManagementCode": "",
+        "particularDelivery1": "",
+        "particularDelivery2": ""
+    }
+}
+ 
+ 
+</con:request><con:originalUri>http://as777/rest/v1/shipments/routing</con:originalUri><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:request></con:method></con:resource><con:resource name="/shipment" path="/shipment" id="25bc7769-b2ee-4502-b32c-bfae7793b5dd"><con:settings/><con:parameters/><con:method name="Create" id="954b744f-54c0-47ed-ad60-457a4ccf8eb6" method="POST"><con:description>
+</con:description><con:settings/><con:parameters><con:parameter><con:name>p1</con:name><con:value/><con:style>PLAIN</con:style><con:default/><con:description xsi:nil="true"/></con:parameter></con:parameters><con:representation type="RESPONSE"><con:mediaType>application/xml</con:mediaType><con:status>200</con:status><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json</con:mediaType><con:status>200</con:status><con:params/></con:representation><con:representation type="REQUEST"><con:mediaType>application/xml</con:mediaType><con:params/></con:representation><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="FAULT"><con:mediaType>text/html; charset=UTF-8</con:mediaType><con:status>404</con:status><con:params/><con:element>html</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="FAULT"><con:mediaType>text/plain</con:mediaType><con:status>400 500</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="FAULT"><con:mediaType>text/html; charset=ISO-8859-1</con:mediaType><con:status>500</con:status><con:params/><con:element>html</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:request name="Request BRT.IT" id="f61e1c41-f013-4799-86af-d16a6a375529" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="accept" value="application/json" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>https://api.brt.it</con:endpoint><con:request>{
+      "account":  {
+        "userID": "1020101",
+        "password": "brt1450st"
+      },
+        "createData": {
+        "network": "",
+        "departureDepot": 102,
+        "senderCustomerCode": 1020101,
+        "deliveryFreightTypeCode": "DAP",
+        "consigneeCompanyName": "Spedizione di prova BrtRestApi",
+        "consigneeAddress": "Via enrico mattei, 54",
+        "consigneeZIPCode": "40138",
+        "consigneeCity": "BOLOGNA",
+        "consigneeProvinceAbbreviation": "BO",
+        "consigneeCountryAbbreviationISOAlpha2": "IT",
+        "consigneeClosingShift1_DayOfTheWeek": "",
+        "consigneeClosingShift1_PeriodOfTheDay": "",
+        "consigneeClosingShift2_DayOfTheWeek": "",
+        "consigneeClosingShift2_PeriodOfTheDay": "",
+        "consigneeContactName": "MARIO ROSSI",
+        "consigneeTelephone": "051456778",
+        "consigneeEMail": "pippo@virgilio.it",
+        "consigneeMobilePhoneNumber": "3356789789",
+        "isAlertRequired": "1",
+        "consigneeVATNumber": "",
+        "consigneeVATNumberCountryISOAlpha2": "",
+        "consigneeItalianFiscalCode": "",
+        "pricingConditionCode": "002",
+        "serviceType": "E",
+        "insuranceAmount": 0.0,
+        "insuranceAmountCurrency": "",
+        "senderParcelType": "",
+        "numberOfParcels": 1,
+        "weightKG": 1.0,
+        "volumeM3": 0.0,
+        "quantityToBeInvoiced": 0,
+        "cashOnDelivery": 100,
+        "isCODMandatory": "1",
+        "codPaymentType": "",
+        "codCurrency": "",
+        "numericSenderReference": 34314,
+        "alphanumericSenderReference": "dsgasdv",
+        "notes": "",
+        "parcelsHandlingCode": "2",
+        "deliveryDateRequired": "2019-01-45",
+        "deliveryType": "",
+        "declaredParcelValue": 0,
+        "declaredParcelValueCurrency": "",
+        "particularitiesDeliveryManagementCode": "",
+        "particularitiesHoldOnStockManagementCode": "",
+        "variousParticularitiesManagementCode": "",
+        "particularDelivery1": "",
+        "particularDelivery2": "",
+        "palletType1": "",
+        "palletType1Number": 0,
+        "palletType2": "",
+        "palletType2Number": 0,
+        "originalSenderCompanyName": "",
+        "originalSenderZIPCode": "",
+        "originalSenderCountryAbbreviationISOAlpha2": "",
+        "cmrCode": "",
+        "neighborNameMandatoryAuthorization": "",
+        "pinCodeMandatoryAuthorization": "",
+        "packingListPDFName": "",
+        "packingListPDFFlagPrint": "",
+        "packingListPDFFlagEmail": ""
+    },
+     "isLabelRequired": "1",
+     "labelParameters":{
+        "outputType": "PDF",
+        "offsetX": "0",
+        "offsetY": "0",
+        "isBorderRequired": "0",
+        "isLogoRequired": "0",
+        "isBarcodeControlRowRequired": "0"
+      }
+}
+
+</con:request><con:originalUri>http://as777/rest/v1/shipments/shipment</con:originalUri><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="p1" value="${=java.util.UUID.randomUUID()}" xmlns="http://eviware.com/soapui/config"/></con:parameters><con:parameterOrder><con:entry>p1</con:entry></con:parameterOrder></con:request></con:method><con:method name="Confirm" id="7fb880bd-85e0-4c4f-901c-3e2d998f2869" method="PUT"><con:description>
+</con:description><con:settings/><con:parameters/><con:representation type="RESPONSE"><con:mediaType>application/xml</con:mediaType><con:status>200</con:status><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json</con:mediaType><con:status>200</con:status><con:params/></con:representation><con:representation type="REQUEST"><con:mediaType>application/xml</con:mediaType><con:params/></con:representation><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:request name="Request BRT.IT" id="05c86537-110e-4bc4-b9f6-e38f72644766" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="accept" value="application/json" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>https://api.brt.it</con:endpoint><con:request>  {
+        "account":  {
+        "userID": "1020101",
+        "password": "brt1450st"
+      },
+    
+        "confirmData": {
+	        "senderCustomerCode": 1020101,
+	        "numericSenderReference": 22,
+        "alphanumericSenderReference": ""
+        }
+  }      
+ 
+</con:request><con:originalUri>http://as777/rest/v1/shipments/shipment</con:originalUri><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/><con:parameterOrder/></con:request></con:method></con:resource></con:interface><con:properties/><con:wssContainer/><con:oAuth2ProfileContainer/><con:oAuth1ProfileContainer/><con:sensitiveInformation/></con:soapui-project>
