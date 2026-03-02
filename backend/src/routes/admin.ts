@@ -367,14 +367,11 @@ export async function adminRoutes(app: FastifyInstance) {
 
     try {
       // Use MailUp Transactional API (HTTPS) – SMTP ports are blocked on this VPS
-      const smtpCredentials = Buffer.from(`${cfg.smtpUser}:${cfg.smtpPass}`).toString("base64");
       const apiRes = await fetch("https://send.mailup.com/API/v2.0/messages/sendmessage", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${smtpCredentials}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          User: { Username: cfg.smtpUser, Secret: cfg.smtpPass },
           Html: { Body: htmlBody },
           Text: { Body: htmlBody.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() },
           Subject: subject,
