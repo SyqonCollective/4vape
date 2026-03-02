@@ -72,7 +72,7 @@ export async function adminRoutes(app: FastifyInstance) {
       consoleBase:
         process.env.MAILUP_CONSOLE_BASE ||
         "https://services.mailup.com/API/v1.1/Rest/ConsoleService.svc/Console",
-      smtpHost: process.env.MAILUP_SMTP_HOST || "smtp.mailup.com",
+      smtpHost: process.env.MAILUP_SMTP_HOST || "send.mailup.com",
       smtpPort: Number(process.env.MAILUP_SMTP_PORT || 587),
       smtpUser: process.env.MAILUP_SMTP_USER || process.env.MAILUP_USERNAME || "",
       smtpPass: process.env.MAILUP_SMTP_PASS || process.env.MAILUP_PASSWORD || "",
