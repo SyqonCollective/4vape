@@ -353,7 +353,7 @@ export async function adminRoutes(app: FastifyInstance) {
   ): Promise<{ ok: boolean; messageId?: string; error?: string }> {
     const cfg = getMailupConfig();
     if (!cfg.smtpUser || !cfg.smtpPass) {
-      return { ok: false, error: "SMTP non configurato: imposta MAILUP_SMTP_USER e MAILUP_SMTP_PASS (o MAILUP_USERNAME / MAILUP_PASSWORD) nel file .env del server" };
+      return { ok: false, error: "MailUp non configurato: imposta MAILUP_USERNAME e MAILUP_PASSWORD nel file .env del server" };
     }
 
     const template = await prisma.mailMarketingTemplate.findFirst({
@@ -366,19 +366,31 @@ export async function adminRoutes(app: FastifyInstance) {
     const htmlBody = replaceTags(template?.html || typeDef.defaultHtml, data);
 
     try {
-      const transporter = nodemailer.createTransport({
-        host: cfg.smtpHost,
-        port: cfg.smtpPort,
-        secure: cfg.smtpPort === 465,
-        auth: { user: cfg.smtpUser, pass: cfg.smtpPass },
+      // Use MailUp Transactional API (HTTPS) – SMTP ports are blocked on this VPS
+      const smtpCredentials = Buffer.from(`${cfg.smtpUser}:${cfg.smtpPass}`).toString("base64");
+      const apiRes = await fetch("https://send.mailup.com/API/v2.0/messages/sendmessage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${smtpCredentials}`,
+        },
+        body: JSON.stringify({
+          Html: { Body: htmlBody },
+          Text: { Body: htmlBody.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() },
+          Subject: subject,
+          From: { Name: "4Vape", Email: cfg.from },
+          To: [{ Name: data["{{customer_name}}"] || recipientEmail, Email: recipientEmail }],
+        }),
       });
 
-      const info = await transporter.sendMail({
-        from: cfg.from,
-        to: recipientEmail,
-        subject,
-        html: htmlBody,
-      });
+      const resText = await apiRes.text();
+      let resData: any = null;
+      try { resData = resText ? JSON.parse(resText) : null; } catch { resData = resText; }
+
+      if (!apiRes.ok) {
+        const errMsg = resData?.Message || resData?.error || resText || `MailUp API error ${apiRes.status}`;
+        return { ok: false, error: String(errMsg) };
+      }
 
       // Log to campaigns table
       await prisma.mailMarketingCampaign.create({
@@ -393,13 +405,13 @@ export async function adminRoutes(app: FastifyInstance) {
           recipientCount: 1,
           sentCount: 1,
           mailupEmailId: null,
-          mailupSendId: info.messageId || null,
+          mailupSendId: resData?.Id || resData?.MessageID || null,
         },
       });
 
-      return { ok: true, messageId: info.messageId };
+      return { ok: true, messageId: resData?.Id || resData?.MessageID || "sent" };
     } catch (err: any) {
-      return { ok: false, error: err?.message || "Invio email SMTP fallito" };
+      return { ok: false, error: err?.message || "Invio email MailUp fallito" };
     }
   }
 
