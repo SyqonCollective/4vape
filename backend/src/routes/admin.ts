@@ -4139,7 +4139,7 @@ export async function adminRoutes(app: FastifyInstance) {
         const exciseUnit = Number(p.exciseTotal ?? Number(p.exciseMl || 0) + Number(p.exciseProduct || 0));
         const accisa = roundUp2(exciseUnit * qty);
         const vatRate = Number(p.taxRate || p.taxRateRef?.rate || 0);
-        const iva = vatRate > 0 ? roundUp2(imponibile * (vatRate / 100)) : 0;
+        const iva = vatRate > 0 ? roundUp2((imponibile + accisa) * (vatRate / 100)) : 0;
         const unitGross = qty > 0 ? (imponibile + accisa + iva) / qty : 0;
         return {
           invoiceId: invoice.id,

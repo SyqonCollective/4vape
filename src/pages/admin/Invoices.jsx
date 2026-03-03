@@ -344,7 +344,7 @@ export default function AdminInvoices() {
       ? (exciseRef.type === "ML" ? Number(exciseRef.amount || 0) * ml : Number(exciseRef.amount || 0))
       : Number(p.exciseTotal ?? (Number(p.exciseMl || 0) + Number(p.exciseProduct || 0)));
     const vatRate = Number(p.taxRate || p.taxRateRef?.rate || 0);
-    const vatTotal = vatRate > 0 ? price * (vatRate / 100) : 0;
+    const vatTotal = vatRate > 0 ? (price + exciseUnit) * (vatRate / 100) : 0;
     return { productId: p.id, sku: p.sku || "", productName: p.name || "", codicePl: p.codicePl || "", mlProduct: ml, nicotine: p.nicotine || 0, qty: 1, unitGross: price + exciseUnit + vatTotal, exciseUnit, exciseTotal: exciseUnit, vatTotal, purchasePrice: Number(p.purchasePrice || 0) };
   }
   function addManualLine(product) { setManualLines((p) => [...p, makeLineFromProduct(product)]); setManualSearch(""); setManualResults([]); }
@@ -823,11 +823,17 @@ function LinesEditor({ lines, search, setSearch, results, onAdd, onUpdate, onRem
       if (input) input.focus();
     }
   }
+  function handleSearchKeyDown(e) {
+    if (e.key === "Enter" && results.length > 0) {
+      e.preventDefault();
+      onAdd(results[0]);
+    }
+  }
   return (
     <div style={{ marginTop: 16 }}>
       <h4 style={{ margin: "0 0 8px" }}>Prodotti</h4>
       <div style={{ position: "relative", marginBottom: 10 }}>
-        <input className="lines-editor-search" placeholder="Cerca prodotto per nome o SKU..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: "100%" }} />
+        <input className="lines-editor-search" placeholder="Cerca prodotto per nome o SKU..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={handleSearchKeyDown} style={{ width: "100%" }} />
         {results.length > 0 && (
           <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #cbd5e1", borderRadius: 8, maxHeight: 200, overflowY: "auto", zIndex: 50 }}>
             {results.map((p) => (
