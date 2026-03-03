@@ -1623,7 +1623,7 @@ button {
 }
 
 .analytics-modern .analytics-table-products .row {
-  grid-template-columns: minmax(200px, 2fr) 120px 120px 90px;
+  grid-template-columns: 1fr 100px 100px 60px;
 }
 .analytics-modern .analytics-table-products .row.header > div {
   white-space: nowrap;

@@ -2614,8 +2614,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get("/analytics", async (request, reply) => {
-    // CHECKLIST (admin richieste):
-    // [x] Flussi cassa = vendite - spese (arrivi merce da goods receipts)
+    // Analytics basate su FATTURE (FiscalInvoice + FiscalInvoiceLine)
     const user = await requireAdmin(request, reply);
     if (!user) return;
     const query = request.query as { start?: string; end?: string; productId?: string };
@@ -2624,21 +2623,14 @@ export async function adminRoutes(app: FastifyInstance) {
     const start = query.start ? new Date(`${query.start}T00:00:00.000Z`) : new Date(end);
     if (!query.start) start.setDate(end.getDate() - 29);
     const selectedProductId = String(query.productId || "").trim();
-    const revenueStatuses: OrderStatus[] = ["APPROVED", "FULFILLED"];
 
-    const orders = await prisma.order.findMany({
+    const invoices = await prisma.fiscalInvoice.findMany({
       where: {
-        createdAt: {
-          gte: start,
-          lte: end,
-        },
-        status: { in: revenueStatuses },
+        issuedAt: { gte: start, lte: end },
       },
       include: {
-        company: {
-          select: { name: true, province: true, city: true },
-        },
-        items: {
+        company: { select: { name: true, province: true, city: true } },
+        lines: {
           include: {
             product: {
               include: { sourceSupplier: true, taxRateRef: true, categoryRef: true },
@@ -2646,7 +2638,7 @@ export async function adminRoutes(app: FastifyInstance) {
           },
         },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { issuedAt: "asc" },
     });
 
     const days: Array<{
@@ -2798,120 +2790,70 @@ export async function adminRoutes(app: FastifyInstance) {
     const receiptLines = await prisma.goodsReceiptLine.findMany({
       where: {
         receipt: {
-          receivedAt: {
-            gte: start,
-            lte: end,
-          },
+          receivedAt: { gte: start, lte: end },
         },
       },
       include: {
-        receipt: {
-          select: {
-            receivedAt: true,
-          },
-        },
+        receipt: { select: { receivedAt: true } },
       },
     });
-    const fiscalInvoiceLines = await prisma.fiscalInvoiceLine.findMany({
-      where: {
-        invoice: {
-          issuedAt: {
-            gte: start,
-            lte: end,
-          },
-        },
-      },
-      include: {
-        invoice: {
-          select: {
-            issuedAt: true,
-          },
-        },
-      },
-    });
-    let invoiceRevenueTotal = 0;
-    const invoiceRevenueByDay = new Map<string, number>();
-    for (const line of fiscalInvoiceLines) {
-      const key = line.invoice.issuedAt.toISOString().slice(0, 10);
-      const lineRevenue = Number(line.unitGross || 0) * Number(line.qty || 0);
-      invoiceRevenueTotal += lineRevenue;
-      invoiceRevenueByDay.set(key, (invoiceRevenueByDay.get(key) || 0) + lineRevenue);
-    }
     const expenseInvoices = await prisma.expenseInvoice.findMany({
       where: {
-        expenseDate: {
-          gte: start,
-          lte: end,
-        },
+        expenseDate: { gte: start, lte: end },
       },
-      select: {
-        expenseDate: true,
-        total: true,
-      },
+      select: { expenseDate: true, total: true },
     });
     for (const line of receiptLines) {
       const key = line.receipt.receivedAt.toISOString().slice(0, 10);
       const idx = dayIndex.get(key);
       const lineExpense = Number(line.unitCost || 0) * Number(line.qty || 0);
       expenses += lineExpense;
-      if (idx != null) {
-        days[idx].expenses += lineExpense;
-      }
+      if (idx != null) days[idx].expenses += lineExpense;
     }
     for (const expense of expenseInvoices) {
       const key = expense.expenseDate.toISOString().slice(0, 10);
       const idx = dayIndex.get(key);
       const value = Number(expense.total || 0);
       expenses += value;
-      if (idx != null) {
-        days[idx].expenses += value;
-      }
+      if (idx != null) days[idx].expenses += value;
     }
 
-    for (const order of orders) {
-      const key = order.createdAt.toISOString().slice(0, 10);
+    // Aggregate from invoices
+    for (const inv of invoices) {
+      const key = inv.issuedAt.toISOString().slice(0, 10);
       const idx = dayIndex.get(key);
-      const orderRevenue = order.items.reduce((sum, i) => sum + Number(i.lineTotal || 0), 0);
-      const orderItems = order.items.reduce((sum, i) => sum + i.qty, 0);
+      const invoiceLines = inv.lines.filter((l) => l.sku !== "SHIPPING");
+      const invoiceRevenue = invoiceLines.reduce((sum, l) => sum + Number(l.unitGross || 0) * Number(l.qty || 0), 0);
+      const invoiceItems = invoiceLines.reduce((sum, l) => sum + l.qty, 0);
       const area =
-        resolveRegion(order.company?.province?.trim() || "") ||
-        resolveRegion(order.company?.city?.trim() || "") ||
+        resolveRegion(inv.company?.province?.trim() || "") ||
+        resolveRegion(inv.company?.city?.trim() || "") ||
         "N/D";
       const geo = geoAgg.get(area) || { area, revenue: 0, orders: 0 };
-      geo.revenue += orderRevenue;
+      geo.revenue += invoiceRevenue;
       geo.orders += 1;
       geoAgg.set(area, geo);
       if (idx != null) {
         days[idx].orders += 1;
-        days[idx].revenue += orderRevenue;
+        days[idx].revenue += invoiceRevenue;
       }
-      const clientId = order.companyId || order.company?.name || "N/D";
-      const clientName = order.company?.name || "N/D";
-      const clientRow = clientAgg.get(clientId) || {
-        id: clientId,
-        name: clientName,
-        revenue: 0,
-        orders: 0,
-        items: 0,
-      };
-      clientRow.revenue += orderRevenue;
+      const clientId = inv.companyId || inv.company?.name || "N/D";
+      const clientName = inv.company?.name || "N/D";
+      const clientRow = clientAgg.get(clientId) || { id: clientId, name: clientName, revenue: 0, orders: 0, items: 0 };
+      clientRow.revenue += invoiceRevenue;
       clientRow.orders += 1;
-      clientRow.items += orderItems;
+      clientRow.items += invoiceItems;
       clientAgg.set(clientId, clientRow);
       orderCount += 1;
-      revenue += orderRevenue;
-      let orderHasSelected = false;
-      for (const item of order.items) {
-        const lineTotal = Number(item.lineTotal);
-        const qty = item.qty;
-        const product = item.product;
+      revenue += invoiceRevenue;
+      let invoiceHasSelected = false;
+      for (const line of invoiceLines) {
+        const lineTotal = Number(line.unitGross || 0) * Number(line.qty || 0);
+        const qty = line.qty;
+        const product = line.product;
         const purchase = Number(product?.purchasePrice || 0);
-        const rate = Number(product?.taxRate || product?.taxRateRef?.rate || 0);
-        const exciseUnit = Number(
-          product?.exciseTotal ?? (Number(product?.exciseMl || 0) + Number(product?.exciseProduct || 0))
-        );
-        const exciseAmount = exciseUnit * qty;
-        const vatAmount = rate > 0 ? (lineTotal + exciseAmount) * (rate / 100) : 0;
+        const exciseAmount = Number(line.exciseTotal || 0);
+        const vatAmount = Number(line.vatTotal || 0);
 
         cost += purchase * qty;
         vat += vatAmount;
@@ -2925,56 +2867,36 @@ export async function adminRoutes(app: FastifyInstance) {
           days[idx].items += qty;
         }
 
-        if (product) {
-          const existing = productAgg.get(product.id) || {
-            id: product.id,
-            name: product.name,
-            sku: product.sku,
-            revenue: 0,
-            qty: 0,
-          };
-          existing.revenue += lineTotal;
-          existing.qty += qty;
-          productAgg.set(product.id, existing);
-        }
+        const productId = line.productId || line.sku;
+        const pAgg = productAgg.get(productId) || {
+          id: productId,
+          name: line.productName || product?.name || line.sku,
+          sku: line.sku,
+          revenue: 0,
+          qty: 0,
+        };
+        pAgg.revenue += lineTotal;
+        pAgg.qty += qty;
+        productAgg.set(productId, pAgg);
 
         const supplier = product?.sourceSupplier;
         if (supplier) {
-          const existing = supplierAgg.get(supplier.id) || {
-            id: supplier.id,
-            name: supplier.name,
-            revenue: 0,
-            qty: 0,
-          };
+          const existing = supplierAgg.get(supplier.id) || { id: supplier.id, name: supplier.name, revenue: 0, qty: 0 };
           existing.revenue += lineTotal;
           existing.qty += qty;
           supplierAgg.set(supplier.id, existing);
         }
 
-        const categoryName =
-          product?.categoryRef?.name ||
-          product?.category ||
-          "-";
-        if (categoryName) {
-          const existing = categoryAgg.get(categoryName) || {
-            name: categoryName,
-            revenue: 0,
-            qty: 0,
-            cost: 0,
-          };
-          existing.revenue += lineTotal;
-          existing.qty += qty;
-          existing.cost += purchase * qty;
-          categoryAgg.set(categoryName, existing);
-        }
+        const categoryName = product?.categoryRef?.name || product?.category || "-";
+        const catRow = categoryAgg.get(categoryName) || { name: categoryName, revenue: 0, qty: 0, cost: 0 };
+        catRow.revenue += lineTotal;
+        catRow.qty += qty;
+        catRow.cost += purchase * qty;
+        categoryAgg.set(categoryName, catRow);
 
-        if (selectedProductId && product?.id === selectedProductId) {
-          orderHasSelected = true;
-          selectedInfo = {
-            id: product.id,
-            sku: product.sku,
-            name: product.name,
-          };
+        if (selectedProductId && (line.productId === selectedProductId || line.sku === selectedProductId)) {
+          invoiceHasSelected = true;
+          selectedInfo = { id: line.productId || line.sku, sku: line.sku, name: line.productName || product?.name || line.sku };
           selectedRevenue += lineTotal;
           selectedCost += purchase * qty;
           selectedVat += vatAmount;
@@ -2989,19 +2911,25 @@ export async function adminRoutes(app: FastifyInstance) {
           }
         }
       }
-      if (selectedProductId && orderHasSelected) {
+      if (selectedProductId && invoiceHasSelected) {
         selectedOrders += 1;
         if (idx != null) selectedDaily[idx].orders += 1;
       }
     }
 
+    const invoiceRevenueTotal = revenue;
+    const invoiceRevenueByDay = new Map<string, number>();
+    for (const d of days) {
+      if (d.revenue > 0) invoiceRevenueByDay.set(d.date, d.revenue);
+    }
+
     for (const d of days) {
       d.margin = (d.revenue - d.vat - d.excise) - d.cost;
-      d.cashflow = (invoiceRevenueByDay.get(d.date) || 0) - d.expenses;
+      d.cashflow = d.revenue - d.expenses;
     }
     for (const d of selectedDaily) {
       d.margin = (d.revenue - d.vat - d.excise) - d.cost;
-      d.cashflow = (invoiceRevenueByDay.get(d.date) || 0) - d.expenses;
+      d.cashflow = d.revenue - d.expenses;
     }
 
     const topProducts = Array.from(productAgg.values())
@@ -3187,34 +3115,28 @@ export async function adminRoutes(app: FastifyInstance) {
     const productId = String(query.productId || "").trim();
     const page = Math.max(1, Number(query.page || 1));
     const perPage = Math.min(500, Math.max(1, Number(query.perPage || 150)));
-    const revenueStatuses: OrderStatus[] = ["APPROVED", "FULFILLED"];
 
-    const orders = await prisma.order.findMany({
+    const invoices = await prisma.fiscalInvoice.findMany({
       where: {
-        createdAt: { gte: start, lte: end },
-        status: { in: revenueStatuses },
+        issuedAt: { gte: start, lte: end },
         ...(companyId ? { companyId } : {}),
       },
       include: {
-        company: {
-          select: { id: true, name: true },
-        },
-        items: {
+        company: { select: { id: true, name: true } },
+        lines: {
           include: {
-            product: {
-              include: { taxRateRef: true },
-            },
+            product: { include: { taxRateRef: true } },
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { issuedAt: "desc" },
     });
 
     const lines: Array<{
       id: string;
       createdAt: Date;
       orderId: string;
-      orderNumber: number | null;
+      orderNumber: string | null;
       companyId: string | null;
       companyName: string;
       productId: string;
@@ -3229,37 +3151,34 @@ export async function adminRoutes(app: FastifyInstance) {
       cost: number;
       margin: number;
     }> = [];
-    const ordersSet = new Set<string>();
+    const invoicesSet = new Set<string>();
 
-    for (const order of orders) {
-      for (const item of order.items) {
-        if (productId && item.productId !== productId) continue;
-        const lineNet = Number(item.lineTotal || 0);
-        const qty = Number(item.qty || 0);
-        const purchase = Number(item.product?.purchasePrice || 0);
-        const rate = Number(item.product?.taxRate || item.product?.taxRateRef?.rate || 0);
-        const exciseUnit = Number(
-          item.product?.exciseTotal ??
-          (Number(item.product?.exciseMl || 0) + Number(item.product?.exciseProduct || 0))
-        );
-        const excise = exciseUnit * qty;
-        const vat = rate > 0 ? (lineNet + excise) * (rate / 100) : 0;
-        const lineGross = lineNet + vat + excise;
+    for (const inv of invoices) {
+      for (const line of inv.lines) {
+        if (line.sku === "SHIPPING") continue;
+        if (productId && line.productId !== productId) continue;
+        const qty = Number(line.qty || 0);
+        const lineGross = Number(line.unitGross || 0) * qty;
+        const excise = Number(line.exciseTotal || 0);
+        const vat = Number(line.vatTotal || 0);
+        const lineNet = lineGross - excise - vat;
+        const purchase = Number(line.product?.purchasePrice || 0);
         const cost = purchase * qty;
         const margin = lineNet - cost;
+        const unitPrice = qty > 0 ? lineGross / qty : 0;
 
         lines.push({
-          id: item.id,
-          createdAt: order.createdAt,
-          orderId: order.id,
-          orderNumber: order.orderNumber ?? null,
-          companyId: order.company?.id || null,
-          companyName: order.company?.name || "N/D",
-          productId: item.productId,
-          sku: item.sku,
-          productName: item.name,
+          id: line.id,
+          createdAt: inv.issuedAt,
+          orderId: inv.id,
+          orderNumber: inv.invoiceNumber ?? null,
+          companyId: inv.company?.id || null,
+          companyName: inv.company?.name || "N/D",
+          productId: line.productId || line.sku,
+          sku: line.sku,
+          productName: line.productName,
           qty,
-          unitPrice: Number(item.unitPrice || 0),
+          unitPrice,
           lineNet,
           vat,
           excise,
@@ -3267,7 +3186,7 @@ export async function adminRoutes(app: FastifyInstance) {
           cost,
           margin,
         });
-        ordersSet.add(order.id);
+        invoicesSet.add(inv.id);
       }
     }
 
@@ -3285,7 +3204,7 @@ export async function adminRoutes(app: FastifyInstance) {
       },
       {
         rows: 0,
-        orders: ordersSet.size,
+        orders: invoicesSet.size,
         qty: 0,
         revenueNet: 0,
         revenueGross: 0,
