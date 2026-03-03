@@ -2517,11 +2517,16 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/suppliers", async (request, reply) => {
     const user = await requireAdmin(request, reply);
     if (!user) return;
+    const query = request.query as any;
+    const dropOnly = query?.drop === "true";
     const timeout = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("DB timeout in /admin/suppliers")), 2000)
     );
     const suppliers = await Promise.race([
-      prisma.supplier.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.supplier.findMany({
+        where: dropOnly ? { isDropSupplier: true } : undefined,
+        orderBy: { createdAt: "desc" },
+      }),
       timeout,
     ]);
     return suppliers;
@@ -3899,6 +3904,25 @@ export async function adminRoutes(app: FastifyInstance) {
     const user = await requireAdmin(request, reply);
     if (!user) return;
     const id = (request.params as any).id as string;
+
+    // Restore inventory stock for each invoice line before deleting
+    const invoice = await prisma.fiscalInvoice.findUnique({
+      where: { id },
+      include: { lines: true },
+    });
+    if (!invoice) return reply.notFound("Fattura non trovata");
+
+    for (const line of invoice.lines) {
+      if (line.sku === "SHIPPING") continue;
+      const invItem = await prisma.internalInventoryItem.findUnique({ where: { sku: line.sku } });
+      if (invItem) {
+        await prisma.internalInventoryItem.update({
+          where: { id: invItem.id },
+          data: { stockQty: { increment: line.qty } },
+        });
+      }
+    }
+
     await prisma.treasurySettlement.deleteMany({
       where: { sourceType: TreasurySourceType.FISCAL_INVOICE, sourceId: id },
     });
@@ -3940,6 +3964,30 @@ export async function adminRoutes(app: FastifyInstance) {
     await prisma.fiscalInvoice.update({ where: { id }, data });
 
     if (body.lines) {
+      // Adjust inventory stock: restore old line quantities, then decrement new
+      const oldQtyBySku: Record<string, number> = {};
+      for (const line of invoice.lines) {
+        if (line.sku === "SHIPPING") continue;
+        oldQtyBySku[line.sku] = (oldQtyBySku[line.sku] || 0) + line.qty;
+      }
+      const newQtyBySku: Record<string, number> = {};
+      for (const line of body.lines) {
+        if (line.sku === "SHIPPING") continue;
+        newQtyBySku[line.sku] = (newQtyBySku[line.sku] || 0) + line.qty;
+      }
+      const allSkus = new Set([...Object.keys(oldQtyBySku), ...Object.keys(newQtyBySku)]);
+      for (const sku of allSkus) {
+        const diff = (oldQtyBySku[sku] || 0) - (newQtyBySku[sku] || 0);
+        if (diff === 0) continue;
+        const invItem = await prisma.internalInventoryItem.findUnique({ where: { sku } });
+        if (invItem) {
+          await prisma.internalInventoryItem.update({
+            where: { id: invItem.id },
+            data: { stockQty: { increment: diff } },
+          });
+        }
+      }
+
       await prisma.fiscalInvoiceLine.deleteMany({ where: { invoiceId: id } });
       if (body.lines.length) {
         await prisma.fiscalInvoiceLine.createMany({
@@ -4907,6 +4955,7 @@ export async function adminRoutes(app: FastifyInstance) {
         phone: z.string().optional(),
         email: z.string().optional(),
         isPrimary: z.boolean().optional(),
+        isDropSupplier: z.boolean().optional(),
         csvFullUrl: z.string().url().optional(),
         csvStockUrl: z.string().url().optional(),
         fieldMap: z.record(z.string()).optional(),

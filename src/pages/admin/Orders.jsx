@@ -1189,7 +1189,7 @@ export default function AdminOrders() {
       {showCreate ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setShowCreate(false)}>
-            <div className="modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal product-modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
                 <div className="modal-title">Crea ordine manuale</div>
@@ -1391,7 +1391,7 @@ export default function AdminOrders() {
       {summaryOrder ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setSummaryOrder(null)}>
-            <div className="modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal product-modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div>
                   <div className="modal-title">Riepilogo ordine</div>
@@ -1601,7 +1601,7 @@ export default function AdminOrders() {
       {editingOrder ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setEditingOrder(null)}>
-            <div className="modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal product-modal order-modal shopify-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div>
                   <div className="modal-title">Modifica ordine</div>

@@ -59,7 +59,7 @@ export default function AdminCategories() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("cards");
-  const [sortBy, setSortBy] = useState("count-desc");
+  const [sortBy, setSortBy] = useState("tree");
   const [showOnlyRoot, setShowOnlyRoot] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", parentId: "" });
   const [editing, setEditing] = useState(null);
@@ -243,6 +243,7 @@ export default function AdminCategories() {
   }, [search, items]);
   const sortedVisible = useMemo(() => {
     const base = showOnlyRoot ? visibleFlat.filter((c) => !c.parentId) : visibleFlat;
+    if (sortBy === "tree") return base; // preserve tree order (parent + children grouped by sortOrder)
     return [...base].sort((a, b) => {
       if (sortBy === "name-asc") return String(a.name || "").localeCompare(String(b.name || ""));
       if (sortBy === "name-desc") return String(b.name || "").localeCompare(String(a.name || ""));

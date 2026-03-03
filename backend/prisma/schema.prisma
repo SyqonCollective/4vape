@@ -153,6 +153,7 @@ model Supplier {
   phone       String?
   email       String?
   isPrimary   Boolean         @default(false)
+  isDropSupplier Boolean      @default(false)
   apiType     SupplierApiType @default(CSV)
   csvFullUrl  String?
   csvStockUrl String?

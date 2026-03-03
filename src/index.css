@@ -1623,7 +1623,10 @@ button {
 }
 
 .analytics-modern .analytics-table-products .row {
-  grid-template-columns: minmax(180px, 1.6fr) 100px 110px 62px;
+  grid-template-columns: minmax(200px, 2fr) 120px 120px 70px;
+}
+.analytics-modern .analytics-table-products .row.header > div {
+  white-space: nowrap;
 }
 
 .analytics-modern .analytics-table-clients .row {
@@ -6457,12 +6460,12 @@ button {
 
 .inventory-row {
   display: grid;
-  grid-template-columns: 48px 110px minmax(220px, 1.4fr) 120px 120px 120px 90px 110px 110px minmax(120px, 0.9fr) 95px 100px auto;
+  grid-template-columns: 48px 110px minmax(220px, 1.4fr) 120px 120px 120px 90px 110px 110px minmax(120px, 0.9fr) 110px 100px auto;
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1280px;
+  min-width: 1320px;
 }
 
 .inventory-row.header {
@@ -6472,7 +6475,11 @@ button {
   color: #64748b;
   font-weight: 700;
   background: #f8fafc;
-  min-width: 1280px;
+  min-width: 1320px;
+}
+
+.inventory-row.header > div {
+  white-space: nowrap;
 }
 
 .inventory-row input[type="checkbox"] {
@@ -6791,12 +6798,12 @@ button {
 }
 
 .goods-receipts-table .row {
-  grid-template-columns: 90px 100px minmax(140px, 1fr) minmax(120px, 0.8fr) 100px 100px 100px 90px 100px 140px;
+  grid-template-columns: 100px 120px minmax(140px, 1fr) minmax(120px, 0.8fr) 110px 100px 110px 90px 110px 140px;
   min-width: 0;
 }
 
 .goods-receipts-table .row.header {
-  grid-template-columns: 90px 100px minmax(140px, 1fr) minmax(120px, 0.8fr) 100px 100px 100px 90px 100px 140px;
+  grid-template-columns: 100px 120px minmax(140px, 1fr) minmax(120px, 0.8fr) 110px 100px 110px 90px 110px 140px;
   min-width: 0;
 }
 
@@ -6970,8 +6977,8 @@ button {
 
 .companies-table-pro .row,
 .companies-table-pro .row.header {
-  grid-template-columns: minmax(190px, 1.15fr) 110px 120px minmax(150px, 0.95fr) minmax(180px, 1fr) 120px 110px 70px 100px 100px 150px;
-  min-width: 1420px;
+  grid-template-columns: minmax(190px, 1.15fr) 110px 120px minmax(140px, 0.9fr) minmax(170px, 1fr) 130px 110px 70px 100px 100px 100px 90px;
+  min-width: 1520px;
 }
 
 .companies-table-pro .row > div {
@@ -7042,8 +7049,8 @@ button {
 
 .treasury-table-pro .row,
 .treasury-table-pro .row.header {
-  grid-template-columns: 36px 100px 110px 120px minmax(160px, 1.2fr) 110px 100px 180px 120px;
-  min-width: 1100px;
+  grid-template-columns: 36px 100px 120px 130px minmax(160px, 1.2fr) 120px 100px 180px 120px;
+  min-width: 1140px;
 }
 
 .treasury-table-pro input[type="checkbox"] {

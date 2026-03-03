@@ -337,7 +337,15 @@ export default function AdminInvoices() {
   }
 
   function makeLineFromProduct(p) {
-    return { productId: p.id, sku: p.sku || "", productName: p.name || "", codicePl: p.codicePl || "", mlProduct: p.mlProduct || 0, nicotine: p.nicotine || 0, qty: 1, unitGross: Number(p.price || 0), exciseUnit: Number(p.exciseUnit || 0), exciseTotal: Number(p.exciseUnit || 0), vatTotal: Number(p.price || 0) * 0.22, purchasePrice: Number(p.purchasePrice || 0) };
+    const price = Number(p.price || 0);
+    const ml = Number(p.mlProduct || 0);
+    const exciseRef = p.exciseRateRef;
+    const exciseUnit = exciseRef
+      ? (exciseRef.type === "ML" ? Number(exciseRef.amount || 0) * ml : Number(exciseRef.amount || 0))
+      : Number(p.exciseTotal ?? (Number(p.exciseMl || 0) + Number(p.exciseProduct || 0)));
+    const vatRate = Number(p.taxRate || p.taxRateRef?.rate || 0);
+    const vatTotal = vatRate > 0 ? price * (vatRate / 100) : 0;
+    return { productId: p.id, sku: p.sku || "", productName: p.name || "", codicePl: p.codicePl || "", mlProduct: ml, nicotine: p.nicotine || 0, qty: 1, unitGross: price + exciseUnit + vatTotal, exciseUnit, exciseTotal: exciseUnit, vatTotal, purchasePrice: Number(p.purchasePrice || 0) };
   }
   function addManualLine(product) { setManualLines((p) => [...p, makeLineFromProduct(product)]); setManualSearch(""); setManualResults([]); }
   function updateManualLine(i, field, val) { setManualLines((p) => p.map((l, j) => j === i ? { ...l, [field]: val } : l)); }
@@ -536,16 +544,16 @@ export default function AdminInvoices() {
             placeholder="Cerca numero, cliente…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ minWidth: 180, flex: "1 1 200px" }}
+            style={{ minWidth: 200, flex: "1 1 240px" }}
           />
-          <input type="date" className="input" value={startDate} onChange={(e) => setStartDate(e.target.value)} title="Data dal" style={{ width: 140 }} />
-          <input type="date" className="input" value={endDate} onChange={(e) => setEndDate(e.target.value)} title="Data al" style={{ width: 140 }} />
-          <select className="select" value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: 120 }}>
+          <input type="date" className="input" value={startDate} onChange={(e) => setStartDate(e.target.value)} title="Data dal" style={{ width: 150 }} />
+          <input type="date" className="input" value={endDate} onChange={(e) => setEndDate(e.target.value)} title="Data al" style={{ width: 150 }} />
+          <select className="select" value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: 140 }}>
             <option value="">Stato: Tutti</option>
             <option value="DA_SALDARE">Da saldare</option>
             <option value="SALDATA">Saldata</option>
           </select>
-          <select className="select" value={companyId} onChange={(e) => setCompanyId(e.target.value)} style={{ minWidth: 160, flex: "1 1 160px" }}>
+          <select className="select" value={companyId} onChange={(e) => setCompanyId(e.target.value)} style={{ minWidth: 180, flex: "1 1 200px" }}>
             <option value="">Cliente: Tutti</option>
             {companies.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
@@ -637,7 +645,7 @@ export default function AdminInvoices() {
       {showManual ? (
         <Portal>
           <div className="modal-backdrop" onClick={() => setShowManual(false)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 900 }}>
+            <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Nuova fattura manuale</h3>
                 <button className="btn ghost" onClick={() => setShowManual(false)}>Chiudi</button>
@@ -662,7 +670,7 @@ export default function AdminInvoices() {
       {detail && (
         <Portal>
           <div className="modal-backdrop" onClick={() => setDetail(null)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 900 }}>
+            <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-title"><h3>Fattura {detail.numero}</h3></div>
                 <button className="btn ghost" onClick={() => setDetail(null)}>Chiudi</button>
@@ -724,7 +732,7 @@ export default function AdminInvoices() {
       {editRow && editDraft && (
         <Portal>
           <div className="modal-backdrop" onClick={() => { setEditRow(null); setEditDraft(null); setEditLines([]); }}>
-            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 900 }}>
+            <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Modifica fattura {editRow.numero}</h3>
                 <button className="btn ghost" onClick={() => { setEditRow(null); setEditDraft(null); setEditLines([]); }}>Chiudi</button>
@@ -808,11 +816,18 @@ export default function AdminInvoices() {
 
 function LinesEditor({ lines, search, setSearch, results, onAdd, onUpdate, onRemove }) {
   const t = calcLineTotals(lines);
+  function handleKeyDown(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const input = document.querySelector(".lines-editor-search");
+      if (input) input.focus();
+    }
+  }
   return (
     <div style={{ marginTop: 16 }}>
       <h4 style={{ margin: "0 0 8px" }}>Prodotti</h4>
       <div style={{ position: "relative", marginBottom: 10 }}>
-        <input placeholder="Cerca prodotto per nome o SKU..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: "100%" }} />
+        <input className="lines-editor-search" placeholder="Cerca prodotto per nome o SKU..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: "100%" }} />
         {results.length > 0 && (
           <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #cbd5e1", borderRadius: 8, maxHeight: 200, overflowY: "auto", zIndex: 50 }}>
             {results.map((p) => (
@@ -832,10 +847,10 @@ function LinesEditor({ lines, search, setSearch, results, onAdd, onUpdate, onRem
             <div className="row" key={i} style={{ gridTemplateColumns: "80px 1fr 60px 80px 80px 80px 80px 40px" }}>
               <div className="mono">{l.sku || "-"}</div>
               <div>{l.productName || "-"}</div>
-              <div><input type="number" min="1" value={l.qty} onChange={(e) => onUpdate(i, "qty", Number(e.target.value))} style={{ width: 50 }} /></div>
-              <div><input type="number" step="0.01" value={l.unitGross} onChange={(e) => onUpdate(i, "unitGross", Number(e.target.value))} style={{ width: 70 }} /></div>
-              <div><input type="number" step="0.01" value={l.exciseTotal} onChange={(e) => onUpdate(i, "exciseTotal", Number(e.target.value))} style={{ width: 70 }} /></div>
-              <div><input type="number" step="0.01" value={l.vatTotal} onChange={(e) => onUpdate(i, "vatTotal", Number(e.target.value))} style={{ width: 70 }} /></div>
+              <div><input type="number" min="1" value={l.qty} onChange={(e) => onUpdate(i, "qty", Number(e.target.value))} onKeyDown={handleKeyDown} style={{ width: 50 }} /></div>
+              <div><input type="number" step="0.01" value={l.unitGross} onChange={(e) => onUpdate(i, "unitGross", Number(e.target.value))} onKeyDown={handleKeyDown} style={{ width: 70 }} /></div>
+              <div><input type="number" step="0.01" value={l.exciseTotal} onChange={(e) => onUpdate(i, "exciseTotal", Number(e.target.value))} onKeyDown={handleKeyDown} style={{ width: 70 }} /></div>
+              <div><input type="number" step="0.01" value={l.vatTotal} onChange={(e) => onUpdate(i, "vatTotal", Number(e.target.value))} onKeyDown={handleKeyDown} style={{ width: 70 }} /></div>
               <div>{money(Number(l.unitGross) * Number(l.qty))}</div>
               <div><button className="btn ghost small danger" onClick={() => onRemove(i)} style={{ padding: 2 }}>✕</button></div>
             </div>

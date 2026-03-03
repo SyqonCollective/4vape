@@ -156,6 +156,16 @@ export default function AdminSupplierRegistry() {
     }
   }
 
+  async function deleteSupplier(id) {
+    if (!confirm("Eliminare questo fornitore?")) return;
+    try {
+      await api(`/admin/suppliers/${id}`, { method: "DELETE" });
+      await load();
+    } catch {
+      setError("Impossibile eliminare fornitore: potrebbe avere prodotti o carichi collegati");
+    }
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -202,6 +212,7 @@ export default function AdminSupplierRegistry() {
               </div>
               <div className="actions">
                 <button className="btn ghost small" onClick={() => openEdit(row)}>Modifica</button>
+                <button className="btn ghost small danger" onClick={() => deleteSupplier(row.id)}>Elimina</button>
               </div>
             </div>
           ))}

@@ -499,10 +499,12 @@ export default function AdminCompanies() {
               <div>Fatturato</div>
               <div>Media ordini</div>
               <div>Stato</div>
+              <div>Azioni</div>
             </div>
             {visibleCompanies.length === 0 ? (
               <div className="row">
                 <div className="muted">Nessuna azienda presente</div>
+                <div />
                 <div />
                 <div />
                 <div />
@@ -529,7 +531,7 @@ export default function AdminCompanies() {
                   <div>{c?.stats?.orders ?? 0}</div>
                   <div>{formatMoney(c?.stats?.revenue ?? 0)}</div>
                   <div>{formatMoney(c?.stats?.averageOrderValue ?? 0)}</div>
-                  <div className="actions">
+                  <div>
                     <span
                       className={`tag ${
                         c.status === "SUSPENDED" ? "danger" : c.status === "PENDING" ? "warn" : "success"
@@ -541,8 +543,10 @@ export default function AdminCompanies() {
                         ? "In attesa"
                         : "Attivo"}
                     </span>
+                  </div>
+                  <div className="actions">
                     <button
-                      className="btn ghost"
+                      className="btn ghost small"
                       onClick={(e) => {
                         e.stopPropagation();
                         openEditCompany(c);

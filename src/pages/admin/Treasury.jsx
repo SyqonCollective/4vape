@@ -157,6 +157,21 @@ export default function AdminTreasury() {
     [filtered]
   );
 
+  const selectedTotals = useMemo(() => {
+    if (!selectedIds.size) return null;
+    return sorted
+      .filter((r) => selectedIds.has(`${r.sourceType}-${r.sourceId}`))
+      .reduce(
+        (acc, r) => {
+          acc.total += Number(r.total || 0);
+          if (r.paid) acc.paid += Number(r.total || 0);
+          else acc.pending += Number(r.total || 0);
+          return acc;
+        },
+        { total: 0, paid: 0, pending: 0 }
+      );
+  }, [sorted, selectedIds]);
+
   function toggleSort(field) {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortField(field); setSortDir("asc"); }
@@ -187,6 +202,9 @@ export default function AdminTreasury() {
     const printRows = selectedIds.size > 0
       ? sorted.filter((r) => selectedIds.has(`${r.sourceType}-${r.sourceId}`))
       : sorted;
+    const printTotal = printRows.reduce((s, r) => s + Number(r.total || 0), 0);
+    const printPaid = printRows.filter((r) => r.paid).reduce((s, r) => s + Number(r.total || 0), 0);
+    const printPending = printTotal - printPaid;
     const bodyRows = printRows
       .map(
         (r) =>
@@ -195,7 +213,7 @@ export default function AdminTreasury() {
       .join("");
     const w = window.open("", "_blank", "width=1000,height=700");
     if (!w) { setError("Popup bloccato"); return; }
-    w.document.write(`<html><head><title>Tesoreria</title><style>body{font-family:Arial,sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cbd5e1;padding:8px;font-size:13px;text-align:left}th{background:#f8fafc}</style></head><body><h1>Tesoreria</h1><table><thead><tr><th>Data</th><th>Tipo</th><th>N. fattura</th><th>Controparte</th><th>Totale</th><th>Stato</th></tr></thead><tbody>${bodyRows}</tbody></table><script>window.onload=()=>{window.print();window.close();};<\/script></body></html>`);
+    w.document.write(`<html><head><title>Tesoreria</title><style>body{font-family:Arial,sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cbd5e1;padding:8px;font-size:13px;text-align:left}th{background:#f8fafc}.tot{margin-top:16px;font-size:14px}</style></head><body><h1>Tesoreria${selectedIds.size > 0 ? ` (${printRows.length} selezionati)` : ""}</h1><table><thead><tr><th>Data</th><th>Tipo</th><th>N. fattura</th><th>Controparte</th><th>Totale</th><th>Stato</th></tr></thead><tbody>${bodyRows}</tbody></table><div class="tot"><strong>Totale: ${money(printTotal)}</strong> · Saldato: ${money(printPaid)} · In attesa: ${money(printPending)}</div><script>window.onload=()=>{window.print();window.close();};<\/script></body></html>`);
     w.document.close();
   }
 
@@ -260,6 +278,15 @@ export default function AdminTreasury() {
         <div className="card"><div className="card-label">Saldato</div><div className="card-value">{money(totals.paid)}</div></div>
         <div className="card"><div className="card-label">In attesa</div><div className="card-value">{money(totals.pending)}</div></div>
       </div>
+
+      {selectedTotals && (
+        <div className="cards treasury-cards" style={{ marginTop: 0 }}>
+          <div className="card"><div className="card-label">Selezionati</div><div className="card-value">{selectedIds.size}</div></div>
+          <div className="card"><div className="card-label">Totale selez.</div><div className="card-value">{money(selectedTotals.total)}</div></div>
+          <div className="card"><div className="card-label">Saldato selez.</div><div className="card-value">{money(selectedTotals.paid)}</div></div>
+          <div className="card"><div className="card-label">In attesa selez.</div><div className="card-value">{money(selectedTotals.pending)}</div></div>
+        </div>
+      )}
 
       {viewMode === "table" ? (
         <div className="table treasury-table-pro">

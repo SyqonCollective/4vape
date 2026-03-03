@@ -98,7 +98,7 @@ export default function AdminSuppliers() {
 
   async function load() {
     try {
-      const res = await api("/admin/suppliers");
+      const res = await api("/admin/suppliers?drop=true");
       const sorted = [...(res || [])].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
@@ -138,6 +138,7 @@ export default function AdminSuppliers() {
         body: JSON.stringify({
           name: form.name,
           code: form.code,
+          isDropSupplier: true,
           csvFullUrl: form.csvFullUrl || undefined,
           csvStockUrl: form.csvStockUrl || undefined,
           legalName: form.legalName || undefined,
