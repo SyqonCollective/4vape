@@ -42,7 +42,7 @@ export default function AdminSupplierRegistry() {
   async function load() {
     try {
       const res = await api("/admin/suppliers");
-      setItems(res || []);
+      setItems((res || []).filter((s) => !s.isDropSupplier));
     } catch {
       setError("Impossibile caricare fornitori");
     }
