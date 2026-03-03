@@ -6460,12 +6460,12 @@ button {
 
 .inventory-row {
   display: grid;
-  grid-template-columns: 48px 110px minmax(220px, 1.4fr) 120px 120px 120px 90px 110px 110px minmax(120px, 0.9fr) 110px 100px auto;
+  grid-template-columns: 48px 100px minmax(180px, 1.2fr) 110px 110px 110px 80px 100px 100px minmax(190px, 1fr) 90px 80px auto;
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1320px;
+  min-width: 1380px;
 }
 
 .inventory-row.header {
@@ -6475,7 +6475,7 @@ button {
   color: #64748b;
   font-weight: 700;
   background: #f8fafc;
-  min-width: 1320px;
+  min-width: 1380px;
 }
 
 .inventory-row.header > div {
@@ -6495,9 +6495,7 @@ button {
 .inventory-row > div:nth-child(3),
 .inventory-row > div:nth-child(4),
 .inventory-row > div:nth-child(5),
-.inventory-row > div:nth-child(6),
-.inventory-row > div:nth-child(10),
-.inventory-row > div:nth-child(11) {
+.inventory-row > div:nth-child(6) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
