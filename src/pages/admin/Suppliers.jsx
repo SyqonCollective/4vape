@@ -413,6 +413,8 @@ export default function AdminSuppliers() {
         <div className="row header">
           <div>Nome</div>
           <div>Codice</div>
+          <div>CSV Completo</div>
+          <div>CSV Stock</div>
           <div>Azioni</div>
         </div>
         {items.map((s) => (
@@ -453,6 +455,8 @@ export default function AdminSuppliers() {
               )}
             </div>
             <div className="mono">{s.code}</div>
+            <div className="mono" style={{ fontSize: 11, wordBreak: "break-all" }}>{s.csvFullUrl || "-"}</div>
+            <div className="mono" style={{ fontSize: 11, wordBreak: "break-all" }}>{s.csvStockUrl || "-"}</div>
             <div className="actions">
               <button className="btn ghost" onClick={() => updateInventory(s.id)}>
                 Aggiorna inventario
