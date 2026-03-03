@@ -562,7 +562,7 @@ export default function AdminSuppliers() {
             <div className="products-kpi-card"><div className="products-kpi-label">Prodotti trovati</div><strong>{dropStats.products}</strong></div>
           </div>
           {productView === "table" ? (
-          <div className="table wide-6">
+          <div className="table drop-products-table">
             <div className="row header">
               <div>Immagine</div>
               <div>SKU</div>
@@ -570,6 +570,10 @@ export default function AdminSuppliers() {
               <div>Prezzo</div>
               <div>Giacenza</div>
               <div>Brand</div>
+              <div>Categoria</div>
+              <div>Sottocategoria</div>
+              <div>ML</div>
+              <div>Nicotina</div>
             </div>
             {supplierProducts.map((p) => (
               <div
@@ -635,6 +639,10 @@ export default function AdminSuppliers() {
                 <div>{p.price ? `€ ${Number(p.price).toFixed(2)}` : "-"}</div>
                 <div>{p.stockQty ?? "-"}</div>
                 <div>{p.brand || "-"}</div>
+                <div>{p.category || "-"}</div>
+                <div>{p.subcategory || "-"}</div>
+                <div>{p.mlProduct ?? "-"}</div>
+                <div>{p.nicotine != null ? parseFloat(Number(p.nicotine).toFixed(3)) : "-"}</div>
               </div>
             ))}
           </div>
