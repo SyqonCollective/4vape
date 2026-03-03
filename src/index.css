@@ -6460,12 +6460,12 @@ button {
 
 .inventory-row {
   display: grid;
-  grid-template-columns: 48px 100px minmax(180px, 1.2fr) 110px 110px 110px 80px 100px 100px minmax(190px, 1fr) 90px 80px auto;
-  gap: 10px;
+  grid-template-columns: 40px 80px minmax(160px, 1fr) 100px 100px 100px 70px 90px 90px 200px 90px 70px 80px;
+  gap: 8px;
   align-items: center;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  min-width: 1380px;
+  min-width: 1300px;
 }
 
 .inventory-row.header {
@@ -6475,7 +6475,7 @@ button {
   color: #64748b;
   font-weight: 700;
   background: #f8fafc;
-  min-width: 1380px;
+  min-width: 1300px;
 }
 
 .inventory-row.header > div {
