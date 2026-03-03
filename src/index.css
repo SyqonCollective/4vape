@@ -1623,18 +1623,18 @@ button {
 }
 
 .analytics-modern .analytics-table-products .row {
-  grid-template-columns: 1fr 100px 100px 60px;
+  grid-template-columns: 1fr 100px 100px 60px !important;
 }
 .analytics-modern .analytics-table-products .row.header > div {
   white-space: nowrap;
 }
 
 .analytics-modern .analytics-table-clients .row {
-  grid-template-columns: minmax(220px, 1.8fr) 90px 130px;
+  grid-template-columns: 1fr 80px 110px !important;
 }
 
 .analytics-modern .analytics-table-categories .row {
-  grid-template-columns: minmax(200px, 1.6fr) 130px 90px;
+  grid-template-columns: 1fr 110px 80px !important;
 }
 
 .analytics-modern .analytics-table .row > div {
