@@ -758,7 +758,6 @@ export default function AdminGoodsReceipts() {
         subtotal: Number(res.totalNet || 0),
         vat: Number(res.totalVat || 0),
       });
-      );
     } catch {
       setError("Impossibile aprire modifica carico");
     }
