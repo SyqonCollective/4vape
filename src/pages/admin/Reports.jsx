@@ -151,186 +151,147 @@ export default function AdminReports() {
       <div className="page-header">
         <div>
           <h1>Report</h1>
-          <p>Controllo vendite, marginalita e storico fiscale</p>
+          <p>Controllo vendite, marginalità e storico fiscale</p>
         </div>
       </div>
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="analytics-toolbar reports-toolbar-modern">
-        <div className="analytics-filters">
-          <label>
-            Da
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </label>
-          <label>
-            A
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-          </label>
-          <label>
-            Cerca cliente
-            <input
-              type="text"
-              value={companyQuery}
-              onChange={(e) => setCompanyQuery(e.target.value)}
-              placeholder="Nome, email o P.IVA"
-            />
-          </label>
-          <label>
-            Cliente
-            <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-              <option value="">Tutti i clienti</option>
-              {filteredCompanies.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Cerca prodotto
-            <input
-              type="text"
-              value={productQuery}
-              onChange={(e) => setProductQuery(e.target.value)}
-              placeholder="SKU o nome prodotto"
-            />
-          </label>
-          <label>
-            Prodotto (SKU)
-            <select value={productId} onChange={(e) => setProductId(e.target.value)}>
-              <option value="">Tutti i prodotti</option>
-              {filteredProducts.map((p) => (
-                <option key={p.id} value={p.id}>{p.sku} · {p.name}</option>
-              ))}
-            </select>
-          </label>
-          <button className="btn primary" onClick={load} disabled={loading}>
-            {loading ? "Carico..." : "Aggiorna"}
+      <div className="rpt-toolbar">
+        <div className="rpt-filters">
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} title="Data dal" />
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} title="Data al" />
+          <input
+            type="text"
+            value={companyQuery}
+            onChange={(e) => setCompanyQuery(e.target.value)}
+            placeholder="Cerca cliente..."
+          />
+          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+            <option value="">Tutti i clienti</option>
+            {filteredCompanies.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={productQuery}
+            onChange={(e) => setProductQuery(e.target.value)}
+            placeholder="Cerca prodotto..."
+          />
+          <select value={productId} onChange={(e) => setProductId(e.target.value)}>
+            <option value="">Tutti i prodotti</option>
+            {filteredProducts.map((p) => (
+              <option key={p.id} value={p.id}>{p.sku} · {p.name}</option>
+            ))}
+          </select>
+          <button className="btn primary small" onClick={load} disabled={loading}>
+            {loading ? "..." : "Aggiorna"}
           </button>
         </div>
-        <div className="analytics-quick">
-          <button className="btn ghost" onClick={() => {
-            const r = rangeDays(7);
-            const s = toDateInput(r.start), e = toDateInput(r.end);
-            setStartDate(s);
-            setEndDate(e);
-            load({ start: s, end: e });
-          }}>7 giorni</button>
-          <button className="btn ghost" onClick={() => {
-            const r = rangeDays(30);
-            const s = toDateInput(r.start), e = toDateInput(r.end);
-            setStartDate(s);
-            setEndDate(e);
-            load({ start: s, end: e });
-          }}>30 giorni</button>
-          <button className="btn ghost" onClick={() => {
-            const r = rangeDays(90);
-            const s = toDateInput(r.start), e = toDateInput(r.end);
-            setStartDate(s);
-            setEndDate(e);
-            load({ start: s, end: e });
-          }}>90 giorni</button>
-        </div>
-        <div className="analytics-export">
-          <button className="btn ghost" onClick={exportCsv}>Export CSV</button>
+        <div className="rpt-actions">
+          <div className="rpt-quick">
+            <button className="btn ghost small" onClick={() => {
+              const r = rangeDays(7);
+              const s = toDateInput(r.start), e = toDateInput(r.end);
+              setStartDate(s);
+              setEndDate(e);
+              load({ start: s, end: e });
+            }}>7g</button>
+            <button className="btn ghost small" onClick={() => {
+              const r = rangeDays(30);
+              const s = toDateInput(r.start), e = toDateInput(r.end);
+              setStartDate(s);
+              setEndDate(e);
+              load({ start: s, end: e });
+            }}>30g</button>
+            <button className="btn ghost small" onClick={() => {
+              const r = rangeDays(90);
+              const s = toDateInput(r.start), e = toDateInput(r.end);
+              setStartDate(s);
+              setEndDate(e);
+              load({ start: s, end: e });
+            }}>90g</button>
+          </div>
+          <button className="btn ghost small" onClick={exportCsv}>Export CSV</button>
         </div>
       </div>
 
-      <div className="reports-tabs">
-        <button
-          type="button"
-          className={`reports-tab ${activeTab === "overview" ? "active" : ""}`}
-          onClick={() => setActiveTab("overview")}
-        >
-          Overview
-        </button>
-        <button
-          type="button"
-          className={`reports-tab ${activeTab === "details" ? "active" : ""}`}
-          onClick={() => setActiveTab("details")}
-        >
-          Dettaglio vendite
-        </button>
+      <div className="rpt-kpis">
+        <div className="rpt-kpi"><span className="rpt-kpi-val">{data.totals.rows}</span><span className="rpt-kpi-lbl">Righe</span></div>
+        <div className="rpt-kpi"><span className="rpt-kpi-val">{data.totals.orders}</span><span className="rpt-kpi-lbl">Ordini</span></div>
+        <div className="rpt-kpi"><span className="rpt-kpi-val">{data.totals.qty}</span><span className="rpt-kpi-lbl">Pezzi</span></div>
+        <div className="rpt-kpi rpt-kpi-accent"><span className="rpt-kpi-val">{formatMoney(data.totals.revenueNet)}</span><span className="rpt-kpi-lbl">Imponibile</span></div>
+        <div className="rpt-kpi"><span className="rpt-kpi-val">{formatMoney(data.totals.excise)}</span><span className="rpt-kpi-lbl">Accise</span></div>
+        <div className="rpt-kpi"><span className="rpt-kpi-val">{formatMoney(data.totals.vat)}</span><span className="rpt-kpi-lbl">IVA</span></div>
+        <div className="rpt-kpi rpt-kpi-accent"><span className="rpt-kpi-val">{formatMoney(data.totals.revenueGross)}</span><span className="rpt-kpi-lbl">Lordo</span></div>
+        <div className="rpt-kpi"><span className="rpt-kpi-val">{formatMoney(data.totals.margin)}</span><span className="rpt-kpi-lbl">Margine</span></div>
       </div>
 
-      <div className="cards analytics-cards reports-cards-modern">
-        <div className="card"><div className="card-label">Righe vendita</div><div className="card-value">{data.totals.rows}</div><div className="card-sub">Movimenti nel periodo</div></div>
-        <div className="card"><div className="card-label">Ordini</div><div className="card-value">{data.totals.orders}</div><div className="card-sub">Univoci</div></div>
-        <div className="card"><div className="card-label">Pezzi</div><div className="card-value">{data.totals.qty}</div><div className="card-sub">Totale quantità</div></div>
-        <div className="card"><div className="card-label">Totale imponibile</div><div className="card-value">{formatMoney(data.totals.revenueNet)}</div><div className="card-sub">Netto</div></div>
-        <div className="card"><div className="card-label">Accise</div><div className="card-value">{formatMoney(data.totals.excise)}</div><div className="card-sub">Nel periodo</div></div>
-        <div className="card"><div className="card-label">IVA</div><div className="card-value">{formatMoney(data.totals.vat)}</div><div className="card-sub">Nel periodo</div></div>
-        <div className="card"><div className="card-label">Totale lordo</div><div className="card-value">{formatMoney(data.totals.revenueGross)}</div><div className="card-sub">Imponibile + IVA + accise</div></div>
-        <div className="card"><div className="card-label">Margine netto-costo</div><div className="card-value">{formatMoney(data.totals.margin)}</div><div className="card-sub">Imponibile - costo prodotti</div></div>
+      <div className="rpt-tabs">
+        <button type="button" className={`rpt-tab ${activeTab === "overview" ? "active" : ""}`} onClick={() => setActiveTab("overview")}>Overview</button>
+        <button type="button" className={`rpt-tab ${activeTab === "details" ? "active" : ""}`} onClick={() => setActiveTab("details")}>Dettaglio vendite</button>
       </div>
 
       {activeTab === "overview" ? (
-        <div className="panel analytics-grid reports-overview-grid">
-          <div className="analytics-panel analytics-panel-feature">
-            <div className="panel-header"><div><h2>Top prodotti</h2><div className="muted">Per totale lordo</div></div></div>
-            <div className="table compact">
-              <div className="row header"><div>Prodotto</div><div>Pezzi</div><div>Totale</div></div>
-              {data.topProducts.map((p) => (
-                <div className="row" key={p.id}>
-                  <div>{p.sku} · {p.name}</div>
-                  <div>{p.qty}</div>
-                  <div>{formatMoney(p.revenueGross)}</div>
+        <div className="rpt-overview">
+          <div className="rpt-panel">
+            <h3>Top prodotti</h3>
+            <div className="rpt-rank-list">
+              {data.topProducts.map((p, i) => (
+                <div className="rpt-rank-item" key={p.id}>
+                  <span className="rpt-rank-pos">{i + 1}</span>
+                  <div className="rpt-rank-info">
+                    <span className="rpt-rank-name">{p.name}</span>
+                    <span className="rpt-rank-sku mono">{p.sku}</span>
+                  </div>
+                  <span className="rpt-rank-qty">{p.qty} pz</span>
+                  <span className="rpt-rank-amount">{formatMoney(p.revenueGross)}</span>
                 </div>
               ))}
+              {!data.topProducts.length && <div className="muted" style={{ padding: "1rem" }}>Nessun dato</div>}
             </div>
           </div>
-          <div className="analytics-panel analytics-panel-feature">
-            <div className="panel-header"><div><h2>Top clienti</h2><div className="muted">Per totale lordo</div></div></div>
-            <div className="table compact">
-              <div className="row header"><div>Cliente</div><div>Ordini</div><div>Totale</div></div>
-              {data.topClients.map((c) => (
-                <div className="row" key={c.id}>
-                  <div>{c.name}</div>
-                  <div>{c.orders}</div>
-                  <div>{formatMoney(c.revenueGross)}</div>
+          <div className="rpt-panel">
+            <h3>Top clienti</h3>
+            <div className="rpt-rank-list">
+              {data.topClients.map((c, i) => (
+                <div className="rpt-rank-item" key={c.id}>
+                  <span className="rpt-rank-pos">{i + 1}</span>
+                  <div className="rpt-rank-info">
+                    <span className="rpt-rank-name">{c.name}</span>
+                  </div>
+                  <span className="rpt-rank-qty">{c.orders} ord.</span>
+                  <span className="rpt-rank-amount">{formatMoney(c.revenueGross)}</span>
                 </div>
               ))}
+              {!data.topClients.length && <div className="muted" style={{ padding: "1rem" }}>Nessun dato</div>}
             </div>
           </div>
         </div>
       ) : null}
 
       {activeTab === "details" ? (
-        <div className="panel reports-detail-panel">
-          <div className="panel-header">
-            <div>
-              <h2>Dettaglio vendite</h2>
-              <div className="muted">
-                Righe: {data.pagination.total} · Pagina {data.pagination.page}/{data.pagination.totalPages}
-              </div>
-            </div>
+        <div className="rpt-detail">
+          <div className="rpt-detail-head">
+            <span>{data.pagination.total} righe · Pagina {data.pagination.page}/{data.pagination.totalPages}</span>
           </div>
-          <div className="table wide-report report-table-modern">
-            <div className="row header">
-              <div>Data</div>
-              <div>Ordine</div>
-              <div>Cliente</div>
-              <div>SKU</div>
-              <div>Prodotto</div>
-              <div>Q.tà</div>
-              <div>Imponibile</div>
-              <div>Accisa</div>
-              <div>IVA</div>
-              <div>Totale lordo</div>
-            </div>
+          <div className="rpt-detail-list">
             {data.lines.map((r) => (
-              <div className="row" key={r.id}>
-                <div>{formatDateIT(r.createdAt)}</div>
-                <div className="mono">{r.orderNumber || r.orderId.slice(-8).toUpperCase()}</div>
-                <div>{r.companyName}</div>
-                <div className="mono">{r.sku}</div>
-                <div>{r.productName}</div>
-                <div>{r.qty}</div>
-                <div>{formatMoney(r.lineNet)}</div>
-                <div>{formatMoney(r.excise)}</div>
-                <div>{formatMoney(r.vat)}</div>
-                <div>{formatMoney(r.lineGross)}</div>
+              <div className="rpt-detail-row" key={r.id}>
+                <span className="rpt-detail-date">{formatDateIT(r.createdAt)}</span>
+                <span className="rpt-detail-order mono">{r.orderNumber || r.orderId.slice(-8).toUpperCase()}</span>
+                <span className="rpt-detail-client">{r.companyName}</span>
+                <span className="rpt-detail-sku mono">{r.sku}</span>
+                <span className="rpt-detail-product">{r.productName}</span>
+                <span className="rpt-detail-qty">{r.qty}</span>
+                <span className="rpt-detail-net">{formatMoney(r.lineNet)}</span>
+                <span className="rpt-detail-excise">{formatMoney(r.excise)}</span>
+                <span className="rpt-detail-vat">{formatMoney(r.vat)}</span>
+                <span className="rpt-detail-gross">{formatMoney(r.lineGross)}</span>
               </div>
             ))}
+            {!data.lines.length && <div className="muted" style={{ padding: "2rem", textAlign: "center" }}>Nessuna riga nel periodo selezionato</div>}
           </div>
         </div>
       ) : null}

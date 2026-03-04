@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
-import { FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiDownload, FiX } from "react-icons/fi";
 
 // CHECKLIST (admin richieste):
 // [x] Click riga cliente apre scheda/modifica
@@ -498,9 +498,7 @@ export default function AdminCompanies() {
                 <div className="modal-title">Dettagli richiesta</div>
                 <div className="modal-subtitle">{pendingDetails.email}</div>
               </div>
-              <button className="btn ghost" onClick={() => setShowPendingDetails(false)}>
-                Chiudi
-              </button>
+              <button className="modal-close-x" onClick={() => setShowPendingDetails(false)}><FiX size={20} /></button>
             </div>
             <div className="modal-body modal-body-single">
               <div className="rules-grid">
@@ -574,9 +572,7 @@ export default function AdminCompanies() {
                   Sei sicuro di voler rifiutare questa richiesta?
                 </div>
               </div>
-              <button className="btn ghost" onClick={() => setConfirmRejectUser(null)}>
-                Chiudi
-              </button>
+              <button className="modal-close-x" onClick={() => setConfirmRejectUser(null)}><FiX size={20} /></button>
             </div>
             <div className="modal-body modal-body-single">
               <div className="actions">
@@ -607,9 +603,7 @@ export default function AdminCompanies() {
                 <div className="modal-title">Crea azienda</div>
                 <div className="modal-subtitle">Inserisci i dati principali</div>
               </div>
-              <button className="btn ghost" onClick={() => setShowCompanyModal(false)}>
-                Chiudi
-              </button>
+              <button className="modal-close-x" onClick={() => setShowCompanyModal(false)}><FiX size={20} /></button>
             </div>
             <div className="modal-body modal-body-single">
               <div className="rules-grid">
@@ -716,9 +710,7 @@ export default function AdminCompanies() {
                 <div className="modal-title">Modifica azienda</div>
                 <div className="modal-subtitle">{editingCompany.legalName || editingCompany.name}</div>
               </div>
-              <button className="btn ghost" onClick={() => setShowCompanyEdit(false)}>
-                Chiudi
-              </button>
+              <button className="modal-close-x" onClick={() => setShowCompanyEdit(false)}><FiX size={20} /></button>
             </div>
             <div className="modal-body modal-body-single">
               <div className="rules-grid">
