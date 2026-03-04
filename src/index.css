@@ -6862,31 +6862,32 @@ button {
 }
 
 .goods-receipts-table .row {
-  grid-template-columns: 90px 100px minmax(120px, 1fr) minmax(100px, 0.7fr) 100px 95px 100px 80px 100px 180px;
+  grid-template-columns: 90px 90px minmax(150px, 1.2fr) minmax(120px, 1fr) 100px 95px 100px 80px 100px auto;
   min-width: 0;
 }
 
 .goods-receipts-table .row.header {
-  grid-template-columns: 90px 100px minmax(120px, 1fr) minmax(100px, 0.7fr) 100px 95px 100px 80px 100px 180px;
+  grid-template-columns: 90px 90px minmax(150px, 1.2fr) minmax(120px, 1fr) 100px 95px 100px 80px 100px auto;
   min-width: 0;
 }
 
 .goods-receipts-table .row > div.actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   white-space: nowrap;
   align-items: center;
+  justify-content: flex-end;
 }
 
 .goods-receipts-table .row:not(.header):hover {
   background: rgba(241, 245, 249, 0.9);
 }
 
-.goods-receipts-table .row > div:nth-child(3),
-.goods-receipts-table .row > div:nth-child(4) {
+.goods-receipts-table .row > div {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .warehouse-page,

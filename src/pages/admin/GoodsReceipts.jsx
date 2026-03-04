@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
@@ -102,6 +103,7 @@ export default function AdminGoodsReceipts() {
   const [editInvoiceDate, setEditInvoiceDate] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editRows, setEditRows] = useState([]);
+  const [originalEditStats, setOriginalEditStats] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingImportRows, setPendingImportRows] = useState([]);
   const [conflictSkus, setConflictSkus] = useState([]);
@@ -749,6 +751,14 @@ export default function AdminGoodsReceipts() {
           lineNote: line.lineNote || "",
         }))
       );
+      setOriginalEditStats({
+        lines: (res.lines || []).length,
+        qty: (res.lines || []).reduce((s, l) => s + Number(l.qty || 0), 0),
+        cost: Number(res.totalNet || 0),
+        subtotal: Number(res.totalNet || 0),
+        vat: Number(res.totalVat || 0),
+      });
+      );
     } catch {
       setError("Impossibile aprire modifica carico");
     }
@@ -925,19 +935,19 @@ export default function AdminGoodsReceipts() {
           <div key={r.id} className="row" onClick={() => openEditReceipt(r.id)} style={{ cursor: "pointer" }}>
             <div>{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
             <div className="mono">{r.progressiveNo}</div>
-            <div>{r.supplier?.name || r.supplierName || "—"}</div>
-            <div>{r.notes || "—"}</div>
+            <div title={r.supplier?.name || r.supplierName || ""}>{r.supplier?.name || r.supplierName || "—"}</div>
+            <div title={r.notes || ""}>{r.notes || "—"}</div>
             <div className="mono">{r.invoiceNo || "—"}</div>
             <div>{r.invoiceDate || "—"}</div>
             <div>{money(r.totalNet)}</div>
             <div>{money(r.totalVat)}</div>
-            <div>{money(r.totalGross)}</div>
+            <div style={{ fontWeight: 600 }}>{money(r.totalGross)}</div>
             <div className="actions">
-              <button className="btn ghost small" onClick={(e) => { e.stopPropagation(); openEditReceipt(r.id); }}>
-                Modifica
+              <button className="icon-btn" data-tooltip="Modifica" onClick={(e) => { e.stopPropagation(); openEditReceipt(r.id); }}>
+                <FiEdit2 size={15} />
               </button>
-              <button className="btn ghost small" onClick={(e) => { e.stopPropagation(); setConfirmDelete(r); }}>
-                Elimina
+              <button className="icon-btn danger" data-tooltip="Elimina" onClick={(e) => { e.stopPropagation(); setConfirmDelete(r); }}>
+                <FiTrash2 size={15} />
               </button>
             </div>
           </div>
@@ -1095,9 +1105,9 @@ export default function AdminGoodsReceipts() {
                               placeholder="Nota"
                             />
                             <div className="actions">
-                              <button className="btn ghost small" onClick={() => moveRow(idx, "up")}>↑</button>
-                              <button className="btn ghost small" onClick={() => moveRow(idx, "down")}>↓</button>
-                              <button className="btn ghost small" onClick={() => removeRow(idx)}>Rimuovi</button>
+                              <button className="icon-btn" data-tooltip="Su" onClick={() => moveRow(idx, "up")}>↑</button>
+                              <button className="icon-btn" data-tooltip="Giù" onClick={() => moveRow(idx, "down")}>↓</button>
+                              <button className="icon-btn danger" data-tooltip="Rimuovi" onClick={() => removeRow(idx)}><FiTrash2 size={14} /></button>
                             </div>
                           </div>
                         ))}
@@ -1190,6 +1200,10 @@ export default function AdminGoodsReceipts() {
                 </button>
               </div>
               <div className="modal-body modal-body-single returns-modal-body goods-receipt-modal-body">
+                <div className="goods-layout">
+                  <div className="goods-main">
+                <div className="order-card">
+                <div className="card-title">Dati carico</div>
                 <div className="order-form">
                   <div>
                     <label>Fornitore (anagrafica)</label>
@@ -1223,6 +1237,8 @@ export default function AdminGoodsReceipts() {
                     <input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
                   </div>
                 </div>
+                </div>
+                <div className="order-card">
                 <div className="goods-toolbar">
                   <div className="card-title" style={{ marginBottom: 0 }}>Righe carico</div>
                   <button className="btn ghost" onClick={addEditRow}>Aggiungi riga</button>
@@ -1260,29 +1276,58 @@ export default function AdminGoodsReceipts() {
                       <div>{money(Number(row.qty || 0) * Number(row.unitCost || 0) * (1 - Math.max(0, Math.min(100, Number(row.discount || 0))) / 100))}</div>
                       <input value={row.lineNote} onChange={(e) => updateEditRow(idx, { lineNote: e.target.value })} placeholder="Nota" />
                       <div className="actions">
-                        <button className="btn ghost small" onClick={() => moveEditRow(idx, "up")}>↑</button>
-                        <button className="btn ghost small" onClick={() => moveEditRow(idx, "down")}>↓</button>
-                        <button className="btn ghost small" onClick={() => removeEditRow(idx)}>Rimuovi</button>
+                        <button className="icon-btn" data-tooltip="Su" onClick={() => moveEditRow(idx, "up")}>↑</button>
+                        <button className="icon-btn" data-tooltip="Giù" onClick={() => moveEditRow(idx, "down")}>↓</button>
+                        <button className="icon-btn danger" data-tooltip="Rimuovi" onClick={() => removeEditRow(idx)}><FiTrash2 size={14} /></button>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="actions">
-                  <button className="btn ghost" onClick={() => setEditingReceipt(null)}>Annulla</button>
-                  <button className="btn primary" onClick={saveEditedReceipt} disabled={saving}>
-                    {saving ? "Salvataggio..." : "Salva modifiche"}
-                  </button>
                 </div>
-                <div className="order-summary-card order-card" style={{ marginTop: 16 }}>
-                  <div className="card-title">Riepilogo</div>
-                  <div className="summary-grid">
-                    <div><strong>Righe valide</strong><div>{editStats.lines}</div></div>
-                    <div><strong>Quantità totale</strong><div>{editStats.qty}</div></div>
-                    <div><strong>Valore a costo</strong><div>{money(editStats.cost)}</div></div>
-                    <div><strong>Subtotale (imponibile)</strong><div>{money(editStats.subtotal)}</div></div>
-                    <div><strong>IVA stimata</strong><div>{money(editStats.vat)}</div></div>
-                    <div><strong>Totale stimato</strong><div>{money(editStats.subtotal + editStats.vat)}</div></div>
                   </div>
+
+                  <aside className="goods-side">
+                    <div className="order-summary-card order-card">
+                      <div className="card-title">Riepilogo modifiche</div>
+                      <div className="summary-grid">
+                        {[
+                          ["Righe", originalEditStats?.lines, editStats.lines],
+                          ["Quantità", originalEditStats?.qty, editStats.qty],
+                          ["Imponibile", originalEditStats?.subtotal, editStats.subtotal, true],
+                          ["IVA", originalEditStats?.vat, editStats.vat, true],
+                          ["Totale", originalEditStats ? originalEditStats.subtotal + originalEditStats.vat : 0, editStats.subtotal + editStats.vat, true],
+                        ].map(([label, orig, curr, isMoney]) => {
+                          const diff = (curr || 0) - (orig || 0);
+                          return (
+                            <div key={label}>
+                              <strong>{label}</strong>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <span>{isMoney ? money(curr) : curr}</span>
+                                {diff !== 0 && (
+                                  <span style={{
+                                    fontSize: 11, fontWeight: 600,
+                                    color: diff > 0 ? "#16a34a" : "#ef4444",
+                                    background: diff > 0 ? "rgba(22,163,74,0.08)" : "rgba(239,68,68,0.08)",
+                                    padding: "2px 6px", borderRadius: 6,
+                                  }}>
+                                    {diff > 0 ? "+" : ""}{isMoney ? money(diff) : diff}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="summary-actions" style={{ marginTop: 16 }}>
+                        <button className="btn primary" onClick={saveEditedReceipt} disabled={saving}>
+                          {saving ? "Salvataggio..." : "Salva modifiche"}
+                        </button>
+                        <button className="btn ghost" onClick={() => setEditingReceipt(null)} style={{ marginTop: 8 }}>
+                          Annulla
+                        </button>
+                      </div>
+                    </div>
+                  </aside>
                 </div>
               </div>
             </div>
