@@ -2795,6 +2795,7 @@ export async function adminRoutes(app: FastifyInstance) {
       },
       include: {
         receipt: { select: { receivedAt: true } },
+        item: { select: { taxRateRef: { select: { rate: true } } } },
       },
     });
     const expenseInvoices = await prisma.expenseInvoice.findMany({
@@ -2806,7 +2807,9 @@ export async function adminRoutes(app: FastifyInstance) {
     for (const line of receiptLines) {
       const key = line.receipt.receivedAt.toISOString().slice(0, 10);
       const idx = dayIndex.get(key);
-      const lineExpense = Number(line.unitCost || 0) * Number(line.qty || 0);
+      const lineNet = Number(line.unitCost || 0) * Number(line.qty || 0);
+      const vatRate = Number(line.item?.taxRateRef?.rate || 0);
+      const lineExpense = lineNet + lineNet * (vatRate / 100);
       expenses += lineExpense;
       if (idx != null) days[idx].expenses += lineExpense;
     }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
+import { FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
 
 // CHECKLIST (admin richieste):
 // [x] Click riga cliente apre scheda/modifica
@@ -37,7 +38,6 @@ export default function AdminCompanies() {
   const [companySearch, setCompanySearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("all");
-  const [viewMode, setViewMode] = useState("table");
   const [showPending, setShowPending] = useState(true);
   const GROUP_OPTIONS = ["NEGOZIO", "TABACCHERIA"];
 
@@ -370,25 +370,6 @@ export default function AdminCompanies() {
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="cards companies-cards">
-        <div className="card">
-          <div className="card-label">Aziende totali</div>
-          <div className="card-value">{companyStats.total}</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Attive</div>
-          <div className="card-value">{companyStats.active}</div>
-        </div>
-        <div className="card">
-          <div className="card-label">In attesa</div>
-          <div className="card-value">{companyStats.pending}</div>
-        </div>
-        <div className="card">
-          <div className="card-label">Revocate</div>
-          <div className="card-value">{companyStats.suspended}</div>
-        </div>
-      </div>
-
       <div className="panel companies-pending-panel">
         <div className="panel-header-compact">
           <h3>Richieste in attesa</h3>
@@ -432,167 +413,82 @@ export default function AdminCompanies() {
         ) : null}
       </div>
 
-      <div className="panel">
-        <div className="panel-header-compact">
-          <h3>Aziende</h3>
-          <button className="btn ghost" onClick={exportCompaniesCsv}>Export</button>
-        </div>
-        <div className="companies-filters-shell">
-          <div className="companies-filters-top">
-            <input
-              placeholder="Cerca cliente (nome, P.IVA, email...)"
-              value={companySearch}
-              onChange={(e) => setCompanySearch(e.target.value)}
-            />
-            <div className="products-view-switch">
-              <button type="button" className={`btn ${viewMode === "table" ? "primary" : "ghost"}`} onClick={() => setViewMode("table")}>Tabella</button>
-              <button type="button" className={`btn ${viewMode === "cards" ? "primary" : "ghost"}`} onClick={() => setViewMode("cards")}>Card</button>
-            </div>
-            <button className="btn ghost" onClick={() => {
-              setCompanySearch("");
-              setStatusFilter("all");
-              setGroupFilter("all");
-            }}>Reset</button>
-          </div>
-          <div className="filters-row companies-filters-grid">
-            <div className="filter-group">
-              <label>Stato</label>
-              <select
-                className="select"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">Tutti</option>
-                <option value="ACTIVE">Attivi</option>
-                <option value="PENDING">In attesa</option>
-                <option value="SUSPENDED">Revocati</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label>Gruppo</label>
-              <select
-                className="select"
-                value={groupFilter}
-                onChange={(e) => setGroupFilter(e.target.value)}
-              >
-                <option value="all">Tutti</option>
-                {availableGroups.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-        {viewMode === "table" ? (
-          <div className="table companies-table companies-table-pro">
-            <div className="row header">
-              <div>Ragione sociale</div>
-              <div>P.IVA</div>
-              <div>Gruppo</div>
-              <div>Referente</div>
-              <div>Email</div>
-              <div>Ultimo accesso</div>
-              <div>Registrazione</div>
-              <div>Ordini</div>
-              <div>Fatturato</div>
-              <div>Media ordini</div>
-              <div>Stato</div>
-              <div>Azioni</div>
-            </div>
-            {visibleCompanies.length === 0 ? (
-              <div className="row">
-                <div className="muted">Nessuna azienda presente</div>
-                <div />
-                <div />
-                <div />
-                <div />
-                <div />
-                <div />
-                <div />
-                <div />
-                <div />
-                <div />
-                <div />
-              </div>
-            ) : (
-              visibleCompanies.map((c) => (
-                <div className="row" key={c.id} onClick={() => openEditCompany(c)} style={{ cursor: "pointer" }}>
-                  <div>{c.legalName || c.name}</div>
-                  <div>{c.vatNumber || "—"}</div>
-                  <div>{c.groupName || "—"}</div>
-                  <div>
-                    {(c.contactFirstName || "") + " " + (c.contactLastName || "")}
-                  </div>
-                  <div>{c.email || "—"}</div>
-                  <div>{formatDate(c?.stats?.lastAccessAt)}</div>
-                  <div>{formatDate(c?.stats?.registeredAt || c.createdAt)}</div>
-                  <div>{c?.stats?.orders ?? 0}</div>
-                  <div>{formatMoney(c?.stats?.revenue ?? 0)}</div>
-                  <div>{formatMoney(c?.stats?.averageOrderValue ?? 0)}</div>
-                  <div>
-                    <span
-                      className={`tag ${
-                        c.status === "SUSPENDED" ? "danger" : c.status === "PENDING" ? "warn" : "success"
-                      }`}
-                    >
-                      {c.status === "SUSPENDED"
-                        ? "Revocata"
-                        : c.status === "PENDING"
-                        ? "In attesa"
-                        : "Attivo"}
-                    </span>
-                  </div>
-                  <div className="actions">
-                    <button
-                      className="btn ghost small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditCompany(c);
-                      }}
-                    >
-                      Modifica
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        ) : (
-          <div className="companies-cards-grid">
-            {visibleCompanies.map((c) => (
-              <article className="companies-card" key={c.id}>
-                <div className="companies-card-top">
-                  <h4>{c.legalName || c.name}</h4>
-                  <span
-                    className={`tag ${
-                      c.status === "SUSPENDED" ? "danger" : c.status === "PENDING" ? "warn" : "success"
-                    }`}
-                  >
-                    {c.status === "SUSPENDED"
-                      ? "Revocata"
-                      : c.status === "PENDING"
-                      ? "In attesa"
-                      : "Attivo"}
-                  </span>
-                </div>
-                <div className="muted">P.IVA: {c.vatNumber || "—"}</div>
-                <div className="muted">Gruppo: {c.groupName || "—"}</div>
-                <div className="muted">Referente: {(c.contactFirstName || "") + " " + (c.contactLastName || "")}</div>
-                <div className="muted">Email: {c.email || "—"}</div>
-                <div className="companies-card-grid">
-                  <span>Ordini: <strong>{c?.stats?.orders ?? 0}</strong></span>
-                  <span>Fatturato: <strong>{formatMoney(c?.stats?.revenue ?? 0)}</strong></span>
-                  <span>Media: <strong>{formatMoney(c?.stats?.averageOrderValue ?? 0)}</strong></span>
-                </div>
-                <button className="btn ghost" onClick={() => openEditCompany(c)}>Modifica azienda</button>
-              </article>
+      <div className="cl-toolbar">
+        <div className="cl-filters">
+          <input
+            placeholder="Cerca cliente (nome, P.IVA, email...)"
+            value={companySearch}
+            onChange={(e) => setCompanySearch(e.target.value)}
+          />
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="all">Tutti gli stati</option>
+            <option value="ACTIVE">Attivi</option>
+            <option value="PENDING">In attesa</option>
+            <option value="SUSPENDED">Revocati</option>
+          </select>
+          <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)}>
+            <option value="all">Tutti i gruppi</option>
+            {availableGroups.map((g) => (
+              <option key={g} value={g}>{g}</option>
             ))}
-            {!visibleCompanies.length ? <div className="inventory-empty">Nessuna azienda presente</div> : null}
-          </div>
-        )}
+          </select>
+          {(companySearch || statusFilter !== "all" || groupFilter !== "all") && (
+            <button className="btn ghost small" onClick={() => { setCompanySearch(""); setStatusFilter("all"); setGroupFilter("all"); }}>
+              Reset
+            </button>
+          )}
+        </div>
+        <div className="cl-stats">
+          <span><strong>{companyStats.total}</strong> aziende</span>
+          <span className="gr-stat-sep" />
+          <span><strong>{companyStats.active}</strong> attive</span>
+          <span><strong>{companyStats.pending}</strong> in attesa</span>
+          <span><strong>{companyStats.suspended}</strong> revocate</span>
+          <button className="icon-btn" data-tooltip="Export CSV" onClick={exportCompaniesCsv}>
+            <FiDownload size={15} />
+          </button>
+        </div>
       </div>
+
+      {!visibleCompanies.length ? (
+        <div className="gr-empty">
+          <p>Nessuna azienda trovata</p>
+          <button className="btn primary" onClick={() => setShowCompanyModal(true)}>Crea la prima azienda</button>
+        </div>
+      ) : (
+        <div className="cl-list">
+          {visibleCompanies.map((c) => (
+            <div key={c.id} className="cl-item" onClick={() => openEditCompany(c)}>
+              <div className="cl-item-left">
+                <span className={`cl-item-status ${c.status === "SUSPENDED" ? "danger" : c.status === "PENDING" ? "warn" : "success"}`} />
+                <div className="cl-item-main">
+                  <strong className="cl-item-name">{c.legalName || c.name}</strong>
+                  <span className="cl-item-meta">
+                    {c.vatNumber ? `P.IVA ${c.vatNumber}` : ""}
+                    {c.groupName ? ` · ${c.groupName}` : ""}
+                    {(c.contactFirstName || c.contactLastName) ? ` · ${(c.contactFirstName || "")} ${(c.contactLastName || "")}`.trim() : ""}
+                  </span>
+                  {c.email && <span className="cl-item-email">{c.email}</span>}
+                </div>
+              </div>
+              <div className="cl-item-right">
+                <div className="cl-item-kpis">
+                  <span className="cl-item-revenue">{formatMoney(c?.stats?.revenue ?? 0)}</span>
+                  <span className="cl-item-detail">{c?.stats?.orders ?? 0} ordini · media {formatMoney(c?.stats?.averageOrderValue ?? 0)}</span>
+                </div>
+                <span className={`tag ${c.status === "SUSPENDED" ? "danger" : c.status === "PENDING" ? "warn" : "success"}`}>
+                  {c.status === "SUSPENDED" ? "Revocata" : c.status === "PENDING" ? "In attesa" : "Attivo"}
+                </span>
+                <div className="cl-item-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEditCompany(c)}>
+                    <FiEdit2 size={15} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showPendingDetails && pendingDetails ? (
         <div className="modal-backdrop" onClick={() => setShowPendingDetails(false)}>

@@ -6972,6 +6972,135 @@ button {
   gap: 2px;
 }
 
+/* ── Clients / Aziende – card-based list ── */
+.cl-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0.6rem 0 1rem;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+}
+.cl-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.cl-filters input,
+.cl-filters select {
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 0 10px;
+  font-size: 13px;
+  background: #fff;
+  min-width: 0;
+  flex: 1 1 120px;
+}
+.cl-filters input {
+  flex: 2 1 180px;
+}
+.cl-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #475569;
+  flex-shrink: 0;
+}
+.cl-stats strong {
+  color: #0f172a;
+}
+.cl-list {
+  display: grid;
+  gap: 8px;
+}
+.cl-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+.cl-item:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+  transform: translateY(-1px);
+}
+.cl-item-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.cl-item-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cl-item-status.success { background: #22c55e; }
+.cl-item-status.warn    { background: #f59e0b; }
+.cl-item-status.danger  { background: #ef4444; }
+.cl-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cl-item-name {
+  font-size: 14px;
+  color: #0f172a;
+}
+.cl-item-meta {
+  font-size: 12px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cl-item-email {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.cl-item-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+.cl-item-kpis {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.cl-item-revenue {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.cl-item-detail {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.cl-item-actions {
+  display: flex;
+  gap: 2px;
+}
+
 .warehouse-page,
 .expenses-page,
 .logistics-page,
