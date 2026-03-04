@@ -602,14 +602,14 @@ export default function AdminInvoices() {
             <div>{money(r.totaleFattura)}</div>
             <div>{r.riferimentoOrdine || "-"}</div>
             <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
-              <button className="btn ghost small" onClick={() => togglePaid(r)}>{r.stato === "SALDATA" ? "Da saldare" : "Saldata"}</button>
-              <button className="btn ghost small" onClick={() => openEdit(r)}>Modifica</button>
-              <button className="btn ghost small" onClick={() => printInvoice(r)}>Stampa</button>
-              <button className="btn ghost small" onClick={() => printDDT(r)}>DDT</button>
-              <button className="btn ghost small" onClick={() => downloadPDF(r)}>PDF</button>
-              <button className="btn ghost small" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? "Invio..." : "Email"}</button>
-              <button className="btn ghost small" onClick={() => exportSingleInvoice(r)}>CSV</button>
-              <button className="btn ghost small danger" onClick={() => deleteInvoice(r)}>Elimina</button>
+              <button className="icon-btn" data-tooltip={r.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => togglePaid(r)}>{r.stato === "SALDATA" ? "💰" : "💰"}</button>
+              <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEdit(r)}>✏️</button>
+              <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(r)}>🖨️</button>
+              <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(r)}>📋</button>
+              <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(r)}>📥</button>
+              <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? "⏳" : "✉️"}</button>
+              <button className="icon-btn" data-tooltip="CSV" onClick={() => exportSingleInvoice(r)}>📊</button>
+              <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(r)}>🗑️</button>
             </div>
           </div>
         ))}
@@ -629,13 +629,13 @@ export default function AdminInvoices() {
                 <span>Ordine {r.riferimentoOrdine || "-"}</span>
               </div>
               <div className="inv-actions" onClick={(e) => e.stopPropagation()} style={{ justifyContent: "center" }}>
-                <button className="btn ghost small" onClick={() => togglePaid(r)}>{r.stato === "SALDATA" ? "Da saldare" : "Saldata"}</button>
-                <button className="btn ghost small" onClick={() => openEdit(r)}>Modifica</button>
-                <button className="btn ghost small" onClick={() => printInvoice(r)}>Stampa</button>
-                <button className="btn ghost small" onClick={() => printDDT(r)}>DDT</button>
-                <button className="btn ghost small" onClick={() => downloadPDF(r)}>PDF</button>
-                <button className="btn ghost small" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? "Invio..." : "Email"}</button>
-                <button className="btn ghost small danger" onClick={() => deleteInvoice(r)}>Elimina</button>
+                <button className="icon-btn" data-tooltip={r.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => togglePaid(r)}>{r.stato === "SALDATA" ? "💰" : "💰"}</button>
+                <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEdit(r)}>✏️</button>
+                <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(r)}>🖨️</button>
+                <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(r)}>📋</button>
+                <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(r)}>📥</button>
+                <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? "⏳" : "✉️"}</button>
+                <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(r)}>🗑️</button>
               </div>
             </article>
           ))}

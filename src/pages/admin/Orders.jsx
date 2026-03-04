@@ -1024,75 +1024,82 @@ export default function AdminOrders() {
             <div className="order-row-actions">
               {o.fiscalInvoice ? <span className="tag success">Fatturato</span> : null}
               <button
-                className="btn ghost"
+                className="icon-btn"
+                data-tooltip="In elaborazione"
                 onClick={(e) => {
                   e.stopPropagation();
                   updateStatus(o.id, "APPROVED");
                 }}
                 disabled={Boolean(o.fiscalInvoice)}
               >
-                In elaborazione
+                ⚙️
               </button>
               <button
-                className="btn ghost"
+                className="icon-btn"
+                data-tooltip="Completato"
                 onClick={(e) => {
                   e.stopPropagation();
                   setConfirmCompleteOrder(o);
                 }}
                 disabled={Boolean(o.fiscalInvoice)}
               >
-                Completato
+                ✅
               </button>
               <button
-                className="btn ghost"
+                className="icon-btn"
+                data-tooltip="Modifica"
                 onClick={(e) => {
                   e.stopPropagation();
                   setEditingOrder(o);
                 }}
                 disabled={Boolean(o.fiscalInvoice)}
               >
-                Modifica
+                ✏️
               </button>
               <button
-                className="btn danger"
+                className="icon-btn danger"
+                data-tooltip="Elimina"
                 onClick={(e) => {
                   e.stopPropagation();
                   deleteOrderById(o.id);
                 }}
                 disabled={Boolean(o.fiscalInvoice)}
               >
-                Elimina
+                🗑️
               </button>
               {o.fiscalInvoice ? (
                 <button
-                  className="btn ghost"
+                  className="icon-btn"
+                  data-tooltip="Vedi fattura"
                   onClick={(e) => {
                     e.stopPropagation();
                     openInvoicePreview(o.fiscalInvoice.id);
                   }}
                 >
-                  Vedi fattura
+                  📄
                 </button>
               ) : (
                 <button
-                  className="btn primary"
+                  className="icon-btn primary"
+                  data-tooltip="Fattura"
                   onClick={(e) => {
                     e.stopPropagation();
                     createInvoiceFromOrder(o.id);
                   }}
                 >
-                  Fattura
+                  📄
                 </button>
               )}
               {(o.status === "APPROVED" || o.status === "FULFILLED") && (
                 <button
-                  className="btn ghost"
+                  className="icon-btn"
+                  data-tooltip="Spedisci"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate("/admin/logistica", { state: { orderId: o.id } });
                   }}
                 >
-                  📦 Spedisci
+                  📦
                 </button>
               )}
             </div>
@@ -1127,27 +1134,27 @@ export default function AdminOrders() {
                   <span>{new Date(o.createdAt).toLocaleString()}</span>
                 </div>
                 <div className="orders-card-actions" onClick={(e) => e.stopPropagation()}>
-                  <button className="btn ghost small" onClick={() => updateStatus(o.id, "APPROVED")} disabled={Boolean(o.fiscalInvoice)}>
-                    In elaborazione
+                  <button className="icon-btn" data-tooltip="In elaborazione" onClick={() => updateStatus(o.id, "APPROVED")} disabled={Boolean(o.fiscalInvoice)}>
+                    ⚙️
                   </button>
-                  <button className="btn ghost small" onClick={() => setConfirmCompleteOrder(o)} disabled={Boolean(o.fiscalInvoice)}>
-                    Completato
+                  <button className="icon-btn" data-tooltip="Completato" onClick={() => setConfirmCompleteOrder(o)} disabled={Boolean(o.fiscalInvoice)}>
+                    ✅
                   </button>
-                  <button className="btn danger small" onClick={() => deleteOrderById(o.id)} disabled={Boolean(o.fiscalInvoice)}>
-                    Elimina
+                  <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteOrderById(o.id)} disabled={Boolean(o.fiscalInvoice)}>
+                    🗑️
                   </button>
                   {o.fiscalInvoice ? (
-                    <button className="btn ghost small" onClick={() => openInvoicePreview(o.fiscalInvoice.id)}>
-                      Vedi fattura
+                    <button className="icon-btn" data-tooltip="Vedi fattura" onClick={() => openInvoicePreview(o.fiscalInvoice.id)}>
+                      📄
                     </button>
                   ) : (
-                    <button className="btn primary small" onClick={() => createInvoiceFromOrder(o.id)}>
-                      Fattura
+                    <button className="icon-btn primary" data-tooltip="Fattura" onClick={() => createInvoiceFromOrder(o.id)}>
+                      📄
                     </button>
                   )}
                   {(o.status === "APPROVED" || o.status === "FULFILLED") && (
-                    <button className="btn ghost small" onClick={() => navigate("/admin/logistica", { state: { orderId: o.id } })}>
-                      📦 Spedisci
+                    <button className="icon-btn" data-tooltip="Spedisci" onClick={() => navigate("/admin/logistica", { state: { orderId: o.id } })}>
+                      📦
                     </button>
                   )}
                 </div>
