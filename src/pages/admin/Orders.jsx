@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
+import { FiLoader, FiCheckCircle, FiEdit2, FiTrash2, FiFileText, FiPackage } from "react-icons/fi";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
@@ -1032,7 +1033,7 @@ export default function AdminOrders() {
                 }}
                 disabled={Boolean(o.fiscalInvoice)}
               >
-                ⚙️
+                <FiLoader size={15} />
               </button>
               <button
                 className="icon-btn"
@@ -1043,7 +1044,7 @@ export default function AdminOrders() {
                 }}
                 disabled={Boolean(o.fiscalInvoice)}
               >
-                ✅
+                <FiCheckCircle size={15} />
               </button>
               <button
                 className="icon-btn"
@@ -1054,7 +1055,7 @@ export default function AdminOrders() {
                 }}
                 disabled={Boolean(o.fiscalInvoice)}
               >
-                ✏️
+                <FiEdit2 size={15} />
               </button>
               <button
                 className="icon-btn danger"
@@ -1065,7 +1066,7 @@ export default function AdminOrders() {
                 }}
                 disabled={Boolean(o.fiscalInvoice)}
               >
-                🗑️
+                <FiTrash2 size={15} />
               </button>
               {o.fiscalInvoice ? (
                 <button
@@ -1076,7 +1077,7 @@ export default function AdminOrders() {
                     openInvoicePreview(o.fiscalInvoice.id);
                   }}
                 >
-                  📄
+                  <FiFileText size={15} />
                 </button>
               ) : (
                 <button
@@ -1087,7 +1088,7 @@ export default function AdminOrders() {
                     createInvoiceFromOrder(o.id);
                   }}
                 >
-                  📄
+                  <FiFileText size={15} />
                 </button>
               )}
               {(o.status === "APPROVED" || o.status === "FULFILLED") && (
@@ -1099,7 +1100,7 @@ export default function AdminOrders() {
                     navigate("/admin/logistica", { state: { orderId: o.id } });
                   }}
                 >
-                  📦
+                  <FiPackage size={15} />
                 </button>
               )}
             </div>
@@ -1135,26 +1136,26 @@ export default function AdminOrders() {
                 </div>
                 <div className="orders-card-actions" onClick={(e) => e.stopPropagation()}>
                   <button className="icon-btn" data-tooltip="In elaborazione" onClick={() => updateStatus(o.id, "APPROVED")} disabled={Boolean(o.fiscalInvoice)}>
-                    ⚙️
+                    <FiLoader size={15} />
                   </button>
                   <button className="icon-btn" data-tooltip="Completato" onClick={() => setConfirmCompleteOrder(o)} disabled={Boolean(o.fiscalInvoice)}>
-                    ✅
+                    <FiCheckCircle size={15} />
                   </button>
                   <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteOrderById(o.id)} disabled={Boolean(o.fiscalInvoice)}>
-                    🗑️
+                    <FiTrash2 size={15} />
                   </button>
                   {o.fiscalInvoice ? (
                     <button className="icon-btn" data-tooltip="Vedi fattura" onClick={() => openInvoicePreview(o.fiscalInvoice.id)}>
-                      📄
+                      <FiFileText size={15} />
                     </button>
                   ) : (
                     <button className="icon-btn primary" data-tooltip="Fattura" onClick={() => createInvoiceFromOrder(o.id)}>
-                      📄
+                      <FiFileText size={15} />
                     </button>
                   )}
                   {(o.status === "APPROVED" || o.status === "FULFILLED") && (
                     <button className="icon-btn" data-tooltip="Spedisci" onClick={() => navigate("/admin/logistica", { state: { orderId: o.id } })}>
-                      📦
+                      <FiPackage size={15} />
                     </button>
                   )}
                 </div>

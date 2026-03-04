@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { FiDollarSign, FiEdit2, FiPrinter, FiClipboard, FiDownload, FiMail, FiGrid, FiTrash2, FiClock } from "react-icons/fi";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
@@ -602,14 +603,14 @@ export default function AdminInvoices() {
             <div>{money(r.totaleFattura)}</div>
             <div>{r.riferimentoOrdine || "-"}</div>
             <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
-              <button className="icon-btn" data-tooltip={r.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => togglePaid(r)}>{r.stato === "SALDATA" ? "💰" : "💰"}</button>
-              <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEdit(r)}>✏️</button>
-              <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(r)}>🖨️</button>
-              <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(r)}>📋</button>
-              <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(r)}>📥</button>
-              <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? "⏳" : "✉️"}</button>
-              <button className="icon-btn" data-tooltip="CSV" onClick={() => exportSingleInvoice(r)}>📊</button>
-              <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(r)}>🗑️</button>
+              <button className="icon-btn" data-tooltip={r.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => togglePaid(r)}><FiDollarSign size={15} /></button>
+              <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEdit(r)}><FiEdit2 size={15} /></button>
+              <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(r)}><FiPrinter size={15} /></button>
+              <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(r)}><FiClipboard size={15} /></button>
+              <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(r)}><FiDownload size={15} /></button>
+              <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? <FiClock size={15} /> : <FiMail size={15} />}</button>
+              <button className="icon-btn" data-tooltip="CSV" onClick={() => exportSingleInvoice(r)}><FiGrid size={15} /></button>
+              <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(r)}><FiTrash2 size={15} /></button>
             </div>
           </div>
         ))}
@@ -629,13 +630,13 @@ export default function AdminInvoices() {
                 <span>Ordine {r.riferimentoOrdine || "-"}</span>
               </div>
               <div className="inv-actions" onClick={(e) => e.stopPropagation()} style={{ justifyContent: "center" }}>
-                <button className="icon-btn" data-tooltip={r.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => togglePaid(r)}>{r.stato === "SALDATA" ? "💰" : "💰"}</button>
-                <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEdit(r)}>✏️</button>
-                <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(r)}>🖨️</button>
-                <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(r)}>📋</button>
-                <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(r)}>📥</button>
-                <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? "⏳" : "✉️"}</button>
-                <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(r)}>🗑️</button>
+                <button className="icon-btn" data-tooltip={r.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => togglePaid(r)}><FiDollarSign size={15} /></button>
+                <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEdit(r)}><FiEdit2 size={15} /></button>
+                <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(r)}><FiPrinter size={15} /></button>
+                <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(r)}><FiClipboard size={15} /></button>
+                <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(r)}><FiDownload size={15} /></button>
+                <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? <FiClock size={15} /> : <FiMail size={15} />}</button>
+                <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(r)}><FiTrash2 size={15} /></button>
               </div>
             </article>
           ))}
