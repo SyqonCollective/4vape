@@ -6862,12 +6862,12 @@ button {
 }
 
 .goods-receipts-table .row {
-  grid-template-columns: 90px 90px minmax(150px, 1.2fr) minmax(120px, 1fr) 100px 95px 100px 80px 100px auto;
+  grid-template-columns: 95px minmax(140px, 1.2fr) minmax(100px, 0.8fr) 100px 100px 100px 90px 110px auto;
   min-width: 0;
 }
 
 .goods-receipts-table .row.header {
-  grid-template-columns: 90px 90px minmax(150px, 1.2fr) minmax(120px, 1fr) 100px 95px 100px 80px 100px auto;
+  grid-template-columns: 95px minmax(140px, 1.2fr) minmax(100px, 0.8fr) 100px 100px 100px 90px 110px auto;
   min-width: 0;
 }
 
@@ -7291,6 +7291,12 @@ button {
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.24);
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.8), rgba(255, 255, 255, 1));
+}
+
+.goods-receipt-modal .order-summary-card.order-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  border-color: transparent;
 }
 
 .goods-receipt-modal .order-form {

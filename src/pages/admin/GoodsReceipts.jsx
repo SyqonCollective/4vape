@@ -914,33 +914,31 @@ export default function AdminGoodsReceipts() {
       <div className="table goods-receipts-table">
         <div className="row header">
           <div>Data</div>
-          <div>N. progressivo</div>
           <div>Fornitore</div>
+          <div>Rif. fattura</div>
           <div>Note</div>
-          <div>N. fattura</div>
-          <div>Data fattura</div>
           <div>Imponibile</div>
           <div>IVA</div>
           <div>Totale</div>
+          <div>Righe</div>
           <div></div>
         </div>
         {!receipts.length ? (
           <div className="row">
             <div className="muted">Nessun arrivo merci registrato.</div>
-            <div /><div /><div /><div /><div /><div /><div /><div /><div />
+            <div /><div /><div /><div /><div /><div /><div /><div />
           </div>
         ) : null}
         {receipts.map((r) => (
           <div key={r.id} className="row" onClick={() => openEditReceipt(r.id)} style={{ cursor: "pointer" }}>
             <div>{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
-            <div className="mono">{r.progressiveNo}</div>
             <div title={r.supplier?.name || r.supplierName || ""}>{r.supplier?.name || r.supplierName || "—"}</div>
+            <div className="mono" title={[r.invoiceNo, r.invoiceDate].filter(Boolean).join(" · ")}>{r.invoiceNo || "—"}{r.invoiceDate ? ` · ${r.invoiceDate}` : ""}</div>
             <div title={r.notes || ""}>{r.notes || "—"}</div>
-            <div className="mono">{r.invoiceNo || "—"}</div>
-            <div>{r.invoiceDate || "—"}</div>
             <div>{money(r.totalNet)}</div>
             <div>{money(r.totalVat)}</div>
             <div style={{ fontWeight: 600 }}>{money(r.totalGross)}</div>
+            <div className="mono">{r.lines?.length ?? "—"}</div>
             <div className="actions">
               <button className="icon-btn" data-tooltip="Modifica" onClick={(e) => { e.stopPropagation(); openEditReceipt(r.id); }}>
                 <FiEdit2 size={15} />
