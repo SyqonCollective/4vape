@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiDollarSign, FiEdit2, FiPrinter, FiClipboard, FiDownload, FiMail, FiGrid, FiTrash2, FiClock } from "react-icons/fi";
+import { FiDollarSign, FiEdit2, FiPrinter, FiClipboard, FiDownload, FiMail, FiGrid, FiTrash2, FiClock, FiX, FiPlus } from "react-icons/fi";
 import { api } from "../../lib/api.js";
 import InlineError from "../../components/InlineError.jsx";
 import Portal from "../../components/Portal.jsx";
@@ -56,17 +56,24 @@ function exportCsv(filename, headers, rows) {
   URL.revokeObjectURL(url);
 }
 
+function rangeDays(n) {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - n);
+  return { start, end };
+}
+
 export default function AdminInvoices() {
   const today = toDateInput(new Date());
+  const r30 = rangeDays(30);
   const [rows, setRows] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [error, setError] = useState("");
-  const [startDate, setStartDate] = useState(today);
+  const [startDate, setStartDate] = useState(toDateInput(r30.start));
   const [endDate, setEndDate] = useState(today);
   const [status, setStatus] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [query, setQuery] = useState("");
-  const [viewMode, setViewMode] = useState("table");
 
   // Manual invoice
   const [showManual, setShowManual] = useState(false);
@@ -111,11 +118,13 @@ export default function AdminInvoices() {
     finally { setSavingTemplate(false); }
   }
 
-  async function load() {
+  async function load(overrides) {
     try {
+      const sd = overrides?.start ?? startDate;
+      const ed = overrides?.end ?? endDate;
       const params = new URLSearchParams();
-      if (startDate) params.set("start", startDate);
-      if (endDate) params.set("end", endDate);
+      if (sd) params.set("start", sd);
+      if (ed) params.set("end", ed);
       if (status) params.set("status", status);
       if (companyId) params.set("companyId", companyId);
       const res = await api(`/admin/invoices?${params.toString()}`);
@@ -451,9 +460,13 @@ export default function AdminInvoices() {
     setSendingEmail(row.id);
     try {
       const res = await api(`/admin/invoices/${row.id}/send-email`, { method: "POST" });
-      alert(`Email inviata a ${res.sentTo}`);
-    } catch {
-      setError("Impossibile inviare email fattura");
+      if (res.ok) {
+        alert(`Email inviata a ${res.sentTo}`);
+      } else {
+        setError(res.error || "Errore invio email");
+      }
+    } catch (err) {
+      setError(err?.message || "Impossibile inviare email fattura");
     } finally {
       setSendingEmail(null);
     }
@@ -528,7 +541,7 @@ export default function AdminInvoices() {
   }
 
   return (
-    <section>
+    <section className="invoices-page">
       <div className="page-header">
         <div>
           <h1>Fatture</h1>
@@ -538,110 +551,73 @@ export default function AdminInvoices() {
 
       <InlineError message={error} onClose={() => setError("")} />
 
-      <div className="invoices-toolbar">
-        <div className="inv-toolbar-row">
-          <input
-            className="input"
-            placeholder="Cerca numero, cliente…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            style={{ minWidth: 200, flex: "1 1 240px" }}
-          />
-          <input type="date" className="input" value={startDate} onChange={(e) => setStartDate(e.target.value)} title="Data dal" style={{ width: 150 }} />
-          <input type="date" className="input" value={endDate} onChange={(e) => setEndDate(e.target.value)} title="Data al" style={{ width: 150 }} />
-          <select className="select" value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: 140 }}>
-            <option value="">Stato: Tutti</option>
+      <div className="inv-bar">
+        <div className="inv-bar-filters">
+          <input type="text" placeholder="Cerca numero, cliente…" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} title="Dal" />
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} title="Al" />
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">Tutti gli stati</option>
             <option value="DA_SALDARE">Da saldare</option>
             <option value="SALDATA">Saldata</option>
           </select>
-          <select className="select" value={companyId} onChange={(e) => setCompanyId(e.target.value)} style={{ minWidth: 180, flex: "1 1 200px" }}>
-            <option value="">Cliente: Tutti</option>
+          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+            <option value="">Tutti i clienti</option>
             {companies.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
-          <div className="products-view-switch">
-            <button type="button" className={`btn ${viewMode === "table" ? "primary" : "ghost"}`} onClick={() => setViewMode("table")}>Tabella</button>
-            <button type="button" className={`btn ${viewMode === "cards" ? "primary" : "ghost"}`} onClick={() => setViewMode("cards")}>Card</button>
+        </div>
+        <div className="inv-bar-actions">
+          <div className="inv-bar-quick">
+            <button className="btn ghost small" onClick={() => { const r = rangeDays(7); const s = toDateInput(r.start), e = toDateInput(r.end); setStartDate(s); setEndDate(e); load({ start: s, end: e }); }}>7g</button>
+            <button className="btn ghost small" onClick={() => { const r = rangeDays(30); const s = toDateInput(r.start), e = toDateInput(r.end); setStartDate(s); setEndDate(e); load({ start: s, end: e }); }}>30g</button>
+            <button className="btn ghost small" onClick={() => { const r = rangeDays(90); const s = toDateInput(r.start), e = toDateInput(r.end); setStartDate(s); setEndDate(e); load({ start: s, end: e }); }}>90g</button>
           </div>
-        </div>
-        <div className="inv-toolbar-row" style={{ justifyContent: "flex-end" }}>
-          <button className="btn ghost small" onClick={exportCurrentCsv}>Esporta CSV</button>
-          <button className="btn ghost small" onClick={printRegister}>Stampa registro</button>
-          <button className="btn ghost small" onClick={() => setShowTemplateEditor(true)}>Personalizza stampa</button>
-          <button className="btn primary small" onClick={() => setShowManual(true)}>+ Fattura manuale</button>
+          <button className="btn ghost small" onClick={exportCurrentCsv}>CSV</button>
+          <button className="btn ghost small" onClick={printRegister}>Registro</button>
+          <button className="btn ghost small" onClick={() => setShowTemplateEditor(true)}>Template</button>
+          <button className="btn primary small" onClick={() => setShowManual(true)}><FiPlus size={14} /> Manuale</button>
         </div>
       </div>
 
-      <div className="cards">
-        <div className="card"><div className="card-label">Fatture</div><div className="card-value">{rows.length}</div></div>
-        <div className="card"><div className="card-label">Totale</div><div className="card-value">{money(totals.total)}</div></div>
-        <div className="card"><div className="card-label">Imponibile</div><div className="card-value">{money(totals.imponibile)}</div></div>
-        <div className="card"><div className="card-label">Accisa</div><div className="card-value">{money(totals.accisa)}</div></div>
-        <div className="card"><div className="card-label">IVA</div><div className="card-value">{money(totals.iva)}</div></div>
+      <div className="inv-kpis">
+        <div className="inv-kpi"><span className="inv-kpi-val">{rows.length}</span><span className="inv-kpi-lbl">Fatture</span></div>
+        <div className="inv-kpi inv-kpi-accent"><span className="inv-kpi-val">{money(totals.total)}</span><span className="inv-kpi-lbl">Totale</span></div>
+        <div className="inv-kpi"><span className="inv-kpi-val">{money(totals.imponibile)}</span><span className="inv-kpi-lbl">Imponibile</span></div>
+        <div className="inv-kpi"><span className="inv-kpi-val">{money(totals.accisa)}</span><span className="inv-kpi-lbl">Accisa</span></div>
+        <div className="inv-kpi"><span className="inv-kpi-val">{money(totals.iva)}</span><span className="inv-kpi-lbl">IVA</span></div>
       </div>
 
-      {viewMode === "table" ? (
-      <div className="table wide-report invoices-table-pro">
-        <div className="row header">
-          <div>Numero</div>
-          <div>Data</div>
-          <div>Cliente</div>
-          <div>Stato</div>
-          <div>Pagamento</div>
-          <div>Totale</div>
-          <div>Ordine</div>
-          <div>Azioni</div>
-        </div>
+      <div className="inv-list">
         {visibleRows.map((r) => (
-          <div className="row" key={r.id} onClick={() => setDetail(r)} style={{ cursor: "pointer" }}>
-            <div className="mono">{r.numero}</div>
-            <div>{fmtDate(r.data)}</div>
-            <div>{r.cliente || "-"}</div>
-            <div><span className={`tag ${r.stato === "SALDATA" ? "success" : "warn"}`}>{r.stato === "SALDATA" ? "Saldata" : "Da saldare"}</span></div>
-            <div>{payLabel(r.pagamento)}</div>
-            <div>{money(r.totaleFattura)}</div>
-            <div>{r.riferimentoOrdine || "-"}</div>
-            <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
-              <button className="icon-btn" data-tooltip={r.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => togglePaid(r)}><FiDollarSign size={15} /></button>
-              <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEdit(r)}><FiEdit2 size={15} /></button>
-              <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(r)}><FiPrinter size={15} /></button>
-              <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(r)}><FiClipboard size={15} /></button>
-              <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(r)}><FiDownload size={15} /></button>
-              <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? <FiClock size={15} /> : <FiMail size={15} />}</button>
-              <button className="icon-btn" data-tooltip="CSV" onClick={() => exportSingleInvoice(r)}><FiGrid size={15} /></button>
-              <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(r)}><FiTrash2 size={15} /></button>
-            </div>
-          </div>
-        ))}
-      </div>
-      ) : (
-        <div className="invoices-cards">
-          {visibleRows.map((r) => (
-            <article key={r.id} className="invoices-card" onClick={() => setDetail(r)} style={{ cursor: "pointer" }}>
-              <div className="invoices-card-top">
+          <div className="inv-item" key={r.id} onClick={() => setDetail(r)}>
+            <div className="inv-item-left">
+              <div className="inv-item-num">
                 <strong className="mono">{r.numero}</strong>
                 <span className={`tag ${r.stato === "SALDATA" ? "success" : "warn"}`}>{r.stato === "SALDATA" ? "Saldata" : "Da saldare"}</span>
               </div>
-              <div><strong>{r.cliente || "-"}</strong></div>
-              <div className="muted">{fmtDate(r.data)} · {payLabel(r.pagamento)}</div>
-              <div className="invoices-card-totals">
-                <span>{money(r.totaleFattura)}</span>
-                <span>Ordine {r.riferimentoOrdine || "-"}</span>
+              <div className="inv-item-main">
+                <span className="inv-item-client">{r.cliente || "-"}</span>
+                <span className="inv-item-meta muted">{fmtDate(r.data)} · {payLabel(r.pagamento)} · Ord. {r.riferimentoOrdine || "-"}</span>
               </div>
-              <div className="inv-actions" onClick={(e) => e.stopPropagation()} style={{ justifyContent: "center" }}>
-                <button className="icon-btn" data-tooltip={r.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => togglePaid(r)}><FiDollarSign size={15} /></button>
-                <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEdit(r)}><FiEdit2 size={15} /></button>
-                <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(r)}><FiPrinter size={15} /></button>
-                <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(r)}><FiClipboard size={15} /></button>
-                <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(r)}><FiDownload size={15} /></button>
-                <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? <FiClock size={15} /> : <FiMail size={15} />}</button>
-                <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(r)}><FiTrash2 size={15} /></button>
+            </div>
+            <div className="inv-item-right">
+              <span className="inv-item-total">{money(r.totaleFattura)}</span>
+              <div className="inv-item-btns" onClick={(e) => e.stopPropagation()}>
+                <button className="icon-btn" data-tooltip={r.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => togglePaid(r)}><FiDollarSign size={14} /></button>
+                <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEdit(r)}><FiEdit2 size={14} /></button>
+                <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(r)}><FiPrinter size={14} /></button>
+                <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(r)}><FiClipboard size={14} /></button>
+                <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(r)}><FiDownload size={14} /></button>
+                <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(r)} disabled={sendingEmail === r.id}>{sendingEmail === r.id ? <FiClock size={14} /> : <FiMail size={14} />}</button>
+                <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(r)}><FiTrash2 size={14} /></button>
               </div>
-            </article>
-          ))}
-        </div>
-      )}
+            </div>
+          </div>
+        ))}
+        {!visibleRows.length && <div className="muted" style={{ padding: "2rem", textAlign: "center" }}>Nessuna fattura nel periodo</div>}
+      </div>
 
       {showManual ? (
         <Portal>
@@ -649,7 +625,7 @@ export default function AdminInvoices() {
             <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Nuova fattura manuale</h3>
-                <button className="btn ghost" onClick={() => setShowManual(false)}>Chiudi</button>
+                <button className="modal-close-x" onClick={() => setShowManual(false)}><FiX size={20} /></button>
               </div>
               <div className="modal-body modal-body-single">
                 <div className="form-grid">
@@ -658,7 +634,7 @@ export default function AdminInvoices() {
                   <label>Cliente<select className="select" value={manual.companyId} onChange={(e) => setManual((p) => ({ ...p, companyId: e.target.value }))}><option value="">Seleziona</option>{companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
                 </div>
                 <LinesEditor lines={manualLines} search={manualSearch} setSearch={setManualSearch} results={manualResults} onAdd={addManualLine} onUpdate={updateManualLine} onRemove={removeManualLine} />
-                <div className="actions">
+                <div className="actions" style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end", marginTop: 16 }}>
                   <button className="btn ghost" onClick={() => setShowManual(false)}>Annulla</button>
                   <button className="btn primary" onClick={createManualInvoice} disabled={savingManual || !manualLines.length}>{savingManual ? "Salvataggio..." : "Crea fattura"}</button>
                 </div>
@@ -674,7 +650,7 @@ export default function AdminInvoices() {
             <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-title"><h3>Fattura {detail.numero}</h3></div>
-                <button className="btn ghost" onClick={() => setDetail(null)}>Chiudi</button>
+                <button className="modal-close-x" onClick={() => setDetail(null)}><FiX size={20} /></button>
               </div>
               <div className="modal-body modal-body-single">
                 <div className="summary-grid">
@@ -714,15 +690,15 @@ export default function AdminInvoices() {
                     ); })()}
                   </>
                 )}
-                <div className="actions" style={{ marginTop: 16 }}>
-                  <button className="btn ghost" onClick={() => { togglePaid(detail); setDetail(null); }}>{detail.stato === "SALDATA" ? "Segna da saldare" : "Segna saldata"}</button>
-                  <button className="btn ghost" onClick={() => { openEdit(detail); setDetail(null); }}>Modifica</button>
-                  <button className="btn ghost" onClick={() => printInvoice(detail)}>Stampa</button>
-                  <button className="btn ghost" onClick={() => printDDT(detail)}>DDT</button>
-                  <button className="btn ghost" onClick={() => downloadPDF(detail)}>PDF</button>
-                  <button className="btn ghost" onClick={() => sendInvoiceEmail(detail)} disabled={sendingEmail === detail.id}>{sendingEmail === detail.id ? "Invio..." : "Email"}</button>
-                  <button className="btn ghost" onClick={() => exportSingleInvoice(detail)}>CSV</button>
-                  <button className="btn ghost danger" onClick={() => deleteInvoice(detail)}>Elimina</button>
+                <div className="actions" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", justifyContent: "flex-end", marginTop: 16, paddingTop: 12, borderTop: "1px solid rgba(148,163,184,0.14)" }}>
+                  <button className="icon-btn" data-tooltip={detail.stato === "SALDATA" ? "Da saldare" : "Saldata"} onClick={() => { togglePaid(detail); setDetail(null); }}><FiDollarSign size={15} /></button>
+                  <button className="icon-btn" data-tooltip="Modifica" onClick={() => { openEdit(detail); setDetail(null); }}><FiEdit2 size={15} /></button>
+                  <button className="icon-btn" data-tooltip="Stampa" onClick={() => printInvoice(detail)}><FiPrinter size={15} /></button>
+                  <button className="icon-btn" data-tooltip="DDT" onClick={() => printDDT(detail)}><FiClipboard size={15} /></button>
+                  <button className="icon-btn" data-tooltip="PDF" onClick={() => downloadPDF(detail)}><FiDownload size={15} /></button>
+                  <button className="icon-btn" data-tooltip="Email" onClick={() => sendInvoiceEmail(detail)} disabled={sendingEmail === detail.id}>{sendingEmail === detail.id ? <FiClock size={15} /> : <FiMail size={15} />}</button>
+                  <button className="icon-btn" data-tooltip="CSV" onClick={() => exportSingleInvoice(detail)}><FiGrid size={15} /></button>
+                  <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => deleteInvoice(detail)}><FiTrash2 size={15} /></button>
                 </div>
               </div>
             </div>
@@ -736,7 +712,7 @@ export default function AdminInvoices() {
             <div className="modal product-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Modifica fattura {editRow.numero}</h3>
-                <button className="btn ghost" onClick={() => { setEditRow(null); setEditDraft(null); setEditLines([]); }}>Chiudi</button>
+                <button className="modal-close-x" onClick={() => { setEditRow(null); setEditDraft(null); setEditLines([]); }}><FiX size={20} /></button>
               </div>
               <div className="modal-body modal-body-single">
                 <div className="form-grid">
@@ -744,7 +720,7 @@ export default function AdminInvoices() {
                   <label>Data<input type="date" value={editDraft.issuedAt} onChange={(e) => setEditDraft((p) => ({ ...p, issuedAt: e.target.value }))} /></label>
                 </div>
                 <LinesEditor lines={editLines} search={editSearch} setSearch={setEditSearch} results={editResults} onAdd={addEditLine} onUpdate={updateEditLine} onRemove={removeEditLine} />
-                <div className="actions">
+                <div className="actions" style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end", marginTop: 16 }}>
                   <button className="btn ghost" onClick={() => { setEditRow(null); setEditDraft(null); setEditLines([]); }}>Annulla</button>
                   <button className="btn primary" onClick={saveEdit} disabled={savingEdit}>{savingEdit ? "Salvataggio..." : "Salva modifiche"}</button>
                 </div>
@@ -760,7 +736,7 @@ export default function AdminInvoices() {
             <div className="modal product-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 960 }}>
               <div className="modal-header">
                 <h3>Personalizza template fattura</h3>
-                <button className="btn ghost" onClick={() => setShowTemplateEditor(false)}>Chiudi</button>
+                <button className="modal-close-x" onClick={() => setShowTemplateEditor(false)}><FiX size={20} /></button>
               </div>
               <div className="modal-body" style={{ display: "grid", gridTemplateColumns: "1fr 240px", gap: 20 }}>
                 <div>
@@ -817,24 +793,26 @@ export default function AdminInvoices() {
 
 function LinesEditor({ lines, search, setSearch, results, onAdd, onUpdate, onRemove }) {
   const t = calcLineTotals(lines);
+  const searchRef = useRef(null);
   function handleKeyDown(e) {
     if (e.key === "Enter") {
       e.preventDefault();
-      const input = document.querySelector(".lines-editor-search");
-      if (input) input.focus();
+      if (searchRef.current) searchRef.current.focus();
     }
   }
   function handleSearchKeyDown(e) {
-    if (e.key === "Enter" && results.length > 0) {
+    if (e.key === "Enter") {
       e.preventDefault();
-      onAdd(results[0]);
+      if (results.length > 0) {
+        onAdd(results[0]);
+      }
     }
   }
   return (
     <div style={{ marginTop: 16 }}>
       <h4 style={{ margin: "0 0 8px" }}>Prodotti</h4>
       <div style={{ position: "relative", marginBottom: 10 }}>
-        <input className="lines-editor-search" placeholder="Cerca prodotto per nome o SKU..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={handleSearchKeyDown} style={{ width: "100%" }} />
+        <input ref={searchRef} className="lines-editor-search" placeholder="Cerca prodotto per nome o SKU... (Invio per aggiungere)" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={handleSearchKeyDown} style={{ width: "100%" }} />
         {results.length > 0 && (
           <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #cbd5e1", borderRadius: 8, maxHeight: 200, overflowY: "auto", zIndex: 50 }}>
             {results.map((p) => (

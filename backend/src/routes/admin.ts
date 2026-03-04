@@ -3456,11 +3456,9 @@ export async function adminRoutes(app: FastifyInstance) {
           if (qty <= 0) return null;
           const imponibile = Number(item.lineTotal || 0);
           const exciseUnit = Number(p.exciseTotal ?? Number(p.exciseMl || 0) + Number(p.exciseProduct || 0));
-          if (!Number.isFinite(exciseUnit) || exciseUnit <= 0) return null;
           const accisa = exciseUnit * qty;
           const vatRate = Number(p.taxRate || p.taxRateRef?.rate || 0);
-          // Requested fiscal view: IVA used for average sale price must exclude excise.
-          const iva = vatRate > 0 ? imponibile * (vatRate / 100) : 0;
+          const iva = vatRate > 0 ? (imponibile + accisa) * (vatRate / 100) : 0;
           const unitGross = qty > 0 ? (imponibile + accisa + iva) / qty : 0;
           return {
             invoiceId: inv.id,
@@ -3480,6 +3478,25 @@ export async function adminRoutes(app: FastifyInstance) {
         .filter(Boolean) as any[];
 
       if (linesToCreate.length) {
+        // Add shipping line if order has shipping cost
+        const shippingCost = Number(order.shippingCost || 0);
+        const shippingVatAmount = Number(order.shippingVatAmount || 0);
+        if (shippingCost > 0) {
+          linesToCreate.push({
+            invoiceId: inv.id,
+            productId: null,
+            sku: "SHIPPING",
+            productName: "Spedizione",
+            codicePl: null,
+            mlProduct: null,
+            nicotine: null,
+            qty: 1,
+            unitGross: shippingCost + shippingVatAmount,
+            exciseUnit: 0,
+            exciseTotal: 0,
+            vatTotal: shippingVatAmount,
+          });
+        }
         await prisma.fiscalInvoiceLine.createMany({ data: linesToCreate });
         linesWritten += linesToCreate.length;
       }
@@ -4219,13 +4236,17 @@ export async function adminRoutes(app: FastifyInstance) {
     const contact = [invoice.company?.contactFirstName, invoice.company?.contactLastName].filter(Boolean).join(" ").trim();
     const invoiceTotal = (invoice.lines || []).reduce((s, l) => s + Number(l.unitGross || 0) * Number(l.qty || 0), 0);
 
-    await sendTransactionalEmail("INVOICE_READY", email, {
+    const result = await sendTransactionalEmail("INVOICE_READY", email, {
       "{{customer_name}}": contact || invoice.company?.name || "-",
       "{{company_name}}": invoice.company?.legalName || invoice.company?.name || "-",
       "{{invoice_number}}": invoice.invoiceNumber,
       "{{invoice_date}}": new Date(invoice.issuedAt).toLocaleDateString("it-IT"),
       "{{invoice_total}}": money(invoiceTotal),
     });
+
+    if (!result.ok) {
+      return reply.code(500).send({ ok: false, error: result.error || "Errore invio email" });
+    }
 
     return { ok: true, sentTo: email };
   });
