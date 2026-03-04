@@ -6841,7 +6841,7 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .gr-filters input,
 .gr-filters select {
@@ -6851,7 +6851,8 @@ button {
   padding: 0 10px;
   font-size: 13px;
   background: #fff;
-  min-width: 130px;
+  min-width: 0;
+  flex: 1 1 120px;
 }
 .gr-stats {
   display: flex;
