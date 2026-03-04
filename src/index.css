@@ -7101,6 +7101,31 @@ button {
   gap: 2px;
 }
 
+/* ── Companies modals fullscreen ── */
+.companies-page .modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform: none !important;
+  margin: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  display: flex;
+  flex-direction: column;
+  padding: 1.15rem 1.35rem;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background:
+    radial-gradient(130% 110% at 100% 0%, rgba(56, 189, 248, 0.08), rgba(56, 189, 248, 0) 48%),
+    #fff;
+}
+.companies-page .modal .modal-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
 .warehouse-page,
 .expenses-page,
 .logistics-page,

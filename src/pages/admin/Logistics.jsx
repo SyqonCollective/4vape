@@ -643,7 +643,7 @@ export default function AdminLogistics() {
             <code>BRT_PASSWORD=tua_password</code> (fornita da BRT)<br />
             <code>BRT_DEPARTURE_DEPOT=numero_filiale</code> (es. 170)<br />
             <code>BRT_SENDER_CUSTOMER_CODE=codice_cliente</code> (es. 1234567)<br />
-            <code>BRT_SENDER_COMPANY_NAME=4Vape S.r.l.</code>
+            <code>BRT_SENDER_COMPANY_NAME=Logistica Salentina S.r.l.s.</code>
           </div>
         )}
       </div>

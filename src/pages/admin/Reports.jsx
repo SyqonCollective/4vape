@@ -12,14 +12,27 @@ function toDateInput(date) {
   return date.toISOString().slice(0, 10);
 }
 
+function rangeDays(days) {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - (days - 1));
+  return { start, end };
+}
+
 function formatMoney(v) {
   return `€ ${Number(v || 0).toFixed(2)}`;
 }
 
+function formatDateIT(v) {
+  if (!v) return "—";
+  const d = new Date(v);
+  return d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 export default function AdminReports() {
   const defaultRange = useMemo(() => {
-    const now = new Date();
-    return { start: now, end: now };
+    const r = rangeDays(30);
+    return { start: r.start, end: r.end };
   }, []);
   const [startDate, setStartDate] = useState(toDateInput(defaultRange.start));
   const [endDate, setEndDate] = useState(toDateInput(defaultRange.end));
@@ -50,13 +63,13 @@ export default function AdminReports() {
     pagination: { page: 1, perPage: 150, total: 0, totalPages: 1 },
   });
 
-  async function load() {
+  async function load(overrides) {
     setLoading(true);
     setError("");
     try {
       const params = new URLSearchParams({
-        start: startDate,
-        end: endDate,
+        start: overrides?.start || startDate,
+        end: overrides?.end || endDate,
         page: "1",
         perPage: "150",
       });
@@ -194,6 +207,29 @@ export default function AdminReports() {
             {loading ? "Carico..." : "Aggiorna"}
           </button>
         </div>
+        <div className="analytics-quick">
+          <button className="btn ghost" onClick={() => {
+            const r = rangeDays(7);
+            const s = toDateInput(r.start), e = toDateInput(r.end);
+            setStartDate(s);
+            setEndDate(e);
+            load({ start: s, end: e });
+          }}>7 giorni</button>
+          <button className="btn ghost" onClick={() => {
+            const r = rangeDays(30);
+            const s = toDateInput(r.start), e = toDateInput(r.end);
+            setStartDate(s);
+            setEndDate(e);
+            load({ start: s, end: e });
+          }}>30 giorni</button>
+          <button className="btn ghost" onClick={() => {
+            const r = rangeDays(90);
+            const s = toDateInput(r.start), e = toDateInput(r.end);
+            setStartDate(s);
+            setEndDate(e);
+            load({ start: s, end: e });
+          }}>90 giorni</button>
+        </div>
         <div className="analytics-export">
           <button className="btn ghost" onClick={exportCsv}>Export CSV</button>
         </div>
@@ -283,7 +319,7 @@ export default function AdminReports() {
             </div>
             {data.lines.map((r) => (
               <div className="row" key={r.id}>
-                <div>{new Date(r.createdAt).toLocaleDateString("it-IT")}</div>
+                <div>{formatDateIT(r.createdAt)}</div>
                 <div className="mono">{r.orderNumber || r.orderId.slice(-8).toUpperCase()}</div>
                 <div>{r.companyName}</div>
                 <div className="mono">{r.sku}</div>

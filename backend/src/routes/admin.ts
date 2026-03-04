@@ -4051,34 +4051,88 @@ export async function adminRoutes(app: FastifyInstance) {
       },
     });
 
-    const linesToCreate = order.items
-      .map((item) => {
-        const p = item.product;
-        if (!p) return null;
-        const qty = Number(item.qty || 0);
-        if (qty <= 0) return null;
-        const imponibile = Number(item.lineTotal || 0);
-        const exciseUnit = Number(p.exciseTotal ?? Number(p.exciseMl || 0) + Number(p.exciseProduct || 0));
-        const accisa = roundUp2(exciseUnit * qty);
-        const vatRate = Number(p.taxRate || p.taxRateRef?.rate || 0);
-        const iva = vatRate > 0 ? roundUp2((imponibile + accisa) * (vatRate / 100)) : 0;
-        const unitGross = qty > 0 ? (imponibile + accisa + iva) / qty : 0;
-        return {
-          invoiceId: invoice.id,
-          productId: p.id,
-          sku: item.sku || p.sku,
-          productName: item.name || p.name,
-          codicePl: p.codicePl || null,
-          mlProduct: p.mlProduct ?? null,
-          nicotine: p.nicotine ?? null,
-          qty,
-          unitGross,
-          exciseUnit,
-          exciseTotal: accisa,
-          vatTotal: iva,
-        };
-      })
-      .filter(Boolean) as any[];
+    const linesToCreate: any[] = [];
+
+    for (const item of order.items) {
+      const p = item.product;
+      if (!p) continue;
+      const qty = Number(item.qty || 0);
+      if (qty <= 0) continue;
+
+      // Check if this is a bundle product → expand into component lines
+      if (p.sku.startsWith("BUNDLE-")) {
+        const bundle = await prisma.productBundle.findFirst({
+          where: {
+            name: { equals: p.name },
+          },
+          include: {
+            items: {
+              include: {
+                product: { include: { taxRateRef: true } },
+              },
+            },
+          },
+        });
+        if (bundle && bundle.items.length > 0) {
+          // Distribute the bundle total proportionally among components
+          const bundleImponibile = Number(item.lineTotal || 0);
+          const componentTotalPrice = bundle.items.reduce(
+            (sum, bi) => sum + Number(bi.product.price || 0) * bi.qty,
+            0
+          );
+          for (const bi of bundle.items) {
+            const cp = bi.product;
+            const componentQty = bi.qty * qty;
+            const proportion = componentTotalPrice > 0
+              ? (Number(cp.price || 0) * bi.qty) / componentTotalPrice
+              : 1 / bundle.items.length;
+            const componentImponibile = roundUp2(bundleImponibile * proportion);
+            const exciseUnit = Number(cp.exciseTotal ?? Number(cp.exciseMl || 0) + Number(cp.exciseProduct || 0));
+            const accisa = roundUp2(exciseUnit * componentQty);
+            const vatRate = Number(cp.taxRate || cp.taxRateRef?.rate || 0);
+            const iva = vatRate > 0 ? roundUp2((componentImponibile + accisa) * (vatRate / 100)) : 0;
+            const unitGross = componentQty > 0 ? (componentImponibile + accisa + iva) / componentQty : 0;
+            linesToCreate.push({
+              invoiceId: invoice.id,
+              productId: cp.id,
+              sku: cp.sku,
+              productName: cp.name,
+              codicePl: cp.codicePl || null,
+              mlProduct: cp.mlProduct ?? null,
+              nicotine: cp.nicotine ?? null,
+              qty: componentQty,
+              unitGross,
+              exciseUnit,
+              exciseTotal: accisa,
+              vatTotal: iva,
+            });
+          }
+          continue;
+        }
+      }
+
+      // Normal (non-bundle) product
+      const imponibile = Number(item.lineTotal || 0);
+      const exciseUnit = Number(p.exciseTotal ?? Number(p.exciseMl || 0) + Number(p.exciseProduct || 0));
+      const accisa = roundUp2(exciseUnit * qty);
+      const vatRate = Number(p.taxRate || p.taxRateRef?.rate || 0);
+      const iva = vatRate > 0 ? roundUp2((imponibile + accisa) * (vatRate / 100)) : 0;
+      const unitGross = qty > 0 ? (imponibile + accisa + iva) / qty : 0;
+      linesToCreate.push({
+        invoiceId: invoice.id,
+        productId: p.id,
+        sku: item.sku || p.sku,
+        productName: item.name || p.name,
+        codicePl: p.codicePl || null,
+        mlProduct: p.mlProduct ?? null,
+        nicotine: p.nicotine ?? null,
+        qty,
+        unitGross,
+        exciseUnit,
+        exciseTotal: accisa,
+        vatTotal: iva,
+      });
+    }
 
     // Add shipping line if order has shipping cost
     const shippingCost = Number(order.shippingCost || 0);
