@@ -6768,7 +6768,7 @@ export async function adminRoutes(app: FastifyInstance) {
       password: process.env.BRT_PASSWORD || "",
       departureDepot: parseInt(process.env.BRT_DEPARTURE_DEPOT || "0", 10),
       senderCustomerCode: parseInt(process.env.BRT_SENDER_CUSTOMER_CODE || "0", 10),
-      senderCompanyName: process.env.BRT_SENDER_COMPANY_NAME || "4Vape S.r.l.",
+      senderCompanyName: process.env.BRT_SENDER_COMPANY_NAME || "Logistica Salentina S.r.l.s.",
       pricingConditionCode: process.env.BRT_PRICING_CONDITION_CODE || "000",
     };
   }
