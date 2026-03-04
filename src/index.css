@@ -6824,70 +6824,151 @@ button {
   min-width: 0;
 }
 
-.goods-filters-shell {
-  display: grid;
-  gap: 0.7rem;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 16px;
-  padding: 0.85rem;
-  margin: 0.85rem 0 0.75rem;
-}
-
-.goods-filters-top {
+/* ── Toolbar: filters + stats inline ── */
+.gr-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0.6rem 0 1rem;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
 }
-
-.goods-filters-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(170px, 1fr));
-  gap: 0.65rem;
-}
-
-.goods-filters-grid .filter-group {
-  margin: 0;
-}
-
-.goods-filters-grid .filter-group input,
-.goods-filters-grid .filter-group select {
-  min-height: 44px;
-}
-
-.goods-cards {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  margin-bottom: 0.8rem;
-}
-
-.goods-receipts-table .row {
-  grid-template-columns: 95px minmax(140px, 1.2fr) minmax(100px, 0.8fr) 100px 100px 100px 90px 110px auto;
-  min-width: 0;
-}
-
-.goods-receipts-table .row.header {
-  grid-template-columns: 95px minmax(140px, 1.2fr) minmax(100px, 0.8fr) 100px 100px 100px 90px 110px auto;
-  min-width: 0;
-}
-
-.goods-receipts-table .row > div.actions {
+.gr-filters {
   display: flex;
-  gap: 2px;
-  white-space: nowrap;
   align-items: center;
-  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gr-filters input,
+.gr-filters select {
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 0 10px;
+  font-size: 13px;
+  background: #fff;
+  min-width: 130px;
+}
+.gr-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #475569;
+}
+.gr-stats strong {
+  color: #0f172a;
+}
+.gr-stat-sep {
+  width: 1px;
+  height: 18px;
+  background: rgba(148, 163, 184, 0.35);
 }
 
-.goods-receipts-table .row:not(.header):hover {
-  background: rgba(241, 245, 249, 0.9);
+/* ── Empty state ── */
+.gr-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+}
+.gr-empty p {
+  font-size: 15px;
+  margin-bottom: 16px;
 }
 
-.goods-receipts-table .row > div {
+/* ── Receipt list (card-based) ── */
+.gr-list {
+  display: grid;
+  gap: 8px;
+}
+.gr-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+.gr-item:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+  transform: translateY(-1px);
+}
+.gr-item-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.gr-item-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
   white-space: nowrap;
+  min-width: 78px;
+}
+.gr-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.gr-item-supplier {
+  font-size: 14px;
+  color: #0f172a;
+}
+.gr-item-ref {
+  font-size: 12px;
+  color: #64748b;
+}
+.gr-item-note {
+  font-size: 12px;
+  color: #94a3b8;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0;
+  white-space: nowrap;
+  max-width: 300px;
+}
+.gr-item-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+.gr-item-amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.gr-item-total {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.gr-item-detail {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.gr-item-lines {
+  font-size: 12px;
+  color: #64748b;
+  background: rgba(148, 163, 184, 0.1);
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.gr-item-actions {
+  display: flex;
+  gap: 2px;
 }
 
 .warehouse-page,

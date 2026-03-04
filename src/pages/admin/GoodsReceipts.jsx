@@ -857,11 +857,11 @@ export default function AdminGoodsReceipts() {
       <div className="page-header">
         <div>
           <h1>Arrivo merci</h1>
-          <p>Inserimento massivo rapido per magazzino interno</p>
+          <p>Gestione carichi e aggiornamento magazzino</p>
         </div>
         <div className="page-actions">
           <button className="btn primary" onClick={() => setShowCreateModal(true)}>
-            Nuovo arrivo merci
+            + Nuovo arrivo
           </button>
         </div>
       </div>
@@ -869,87 +869,67 @@ export default function AdminGoodsReceipts() {
       <InlineError message={error} onClose={() => setError("")} />
       {success ? <div className="success-banner">{success}</div> : null}
 
-      <div className="goods-filters-shell">
-        <div className="goods-filters-top">
-          <span className="tag">{receipts.length} registrazioni</span>
-          <button
-            className="btn ghost"
-            onClick={() => {
-              setFilterFromDate("");
-              setFilterToDate("");
-              setFilterSupplierId("");
-            }}
-          >
-            Reset filtri
-          </button>
-        </div>
-      <div className="goods-filters-grid">
-        <div className="filter-group">
-          <label>Data dal</label>
-          <input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)} />
-        </div>
-        <div className="filter-group">
-          <label>Data al</label>
-          <input type="date" value={filterToDate} onChange={(e) => setFilterToDate(e.target.value)} />
-        </div>
-        <div className="filter-group">
-          <label>Fornitore</label>
+      <div className="gr-toolbar">
+        <div className="gr-filters">
+          <input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)} title="Data dal" />
+          <input type="date" value={filterToDate} onChange={(e) => setFilterToDate(e.target.value)} title="Data al" />
           <select value={filterSupplierId} onChange={(e) => setFilterSupplierId(e.target.value)}>
-            <option value="">Tutti</option>
+            <option value="">Tutti i fornitori</option>
             {suppliers.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
+          {(filterFromDate || filterToDate || filterSupplierId) && (
+            <button className="btn ghost small" onClick={() => { setFilterFromDate(""); setFilterToDate(""); setFilterSupplierId(""); }}>
+              Reset
+            </button>
+          )}
+        </div>
+        <div className="gr-stats">
+          <span><strong>{receiptStats.count}</strong> arrivi</span>
+          <span className="gr-stat-sep" />
+          <span>Imp. <strong>{money(receiptStats.net)}</strong></span>
+          <span>IVA <strong>{money(receiptStats.vat)}</strong></span>
+          <span>Tot. <strong>{money(receiptStats.gross)}</strong></span>
         </div>
       </div>
-      </div>
 
-      <div className="cards goods-cards">
-        <div className="card"><div className="card-label">Arrivi</div><div className="card-value">{receiptStats.count}</div></div>
-        <div className="card"><div className="card-label">Imponibile</div><div className="card-value">{money(receiptStats.net)}</div></div>
-        <div className="card"><div className="card-label">IVA</div><div className="card-value">{money(receiptStats.vat)}</div></div>
-        <div className="card"><div className="card-label">Totale</div><div className="card-value">{money(receiptStats.gross)}</div></div>
-      </div>
-
-      <div className="table goods-receipts-table">
-        <div className="row header">
-          <div>Data</div>
-          <div>Fornitore</div>
-          <div>Rif. fattura</div>
-          <div>Note</div>
-          <div>Imponibile</div>
-          <div>IVA</div>
-          <div>Totale</div>
-          <div>Righe</div>
-          <div></div>
+      {!receipts.length ? (
+        <div className="gr-empty">
+          <p>Nessun arrivo merci registrato</p>
+          <button className="btn primary" onClick={() => setShowCreateModal(true)}>Registra il primo arrivo</button>
         </div>
-        {!receipts.length ? (
-          <div className="row">
-            <div className="muted">Nessun arrivo merci registrato.</div>
-            <div /><div /><div /><div /><div /><div /><div /><div />
-          </div>
-        ) : null}
-        {receipts.map((r) => (
-          <div key={r.id} className="row" onClick={() => openEditReceipt(r.id)} style={{ cursor: "pointer" }}>
-            <div>{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
-            <div title={r.supplier?.name || r.supplierName || ""}>{r.supplier?.name || r.supplierName || "—"}</div>
-            <div className="mono" title={[r.invoiceNo, r.invoiceDate].filter(Boolean).join(" · ")}>{r.invoiceNo || "—"}{r.invoiceDate ? ` · ${r.invoiceDate}` : ""}</div>
-            <div title={r.notes || ""}>{r.notes || "—"}</div>
-            <div>{money(r.totalNet)}</div>
-            <div>{money(r.totalVat)}</div>
-            <div style={{ fontWeight: 600 }}>{money(r.totalGross)}</div>
-            <div className="mono">{r.lines?.length ?? "—"}</div>
-            <div className="actions">
-              <button className="icon-btn" data-tooltip="Modifica" onClick={(e) => { e.stopPropagation(); openEditReceipt(r.id); }}>
-                <FiEdit2 size={15} />
-              </button>
-              <button className="icon-btn danger" data-tooltip="Elimina" onClick={(e) => { e.stopPropagation(); setConfirmDelete(r); }}>
-                <FiTrash2 size={15} />
-              </button>
+      ) : (
+        <div className="gr-list">
+          {receipts.map((r) => (
+            <div key={r.id} className="gr-item" onClick={() => openEditReceipt(r.id)}>
+              <div className="gr-item-left">
+                <div className="gr-item-date">{new Date(r.receivedAt).toLocaleDateString("it-IT")}</div>
+                <div className="gr-item-main">
+                  <strong className="gr-item-supplier">{r.supplier?.name || r.supplierName || "—"}</strong>
+                  {r.invoiceNo && <span className="gr-item-ref mono">Fatt. {r.invoiceNo}{r.invoiceDate ? ` del ${new Date(r.invoiceDate + "T00:00:00").toLocaleDateString("it-IT")}` : ""}</span>}
+                  {r.notes && <span className="gr-item-note">{r.notes}</span>}
+                </div>
+              </div>
+              <div className="gr-item-right">
+                <div className="gr-item-amounts">
+                  <span className="gr-item-total">{money(r.totalGross)}</span>
+                  <span className="gr-item-detail">Imp. {money(r.totalNet)} · IVA {money(r.totalVat)}</span>
+                </div>
+                <span className="gr-item-lines">{r.lines?.length ?? 0} righe</span>
+                <div className="gr-item-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="icon-btn" data-tooltip="Modifica" onClick={() => openEditReceipt(r.id)}>
+                    <FiEdit2 size={15} />
+                  </button>
+                  <button className="icon-btn danger" data-tooltip="Elimina" onClick={() => setConfirmDelete(r)}>
+                    <FiTrash2 size={15} />
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {showCreateModal ? (
         <Portal>
